@@ -14,6 +14,8 @@ Main LLM models used to generate and troubleshoot code:
 * Google: Gemini 
 * xAI: Grok
 
+---
+
 Personal setup for this project:
 * Windows 10 with Firefox, Edge Zen with JavaScript blocker
 * VS Code with the Live Server extension by Ritwick Dey
