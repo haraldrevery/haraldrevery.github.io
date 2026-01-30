@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="main.css"> 
+    <title>Harald Revery - About</title>
+    <meta name="description" content="Harald Revery | Beyond the Scandinavian wilderness and the EDM stage, learn about the artist behind the sound.">
+    <meta name="keywords" content="harald, revery, edm, model, biography, about, background">
+
+    <!--  Open Graph (social media image thing) -->
+    <meta property="og:title" content="Harald Revery - About" />
+    <meta property="og:description" content="Harald Revery | Beyond the Scandinavian wilderness and the EDM stage, learn about the artist behind the sound." />
+    <meta property="og:image" content="https://haraldrevery.com/opengraphimg.jpg" />
+    <meta property="og:url" content="https://haraldrevery.com/about" />
+    <meta property="og:type" content="website" />
+    <meta name="robots" content="index, follow">
+
+     <!-- test CSP -->
+    <meta http-equiv="Content-Security-Policy" 
+      content="default-src 'self'; 
+               script-src 'self' 'unsafe-inline' 'unsafe-eval'; 
+               style-src 'self' 'unsafe-inline'; 
+               font-src 'self' data: http://127.0.0.1:* http://localhost:*;
+               media-src 'self' data:;">
+
+    <!-- Internet icon -->
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
+    <link rel="shortcut icon" href="/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
+    <link rel="canonical" href="https://haraldrevery.com/about">
+</head>
+
+<body class="min-h-screen text-zinc-900 dark:text-white">
+
+<div class="scroll-sentinel absolute top-0 h-[50vh] w-full pointer-events-none"></div>
+<nav class="main-nav fixed top-0 inset-x-0 z-[200] backdrop-blur-xl
+            border-zinc-200 bg-white/80 
+            dark:border-white/10 dark:bg-neutral-950/90">
+    
+    <div class="page-container nav-desktop:h-13 h-18 flex items-center justify-between relative">
+        <a href="index.html" class="flex items-center group z-[250] translate-y-[14%]">
+            <svg class="mr-4 fill-current h-[0.96em] w-auto text-neutral-900 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors -translate-y-[24%]" 
+                viewBox="0 0 1080 1080">
+                <path d="M477.9,730c-31.9-13.7-62.4-30.2-91-49.1c-33.4-22-64.5-47.4-92.6-75.7c-32.8-32.9-61.8-69.7-86.1-109.7 C160,416.5,130.1,325,124.3,227C171.2,144.6,246,80,335.8,46c-34.2,56.8-57.7,120.8-67.8,189.2c-3.7,24.8-5.6,50.1-5.6,75.8 c0,109.4,34.1,210.9,92.3,294.3c10,14.4,20.8,28.2,32.2,41.4C413.8,678,444.4,706,477.9,730z"/>
+                <path d="M546.2,737.8c-151.9-82.1-255.1-242.9-255.1-427.7c0-43.2,5.6-85.1,16.2-124.9C366.7,121.4,447.5,78,538.4,66.4 C454.6,151.9,403,269,403,398.2c0,53.9,9,105.7,25.5,153.9c6.3,18.3,13.6,36,22,53.2C474.6,654.9,507.1,699.7,546.2,737.8z"/>
+                <path d="M386.9,717.3v317.8H253.3V607.2C292.4,649.9,337.3,687,386.9,717.3z"/>
+                <path d="M956.1,98.2v936.8H839.9V605.3H485c-19.2-36-33.5-75.1-42.1-116.2h397V98.2H956.1z"/>
+            </svg>
+            <span class="text-neutral-900 dark:text-white font-mono text-nav tracking-[0.2em] md:tracking-[0.3em] uppercase leading-none group-hover:text-neutral-500 dark:group-hover:text-neutral-300">Harald Revery</span>
+        </a>
+
+        <div class="hidden nav-desktop:flex items-center gap-6 font-mono text-[1.2rem] uppercase tracking-[0.18em] text-neutral-500  dark:text-neutral-400 translate-y-[10%]">
+            <a href="index.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Home</a>
+            <a href="music.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Music</a>
+            <a href="about.html" class="text-neutral-800 dark:text-neutral-100 hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">About</a>
+            <a href="contact.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Contact</a>
+        </div>
+
+        <input type="checkbox" id="mobile-menu-toggle" class="hidden peer">
+        
+
+        <label for="mobile-menu-toggle" class="nav-desktop:hidden z-[250] cursor-pointer p-4 -mr-4 group select-none translate-y-[6%]">
+        <span class="menu-icon-text">
+            <span class="icon-menu font-mono text-2xl text-neutral-900 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors">E</span>
+            <span class="icon-close font-mono text-2xl text-neutral-900 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors">X</span>
+        </span>
+        </label>
+
+        <div class="fixed inset-0 flex items-center justify-center min-h-screen w-screen z-[210] opacity-0 pointer-events-none -translate-y-full
+            bg-white/98 dark:bg-neutral-950/98 backdrop-blur-3xl 
+            peer-checked:opacity-100 peer-checked:pointer-events-auto peer-checked:translate-y-0 
+            transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]">
+            
+            <div class="page-container h-full flex flex-col justify-center">
+                <nav class="main-nav flex flex-col pt-42 py-10 text-center gap-10 text-neutral-900 dark:text-white font-mono text-xl uppercase tracking-[0.3em]">
+                    <a href="index.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Home</a>
+                    <a href="music.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Music</a>
+                    <a href="about.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors ">About</a>
+                    <a href="contact.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Contact</a>
+                </nav>
+            </div>
+        </div>
+    </div>
+</nav>
+
+
+
+
+<!-- Helps the reader view -->
+<h1 class="seo-only-h1">Harald Revery - About</h1>
+
+
+<!-- svg background start -->
+<div class="bg-topology-map"> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<section class="py-12 pt-48">
+    <div class="page-container">
+        <div class="grid md:grid-cols-2 gap-16 items-center">
+            
+            <div class="space-y-6">
+<h2 class="text-4xl text-black dark:text-white uppercase">
+<span class="word_animation" style="animation-delay: 0.12s">Music</span>
+<span class="word_animation" style="animation-delay: 0.42s">from</span>
+<span class="word_animation" style="animation-delay: 0.88s">the</span>
+<span class="word_animation" style="animation-delay: 0.1s">forests</span>
+<span class="word_animation" style="animation-delay: 0.55s">and</span>
+<span class="word_animation" style="animation-delay: 0.72s">the</span>
+<span class="word_animation" style="animation-delay: 0.2s">mountains</span></h2>
+                <p class="text-black dark:text-white text-justify leading-relaxed text-body">
+
+<span class="word_animation" style="animation-delay: 0.19s">Harald</span>
+<span class="word_animation" style="animation-delay: 0.93s">Revery</span>
+<span class="word_animation" style="animation-delay: 0.38s">is</span>
+<span class="word_animation" style="animation-delay: 0.61s">a</span>
+<span class="word_animation" style="animation-delay: 0.08s">contemporary</span>
+<span class="word_animation" style="animation-delay: 0.47s">electronic</span>
+<span class="word_animation" style="animation-delay: 0.23s">music</span>
+<span class="word_animation" style="animation-delay: 0.81s">producer</span>
+<span class="word_animation" style="animation-delay: 0.15s">based</span>
+<span class="word_animation" style="animation-delay: 0.59s">in</span>
+<span class="word_animation" style="animation-delay: 0.34s">Sweden.</span>
+<span class="word_animation" style="animation-delay: 0.96s">In</span>
+<span class="word_animation" style="animation-delay: 0.11s">an</span>
+<span class="word_animation" style="animation-delay: 0.68s">era</span>
+<span class="word_animation" style="animation-delay: 0.27s">of</span>
+<span class="word_animation" style="animation-delay: 0.83s">digital</span>
+<span class="word_animation" style="animation-delay: 0.44s">slop</span>
+<span class="word_animation" style="animation-delay: 0.04s">and</span>
+<span class="word_animation" style="animation-delay: 0.72s">cheap</span>
+<span class="word_animation" style="animation-delay: 0.51s">sample</span>
+<span class="word_animation" style="animation-delay: 0.21s">packs,</span>
+<span class="word_animation" style="animation-delay: 0.90s">Harald</span>
+<span class="word_animation" style="animation-delay: 0.14s">draws</span>
+<span class="word_animation" style="animation-delay: 0.63s">inspiration</span>
+<span class="word_animation" style="animation-delay: 0.36s">from</span>
+<span class="word_animation" style="animation-delay: 0.09s">the</span>
+<span class="word_animation" style="animation-delay: 0.77s">natural</span>
+<span class="word_animation" style="animation-delay: 0.53s">world,</span>
+<span class="word_animation" style="animation-delay: 0.18s">incorporating</span>
+<span class="word_animation" style="animation-delay: 0.98s">field-recorded</span>
+<span class="word_animation" style="animation-delay: 0.40s">elements</span>
+<span class="word_animation" style="animation-delay: 0.06s">ranging</span>
+<span class="word_animation" style="animation-delay: 0.85s">from</span>
+<span class="word_animation" style="animation-delay: 0.33s">nocturnal</span>
+<span class="word_animation" style="animation-delay: 0.66s">forest</span>
+<span class="word_animation" style="animation-delay: 0.25s">ambiences</span>
+<span class="word_animation" style="animation-delay: 0.57s">to</span>
+<span class="word_animation" style="animation-delay: 0.01s">the</span>
+<span class="word_animation" style="animation-delay: 0.80s">raw</span>
+<span class="word_animation" style="animation-delay: 0.49s">beauty</span>
+<span class="word_animation" style="animation-delay: 0.13s">of</span>
+<span class="word_animation" style="animation-delay: 0.92s">the</span>
+<span class="word_animation" style="animation-delay: 0.29s">world's</span>
+<span class="word_animation" style="animation-delay: 0.70s">landscapes.</span>
+<span class="word_animation" style="animation-delay: 0.46s">From</span>
+<span class="word_animation" style="animation-delay: 0.17s">the</span>
+<span class="word_animation" style="animation-delay: 0.39s">haunting</span>
+<span class="word_animation" style="animation-delay: 0.82s">echoes</span>
+<span class="word_animation" style="animation-delay: 0.05s">of</span>
+<span class="word_animation" style="animation-delay: 0.54s">the</span>
+<span class="word_animation" style="animation-delay: 0.22s">woods</span>
+<span class="word_animation" style="animation-delay: 0.71s">at</span>
+<span class="word_animation" style="animation-delay: 0.10s">night</span>
+<span class="word_animation" style="animation-delay: 0.89s">to</span>
+<span class="word_animation" style="animation-delay: 0.43s">the</span>
+<span class="word_animation" style="animation-delay: 0.67s">winds</span>
+<span class="word_animation" style="animation-delay: 0.03s">at</span>
+<span class="word_animation" style="animation-delay: 0.76s">the</span>
+<span class="word_animation" style="animation-delay: 0.32s">highest</span>
+<span class="word_animation" style="animation-delay: 0.95s">mountain</span>
+<span class="word_animation" style="animation-delay: 0.20s">peaks</span>
+<span class="word_animation" style="animation-delay: 0.58s">of</span>
+<span class="word_animation" style="animation-delay: 0.16s">Scandinavia,</span>
+<span class="word_animation" style="animation-delay: 0.84s">Harald</span>
+<span class="word_animation" style="animation-delay: 0.45s">captures</span>
+<span class="word_animation" style="animation-delay: 0.07s">these</span>
+<span class="word_animation" style="animation-delay: 0.73s">elements</span>
+<span class="word_animation" style="animation-delay: 0.35s">and</span>
+<span class="word_animation" style="animation-delay: 0.91s">translates</span>
+<span class="word_animation" style="animation-delay: 0.50s">them</span>
+<span class="word_animation" style="animation-delay: 0.24s">for</span>
+<span class="word_animation" style="animation-delay: 0.79s">the</span>
+<span class="word_animation" style="animation-delay: 0.11s">dancefloor.</span><br><br>
+<span class="word_animation" style="animation-delay: 0.62s">With</span>
+<span class="word_animation" style="animation-delay: 0.37s">earth's</span>
+<span class="word_animation" style="animation-delay: 0.04s">varying</span>
+<span class="word_animation" style="animation-delay: 0.78s">wilderness</span>
+<span class="word_animation" style="animation-delay: 0.52s">and</span>
+<span class="word_animation" style="animation-delay: 0.26s">its</span>
+<span class="word_animation" style="animation-delay: 0.97s">sonics,</span>
+<span class="word_animation" style="animation-delay: 0.41s">Harald</span>
+<span class="word_animation" style="animation-delay: 0.09s">brings</span>
+<span class="word_animation" style="animation-delay: 0.86s">a</span>
+<span class="word_animation" style="animation-delay: 0.30s">unique</span>
+<span class="word_animation" style="animation-delay: 0.65s">sound</span>
+<span class="word_animation" style="animation-delay: 0.28s">experience</span>
+<span class="word_animation" style="animation-delay: 0.56s">to</span>
+<span class="word_animation" style="animation-delay: 0.01s">his</span>
+<span class="word_animation" style="animation-delay: 0.87s">sets.</span>
+<span class="word_animation" style="animation-delay: 0.48s">His</span>
+<span class="word_animation" style="animation-delay: 0.14s">dedication</span>
+<span class="word_animation" style="animation-delay: 0.94s">for</span>
+<span class="word_animation" style="animation-delay: 0.33s">making</span>
+<span class="word_animation" style="animation-delay: 0.69s">music</span>
+<span class="word_animation" style="animation-delay: 0.21s">that</span>
+<span class="word_animation" style="animation-delay: 0.75s">can</span>
+<span class="word_animation" style="animation-delay: 0.46s">ignite</span>
+<span class="word_animation" style="animation-delay: 0.13s">that</span>
+<span class="word_animation" style="animation-delay: 0.82s">special</span>
+<span class="word_animation" style="animation-delay: 0.39s">spark</span>
+<span class="word_animation" style="animation-delay: 0.05s">within</span>
+<span class="word_animation" style="animation-delay: 0.57s">people</span>
+<span class="word_animation" style="animation-delay: 0.25s">is</span>
+<span class="word_animation" style="animation-delay: 0.71s">well</span>
+<span class="word_animation" style="animation-delay: 0.12s">known</span>
+<span class="word_animation" style="animation-delay: 0.90s">to</span>
+<span class="word_animation" style="animation-delay: 0.43s">those</span>
+<span class="word_animation" style="animation-delay: 0.68s">around</span>
+<span class="word_animation" style="animation-delay: 0.02s">him.</span>
+<span class="word_animation" style="animation-delay: 0.74s">He</span>
+<span class="word_animation" style="animation-delay: 0.31s">brings</span>
+<span class="word_animation" style="animation-delay: 0.96s">the</span>
+<span class="word_animation" style="animation-delay: 0.51s">raw</span>
+<span class="word_animation" style="animation-delay: 0.18s">spirit</span>
+<span class="word_animation" style="animation-delay: 0.85s">of</span>
+<span class="word_animation" style="animation-delay: 0.40s">Europe's</span>
+<span class="word_animation" style="animation-delay: 0.06s">nature</span>
+<span class="word_animation" style="animation-delay: 0.63s">into</span>
+<span class="word_animation" style="animation-delay: 0.36s">his</span>
+<span class="word_animation" style="animation-delay: 0.03s">productions</span>
+<span class="word_animation" style="animation-delay: 0.77s">for</span>
+<span class="word_animation" style="animation-delay: 0.53s">the</span>
+<span class="word_animation" style="animation-delay: 0.27s">world</span>
+<span class="word_animation" style="animation-delay: 0.92s">to</span>
+<span class="word_animation" style="animation-delay: 0.44s">experience.</span>
+<span class="word_animation" style="animation-delay: 0.04s">With</span>
+<span class="word_animation" style="animation-delay: 0.70s">a</span>
+<span class="word_animation" style="animation-delay: 0.22s">decade</span>
+<span class="word_animation" style="animation-delay: 0.88s">of</span>
+<span class="word_animation" style="animation-delay: 0.49s">experience</span>
+<span class="word_animation" style="animation-delay: 0.15s">crafting</span>
+<span class="word_animation" style="animation-delay: 0.60s">tracks</span>
+<span class="word_animation" style="animation-delay: 0.34s">for</span>
+<span class="word_animation" style="animation-delay: 0.07s">the</span>
+<span class="word_animation" style="animation-delay: 0.81s">dancefloor,</span>
+<span class="word_animation" style="animation-delay: 0.47s">Harald</span>
+<span class="word_animation" style="animation-delay: 0.19s">knows</span>
+<span class="word_animation" style="animation-delay: 0.98s">how</span>
+<span class="word_animation" style="animation-delay: 0.32s">to</span>
+<span class="word_animation" style="animation-delay: 0.66s">get</span>
+<span class="word_animation" style="animation-delay: 0.01s">the</span>
+<span class="word_animation" style="animation-delay: 0.83s">rave</span>
+<span class="word_animation" style="animation-delay: 0.55s">experience</span>
+<span class="word_animation" style="animation-delay: 0.29s">anywhere</span>
+<span class="word_animation" style="animation-delay: 0.91s">—</span>
+<span class="word_animation" style="animation-delay: 0.38s">whether</span>
+<span class="word_animation" style="animation-delay: 0.08s">they</span>
+<span class="word_animation" style="animation-delay: 0.72s">are</span>
+<span class="word_animation" style="animation-delay: 0.50s">in</span>
+<span class="word_animation" style="animation-delay: 0.23s">a</span>
+<span class="word_animation" style="animation-delay: 0.95s">dimly</span>
+<span class="word_animation" style="animation-delay: 0.41s">lit</span>
+<span class="word_animation" style="animation-delay: 0.10s">basement</span>
+<span class="word_animation" style="animation-delay: 0.89s">bar</span>
+<span class="word_animation" style="animation-delay: 0.59s">or</span>
+<span class="word_animation" style="animation-delay: 0.20s">at</span>
+<span class="word_animation" style="animation-delay: 0.76s">a</span>
+<span class="word_animation" style="animation-delay: 0.45s">major</span>
+<span class="word_animation" style="animation-delay: 0.17s">festival.</span>
+<span class="word_animation" style="animation-delay: 0.84s">His</span>
+<span class="word_animation" style="animation-delay: 0.37s">music</span>
+<span class="word_animation" style="animation-delay: 0.64s">always</span>
+<span class="word_animation" style="animation-delay: 0.02s">hits</span>
+<span class="word_animation" style="animation-delay: 0.79s">home</span>
+<span class="word_animation" style="animation-delay: 0.52s">for</span>
+<span class="word_animation" style="animation-delay: 0.28s">those</span>
+<span class="word_animation" style="animation-delay: 0.99s">who</span>
+<span class="word_animation" style="animation-delay: 0.43s">hear</span>
+<span class="word_animation" style="animation-delay: 0.11s">it.</span>
+</p>
+            </div>
+
+
+              <div class="grid grid-cols-3 md:grid-cols-3 gap-4 extra_fade_effect">
+                  
+                  <a href="./photos/2025haraldgaldhopiggen2.jpg" 
+                    class="glightbox portfolio-item group block col-span-2 row-span-2 aspect-square" 
+                    style="--delay: 0.1s"
+                    data-gallery="photos">
+                    <div class="overlay"></div>
+                    <img src="./photos/2025haraldgaldhopiggen2.jpg" alt="Harald Revery walking at Galdhøpiggen" class="w-full h-full object-cover">
+                  </a>
+
+                  <a href="./photos/2025haraldgaldhopiggen1.jpg" 
+                    class="glightbox portfolio-item group block aspect-square" 
+                    style="--delay: 0.2s"
+                    data-gallery="photos">
+                    <div class="overlay"></div>
+                    <img src="./photos/2025haraldgaldhopiggen1.jpg" alt="Harald Revery walking at Galdhøpiggen" class="w-full h-full object-cover">
+                  </a>
+
+                  <a href="./photos/HRldbnr.jpg" 
+                    class="glightbox portfolio-item group block aspect-square" 
+                    style="--delay: 0.3s"
+                    data-gallery="photos">
+                    <div class="overlay"></div>
+                    <img src="./photos/HRldbnr.jpg" alt="Harald Revery wall photography" class="w-full h-full object-cover">
+                  </a>
+
+                  <a href="./photos/2025Sunne_1.jpg" 
+                    class="glightbox portfolio-item group block aspect-square" 
+                    style="--delay: 0.4s"
+                    data-gallery="photos">
+                    <div class="overlay"></div>
+                    <img src="./photos/2025Sunne_1.jpg" alt="Harald Revery with a snowboard at Sunne, Sweden" class="w-full h-full object-cover">
+                  </a>
+
+                  <a href="./photos/2024HaraldMT.jpg" 
+                    class="glightbox portfolio-item group block aspect-square" 
+                    style="--delay: 0.5s"
+                    data-gallery="photos">
+                    <div class="overlay"></div>
+                    <img src="./photos/2024HaraldMT.jpg" alt="Harald Revery profile photography" class="w-full h-full object-cover">
+                  </a>
+
+                  <a href="./photos/2025haraldgaldhopiggen3.jpg" 
+                    class="glightbox portfolio-item group block aspect-square" 
+                    style="--delay: 0.6s"
+                    data-gallery="photos">
+                    <div class="overlay"></div>
+                    <img src="./photos/2025haraldgaldhopiggen3.jpg" alt="Harald Revery at Galdhøpiggen with a backpack containing the Harald Revery logo" class="w-full h-full object-cover">
+                  </a>
+
+                </div>
+
+            
+
+
+
+        </div>
+    </div>
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<section class="py-12">
+    <div class="page-container">
+        <div class="grid md:grid-cols-2 gap-16 items-center">
+            
+
+        
+            <div class="page-container">
+            <div class="image-carousel extra_fade_effect">
+                <!-- Hidden radio buttons -->
+                <input type="radio" name="carousel" id="img1" checked>
+                <input type="radio" name="carousel" id="img2">
+                <input type="radio" name="carousel" id="img3">
+                <input type="radio" name="carousel" id="img4">
+                
+                <!-- Image labels (clickable) -->
+                <label for="img2">
+                    <img src="./photos/audioplayer_texture3.jpg" alt="Harald Revery logo behind mountain Matterhorn">
+                    
+                </label>
+                
+                <label for="img3">
+                    <img src="./photos/sketch_logo.jpg" alt="visual sketch of Harald Revery logo">
+                </label>
+                
+                <label for="img4">
+                    <img src="./photos/2024Looking_at_Matterhorn.jpg" alt="Harald Revery looking at Matterhorn, Zermatt">
+                </label>
+                
+                <label for="img1">
+                    <img src="./gif/haraldrevery11techbw.gif" alt="Harald Revery logo animation loop">
+                </label>
+            </div>
+             </div>
+
+
+
+             <div class="space-y-6">
+<h2 class="text-4xl text-black dark:text-white uppercase"><span class="word_animation" style="animation-delay: 0.2s">Logo</span></h2>
+<p class="text-black dark:text-white text-justify leading-relaxed text-body">
+<span class="word_animation" style="animation-delay: 0.42s">The</span> <span class="word_animation" style="animation-delay: 0.15s">letter</span> <span class="word_animation" style="animation-delay: 0.88s">"H"</span> <span class="word_animation" style="animation-delay: 0.23s">is</span> <span class="word_animation" style="animation-delay: 0.61s">derived</span> <span class="word_animation" style="animation-delay: 0.07s">from</span> <span class="word_animation" style="animation-delay: 0.74s">the</span> <span class="word_animation" style="animation-delay: 0.39s">first</span> <span class="word_animation" style="animation-delay: 0.92s">letter</span> <span class="word_animation" style="animation-delay: 0.50s">of</span> <span class="word_animation" style="animation-delay: 0.11s">his</span> <span class="word_animation" style="animation-delay: 0.68s">birth</span> <span class="word_animation" style="animation-delay: 0.33s">name,</span> <span class="word_animation" style="animation-delay: 0.81s">Harald.</span> <span class="word_animation" style="animation-delay: 0.27s">The</span> <span class="word_animation" style="animation-delay: 0.55s">split</span> <span class="word_animation" style="animation-delay: 0.04s">in</span> <span class="word_animation" style="animation-delay: 0.79s">the</span> <span class="word_animation" style="animation-delay: 0.46s">upper-left</span> <span class="word_animation" style="animation-delay: 0.19s">branch</span> <span class="word_animation" style="animation-delay: 0.97s">of</span> <span class="word_animation" style="animation-delay: 0.63s">the</span> <span class="word_animation" style="animation-delay: 0.35s">"H"</span> <span class="word_animation" style="animation-delay: 0.84s">is</span> <span class="word_animation" style="animation-delay: 0.12s">a</span> <span class="word_animation" style="animation-delay: 0.58s">highly</span> <span class="word_animation" style="animation-delay: 0.29s">abstracted</span> <span class="word_animation" style="animation-delay: 0.72s">representation</span> <span class="word_animation" style="animation-delay: 0.03s">of</span> <span class="word_animation" style="animation-delay: 0.91s">a</span> <span class="word_animation" style="animation-delay: 0.48s">boat's</span> <span class="word_animation" style="animation-delay: 0.21s">sails.</span> <span class="word_animation" style="animation-delay: 0.66s">It</span> <span class="word_animation" style="animation-delay: 0.37s">reflects</span> <span class="word_animation" style="animation-delay: 0.85s">Harald’s</span> <span class="word_animation" style="animation-delay: 0.53s">philosophy</span> <span class="word_animation" style="animation-delay: 0.17s">on</span> <span class="word_animation" style="animation-delay: 0.76s">life:</span> <span class="word_animation" style="animation-delay: 0.31s">you</span> <span class="word_animation" style="animation-delay: 0.99s">cannot</span> <span class="word_animation" style="animation-delay: 0.59s">go</span> <span class="word_animation" style="animation-delay: 0.25s">against</span> <span class="word_animation" style="animation-delay: 0.82s">the</span> <span class="word_animation" style="animation-delay: 0.44s">wind,</span> <span class="word_animation" style="animation-delay: 0.09s">but</span> <span class="word_animation" style="animation-delay: 0.70s">you</span> <span class="word_animation" style="animation-delay: 0.36s">can</span> <span class="word_animation" style="animation-delay: 0.94s">steer</span> <span class="word_animation" style="animation-delay: 0.51s">and</span> <span class="word_animation" style="animation-delay: 0.14s">move</span> <span class="word_animation" style="animation-delay: 0.67s">with</span> <span class="word_animation" style="animation-delay: 0.32s">it.</span> <span class="word_animation" style="animation-delay: 0.89s">Just</span> <span class="word_animation" style="animation-delay: 0.47s">as</span> <span class="word_animation" style="animation-delay: 0.02s">one</span> <span class="word_animation" style="animation-delay: 0.78s">cannot</span> <span class="word_animation" style="animation-delay: 0.41s">go</span> <span class="word_animation" style="animation-delay: 0.96s">against</span> <span class="word_animation" style="animation-delay: 0.62s">nature,</span> <span class="word_animation" style="animation-delay: 0.28s">only</span> <span class="word_animation" style="animation-delay: 0.73s">design</span> <span class="word_animation" style="animation-delay: 0.38s">and</span> <span class="word_animation" style="animation-delay: 0.86s">make</span> <span class="word_animation" style="animation-delay: 0.54s">choices</span> <span class="word_animation" style="animation-delay: 0.10s">around</span> <span class="word_animation" style="animation-delay: 0.69s">it.</span>
+<br><br>
+<span class="word_animation" style="animation-delay: 0.34s">"Revery"</span> <span class="word_animation" style="animation-delay: 0.93s">means</span> <span class="word_animation" style="animation-delay: 0.57s">"daydreamer"</span> <span class="word_animation" style="animation-delay: 0.20s">("dagdrömmare"</span> <span class="word_animation" style="animation-delay: 0.77s">in</span> <span class="word_animation" style="animation-delay: 0.45s">Swedish),</span> <span class="word_animation" style="animation-delay: 0.06s">a</span> <span class="word_animation" style="animation-delay: 0.83s">recurrent</span> <span class="word_animation" style="animation-delay: 0.49s">name</span> <span class="word_animation" style="animation-delay: 0.16s">recalled</span> <span class="word_animation" style="animation-delay: 0.71s">by</span> <span class="word_animation" style="animation-delay: 0.30s">teachers</span> <span class="word_animation" style="animation-delay: 0.98s">in</span> <span class="word_animation" style="animation-delay: 0.64s">his</span> <span class="word_animation" style="animation-delay: 0.26s">youth.</span> <span class="word_animation" style="animation-delay: 0.80s">When</span> <span class="word_animation" style="animation-delay: 0.43s">it</span> <span class="word_animation" style="animation-delay: 0.08s">came</span> <span class="word_animation" style="animation-delay: 0.75s">to</span> <span class="word_animation" style="animation-delay: 0.40s">pick</span> <span class="word_animation" style="animation-delay: 0.95s">something</span> <span class="word_animation" style="animation-delay: 0.60s">to</span> <span class="word_animation" style="animation-delay: 0.24s">release</span> <span class="word_animation" style="animation-delay: 0.87s">music</span> <span class="word_animation" style="animation-delay: 0.52s">with,</span> <span class="word_animation" style="animation-delay: 0.13s">it</span> <span class="word_animation" style="animation-delay: 0.65s">felt</span> <span class="word_animation" style="animation-delay: 0.32s">like</span> <span class="word_animation" style="animation-delay: 0.90s">a</span> <span class="word_animation" style="animation-delay: 0.56s">natural</span> <span class="word_animation" style="animation-delay: 0.22s">fit</span> <span class="word_animation" style="animation-delay: 0.81s">for</span> <span class="word_animation" style="animation-delay: 0.47s">the</span> <span class="word_animation" style="animation-delay: 0.11s">atmospheric</span> <span class="word_animation" style="animation-delay: 0.74s">nature</span> <span class="word_animation" style="animation-delay: 0.38s">of</span> <span class="word_animation" style="animation-delay: 0.01s">his</span> <span class="word_animation" style="animation-delay: 0.67s">genre</span> <span class="word_animation" style="animation-delay: 0.35s">of</span> <span class="word_animation" style="animation-delay: 0.92s">music.</span>
+</p>
+            </div>
+
+            
+
+
+
+        </div>
+    </div>
+</section>
+
+
+
+
+
+
+
+
+
+
+
+<!-- FAQ Section -->
+<section class="py-28">
+    <div class="page-container max-w-4xl mx-auto extra_fade_effect">
+        <h2 class="text-4xl md:text-5xl mb-8 text-center text-zinc-900 dark:text-white">
+            Frequently Asked Questions
+        </h2>
+        
+        <div class="space-y-2">
+            <!-- FAQ Item 1 -->
+            <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden">
+                <input type="checkbox" id="faq-1" class="faq-toggle hidden">
+                <label for="faq-1" class="faq-question block p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">
+                            What is the best way to support your music (besides streaming)?
+                        </h3>
+                        <span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+                    </div>
+                </label>
+                <div class="faq-answer">
+                    <div class="p-4 text-zinc-800 dark:text-zinc-200">
+                        <p>Honestly, just telling someone about my music; share it!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Item 2 -->
+            <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden">
+                <input type="checkbox" id="faq-2" class="faq-toggle hidden">
+                <label for="faq-2" class="faq-question block p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">
+                            Are all the graphics and artworks your own?
+                        </h3>
+                        <span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+                    </div>
+                </label>
+                <div class="faq-answer">
+                    <div class="p-4 text-zinc-800 dark:text-zinc-200">
+                        <p>Yes! I think that the visual graphics for a track reflects the effort of the song itself. I made the song hence I should do the cover art, it’s truly my art. I even made a font (the one you see on this website) to match the logo that I use for everything related to this project.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Item 3 -->
+            <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden">
+                <input type="checkbox" id="faq-3" class="faq-toggle hidden">
+                <label for="faq-3" class="faq-question block p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">
+                           Are you available for live performances/DJ?
+                        </h3>
+                        <span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+                    </div>
+                </label>
+                <div class="faq-answer">
+                    <div class="p-4 text-zinc-800 dark:text-zinc-200">
+                        <p>If I have time and can travel to said location, then yes!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Item 4 -->
+            <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden">
+                <input type="checkbox" id="faq-4" class="faq-toggle hidden">
+                <label for="faq-4" class="faq-question block p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">
+                            Who should I contact for interview requests, features and booking?
+                        </h3>
+                        <span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+                    </div>
+                </label>
+                <div class="faq-answer">
+                    <div class="p-4 text-zinc-800 dark:text-zinc-200">
+                        <p>The contact page has the information about that.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Item 5 -->
+            <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden">
+                <input type="checkbox" id="faq-5" class="faq-toggle hidden">
+                <label for="faq-5" class="faq-question block p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">
+                            What hardware and software do you use?
+                        </h3>
+                        <span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+                    </div>
+                </label>
+                <div class="faq-answer">
+                    <div class="p-4 text-zinc-800 dark:text-zinc-200">
+                        <p>Hardware: Main setup is Yamaha HS7 with Native Instruments Komplete Audio 6 and a Hitachi AX-M76E system for reference listening. I have a Focusrite Scarlett 2i2 for another set of HS7 when not in my studio at home. For field-recordings I use Zoom H8. <br><br> 
+                
+                Software: FL Studio is my main DAW (unfortunately). For synths I use Harmor (built into FL Studio), Native Instruments Rounds, Xfer Serum, Surge, Odin 2 and Arminator2 (got a softspot for jankware). For making kicks I use Sonic Academy Kick 2, but I also use Geonkick. My go to equalizer is ReaPlugs ReaEQ, since I just want good performance and no delays with routing automation, it just works. For LFO volume stuff I use Gross Beat or TiagoLr GATE-12. For reverb I use ValhallaSupermassive if I want to save CPU or Native Instruments Raum if I want to be fancy. For delay effects I just use the Fruity Delay 3.</p>
+          </p>
+                    </div>
+                </div>
+            </div>
+
+
+              <!-- FAQ Item 6 -->
+              <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden">
+                  <input type="checkbox" id="faq-6" class="faq-toggle hidden">
+                  <label for="faq-6" class="faq-question block p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                      <div class="flex items-center justify-between">
+                          <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">
+                              Are you currently signed to a label or independent?
+                          </h3>
+                          <span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+                      </div>
+                  </label>
+                  <div class="faq-answer">
+                      <div class="p-4 text-zinc-800 dark:text-zinc-200">
+                          <p>Not signed to anything, 100% independent.</p>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- FAQ Item 7 -->
+              <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden">
+                  <input type="checkbox" id="faq-7" class="faq-toggle hidden">
+                  <label for="faq-7" class="faq-question block p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                      <div class="flex items-center justify-between">
+                          <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">
+                              Educational background? Perhaps something related to music?
+                          </h3>
+                          <span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+                      </div>
+                  </label>
+                  <div class="faq-answer">
+                      <div class="p-4 text-zinc-800 dark:text-zinc-200">
+                          <p>My parents pushed me to play the guitar, but I never put any effort into it, then I switched over to the piano instead thinking it would be better; nope! I lost interest fast and my parent’s money was wasted there too. That’s my only “musical background“ I guess. Ironically when I was 15 and I stopped taking piano lessons that’s when I started learning music production on my own. My educational background is physics, I hold bachelor's degree in engineering physics.</p> 
+          
+                      </div>
+                  </div>
+              </div>
+
+              <!-- FAQ Item 8 -->
+              <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden">
+                  <input type="checkbox" id="faq-8" class="faq-toggle hidden">
+                  <label for="faq-8" class="faq-question block p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                      <div class="flex items-center justify-between">
+                          <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">
+                              Are your songs available for sync licensing (film, live stream, internet content, TV, ads)?
+                          </h3>
+                          <span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+                      </div>
+                  </label>
+                  <div class="faq-answer">
+                      <div class="p-4 text-zinc-800 dark:text-zinc-200">
+                          <p>For live streaming my music; a quick mention of the track is appreciated. For internet content (such as content in TikTok, Youtube, Facebook formats) I’m fine with just you providing a link in the description/post (of said content) to my social media profiles (instagram and/or soundloud) if you use one of my songs. If it’s for film or TV; contact me about it.</p>
+         
+                      </div>
+                  </div>
+              </div>
+
+
+
+
+        </div>
+    </div>
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a href="wallpaper_line.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors "></a>
+
+
+
+<footer class="py-16">
+  <div class="max-w-screen-xl mx-auto px-4">
+    <div class="flex flex-col items-center text-center space-y-4">
+      
+      <div>
+        <p class="font-mono text-black dark:text-white leading-none text-base uppercase tracking-widest">
+          Revery Division
+        </p>
+        <p class="mt-2 text-3xl text-black dark:text-white"><a href="h.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors ">½</a></p>
+        <p class="text-sm text-gray-600 dark:text-gray-300">
+          Gothenburg, Sweden
+        </p>
+      </div>
+
+      <div class="flex text-gray-600 dark:text-gray-300 flex-wrap justify-center items-center gap-2 text-sm uppercase tracking-widest font-mono opacity-70">
+        <a href="#top" class="hover:opacity-50 transition-opacity">↑ Back to top</a>
+        <span class="text-gray-400">|</span>
+        <a href="./contact.html" class="hover:opacity-50 transition-opacity">Contact</a>
+        <span class="text-gray-400">|</span>
+        <a href="./legal.html" class="hover:opacity-50 transition-opacity">Legal</a>
+      </div>
+
+      <div class="mt-2 flex justify-center items-center gap-6 text-gray-600 dark:text-gray-300">
+        
+        <a class="transition-opacity duration-300 hover:opacity-50" href="https://www.facebook.com/HaraldRevery" target="_blank" rel="noopener noreferrer">
+          <span class="sr-only">Facebook</span>
+          <div class="w-6 h-6 flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 16 16" class="w-full h-full" aria-hidden="true">
+              <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z" />
+            </svg>
+          </div>
+        </a>
+
+        <a class="transition-opacity duration-300 hover:opacity-50" href="https://www.instagram.com/HaraldRevery" target="_blank" rel="noopener noreferrer">
+          <span class="sr-only">Instagram</span>
+          <div class="w-6 h-6 flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 16 16" class="w-full h-full" aria-hidden="true">
+              <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.478 2.478 0 0 1-.92-.598 2.48 2.48 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233 0-2.136.008-2.388.046-3.231.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z" />
+            </svg>
+          </div>
+        </a>
+        
+        <a class="transition-opacity duration-300 hover:opacity-50" href="https://twitter.com/haraldrevery" target="_blank" rel="noopener noreferrer">
+          <span class="sr-only">Twitter</span>
+          <div class="w-6 h-6 flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 1200 1227" class="w-full h-full">
+              <path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z" />
+            </svg>
+          </div>
+        </a>
+
+        <a class="transition-opacity duration-300 hover:opacity-50" href="https://open.spotify.com/artist/3e27f6Y3wBFJ1YYLNkrjNu" target="_blank" rel="noopener noreferrer">
+          <span class="sr-only">Spotify</span>
+          <div class="w-6 h-6 flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 64 64" class="w-full h-full" aria-hidden="true">
+              <path d="M32 0C14.3 0 0 14.337 0 32c0 17.7 14.337 32 32 32 17.7 0 32-14.337 32-32S49.663 0 32 0zm14.68 46.184c-.573.956-1.797 1.223-2.753.65-7.532-4.588-16.975-5.62-28.14-3.097-1.07.23-2.14-.42-2.37-1.49s.42-2.14 1.49-2.37c12.196-2.79 22.67-1.606 31.082 3.556a2 2 0 0 1 .688 2.753zm3.9-8.717c-.726 1.185-2.256 1.53-3.44.84-8.602-5.276-21.716-6.805-31.885-3.747-1.338.382-2.714-.344-3.097-1.644-.382-1.338.344-2.714 1.682-3.097 11.622-3.517 26.074-1.835 35.976 4.244 1.147.688 1.49 2.217.765 3.403zm.344-9.1c-10.323-6.117-27.336-6.69-37.2-3.708-1.568.497-3.25-.42-3.747-1.988s.42-3.25 1.988-3.747c11.317-3.44 30.127-2.753 41.98 4.282 1.415.84 1.873 2.676 1.032 4.09-.765 1.453-2.638 1.912-4.053 1.07z" />
+            </svg>
+          </div>
+        </a>
+
+        <a class="transition-opacity duration-300 hover:opacity-50" href="https://music.apple.com/se/artist/harald-revery/1275991562" target="_blank" rel="noopener noreferrer">
+          <span class="sr-only">Apple Music</span>
+          <div class="w-6 h-6 flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 24 24" class="w-full h-full">
+              <path d="M19.467 1.482a2.38 2.38 0 0 0-1.897-.89c-.198 0-.411.024-.627.078l-7.464 1.831a2.4 2.4 0 0 0-1.84 2.33v11.722a3.86 3.86 0 0 0-1.192-.201c-1.92 0-3.477 1.34-3.477 2.991s1.557 2.991 3.477 2.991c1.88 0 3.409-1.285 3.473-2.883l.004-10.744 8.016-1.936v6.983c-.443-.131-.914-.202-1.404-.202-2.333 0-4.225 1.626-4.225 3.633 0 2.006 1.892 3.632 4.225 3.632 2.333 0 4.226-1.626 4.226-3.632V3.535a2.38 2.38 0 0 0-1.296-2.053z"/>
+            </svg>
+          </div>
+        </a>
+
+        <a class="transition-opacity duration-300 hover:opacity-50" href="https://www.behance.net/haraldrevery" target="_blank" rel="noopener noreferrer">
+          <span class="sr-only">Behance</span>
+          <div class="w-6 h-6 flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 16 16" class="w-full h-full" aria-hidden="true">
+              <path d="M4.654 3c.461 0 .887.035 1.278.14.39.07.711.216.996.391.286.176.497.426.641.747.14.32.216.711.216 1.137 0 .496-.106.922-.356 1.242-.215.32-.566.606-.997.817.606.176 1.067.496 1.348.922.281.426.461.957.461 1.563 0 .496-.105.922-.285 1.278a2.317 2.317 0 0 1-.782.887c-.32.215-.711.39-1.137.496a5.329 5.329 0 0 1-1.278.176L0 12.803V3h4.654zm-.285 3.978c.39 0 .71-.105.957-.285.246-.18.355-.497.355-.887 0-.216-.035-.426-.105-.567a.981.981 0 0 0-.32-.355 1.84 1.84 0 0 0-.461-.176c-.176-.035-.356-.035-.567-.035H2.17v2.31c0-.005 2.2-.005 2.2-.005zm.105 4.193c.215 0 .426-.035.606-.07.176-.035.356-.106.496-.216s.25-.215.356-.39c.07-.176.14-.391.14-.641 0-.496-.14-.852-.426-1.102-.285-.215-.676-.32-1.137-.32H2.17v2.734h2.305v.005zm6.858-.035c.286.285.711.426 1.278.426.39 0 .746-.106 1.032-.286.285-.215.46-.426.53-.64h1.74c-.286.851-.712 1.457-1.278 1.848-.566.355-1.243.566-2.06.566a4.135 4.135 0 0 1-1.527-.285 2.827 2.827 0 0 1-1.137-.782 2.851 2.851 0 0 1-.712-1.172c-.175-.461-.25-.957-.25-1.528 0-.531.07-1.032.25-1.493.18-.46.426-.852.747-1.207.32-.32.711-.606 1.137-.782a4.018 4.018 0 0 1 1.493-.285c.606 0 1.137.105 1.598.355.46.25.817.532 1.102.958.285.39.496.851.641 1.348.07.496.105.996.07 1.563h-5.15c0 .58.21 1.11.496 1.396zm2.24-3.732c-.25-.25-.642-.391-1.103-.391-.32 0-.566.07-.781.176-.215.105-.356.25-.496.39a.957.957 0 0 0-.25.497c-.036.175-.07.32-.07.46h3.196c-.07-.526-.25-.882-.497-1.132zm-3.127-3.728h3.978v.957h-3.978v-.957z" />
+            </svg>
+          </div>
+        </a>
+      </div>
+
+      <div class="pt-4 border-gray-200 dark:border-gray-800 w-full max-w-md mx-auto">
+        <p class="text-sm text-gray-600 dark:text-gray-300 opacity-50">
+          © 2026 Harald Revery™. All Rights Reserved <br>
+        </p>
+      </div>
+
+    </div>
+  </div>
+</footer>
+
+
+
+
+
+<!-- svg background end -->
+ </div>
+
+
+
+
+
+
+</body>
+
+
+
+
+
+
+
+
+
+
+
+<!-- GLightbox load -->
+<script src="./javascript/glightbox.min.js"></script>
+<!-- GLightbox settings -->
+<script src="./javascript/glightbox_settings.js"></script>
+
+<!-- Alpine.js load -->
+<script src="./javascript/alpine.min.js"></script>
+
+<!-- Schema SEO -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Harald Revery",
+  "jobTitle": "Electronic Music Producer & DJ",
+  "description": "Contemporary electronic music producer and DJ based in Sweden, specializing in festival house and techno music.",
+  "url": "https://haraldrevery.com/about",
+  "image": "https://haraldrevery.com/opengraphimg.jpg",
+  "birthPlace": {
+    "@type": "Place",
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "Sweden"
+    }
+  },
+  "homeLocation": {
+    "@type": "Place",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Gothenburg",
+      "addressCountry": "Sweden"
+    }
+  },
+  "knowsAbout": ["Electronic Music Production", "DJ Performance", "Festival House", "Techno", "Music Production"],
+  "sameAs": [
+    "https://www.instagram.com/haraldrevery",
+    "https://www.facebook.com/HaraldRevery",
+    "https://twitter.com/haraldrevery",
+    "https://open.spotify.com/artist/3e27f6Y3wBFJ1YYLNkrjNu",
+    "https://soundcloud.com/haraldrevery",
+    "https://www.youtube.com/@haraldrevery",
+    "https://music.apple.com/se/artist/harald-revery/1275991562",
+    "https://www.behance.net/haraldrevery"
+  ]
+}
+</script>
+
+</html>

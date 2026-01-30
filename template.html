@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="main.css"> 
+    <title>V2 Project | Layout</title>
+
+     <!-- test CSP -->
+    <meta http-equiv="Content-Security-Policy" 
+      content="default-src 'self'; 
+               script-src 'self' 'unsafe-inline' 'unsafe-eval'; 
+               style-src 'self' 'unsafe-inline'; 
+               font-src 'self' data: http://127.0.0.1:* http://localhost:*;
+               media-src 'self' data:;">
+
+</head>
+
+<body class="min-h-screen text-zinc-900 dark:text-white">
+
+<div class="scroll-sentinel absolute top-0 h-[50vh] w-full pointer-events-none"></div>
+<nav class="main-nav navi_mechanic fixed top-0 inset-x-0 z-[200] border-b backdrop-blur-xl
+            border-zinc-200 bg-white/80 
+            dark:border-white/10 dark:bg-zinc-950/80">
+    
+    <div class="page-container nav-desktop:h-12 h-18 flex items-center justify-between relative">
+        <a href="index.html" class="flex items-center group z-[250] translate-y-[14%]">
+            <svg class="mr-4 fill-current h-[0.96em] w-auto text-zinc-900 dark:text-white group-hover:text-blue-500 transition-colors -translate-y-[24%]" 
+                viewBox="0 0 1080 1080">
+                <path d="M477.9,730c-31.9-13.7-62.4-30.2-91-49.1c-33.4-22-64.5-47.4-92.6-75.7c-32.8-32.9-61.8-69.7-86.1-109.7 C160,416.5,130.1,325,124.3,227C171.2,144.6,246,80,335.8,46c-34.2,56.8-57.7,120.8-67.8,189.2c-3.7,24.8-5.6,50.1-5.6,75.8 c0,109.4,34.1,210.9,92.3,294.3c10,14.4,20.8,28.2,32.2,41.4C413.8,678,444.4,706,477.9,730z"/>
+                <path d="M546.2,737.8c-151.9-82.1-255.1-242.9-255.1-427.7c0-43.2,5.6-85.1,16.2-124.9C366.7,121.4,447.5,78,538.4,66.4 C454.6,151.9,403,269,403,398.2c0,53.9,9,105.7,25.5,153.9c6.3,18.3,13.6,36,22,53.2C474.6,654.9,507.1,699.7,546.2,737.8z"/>
+                <path d="M386.9,717.3v317.8H253.3V607.2C292.4,649.9,337.3,687,386.9,717.3z"/>
+                <path d="M956.1,98.2v936.8H839.9V605.3H485c-19.2-36-33.5-75.1-42.1-116.2h397V98.2H956.1z"/>
+            </svg>
+            <span class="text-zinc-900 dark:text-white font-mono text-nav tracking-[0.2em] md:tracking-[0.3em] uppercase leading-none group-hover:text-blue-500">Harald Revery</span>
+        </a>
+
+        <div class="hidden nav-desktop:flex items-center gap-6 font-mono text-[1.2rem] uppercase tracking-[0.18em] text-zinc-500 translate-y-[10%]">
+            <a href="index.html" class="hover:text-blue-500 transition-colors">Home</a>
+            <a href="music.html" class="hover:text-blue-500 transition-colors">Music</a>
+            <a href="about.html" class="hover:text-blue-500 transition-colors">About</a>
+            <a href="contact.html" class="hover:text-blue-500 transition-colors">Contact</a>
+        </div>
+
+        <input type="checkbox" id="mobile-menu-toggle" class="hidden peer">
+        
+
+        <label for="mobile-menu-toggle" class="nav-desktop:hidden z-[250] cursor-pointer p-4 -mr-4 group select-none translate-y-[6%]">
+        <span class="menu-icon-text">
+            <span class="icon-menu font-mono text-2xl text-zinc-900 dark:text-white group-hover:text-blue-500 transition-colors">E</span>
+            <span class="icon-close font-mono text-2xl text-zinc-900 dark:text-white group-hover:text-blue-500 transition-colors">X</span>
+        </span>
+        </label>
+
+        <div class="fixed inset-0 flex items-center justify-center min-h-screen w-screen z-[210] opacity-0 pointer-events-none -translate-y-full
+            bg-white/98 dark:bg-zinc-950/98 backdrop-blur-3xl 
+            peer-checked:opacity-100 peer-checked:pointer-events-auto peer-checked:translate-y-0 
+            transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]">
+            
+            <div class="page-container h-full flex flex-col justify-center">
+                <nav class="main-nav navi_mechanic flex flex-col pt-42 py-10 text-center gap-10 text-zinc-900 dark:text-white font-mono text-xl uppercase tracking-[0.3em]">
+                    <a href="index.html" class="hover:text-blue-500 transition-colors">Home</a>
+                    <a href="music.html" class="hover:text-blue-500 transition-colors">Music</a>
+                    <a href="about.html" class="hover:text-blue-500 transition-colors ">About</a>
+                    <a href="contact.html" class="hover:text-blue-500 transition-colors">Contact</a>
+                </nav>
+            </div>
+        </div>
+    </div>
+</nav>
+
+ <!-- hero page -->
+<section class="relative hero-safe-vh w-full flex items-center justify-center overflow-hidden bg-dot-grid">
+  <!-- Bakcground texture -->
+<div class="hero-bg-image"></div>
+ <!-- something cool... -->
+        <svg id="hero-logo-svg" viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" class="-translate-x-[6%] -translate-y-[4%]">
+            
+            <defs>
+                <g id="logo-shape-outline">
+                    <path d="M477.9,730c-31.9-13.7-62.4-30.2-91-49.1c-33.4-22-64.5-47.4-92.6-75.7c-32.8-32.9-61.8-69.7-86.1-109.7 C160,416.5,130.1,325,124.3,227C171.2,144.6,246,80,335.8,46c-34.2,56.8-57.7,120.8-67.8,189.2c-3.7,24.8-5.6,50.1-5.6,75.8 c0,109.4,34.1,210.9,92.3,294.3c10,14.4,20.8,28.2,32.2,41.4C413.8,678,444.4,706,477.9,730z"/>
+                    <path d="M546.2,737.8c-151.9-82.1-255.1-242.9-255.1-427.7c0-43.2,5.6-85.1,16.2-124.9C366.7,121.4,447.5,78,538.4,66.4 C454.6,151.9,403,269,403,398.2c0,53.9,9,105.7,25.5,153.9c6.3,18.3,13.6,36,22,53.2C474.6,654.9,507.1,699.7,546.2,737.8z"/>
+                    <path d="M386.9,717.3v317.8H253.3V607.2C292.4,649.9,337.3,687,386.9,717.3z"/>
+                    <path d="M956.1,98.2v936.8H839.9V605.3H485c-19.2-36-33.5-75.1-42.1-116.2h397V98.2H956.1z"/>
+                </g>
+            </defs>
+            
+            <!-- Implosion Wave Rings -->
+            <g class="implosion-waves">
+                <use href="#logo-shape-outline" class="wave-echo echo-1" />
+                <use href="#logo-shape-outline" class="wave-echo echo-2" />
+                <use href="#logo-shape-outline" class="wave-echo echo-3" />
+            </g>
+            
+            <!-- Main Logo Shape -->
+            <g id="logo-shape-definition" class="animate-logo text-zinc-900 dark:text-white">
+                <path d="M477.9,730c-31.9-13.7-62.4-30.2-91-49.1c-33.4-22-64.5-47.4-92.6-75.7c-32.8-32.9-61.8-69.7-86.1-109.7 C160,416.5,130.1,325,124.3,227C171.2,144.6,246,80,335.8,46c-34.2,56.8-57.7,120.8-67.8,189.2c-3.7,24.8-5.6,50.1-5.6,75.8 c0,109.4,34.1,210.9,92.3,294.3c10,14.4,20.8,28.2,32.2,41.4C413.8,678,444.4,706,477.9,730z"/>
+                <path d="M546.2,737.8c-151.9-82.1-255.1-242.9-255.1-427.7c0-43.2,5.6-85.1,16.2-124.9C366.7,121.4,447.5,78,538.4,66.4 C454.6,151.9,403,269,403,398.2c0,53.9,9,105.7,25.5,153.9c6.3,18.3,13.6,36,22,53.2C474.6,654.9,507.1,699.7,546.2,737.8z"/>
+                <path d="M386.9,717.3v317.8H253.3V607.2C292.4,649.9,337.3,687,386.9,717.3z"/>
+                <path d="M956.1,98.2v936.8H839.9V605.3H485c-19.2-36-33.5-75.1-42.1-116.2h397V98.2H956.1z"/>
+            </g>
+            
+        </svg>
+
+<a href="#enter_site" id="scroll-prompt" 
+   class="absolute text-center bottom-10 text-black dark:text-white hover:text-blue-500 transition-colors opacity-0 cursor-pointer z-50">
+    Welcome! <br> Scroll down to enter the site ↓
+</a>
+</section>
+
+
+<section id="enter_site"></section>
+
+
+
+
+
+<section class="py-32 pt-48 bg-dot-grid">
+    <div class="page-container">
+        <h3 class="font-mono text-orange-500 mb-4 tracking-widest uppercase">01 // Statement</h3>
+        <h2 class="text-4xl md:text-5xl text-zinc-900 dark:text-white mb-8 uppercase tracking-widest">Explore the <span class="text-orange-500">sound</span></h2>
+        <p class="text-black dark:text-white text-justify leading-relaxed text-body">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Yotam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. 
+        </p>
+    </div>
+</section>
+
+<section class="py-24 bg-zinc-900/10 border-y border-white/5">
+    <div class="page-container">
+        <div class="grid md:grid-cols-2 gap-16 items-center">
+            <div class="grid grid-cols-2 gap-4">
+                <img src="./photos/20220512_131558.jpg" alt="Visual A" class="aspect-[3/4] object-cover rounded-2xl grayscale hover:grayscale-0 transition-all duration-500">
+                <img src="./photos/sketch_logo.jpg" alt="Visual B" class="aspect-[3/4] object-cover rounded-2xl grayscale hover:grayscale-0 transition-all duration-500 mt-8">
+            </div>
+            <div class="space-y-6">
+                <h3 class="font-mono text-blue-500 tracking-widest uppercase">02 // Architecture</h3>
+                <h2 class="text-4xl text-black dark:text-white uppercase">Structured <span class="text-blue-500">Chaos</span></h2>
+                <p class="text-black dark:text-white text-justify leading-relaxed text-body">
+                    Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<section class="bg-dot-grid">
+    <div class="text-container py-24 page-container">
+      <h1 class="text-black dark:text-white font-mono uppercase tracking-widest word_animation"><span class="word_animation" style="animation-delay: 0.05s">HARALD</span> <span class="word_animation" style="animation-delay: 0.3s">REVERY</span></h1>
+        <p class="text-container">
+          <span class="word_animation" style="animation-delay: 0.05s">Sed</span>
+          <span class="word_animation" style="animation-delay: 0.42s">ut</span>
+          <span class="word_animation" style="animation-delay: 0.12s">perspiciatis</span>
+          <span class="word_animation" style="animation-delay: 0.88s">unde</span>
+          <span class="word_animation" style="animation-delay: 0.31s">omnis</span>
+          <span class="word_animation" style="animation-delay: 0.55s">iste</span>
+          <span class="word_animation" style="animation-delay: 0.02s">natus</span>
+          <span class="word_animation" style="animation-delay: 0.74s">error</span>
+          <span class="word_animation" style="animation-delay: 0.19s">sit</span>
+          <span class="word_animation" style="animation-delay: 0.93s">voluptatem</span>
+          <span class="word_animation" style="animation-delay: 0.38s">accusantium</span>
+          <span class="word_animation" style="animation-delay: 0.61s">doloremque</span>
+          <span class="word_animation" style="animation-delay: 0.08s">laudantium,</span>
+          <span class="word_animation" style="animation-delay: 0.47s">totam</span>
+          <span class="word_animation" style="animation-delay: 0.23s">rem</span>
+          <span class="word_animation" style="animation-delay: 0.81s">aperiam,</span>
+          <span class="word_animation" style="animation-delay: 0.15s">eaque</span>
+          <span class="word_animation" style="animation-delay: 0.59s">ipsa</span>
+          <span class="word_animation" style="animation-delay: 0.34s">quae</span>
+          <span class="word_animation" style="animation-delay: 0.96s">ab</span>
+          <span class="word_animation" style="animation-delay: 0.11s">illo</span>
+          <span class="word_animation" style="animation-delay: 0.68s">inventore</span>
+          <span class="word_animation" style="animation-delay: 0.27s">veritatis</span>
+          <span class="word_animation" style="animation-delay: 0.83s">et</span>
+          <span class="word_animation" style="animation-delay: 0.44s">quasi</span>
+          <span class="word_animation" style="animation-delay: 0.04s">architecto</span>
+          <span class="word_animation" style="animation-delay: 0.72s">beatae</span>
+          <span class="word_animation" style="animation-delay: 0.51s">vitae</span>
+          <span class="word_animation" style="animation-delay: 0.21s">dicta</span>
+          <span class="word_animation" style="animation-delay: 0.90s">sunt</span>
+          <span class="word_animation" style="animation-delay: 0.14s">explicabo.</span>
+          <span class="word_animation" style="animation-delay: 0.63s">Nemo</span>
+          <span class="word_animation" style="animation-delay: 0.36s">enim</span>
+          <span class="word_animation" style="animation-delay: 0.09s">ipsam</span>
+          <span class="word_animation" style="animation-delay: 0.77s">voluptatem</span>
+          <span class="word_animation" style="animation-delay: 0.53s">quia</span>
+          <span class="word_animation" style="animation-delay: 0.18s">voluptas</span>
+          <span class="word_animation" style="animation-delay: 0.98s">sit</span>
+          <span class="word_animation" style="animation-delay: 0.40s">aspernatur</span>
+          <span class="word_animation" style="animation-delay: 0.06s">aut</span>
+          <span class="word_animation" style="animation-delay: 0.85s">odit</span>
+          <span class="word_animation" style="animation-delay: 0.33s">aut</span>
+          <span class="word_animation" style="animation-delay: 0.66s">fugit,</span>
+          <span class="word_animation" style="animation-delay: 0.25s">sed</span>
+          <span class="word_animation" style="animation-delay: 0.57s">quia</span>
+          <span class="word_animation" style="animation-delay: 0.01s">consequuntur</span>
+          <span class="word_animation" style="animation-delay: 0.80s">magni</span>
+          <span class="word_animation" style="animation-delay: 0.49s">dolores</span>
+          <span class="word_animation" style="animation-delay: 0.13s">eos</span>
+          <span class="word_animation" style="animation-delay: 0.92s">qui</span>
+          <span class="word_animation" style="animation-delay: 0.29s">ratione</span>
+          <span class="word_animation" style="animation-delay: 0.70s">voluptatem</span>
+          <span class="word_animation" style="animation-delay: 0.46s">sequi</span>
+          <span class="word_animation" style="animation-delay: 0.17s">nesciunt.</span>
+        </p>
+    </div>
+    
+</section>
+
+
+<!-- Artcover grid-->  
+<section class="py-16">
+  <div class="page-container">
+      
+    <!-- Image Grid -->
+    <div id="music-image-grid" class="grid grid-cols-3 md:grid-cols-6 gap-4 md:gap-6 relative z-10">
+      
+      <a href="./artcover/cloudsandroads11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Clouds and Roads | ISRC: QZHN32004027"
+         data-gallery="music-gallery">
+        <img src="./artcover/cloudsandroads11.jpg" 
+             alt="Clouds and Roads" 
+             class="object-cover w-full h-full rounded filter group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+      <a href="./artcover/spiritless11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Spiritless | ISRC: QZANL1736598"
+         data-gallery="music-gallery">
+        <img src="./artcover/spiritless11.jpg" 
+             alt="Spiritless" 
+             class="object-cover w-full h-full rounded filter group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+      <a href="./artcover/phrases11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Phrases | ISRC: QZWFL2416355"
+         data-gallery="music-gallery">
+        <img src="./artcover/phrases11.jpg" 
+             alt="Phrases" 
+             class="object-cover w-full h-full rounded filter  group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+      <a href="./artcover/hollow11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Hollow | ISRC: QZAPG1891917"
+         data-gallery="music-gallery">
+        <img src="./artcover/hollow11.jpg" 
+             alt="Hollow" 
+             class="object-cover w-full h-full rounded filter group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+      <a href="./artcover/uninhabitedisland11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Uninhabited Island | ISRC: QZTB52410896"
+         data-gallery="music-gallery">
+        <img src="./artcover/uninhabitedisland11.jpg" 
+             alt="Uninhabited Island" 
+             class="object-cover w-full h-full rounded filter group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+      <a href="./artcover/lookingforsnow11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Looking for Snow | ISRC: QZTBB2487093"
+         data-gallery="music-gallery">
+        <img src="./artcover/lookingforsnow11.jpg" 
+             alt="Looking for Snow" 
+             class="object-cover w-full h-full rounded filter group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+      <a href="./artcover/krakatau11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Krakatau | ISRC: QZMEQ2210200"
+         data-gallery="music-gallery">
+        <img src="./artcover/krakatau11.jpg" 
+             alt="Krakatau" 
+             class="object-cover w-full h-full rounded filter group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+      <a href="./artcover/forestrain11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Forest Rain | ISRC: QZES81920321"
+         data-gallery="music-gallery">
+        <img src="./artcover/forestrain11.jpg" 
+             alt="Forest Rain" 
+             class="object-cover w-full h-full rounded filter group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+      <a href="./artcover/isolated11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Isolated | ISRC: QZ4JJ1822081"
+         data-gallery="music-gallery">
+        <img src="./artcover/isolated11.jpg" 
+             alt="Isolated" 
+             class="object-cover w-full h-full rounded filter group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+      <a href="./artcover/thenorth11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="The North | ISRC: QZTAY2218472"
+         data-gallery="music-gallery">
+        <img src="./artcover/thenorth11.jpg" 
+             alt="The North" 
+             class="object-cover w-full h-full rounded filter group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+      <a href="./artcover/mysterycard11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Mystery Card | ISRC: QZ9JZ1740891"
+         data-gallery="music-gallery">
+        <img src="./artcover/mysterycard11.jpg" 
+             alt="Mystery Card" 
+             class="object-cover w-full h-full rounded filter group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+      <a href="./artcover/mirth11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Mirth | ISRC: QZDA81865578"
+         data-gallery="music-gallery">
+        <img src="./artcover/mirth11.jpg" 
+             alt="Mirth" 
+             class="object-cover w-full h-full rounded filter group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+    </div>
+
+
+    
+  </div>
+  
+<!-- slow moving particles/stars behind and infront of the images in this section -->
+
+</section>
+
+
+
+<section class="py-32 bg-dot-grid">
+    <div class="page-container space-y-6 relative z-10">
+                <h2 class="font-mono text-black dark:text-white tracking-widest uppercase">Regular mono font size</h2>
+                <h2 class="text-5xl text-zinc-900 dark:text-white">Text font at 5xl<span class="text-blue-500">Chaos</span></h2>
+                <h2 class="text-4xl text-zinc-900 dark:text-white">Text font at 4xl<span class="text-blue-500">Chaos</span></h2>
+                <h2 class="text-3xl text-zinc-900 dark:text-white">Text font at 3xl<span class="text-blue-500">Chaos</span></h2>
+                <h2 class="text-2xl text-zinc-900 dark:text-white">Text font at 2xl<span class="text-blue-500">Chaos</span></h2>
+                <h2 class="text-xl text-zinc-900 dark:text-white">Text font at xl<span class="text-blue-500">Chaos</span></h2>
+                <h2 class="text-zinc-900 dark:text-white">Text font at normal<span class="text-blue-500">Chaos</span></h2>
+                <h2 class="text-sm text-zinc-900 dark:text-white">Text font at sm<span class="text-blue-500">Chaos</span></h2>
+                <h2 class="text-xs text-zinc-900 dark:text-white">Text font at xs<span class="text-blue-500">Chaos</span></h2>
+                <p class="text-black dark:text-white text-justify leading-relaxed text-body">
+                    Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
+                </p>
+            </div>
+</section>
+
+
+
+
+
+<section class="py-20 page-container">
+  <div class="grid grid-cols-3 md:grid-cols-12 gap-4 auto-rows-[160px] md:auto-rows-[250px]">
+    
+    <a href="./photos/2025haraldgaldhopiggen2.jpg" 
+       class="glightbox portfolio-item group col-span-3 md:col-span-8 md:row-span-2" 
+       style="--delay: 0.1s"
+       data-gallery="photos">
+       
+      <div class="overlay"></div>
+      <img src="./photos/2025haraldgaldhopiggen2.jpg" alt="Featured Work">
+    </a>
+
+    <a href="./photos/2025haraldgaldhopiggen1.jpg" 
+       class="glightbox portfolio-item group col-span-2 md:col-span-4 md:row-span-2" 
+       style="--delay: 0.2s"
+       data-gallery="photos">
+      <div class="overlay"></div>
+      <img src="./photos/2025haraldgaldhopiggen1.jpg" alt="Portrait">
+    </a>
+
+    <a href="./photos/HRldbnr.jpg" 
+       class="glightbox portfolio-item group col-span-1 md:col-span-4 md:row-span-1" 
+       style="--delay: 0.3s"
+       data-gallery="photos">
+      <div class="overlay"></div>
+      <img src="./photos/HRldbnr.jpg" alt="Details">
+    </a>
+
+    <a href="./photos/2025Sunne_1.jpg" 
+       class="glightbox portfolio-item group col-span-3 md:col-span-8 md:row-span-1" 
+       style="--delay: 0.4s"
+       data-gallery="photos">
+      <div class="overlay"></div>
+      <img src="./photos/2025Sunne_1.jpg" alt="Landscape">
+    </a>
+
+    <a href="./photos/2024HaraldMT.jpg" 
+       class="glightbox portfolio-item group col-span-1 md:col-span-6 md:row-span-2" 
+       style="--delay: 0.5s"
+       data-gallery="photos">
+      <div class="overlay"></div>
+      <img src="./photos/2024HaraldMT.jpg" alt="Mountain View">
+    </a>
+
+    <a href="./photos/2025haraldgaldhopiggen3.jpg" 
+       class="glightbox portfolio-item group col-span-2 md:col-span-6 md:row-span-2" 
+       style="--delay: 0.6s"
+       data-gallery="photos">
+      <div class="overlay"></div>
+      <img src="./photos/2025haraldgaldhopiggen3.jpg" alt="Final Shot">
+    </a>
+
+  </div>
+</section>
+
+
+
+
+<section class="py-20 page-container">
+  <div class="columns-2 md:columns-3 gap-4 space-y-4">
+    
+    <a href="./photos/2025haraldgaldhopiggen2.jpg" 
+       class="glightbox portfolio-item group block break-inside-avoid mb-4" 
+       style="--delay: 0.1s"
+       data-gallery="photos">
+      <div class="overlay"></div>
+      <img src="./photos/2025haraldgaldhopiggen2.jpg" alt="Featured Work" class="w-full !h-auto">
+    </a>
+
+    <a href="./photos/2025haraldgaldhopiggen1.jpg" 
+       class="glightbox portfolio-item group block break-inside-avoid mb-4" 
+       style="--delay: 0.2s"
+       data-gallery="photos">
+      <div class="overlay"></div>
+      <img src="./photos/2025haraldgaldhopiggen1.jpg" alt="Portrait" class="w-full !h-auto">
+    </a>
+
+    <a href="./photos/HRldbnr.jpg" 
+       class="glightbox portfolio-item group block break-inside-avoid mb-4" 
+       style="--delay: 0.3s"
+       data-gallery="photos">
+      <div class="overlay"></div>
+      <img src="./photos/HRldbnr.jpg" alt="Details" class="w-full !h-auto">
+    </a>
+
+    <a href="./photos/2025Sunne_1.jpg" 
+       class="glightbox portfolio-item group block break-inside-avoid mb-4" 
+       style="--delay: 0.4s"
+       data-gallery="photos">
+      <div class="overlay"></div>
+      <img src="./photos/2025Sunne_1.jpg" alt="Landscape" class="w-full !h-auto">
+    </a>
+
+    <a href="./photos/2024HaraldMT.jpg" 
+       class="glightbox portfolio-item group block break-inside-avoid mb-4" 
+       style="--delay: 0.5s"
+       data-gallery="photos">
+      <div class="overlay"></div>
+      <img src="./photos/2024HaraldMT.jpg" alt="Mountain View" class="w-full !h-auto">
+    </a>
+
+    <a href="./photos/2025haraldgaldhopiggen3.jpg" 
+       class="glightbox portfolio-item group block break-inside-avoid mb-4" 
+       style="--delay: 0.6s"
+       data-gallery="photos">
+      <div class="overlay"></div>
+      <img src="./photos/2025haraldgaldhopiggen3.jpg" alt="Final Shot" class="w-full !h-auto">
+    </a>
+
+  </div>
+</section>
+
+
+
+
+
+<section class="py-24 bg-dot-grid">
+    <div class="page-container">
+        <div class="grid md:grid-cols-2 gap-16 items-center">
+            
+
+              <div id="music-image-grid" class="grid grid-cols-3 md:grid-cols-3 gap-4 md:gap-6 relative z-10">
+      
+      <a href="./artcover/cloudsandroads11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Clouds and Roads | ISRC: QZHN32004027"
+         data-gallery="music-gallery">
+        <img src="./artcover/cloudsandroads11.jpg" 
+             alt="Clouds and Roads" 
+             class="object-cover w-full h-full rounded filter group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+      <a href="./artcover/spiritless11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Spiritless | ISRC: QZANL1736598"
+         data-gallery="music-gallery">
+        <img src="./artcover/spiritless11.jpg" 
+             alt="Spiritless" 
+             class="object-cover w-full h-full rounded filter group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+      <a href="./artcover/phrases11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Phrases | ISRC: QZWFL2416355"
+         data-gallery="music-gallery">
+        <img src="./artcover/phrases11.jpg" 
+             alt="Phrases" 
+             class="object-cover w-full h-full rounded filter  group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+      <a href="./artcover/hollow11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Hollow | ISRC: QZAPG1891917"
+         data-gallery="music-gallery">
+        <img src="./artcover/hollow11.jpg" 
+             alt="Hollow" 
+             class="object-cover w-full h-full rounded filter group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+      <a href="./artcover/uninhabitedisland11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Uninhabited Island | ISRC: QZTB52410896"
+         data-gallery="music-gallery">
+        <img src="./artcover/uninhabitedisland11.jpg" 
+             alt="Uninhabited Island" 
+             class="object-cover w-full h-full rounded filter group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+      <a href="./artcover/lookingforsnow11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Looking for Snow | ISRC: QZTBB2487093"
+         data-gallery="music-gallery">
+        <img src="./artcover/lookingforsnow11.jpg" 
+             alt="Looking for Snow" 
+             class="object-cover w-full h-full rounded filter group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+
+      <a href="./artcover/forestrain11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Forest Rain | ISRC: QZES81920321"
+         data-gallery="music-gallery">
+        <img src="./artcover/forestrain11.jpg" 
+             alt="Forest Rain" 
+             class="object-cover w-full h-full rounded filter group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+      <a href="./artcover/isolated11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Isolated | ISRC: QZ4JJ1822081"
+         data-gallery="music-gallery">
+        <img src="./artcover/isolated11.jpg" 
+             alt="Isolated" 
+             class="object-cover w-full h-full rounded filter group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+
+
+      <a href="./artcover/mysterycard11.jpg"
+         class="glightbox group rounded aspect-square bg-neutral-100 dark:bg-neutral-800 grid-item-reveal transition-all duration-500 hover:scale-105 hover:z-20 shadow-lg overflow-hidden cursor-pointer"
+         data-title="Mystery Card | ISRC: QZ9JZ1740891"
+         data-gallery="music-gallery">
+        <img src="./artcover/mysterycard11.jpg" 
+             alt="Mystery Card" 
+             class="object-cover w-full h-full rounded filter group-hover:saturate-100 transition duration-1000 ease-out" 
+             loading="lazy">
+      </a>
+
+
+
+    </div>
+
+
+              
+
+            
+            <div class="space-y-6">
+                <h3 class="font-mono text-blue-500 tracking-widest uppercase">02 // Architecture</h3>
+                <h2 class="text-4xl text-black dark:text-white uppercase">Structured <span class="text-blue-500">Chaos</span></h2>
+                <p class="text-black dark:text-white text-justify leading-relaxed text-body">
+                    Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
+                </p>
+            </div>
+
+
+        </div>
+    </div>
+</section>
+
+
+
+<section class="py-24">
+    <div class="page-container">
+        <div class="grid md:grid-cols-2 gap-16 items-center">
+            
+            <div class="space-y-6">
+                <h3 class="font-mono text-blue-500 tracking-widest uppercase">02 // Architecture</h3>
+                <h2 class="text-4xl text-black dark:text-white uppercase">Structured <span class="text-blue-500">Chaos</span></h2>
+                <p class="text-black dark:text-white text-justify leading-relaxed text-body">
+                    Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
+                </p>
+            </div>
+
+
+              <div class="columns-2 md:columns-2 gap-4 space-y-4">
+                  
+                  <a href="./photos/2025haraldgaldhopiggen2.jpg" 
+                    class="glightbox portfolio-item group block break-inside-avoid mb-4" 
+                    style="--delay: 0.1s"
+                    data-gallery="photos">
+                    <div class="overlay"></div>
+                    <img src="./photos/2025haraldgaldhopiggen2.jpg" alt="Featured Work" class="w-full !h-auto">
+                  </a>
+
+                  <a href="./photos/2025haraldgaldhopiggen1.jpg" 
+                    class="glightbox portfolio-item group block break-inside-avoid mb-4" 
+                    style="--delay: 0.2s"
+                    data-gallery="photos">
+                    <div class="overlay"></div>
+                    <img src="./photos/2025haraldgaldhopiggen1.jpg" alt="Portrait" class="w-full !h-auto">
+                  </a>
+
+                  <a href="./photos/HRldbnr.jpg" 
+                    class="glightbox portfolio-item group block break-inside-avoid mb-4" 
+                    style="--delay: 0.3s"
+                    data-gallery="photos">
+                    <div class="overlay"></div>
+                    <img src="./photos/HRldbnr.jpg" alt="Details" class="w-full !h-auto">
+                  </a>
+
+                  <a href="./photos/2025Sunne_1.jpg" 
+                    class="glightbox portfolio-item group block break-inside-avoid mb-4" 
+                    style="--delay: 0.4s"
+                    data-gallery="photos">
+                    <div class="overlay"></div>
+                    <img src="./photos/2025Sunne_1.jpg" alt="Landscape" class="w-full !h-auto">
+                  </a>
+
+                  <a href="./photos/2024HaraldMT.jpg" 
+                    class="glightbox portfolio-item group block break-inside-avoid mb-4" 
+                    style="--delay: 0.5s"
+                    data-gallery="photos">
+                    <div class="overlay"></div>
+                    <img src="./photos/2024HaraldMT.jpg" alt="Mountain View" class="w-full !h-auto">
+                  </a>
+
+                  <a href="./photos/2025haraldgaldhopiggen3.jpg" 
+                    class="glightbox portfolio-item group block break-inside-avoid mb-4" 
+                    style="--delay: 0.6s"
+                    data-gallery="photos">
+                    <div class="overlay"></div>
+                    <img src="./photos/2025haraldgaldhopiggen3.jpg" alt="Final Shot" class="w-full !h-auto">
+                  </a>
+
+                </div>
+
+            
+
+
+
+        </div>
+    </div>
+</section>
+
+
+
+
+
+
+
+
+
+
+
+<section class="py-24">
+    <div class="page-container">
+        <div class="grid md:grid-cols-2 gap-16 items-center">
+            
+            <div class="space-y-6">
+                <h3 class="font-mono text-blue-500 tracking-widest uppercase">02 // Architecture</h3>
+                <h2 class="text-4xl text-black dark:text-white uppercase">Available streaming <span class="text-blue-500">services</span></h2>
+                <p class="text-black dark:text-white text-justify leading-relaxed text-body">
+                    Official releases are accessible throughout the major streaming services and more!
+                </p>
+                
+                <div class="flex flex-wrap items-center gap-6 space-x-6 mt-10 mb-8">
+    <a class="logo-item transition duration-300 hover:opacity-50" href="https://open.spotify.com/artist/3e27f6Y3wBFJ1YYLNkrjNu" target="_blank" rel="noreferrer">
+      <span class="sr-only">Spotify</span>
+      <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.669 11.538a.498.498 0 0 1-.686.165c-1.879-1.147-4.243-1.407-7.028-.77a.499.499 0 0 1-.222-.973c3.048-.696 5.662-.397 7.77.892a.5.5 0 0 1 .166.686zm.979-2.178a.624.624 0 0 1-.858.205c-2.15-1.321-5.428-1.704-7.972-.932a.625.625 0 0 1-.362-1.194c2.905-.881 6.517-.454 8.986 1.063a.624.624 0 0 1 .206.858zm.084-2.269C10.154 5.56 5.9 5.419 3.438 6.166a.748.748 0 1 1-.434-1.432c2.825-.857 7.523-.692 10.492 1.07a.747.747 0 1 1-.764 1.288z" />
+      </svg>
+    </a>
+
+    <a class="logo-item transition duration-300 hover:opacity-50" href="https://music.apple.com/se/artist/harald-revery/1275991562" target="_blank" rel="noreferrer">
+      <span class="sr-only">Apple Music</span>
+      <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 512 512">
+        <path d="M199 359V199q0-9 10-11l138-28q11-2 12 10v122q0 15-45 20c-57 9-48 105 30 79 30-11 35-40 35-69V88s0-20-17-15l-170 35s-13 2-13 18v203q0 15-45 20c-57 9-48 105 30 79 30-11 35-40 35-69"/>
+      </svg>
+    </a>
+
+    <a class="logo-item transition duration-300 hover:opacity-50" href="https://soundcloud.com/haraldrevery" target="_blank" rel="noreferrer">
+      <span class="sr-only">SoundCloud</span>
+      <svg class="w-6 h-6" fill="currentColor" viewBox="-275 345 270 115" aria-hidden="true">
+        <g>
+          <path d="M-238.4,398.1c-0.8,0-1.4,0.6-1.5,1.5l-2.3,28l2.3,27.1c0.1,0.8,0.7,1.5,1.5,1.5c0.8,0,1.4-0.6,1.5-1.5l2.6-27.1l-2.6-28 C-237,398.7-237.7,398.1-238.4,398.1z"/>
+          <path d="M-228.2,399.9c-0.9,0-1.7,0.7-1.7,1.7l-2.1,26l2.1,27.3c0.1,1,0.8,1.7,1.7,1.7c0.9,0,1.6-0.7,1.7-1.7l2.4-27.3l-2.4-26 C-226.6,400.6-227.3,399.9-228.2,399.9z"/>
+          <path d="M-258.6,403.5c-0.5,0-1,0.4-1.1,1l-2.5,23l2.5,22.5c0.1,0.6,0.5,1,1.1,1c0.5,0,1-0.4,1.1-1l2.9-22.5l-2.9-23 C-257.7,404-258.1,403.5-258.6,403.5z"/>
+          <path d="M-268.1,412.3c-0.5,0-1,0.4-1,1l-1.9,14.3l1.9,14c0.1,0.6,0.5,1,1,1s0.9-0.4,1-1l2.2-14l-2.2-14.2 C-267.2,412.8-267.6,412.3-268.1,412.3z"/>
+          <path d="M-207.5,373.5c-1.2,0-2.1,0.9-2.2,2.1l-1.9,52l1.9,27.2c0.1,1.2,1,2.1,2.2,2.1s2.1-0.9,2.2-2.1l2.1-27.2l-2.1-52 C-205.4,374.4-206.4,373.5-207.5,373.5z"/>
+          <path d="M-248.6,399c-0.7,0-1.2,0.5-1.3,1.3l-2.4,27.3l2.4,26.3c0.1,0.7,0.6,1.3,1.3,1.3c0.7,0,1.2-0.5,1.3-1.2l2.7-26.3l-2.7-27.3 C-247.4,399.6-247.9,399-248.6,399z"/>
+          <path d="M-217.9,383.4c-1,0-1.9,0.8-1.9,1.9l-2,42.3l2,27.3c0.1,1.1,0.9,1.9,1.9,1.9s1.9-0.8,1.9-1.9l2.3-27.3l-2.3-42.3 C-216,384.2-216.9,383.4-217.9,383.4z"/>
+          <path d="M-154.4,359.3c-1.8,0-3.2,1.4-3.2,3.2l-1.2,65l1.2,26.1c0,1.8,1.5,3.2,3.2,3.2c1.8,0,3.2-1.5,3.2-3.2l1.4-26.1l-1.4-65 C-151.1,360.8-152.6,359.3-154.4,359.3z"/>
+          <path d="M-197.1,368.9c-1.3,0-2.3,1-2.4,2.4l-1.8,56.3l1.8,26.9c0,1.3,1.1,2.3,2.4,2.3s2.3-1,2.4-2.4l2-26.9l-2-56.3 C-194.7,370-195.8,368.9-197.1,368.9z"/>
+          <path d="M-46.5,394c-4.3,0-8.4,0.9-12.2,2.4C-61.2,368-85,345.8-114,345.8c-7.1,0-14,1.4-20.1,3.8c-2.4,0.9-3,1.9-3,3.7v99.9 c0,1.9,1.5,3.5,3.4,3.7c0.1,0,86.7,0,87.3,0c17.4,0,31.5-14.1,31.5-31.5C-15,408.1-29.1,394-46.5,394z"/>
+          <path d="M-143.6,353.2c-1.9,0-3.4,1.6-3.5,3.5l-1.4,70.9l1.4,25.7c0,1.9,1.6,3.4,3.5,3.4c1.9,0,3.4-1.6,3.5-3.5l1.5-25.8l-1.5-70.9 C-140.2,354.8-141.7,353.2-143.6,353.2z"/>
+          <path d="M-186.5,366.8c-1.4,0-2.5,1.1-2.6,2.6l-1.6,58.2l1.6,26.7c0,1.4,1.2,2.6,2.6,2.6s2.5-1.1,2.6-2.6l1.8-26.7l-1.8-58.2 C-184,367.9-185.1,366.8-186.5,366.8z"/>
+          <path d="M-175.9,368.1c-1.5,0-2.8,1.2-2.8,2.8l-1.5,56.7l1.5,26.5c0,1.6,1.3,2.8,2.8,2.8s2.8-1.2,2.8-2.8l1.7-26.5l-1.7-56.7 C-173.1,369.3-174.3,368.1-175.9,368.1z"/>
+          <path d="M-165.2,369.9c-1.7,0-3,1.3-3,3l-1.4,54.7l1.4,26.3c0,1.7,1.4,3,3,3c1.7,0,3-1.3,3-3l1.5-26.3l-1.5-54.7 C-162.2,371.3-163.5,369.9-165.2,369.9z"/>
+        </g>
+      </svg>
+    </a>
+
+    <a class="logo-item transition duration-300 hover:opacity-50" href="https://tidal.com/artist/9065421" target="_blank" rel="noreferrer">
+      <span class="sr-only">Tidal</span>
+      <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 32 22" aria-hidden="true">
+        <path d="M16.016 5.323l-5.339 5.339-5.339-5.339-5.339 5.339 5.339 5.339 5.339-5.339 5.339 5.339-5.339 5.339 5.339 5.339 5.339-5.339-5.339-5.339 5.339-5.339zM21.391 10.661l5.302-5.307 5.307 5.307-5.307 5.307z"/>
+      </svg>
+    </a>
+
+        <a class="logo-item transition duration-300 hover:opacity-50" href="https://www.youtube.com/c/HaraldRevery" target="_blank" rel="noreferrer">
+          <span class="sr-only">YouTube</span>
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.101.38.172.883.22 1.402l.01.104.022.26.008.104c.065.914.073 1.77.074 1.957v.075c-.001.194-.01 1.108-.082 2.06l-.008.105-.009.104c-.05.572-.124 1.14-.235 1.558a2.007 2.007 0 0 1-1.415 1.42c-1.16.312-5.569.334-6.18.335h-.142c-.309 0-1.587-.006-2.927-.052l-.17-.006-.087-.004-.171-.007-.171-.007c-1.11-.049-2.167-.128-2.654-.26a2.007 2.007 0 0 1-1.415-1.419c-.111-.417-.185-.986-.235-1.558L.09 9.82l-.008-.104A31.4 31.4 0 0 1 0 7.68v-.123c.002-.215.01-.958.064-1.778l.007-.103.003-.052.008-.104.022-.26.01-.104c.048-.519.119-1.023.22-1.402a2.007 2.007 0 0 1 1.415-1.42c.487-.13 1.544-.21 2.654-.26l.17-.007.172-.006.086-.003.171-.007A99.788 99.788 0 0 1 7.858 2h.193zM6.4 5.209v4.818l4.157-2.408L6.4 5.209z"/>
+          </svg>
+        </a>
+
+      <a class="logo-item transition duration-300 hover:opacity-50" href="https://odysee.com/@HaraldRevery:f" target="_blank" rel="noreferrer">
+        <span class="sr-only">Odysee</span>
+        <svg class="w-6 h-6" viewBox="0 0 324 324" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <g> 
+          <path d="M37.188,119.688c-0.938,-1.251 -2.813,-1.876 -4.063,-0.938c-1.25,0.938 -1.875,2.813 -0.938,4.063c0.938,1.249 2.813,1.874 4.063,0.937c1.563,-0.938 1.875,-2.813 0.938,-4.063" fill="currentColor"/>
+          <path d="M210.625,41.875c-0.937,-1.25 -2.813,-1.875 -4.062,-0.937c-1.25,0.937 -1.875,2.812 -0.938,4.062c0.938,1.25 2.813,1.875 4.063,0.938c1.562,-0.625 1.875,-2.5 0.937,-4.063" fill="currentColor"/>
+          <path d="M246.563,158.438c-0.313,1.874 0.624,3.749 2.499,4.062c1.875,0.312 3.75,-0.625 4.063,-2.5c0.313,-1.875 -0.625,-3.75 -2.5,-4.063c-1.875,-0.625 -3.75,0.625 -4.063,2.5" fill="currentColor"/>
+          <path d="M194.688,274.063c-0.313,1.562 0.624,2.812 1.874,3.125c1.563,0.312 2.813,-0.625 3.125,-1.875c0.313,-1.25 -0.625,-2.813 -1.875,-3.125c-1.249,-0.313 -2.5,0.312 -3.125,1.875" fill="currentColor"/>
+          <path d="M60,66.25c-0.313,0.938 0.313,1.875 1.25,1.875c0.938,0.313 1.875,-0.313 1.875,-1.25c0.313,-0.938 -0.313,-1.875 -1.25,-1.875c-0.938,0 -1.875,0.313 -1.875,1.25" fill="currentColor"/>
+          <path d="M68.438,218.75c-0.313,-1.25 -1.563,-2.188 -2.501,-1.875c-1.249,0.313 -2.187,1.563 -1.875,2.5c0.313,1.25 1.563,2.188 2.5,1.875c1.251,-0 1.876,-1.25 1.876,-2.5" fill="currentColor"/>
+          <path d="M285.625,261.563c-0.938,-1.875 -20,-31.25 -22.5,-55.938c-1.875,-17.188 -24.063,-35.938 -37.5,-45.938c-4.375,-3.125 -5,-9.375 -1.875,-13.75c0.313,-0.312 0.625,-0.937 1.25,-1.25c13.125,-12.5 36.563,-36.875 44.063,-49.687c6.875,-13.438 10.625,-28.438 10.625,-43.438c-9.063,-9.687 -19.375,-18.437 -30.625,-25.625c-10.938,5.313 -13.75,22.188 -18.438,41.563c-6.562,26.562 -21.875,23.437 -28.125,23.437c-6.25,0 -2.5,-9.375 -16.875,-50.937c-14.375,-41.563 -52.188,-31.25 -80.937,-14.063c-36.563,21.875 -20.313,68.438 -11.25,98.438c-5,5 -24.375,8.75 -41.875,18.125c-21.563,11.562 -44.063,30.625 -49.688,39.062c1.563,11.875 4.063,23.125 8.125,34.375c1.25,1.25 2.813,2.188 4.375,2.813c10.313,4.688 25.313,-3.438 39.688,-18.125c4.375,-4.375 9.062,-7.813 14.375,-10.938c11.562,-7.5 23.75,-13.125 36.875,-17.187c-0.001,0 14.062,21.563 27.187,47.187c13.125,25.625 -14.062,34.063 -17.187,34.063c-3.125,0 -45.625,-4.063 -36.25,32.188c9.375,36.25 61.562,23.125 88.125,5.625c26.562,-17.501 20,-74.688 20,-74.688c25.937,-4.063 34.062,23.437 36.562,37.5c2.5,14.062 -3.125,38.437 23.125,39.062c3.75,0 7.5,-0.625 10.938,-1.562c10,-7.5 19.375,-15.938 27.187,-25.625c0.313,-1.563 0.625,-3.125 0.625,-4.688Zm-131.25,-168.75c-26.563,10 -39.375,-3.125 -40.938,-26.875c-1.874,-26.875 23.438,-34.062 23.438,-34.062c28.125,-9.375 35.625,4.062 42.188,24.062c6.562,20 1.562,26.875 -24.688,36.875Z" fill="currentColor"/>
+          <path d="M285.313,120l-7.188,3.438l-1.875,8.124l-3.438,-7.187l-8.125,-1.875l7.188,-3.438l1.875,-8.125l3.438,7.188l8.125,1.875Z" fill="currentColor"/>
+          <path d="M170.625,75.313l-0.625,-0.001c-1.875,-0.312 -3.125,-2.187 -2.813,-4.062c0.938,-3.125 0.313,-6.563 -0.937,-9.375c-0.625,-1.875 0.313,-3.75 2.188,-4.375c1.562,-0.625 3.125,0.313 4.062,1.563c1.875,4.062 2.5,8.749 1.25,13.124c-0,1.876 -1.563,3.126 -3.125,3.126Z" fill="currentColor"/>
+          <path d="M163.75,49.063c-1.25,-0 -2.5,-0.625 -3.125,-1.875c-0.625,-1.25 -1.25,-2.188 -1.875,-3.125c-1.25,-1.25 -1.25,-3.438 0,-4.688c1.25,-1.25 3.438,-1.25 4.688,0c1.25,1.563 2.187,3.125 3.125,4.688c0.937,1.562 0.312,3.75 -1.563,4.687c-0.625,0 -0.938,0.313 -1.25,0.313Z" fill="currentColor"/>
+        </g>
+
+      </svg>
+    </a>
+
+  </div>
+            </div>
+
+
+
+      <!-- Audio player --> 
+                        <div 
+                            x-data="audioPlayer()"
+                            x-init="init()"
+                            class="group relative overflow-hidden bg-white/40 dark:bg-neutral-900/40 backdrop-blur-xl border border-neutral-200 dark:border-neutral-800 rounded-2xl p-6 transition-all duration-700 hover:shadow-2xl"
+                            :class="{ 'playing': isPlaying }">
+
+                    <!-- Image texture --> 
+                              <div class="absolute inset-0 bg-cover bg-center animate-crossfade" 
+                                  style="background-image: url('./photos/audioplayer_texture1.jpg'); animation-delay: -2s;"></div>
+                              
+                              <div class="absolute inset-0 bg-cover bg-center animate-crossfade" 
+                                  style="background-image: url('./photos/audioplayer_texture0.jpg'); animation-delay: 10s;"></div>
+                              
+                              <div class="absolute inset-0 bg-cover bg-center animate-crossfade" 
+                                  style="background-image: url('./photos/audioplayer_texture2.jpg'); animation-delay: 22s;"></div>
+                              
+                              <div class="absolute inset-0 bg-cover bg-center animate-crossfade" 
+                                  style="background-image: url('./photos/audioplayer_texture3.jpg'); animation-delay: 34s;"></div>
+                          
+                    <div class="ambient-blob blob-1 absolute -top-1/2 -left-1/2 rounded-full" 
+                        :style="`background: radial-gradient(circle, ${tracks[currentIndex].color1} 0%, transparent 70%)`"></div >
+                    
+                    <div class="ambient-blob blob-2 absolute -bottom-1/2 -right-1/2 rounded-full" 
+                        :style="`background: radial-gradient(circle, ${tracks[currentIndex].color2} 0%, transparent 70%)`"></div >
+
+                  <div class="relative z-10 flex flex-col gap-1">
+                    
+                    <!-- progress bar part rise / lower -->  
+                    <div class="flex items-center gap-4 w-full -mt-1 mb-2">
+                      <span class="font-mono text-sm font-medium opacity-70 text-neutral-800 dark:text-white w-10 text-right" x-text="formatTime(currentTime)">0:00</span>
+                      <!-- number text -->  
+                      <div class="relative flex-grow h-1 bg-black/10 dark:bg-white/10 rounded-full cursor-pointer group/bar mb-[6px]" 
+                                  @click="seek($event)"
+                                  @mousedown="startDrag($event)"
+                                  @touchstart.prevent="startDrag($event)"
+                                  @mousemove="drag($event)"
+                                  @touchmove.prevent="drag($event)"
+                                  @mouseup="stopDrag($event)"
+                                  @touchend="stopDrag($event)"
+                                  @mouseleave="stopDrag($event)"
+                              >
+                        <div class="absolute top-0 left-0 h-full rounded-full transition-all duration-100" 
+                              :style="`width: ${(currentTime/duration * 100)}%; background: linear-gradient(to right, ${tracks[currentIndex].color1}, ${tracks[currentIndex].color2})`">
+                          <div class="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-md scale-0 group-hover/bar:scale-100 transition-transform border-2" :style="`border-color: ${tracks[currentIndex].color2}`"></div>
+                        </div>
+                      </div>
+                      <span class="font-mono text-sm font-medium opacity-70 text-neutral-800 dark:text-white w-10" x-text="formatTime(duration)">0:00</span>
+                    </div>
+
+                  <div class="w-full relative border-y border-black/5 dark:border-white/5 py-1 overflow-hidden">
+                    <div class="mask-fade">
+                      <div class="flex animate-marquee items-center translate-y-[5%]">
+                        
+                        <div class="flex items-center shrink-0">
+                          <span class="text-lg opacity-60 text-neutral-800 dark:text-white transition-opacity duration-500" x-text="tracks[currentIndex].artist"></span>
+                          <span class="mx-3 opacity-40 text-neutral-800 dark:text-white"> - </span>
+                          <span class="text-lg text-neutral-800 dark:text-white transition-opacity duration-500" x-text="tracks[currentIndex].title"></span>
+                          <div class="w-[20vw] shrink-0"></div> 
+                        </div>
+                        
+                        <div class="flex items-center shrink-0" aria-hidden="true">
+                          <span class="text-lg opacity-60 text-neutral-800 dark:text-white" x-text="tracks[currentIndex].artist"></span>
+                          <span class="mx-3 opacity-40 text-neutral-800 dark:text-white"> - </span>
+                          <span class="text-lg text-neutral-800 dark:text-white" x-text="tracks[currentIndex].title"></span>
+                          <div class="w-[20vw] shrink-0"></div>
+                        </div>
+                        
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Button part rise / lower -->  
+                    <div class="flex flex-wrap items-center justify-center gap-8 flex-shrink-0 pt-4 translate-y-[6%]">
+                      
+                      <div class="flex items-center gap-2">
+                        <button @click="previous()" class="p-2 opacity-50 hover:opacity-100 transition hover:scale-110 active:scale-95 text-neutral-800 dark:text-white">
+                          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                        </button>
+
+                        <button @click="togglePlay()" 
+                          class="flex-shrink-0 w-8 h-8 flex items-center justify-center text-neutral-800 dark:text-white rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 border border-black/5 dark:border-white/10 transition-all active:scale-95 shadow-sm"
+                        >
+                          <template x-if="!isPlaying"><svg class="w-4 h-4 ml-0.1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></template>
+                          <template x-if="isPlaying"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg></template>
+                        </button>
+
+                        <button @click="next()" class="p-2 opacity-50 hover:opacity-100 transition hover:scale-110 active:scale-95 text-neutral-800 dark:text-white">
+                          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                        </button>
+                      </div>
+
+                      <!-- Mute button part  -->  
+                      <div class="flex items-center gap-3">
+                        <button @click="toggleMute()" class="focus:outline-none">
+                          <svg x-show="volume > 0 && !isMuted" class="w-4 h-4 opacity-60 text-neutral-800 dark:text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                          <svg x-show="volume == 0 || isMuted" class="w-4 h-4 opacity-60 text-neutral-800 dark:text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+                        </button>
+                        
+                        <input type="range" min="0" max="1" step="0.01" 
+                              x-model="volume" 
+                              @input="audio.volume = volume; isMuted = (volume == 0)" 
+                              class="volume-slider w-24 md:w-32 h-1 bg-black/10 dark:bg-white/10 rounded-lg appearance-none cursor-pointer" 
+                              :style="`accent-color: ${tracks[currentIndex].color2}`">
+                      </div>
+                    </div>
+
+                  <div class="mt-6 border-t border-black/5 dark:border-white/5 pt-4">
+                    <h3 class="font-mono text-sm uppercase tracking-widest opacity-50 mb-3">Tracklist</h3>
+                    <div class="space-y-1 max-h-48 overflow-y-auto custom-scrollbar">
+                      <template x-for="(track, index) in tracks" :key="index">
+                        <div 
+                          @click="selectTrack(index)"
+                          class="flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                          :class="{ 'bg-black/5 dark:bg-white/5': currentIndex === index }"
+                        >
+                          <div class="flex items-center gap-3">
+                            <span class="text-xs opacity-40 font-mono" x-text="index + 1"></span>
+                            <div>
+                              <p class="text-sm font-medium" :class="currentIndex === index ? 'text-black dark:text-white' : 'opacity-70'" x-text="track.title"></p>
+                              <p class="text-xs opacity-50 uppercase" x-text="track.artist"></p>
+                            </div>
+                          </div>
+                          <template x-if="currentIndex === index && isPlaying">
+                              <div class="flex gap-1 items-end h-3">
+                                  <div class="w-1 bg-current animate-pulse h-full"></div>
+                                  <div class="w-1 bg-current animate-pulse h-2"></div>
+                                  <div class="w-1 bg-current animate-pulse h-3"></div>
+                              </div>
+                          </template>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+
+            
+
+
+
+        </div>
+    </div>
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- FAQ Section -->
+<section class="py-32">
+    <div class="page-container max-w-4xl mx-auto">
+        <h2 class="text-4xl md:text-5xl mb-16 text-center text-zinc-900 dark:text-white">
+            Frequently Asked Questions
+        </h2>
+        
+        <div class="space-y-4">
+            <!-- FAQ Item 1 -->
+            <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden">
+                <input type="checkbox" id="faq-1" class="faq-toggle hidden">
+                <label for="faq-1" class="faq-question block p-6 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">
+                            What services do you offer?
+                        </h3>
+                        <span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+                    </div>
+                </label>
+                <div class="faq-answer">
+                    <div class="p-6 text-zinc-600 dark:text-zinc-400">
+                        <p>I offer a range of creative services including music production, sound design, graphic design, and web development. Each project is tailored to meet your specific needs and vision.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Item 2 -->
+            <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden">
+                <input type="checkbox" id="faq-2" class="faq-toggle hidden">
+                <label for="faq-2" class="faq-question block p-6 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">
+                            How can I book a session or commission a project?
+                        </h3>
+                        <span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+                    </div>
+                </label>
+                <div class="faq-answer">
+                    <div class="p-6 text-zinc-600 dark:text-zinc-400">
+                        <p>You can reach out through the contact page or send me a direct message on any of my social media platforms. I'll get back to you within 24-48 hours to discuss your project details and availability.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Item 3 -->
+            <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden">
+                <input type="checkbox" id="faq-3" class="faq-toggle hidden">
+                <label for="faq-3" class="faq-question block p-6 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">
+                            What is your typical turnaround time?
+                        </h3>
+                        <span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+                    </div>
+                </label>
+                <div class="faq-answer">
+                    <div class="p-6 text-zinc-600 dark:text-zinc-400">
+                        <p>Turnaround times vary depending on the project scope and complexity. Typical projects range from 1-4 weeks. Rush services may be available for an additional fee. We'll establish clear timelines during our initial consultation.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Item 4 -->
+            <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden">
+                <input type="checkbox" id="faq-4" class="faq-toggle hidden">
+                <label for="faq-4" class="faq-question block p-6 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">
+                            Do you offer revisions?
+                        </h3>
+                        <span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+                    </div>
+                </label>
+                <div class="faq-answer">
+                    <div class="p-6 text-zinc-600 dark:text-zinc-400">
+                        <p>Yes! Most projects include 2-3 rounds of revisions to ensure you're completely satisfied with the final result. Additional revisions can be arranged if needed.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Item 5 -->
+            <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden">
+                <input type="checkbox" id="faq-5" class="faq-toggle hidden">
+                <label for="faq-5" class="faq-question block p-6 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">
+                            What are your payment terms?
+                        </h3>
+                        <span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+                    </div>
+                </label>
+                <div class="faq-answer">
+                    <div class="p-6 text-zinc-600 dark:text-zinc-400">
+                        <p>I typically require a 50% deposit to begin work, with the remaining balance due upon project completion. Payment plans can be arranged for larger projects. I accept various payment methods including bank transfers and digital payments.</p>
+                    </div>
+                </div>
+            </div>
+
+
+              <!-- FAQ Item 6 -->
+              <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden">
+                  <input type="checkbox" id="faq-6" class="faq-toggle hidden">
+                  <label for="faq-6" class="faq-question block p-6 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                      <div class="flex items-center justify-between">
+                          <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">
+                              Your Question Here?
+                          </h3>
+                          <span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+                      </div>
+                  </label>
+                  <div class="faq-answer">
+                      <div class="p-6 text-zinc-600 dark:text-zinc-400">
+                          <p>Your answer here.</p>
+                      </div>
+                  </div>
+              </div>
+
+
+
+
+
+
+
+
+        </div>
+    </div>
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<footer class="py-16">
+  <div class="max-w-screen-xl mx-auto px-4">
+    <div class="flex flex-col items-center text-center space-y-4">
+      
+      <div>
+        <p class="font-mono text-black dark:text-white leading-none text-base uppercase tracking-widest">
+          Revery Division
+        </p>
+        <p class="mt-2 text-3xl text-black dark:text-white">½</p>
+        <p class="text-sm text-gray-600 dark:text-gray-300">
+          Gothenburg, Sweden
+        </p>
+      </div>
+
+      <div class="flex text-gray-600 dark:text-gray-300 flex-wrap justify-center items-center gap-2 text-sm uppercase tracking-widest font-mono opacity-70">
+        <a href="#top" class="hover:opacity-50 transition-opacity">↑ Back to top</a>
+        <span class="text-gray-400">|</span>
+        <a href="./contact.html" class="hover:opacity-50 transition-opacity">Contact</a>
+        <span class="text-gray-400">|</span>
+        <a href="./legal.html" class="hover:opacity-50 transition-opacity">Legal</a>
+      </div>
+
+      <div class="mt-2 flex justify-center items-center gap-6 text-gray-600 dark:text-gray-300">
+        
+        <a class="transition-opacity duration-300 hover:opacity-50" href="https://www.facebook.com/HaraldRevery" target="_blank" rel="noopener noreferrer">
+          <span class="sr-only">Facebook</span>
+          <div class="w-6 h-6 flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 16 16" class="w-full h-full" aria-hidden="true">
+              <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z" />
+            </svg>
+          </div>
+        </a>
+
+        <a class="transition-opacity duration-300 hover:opacity-50" href="https://www.instagram.com/HaraldRevery" target="_blank" rel="noopener noreferrer">
+          <span class="sr-only">Instagram</span>
+          <div class="w-6 h-6 flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 16 16" class="w-full h-full" aria-hidden="true">
+              <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.478 2.478 0 0 1-.92-.598 2.48 2.48 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233 0-2.136.008-2.388.046-3.231.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z" />
+            </svg>
+          </div>
+        </a>
+        
+        <a class="transition-opacity duration-300 hover:opacity-50" href="https://twitter.com/haraldrevery" target="_blank" rel="noopener noreferrer">
+          <span class="sr-only">Twitter</span>
+          <div class="w-6 h-6 flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 1200 1227" class="w-full h-full">
+              <path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z" />
+            </svg>
+          </div>
+        </a>
+
+        <a class="transition-opacity duration-300 hover:opacity-50" href="https://open.spotify.com/artist/3e27f6Y3wBFJ1YYLNkrjNu" target="_blank" rel="noopener noreferrer">
+          <span class="sr-only">Spotify</span>
+          <div class="w-6 h-6 flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 64 64" class="w-full h-full" aria-hidden="true">
+              <path d="M32 0C14.3 0 0 14.337 0 32c0 17.7 14.337 32 32 32 17.7 0 32-14.337 32-32S49.663 0 32 0zm14.68 46.184c-.573.956-1.797 1.223-2.753.65-7.532-4.588-16.975-5.62-28.14-3.097-1.07.23-2.14-.42-2.37-1.49s.42-2.14 1.49-2.37c12.196-2.79 22.67-1.606 31.082 3.556a2 2 0 0 1 .688 2.753zm3.9-8.717c-.726 1.185-2.256 1.53-3.44.84-8.602-5.276-21.716-6.805-31.885-3.747-1.338.382-2.714-.344-3.097-1.644-.382-1.338.344-2.714 1.682-3.097 11.622-3.517 26.074-1.835 35.976 4.244 1.147.688 1.49 2.217.765 3.403zm.344-9.1c-10.323-6.117-27.336-6.69-37.2-3.708-1.568.497-3.25-.42-3.747-1.988s.42-3.25 1.988-3.747c11.317-3.44 30.127-2.753 41.98 4.282 1.415.84 1.873 2.676 1.032 4.09-.765 1.453-2.638 1.912-4.053 1.07z" />
+            </svg>
+          </div>
+        </a>
+
+        <a class="transition-opacity duration-300 hover:opacity-50" href="https://music.apple.com/se/artist/harald-revery/1275991562" target="_blank" rel="noopener noreferrer">
+          <span class="sr-only">Apple Music</span>
+          <div class="w-6 h-6 flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 24 24" class="w-full h-full">
+              <path d="M19.467 1.482a2.38 2.38 0 0 0-1.897-.89c-.198 0-.411.024-.627.078l-7.464 1.831a2.4 2.4 0 0 0-1.84 2.33v11.722a3.86 3.86 0 0 0-1.192-.201c-1.92 0-3.477 1.34-3.477 2.991s1.557 2.991 3.477 2.991c1.88 0 3.409-1.285 3.473-2.883l.004-10.744 8.016-1.936v6.983c-.443-.131-.914-.202-1.404-.202-2.333 0-4.225 1.626-4.225 3.633 0 2.006 1.892 3.632 4.225 3.632 2.333 0 4.226-1.626 4.226-3.632V3.535a2.38 2.38 0 0 0-1.296-2.053z"/>
+            </svg>
+          </div>
+        </a>
+
+        <a class="transition-opacity duration-300 hover:opacity-50" href="https://www.behance.net/haraldrevery" target="_blank" rel="noopener noreferrer">
+          <span class="sr-only">Behance</span>
+          <div class="w-6 h-6 flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 16 16" class="w-full h-full" aria-hidden="true">
+              <path d="M4.654 3c.461 0 .887.035 1.278.14.39.07.711.216.996.391.286.176.497.426.641.747.14.32.216.711.216 1.137 0 .496-.106.922-.356 1.242-.215.32-.566.606-.997.817.606.176 1.067.496 1.348.922.281.426.461.957.461 1.563 0 .496-.105.922-.285 1.278a2.317 2.317 0 0 1-.782.887c-.32.215-.711.39-1.137.496a5.329 5.329 0 0 1-1.278.176L0 12.803V3h4.654zm-.285 3.978c.39 0 .71-.105.957-.285.246-.18.355-.497.355-.887 0-.216-.035-.426-.105-.567a.981.981 0 0 0-.32-.355 1.84 1.84 0 0 0-.461-.176c-.176-.035-.356-.035-.567-.035H2.17v2.31c0-.005 2.2-.005 2.2-.005zm.105 4.193c.215 0 .426-.035.606-.07.176-.035.356-.106.496-.216s.25-.215.356-.39c.07-.176.14-.391.14-.641 0-.496-.14-.852-.426-1.102-.285-.215-.676-.32-1.137-.32H2.17v2.734h2.305v.005zm6.858-.035c.286.285.711.426 1.278.426.39 0 .746-.106 1.032-.286.285-.215.46-.426.53-.64h1.74c-.286.851-.712 1.457-1.278 1.848-.566.355-1.243.566-2.06.566a4.135 4.135 0 0 1-1.527-.285 2.827 2.827 0 0 1-1.137-.782 2.851 2.851 0 0 1-.712-1.172c-.175-.461-.25-.957-.25-1.528 0-.531.07-1.032.25-1.493.18-.46.426-.852.747-1.207.32-.32.711-.606 1.137-.782a4.018 4.018 0 0 1 1.493-.285c.606 0 1.137.105 1.598.355.46.25.817.532 1.102.958.285.39.496.851.641 1.348.07.496.105.996.07 1.563h-5.15c0 .58.21 1.11.496 1.396zm2.24-3.732c-.25-.25-.642-.391-1.103-.391-.32 0-.566.07-.781.176-.215.105-.356.25-.496.39a.957.957 0 0 0-.25.497c-.036.175-.07.32-.07.46h3.196c-.07-.526-.25-.882-.497-1.132zm-3.127-3.728h3.978v.957h-3.978v-.957z" />
+            </svg>
+          </div>
+        </a>
+      </div>
+
+      <div class="pt-4 border-gray-200 dark:border-gray-800 w-full max-w-md mx-auto">
+        <p class="text-sm text-gray-600 dark:text-gray-300 opacity-50">
+          © 2026 Harald Revery™. All Rights Reserved <br>
+        </p>
+      </div>
+
+    </div>
+  </div>
+</footer>
+
+</body>
+
+
+
+
+
+
+<!-- Navigation bar reveal when scrolling down (for firefox and iOS < 15.4)) -->
+<script src="./javascript/navbar_scroll.js"></script>
+
+
+
+
+
+<!-- GLightbox load -->
+<script src="./javascript/glightbox.min.js"></script>
+<!-- GLightbox settings -->
+<script src="./javascript/glightbox_settings.js"></script>
+
+
+
+
+<!-- audioplayer.js load -->
+<script src="./javascript/audioplayer.js"></script>
+
+
+<!-- Alpine.js load -->
+<script src="./javascript/alpine.min.js"></script>
+
+
+</html>

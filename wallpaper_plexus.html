@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="main.css"> 
+    <title>Harald Revery Plexus Animation</title>
+
+     <!-- test CSP -->
+    <meta http-equiv="Content-Security-Policy" 
+      content="default-src 'self'; 
+               script-src 'self' 'unsafe-inline' 'unsafe-eval'; 
+               style-src 'self' 'unsafe-inline'; 
+               font-src 'self' data: http://127.0.0.1:* http://localhost:*;
+               media-src 'self' data:;">
+
+    <!-- Internet icon -->
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
+    <link rel="shortcut icon" href="/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
+
+</head>
+<body>
+    <div class="hero-container_legacy">
+        <!-- Background Texture -->
+        <div class="bg-texture_legacy"></div>
+
+        <!-- Background Plexus -->
+        <div class="background-plexus_legacy">
+            <canvas id="background-plexus-canvas_legacy"></canvas>
+        </div>
+
+        <!-- Logo Container -->
+        <div id="logo-container_legacy">
+            <div class="position-wrapper_legacy">
+                <svg id="main-logo-svg_legacy" viewBox="0 0 1000 1100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+                    
+                    
+                    <!-- Definitions -->
+                    <defs>
+                        <g id="logo-shape-outline_legacy">
+                            <path d="M477.9,730c-31.9-13.7-62.4-30.2-91-49.1c-33.4-22-64.5-47.4-92.6-75.7c-32.8-32.9-61.8-69.7-86.1-109.7 C160,416.5,130.1,325,124.3,227C171.2,144.6,246,80,335.8,46c-34.2,56.8-57.7,120.8-67.8,189.2c-3.7,24.8-5.6,50.1-5.6,75.8 c0,109.4,34.1,210.9,92.3,294.3c10,14.4,20.8,28.2,32.2,41.4C413.8,678,444.4,706,477.9,730z"/>
+                            <path d="M546.2,737.8c-151.9-82.1-255.1-242.9-255.1-427.7c0-43.2,5.6-85.1,16.2-124.9C366.7,121.4,447.5,78,538.4,66.4 C454.6,151.9,403,269,403,398.2c0,53.9,9,105.7,25.5,153.9c6.3,18.3,13.6,36,22,53.2C474.6,654.9,507.1,699.7,546.2,737.8z"/>
+                            <path d="M386.9,717.3v317.8H253.3V607.2C292.4,649.9,337.3,687,386.9,717.3z"/>
+                            <path d="M956.1,98.2v936.8H839.9V605.3H485c-19.2-36-33.5-75.1-42.1-116.2h397V98.2H956.1z"/>
+                        </g>
+                        
+                        <linearGradient id="logoGradient_legacy" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#1a1a1a" />
+                            <stop offset="100%" stop-color="#000000" />
+                        </linearGradient>
+                        
+                        <linearGradient id="logoGradientDark_legacy" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#ffffff" />
+                            <stop offset="100%" stop-color="#e0e0e0" />
+                        </linearGradient>
+                        
+                        <clipPath id="logoClip_legacy">
+                            <path d="M477.9,730c-31.9-13.7-62.4-30.2-91-49.1c-33.4-22-64.5-47.4-92.6-75.7c-32.8-32.9-61.8-69.7-86.1-109.7 C160,416.5,130.1,325,124.3,227C171.2,144.6,246,80,335.8,46c-34.2,56.8-57.7,120.8-67.8,189.2c-3.7,24.8-5.6,50.1-5.6,75.8 c0,109.4,34.1,210.9,92.3,294.3c10,14.4,20.8,28.2,32.2,41.4C413.8,678,444.4,706,477.9,730z"/>
+                            <path d="M546.2,737.8c-151.9-82.1-255.1-242.9-255.1-427.7c0-43.2,5.6-85.1,16.2-124.9C366.7,121.4,447.5,78,538.4,66.4 C454.6,151.9,403,269,403,398.2c0,53.9,9,105.7,25.5,153.9c6.3,18.3,13.6,36,22,53.2C474.6,654.9,507.1,699.7,546.2,737.8z"/>
+                            <path d="M386.9,717.3v317.8H253.3V607.2C292.4,649.9,337.3,687,386.9,717.3z"/>
+                            <path d="M956.1,98.2v936.8H839.9V605.3H485c-19.2-36-33.5-75.1-42.1-116.2h397V98.2H956.1z"/>
+                        </clipPath>
+                    </defs>
+                    
+                    <!-- Implosion waves -->
+                    <g class="implosion-waves_legacy">
+                        <use href="#logo-shape-outline_legacy" class="wave-echo_legacy echo-1_legacy" />
+                        <use href="#logo-shape-outline_legacy" class="wave-echo_legacy echo-2_legacy" />
+                        <use href="#logo-shape-outline_legacy" class="wave-echo_legacy echo-3_legacy" />
+                    </g>
+                    
+                    <!-- Canvas clipped by logo shape -->
+                    <foreignObject width="1000" height="1100" clip-path="url(#logoClip_legacy)">
+                        <canvas id="plexus-canvas_legacy" width="1000" height="1100"></canvas>
+                    </foreignObject>
+                    
+                    <!-- Logo paths with animation -->
+                    <g id="logo-shape-definition_legacy" class="animate-logo_legacy">
+                        <path d="M477.9,730c-31.9-13.7-62.4-30.2-91-49.1c-33.4-22-64.5-47.4-92.6-75.7c-32.8-32.9-61.8-69.7-86.1-109.7 C160,416.5,130.1,325,124.3,227C171.2,144.6,246,80,335.8,46c-34.2,56.8-57.7,120.8-67.8,189.2c-3.7,24.8-5.6,50.1-5.6,75.8 c0,109.4,34.1,210.9,92.3,294.3c10,14.4,20.8,28.2,32.2,41.4C413.8,678,444.4,706,477.9,730z"/>
+                        <path d="M546.2,737.8c-151.9-82.1-255.1-242.9-255.1-427.7c0-43.2,5.6-85.1,16.2-124.9C366.7,121.4,447.5,78,538.4,66.4 C454.6,151.9,403,269,403,398.2c0,53.9,9,105.7,25.5,153.9c6.3,18.3,13.6,36,22,53.2C474.6,654.9,507.1,699.7,546.2,737.8z"/>
+                        <path d="M386.9,717.3v317.8H253.3V607.2C292.4,649.9,337.3,687,386.9,717.3z"/>
+                        <path d="M956.1,98.2v936.8H839.9V605.3H485c-19.2-36-33.5-75.1-42.1-116.2h397V98.2H956.1z"/>
+                    </g>
+                    
+                </svg>
+                
+            </div>
+            
+        </div>
+
+        <!-- Text Overlay -->
+        <div class="text-overlay_legacy">
+            haraldrevery.com
+        </div>
+
+        <!-- Dark Mode Toggle -->
+        <div class="mode-toggle_legacy" id="mode-toggle_legacy">
+            <span id="mode-icon_legacy">☀</span>
+        </div>
+    </div>
+
+
+
+
+
+<!-- QR code -->
+<div class="bottom-right-svg">
+    <?xml version="1.0" standalone="no"?>
+    <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+    <svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" shape-rendering="crispEdges" viewBox="0 0 1024 1024" viewport-fill="rgb(255,255,255)" viewport-fill-opacity="1" fill="rgb(0,0,0)" fill-opacity="1" style="background-color:rgb(255,255,255);background-color:rgba(255, 255, 255, 1);">
+        <rect x="74" y="74" width="35" height="245"/><rect x="74" y="354" width="35" height="70"/><rect x="74" y="459" width="35" height="210"/><rect x="74" y="704" width="35" height="245"/><rect x="109" y="74" width="210" height="35"/><rect x="109" y="284" width="210" height="35"/><rect x="109" y="389" width="35" height="70"/><rect x="109" y="494" width="210" height="35"/><rect x="109" y="704" width="210" height="35"/><rect x="109" y="914" width="210" height="35"/><rect x="144" y="144" width="105" height="105"/><rect x="144" y="354" width="35" height="70"/><rect x="144" y="599" width="70" height="35"/><rect x="144" y="774" width="105" height="105"/><rect x="179" y="354" width="140" height="35"/><rect x="179" y="424" width="35" height="140"/><rect x="214" y="529" width="70" height="70"/><rect x="249" y="424" width="35" height="175"/><rect x="249" y="634" width="70" height="35"/><rect x="284" y="109" width="35" height="210"/><rect x="284" y="424" width="105" height="35"/><rect x="284" y="564" width="35" height="35"/><rect x="284" y="739" width="35" height="210"/><rect x="319" y="389" width="35" height="105"/><rect x="319" y="529" width="70" height="35"/><rect x="354" y="144" width="35" height="210"/><rect x="354" y="459" width="175" height="35"/><rect x="354" y="564" width="35" height="140"/><rect x="354" y="739" width="35" height="140"/><rect x="354" y="914" width="35" height="35"/><rect x="389" y="74" width="70" height="105"/><rect x="389" y="214" width="35" height="35"/><rect x="389" y="354" width="105" height="35"/><rect x="389" y="494" width="105" height="35"/><rect x="389" y="564" width="35" height="105"/><rect x="389" y="809" width="35" height="35"/><rect x="389" y="879" width="35" height="35"/><rect x="424" y="284" width="35" height="105"/><rect x="424" y="529" width="35" height="70"/><rect x="424" y="739" width="70" height="70"/><rect x="424" y="844" width="35" height="35"/><rect x="424" y="914" width="175" height="35"/><rect x="459" y="144" width="35" height="70"/><rect x="459" y="249" width="105" height="35"/><rect x="459" y="389" width="35" height="140"/><rect x="459" y="704" width="35" height="105"/><rect x="494" y="74" width="35" height="105"/><rect x="494" y="284" width="35" height="70"/><rect x="494" y="424" width="35" height="70"/><rect x="494" y="529" width="70" height="35"/><rect x="494" y="599" width="35" height="70"/><rect x="494" y="704" width="70" height="35"/><rect x="494" y="774" width="70" height="70"/><rect x="529" y="179" width="140" height="35"/><rect x="529" y="354" width="70" height="70"/><rect x="529" y="494" width="35" height="105"/><rect x="529" y="634" width="280" height="35"/><rect x="529" y="844" width="70" height="35"/><rect x="564" y="109" width="35" height="140"/><rect x="564" y="284" width="35" height="35"/><rect x="564" y="459" width="35" height="35"/><rect x="564" y="564" width="70" height="35"/><rect x="564" y="739" width="35" height="70"/><rect x="564" y="879" width="35" height="70"/><rect x="599" y="109" width="35" height="35"/><rect x="599" y="249" width="70" height="35"/><rect x="599" y="319" width="35" height="70"/><rect x="599" y="424" width="35" height="35"/><rect x="599" y="494" width="140" height="35"/><rect x="599" y="599" width="70" height="105"/><rect x="599" y="774" width="35" height="70"/><rect x="599" y="879" width="70" height="35"/><rect x="634" y="74" width="35" height="35"/><rect x="634" y="144" width="35" height="210"/><rect x="634" y="389" width="35" height="35"/><rect x="634" y="529" width="70" height="35"/><rect x="634" y="704" width="35" height="105"/><rect x="634" y="844" width="35" height="70"/><rect x="669" y="459" width="35" height="105"/><rect x="669" y="774" width="70" height="70"/><rect x="669" y="914" width="280" height="35"/><rect x="704" y="74" width="35" height="245"/><rect x="704" y="354" width="175" height="35"/><rect x="704" y="424" width="35" height="105"/><rect x="704" y="564" width="140" height="35"/><rect x="704" y="704" width="35" height="35"/><rect x="704" y="879" width="140" height="70"/><rect x="739" y="74" width="210" height="35"/><rect x="739" y="284" width="210" height="35"/><rect x="739" y="389" width="35" height="35"/><rect x="739" y="529" width="35" height="140"/><rect x="739" y="774" width="70" height="35"/><rect x="774" y="144" width="105" height="105"/><rect x="774" y="459" width="35" height="70"/><rect x="774" y="599" width="35" height="245"/><rect x="809" y="424" width="35" height="35"/><rect x="809" y="529" width="35" height="70"/><rect x="809" y="669" width="35" height="35"/><rect x="809" y="739" width="35" height="35"/><rect x="809" y="809" width="35" height="140"/><rect x="844" y="494" width="105" height="35"/><rect x="844" y="634" width="35" height="35"/><rect x="844" y="704" width="105" height="35"/><rect x="844" y="774" width="35" height="105"/><rect x="879" y="389" width="35" height="70"/><rect x="879" y="529" width="35" height="70"/><rect x="879" y="809" width="70" height="35"/><rect x="914" y="109" width="35" height="210"/><rect x="914" y="424" width="35" height="105"/><rect x="914" y="564" width="35" height="70"/><rect x="914" y="739" width="35" height="35"/><rect x="914" y="844" width="35" height="105"/>
+    </svg>
+</div>
+
+
+
+
+
+<!-- plexus.js load -->
+<script src="./javascript/plexus.js"></script>
+
+</body>
+</html>
