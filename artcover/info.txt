@@ -1,1 +1,2 @@
-1200 x 1200 res, very high compressed .jpg, that will do the trick.
+2160 x 2160 res. compressed .jpg.
+670 x 670 res. for min version compressed .jpg, that will do the trick.
