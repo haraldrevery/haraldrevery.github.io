@@ -1,5 +1,7 @@
 # Harald Revery official website
 
+![[site.png]]
+
 ---
 
 Harald Revery official website, made with Tailwind CSS, Alpine.js and GLightbox.
