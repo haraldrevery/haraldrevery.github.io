@@ -3,12 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="main.css"> 
     <title>Harald Revery - Official Website</title>
     <meta name="description" content="Harald Revery | From the Scandinavian forest and mountains onto the EDM stage. Explore the world of electronic music, festival, melodic house, and techno.">
     <meta name="keywords" content="harald, revery, edm, dj, electronic music, festival house, techno, mainstage, producer, music artist">
 
+        <!-- CRITICAL CSS - Inlined for instant render (above the fold) -->
+        <style>
+        /* Reset & base styles */
+        *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid;border-color:currentColor}
+        html{line-height:1.5;-webkit-text-size-adjust:100%;tab-size:4;font-family:ui-sans-serif,system-ui,sans-serif}
+        body{margin:0;line-height:inherit}
+        
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark){.dark\:text-white{color:#fff}.dark\:bg-neutral-950\/90{background-color:rgba(10,10,10,.9)}.dark\:border-white\/10{border-color:rgba(255,255,255,.1)}.dark\:text-neutral-100{color:#f5f5f5}.dark\:text-neutral-400{color:#a3a3a3}}
+        
+        /* Critical navigation styles */
+        .navi_mechanic{position:fixed;top:0;left:0;right:0;z-index:200;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);background-color:rgba(255,255,255,.8);border-bottom:1px solid #e4e4e7}
+        .page-container{max-width:1280px;margin:0 auto;padding:0 1rem}
+        .min-h-screen{min-height:100vh}
+        .text-neutral-900{color:#171717}
+        .bg-white\/80{background-color:rgba(255,255,255,.8)}
+        .border-zinc-200{border-color:#e4e4e7}
+        .backdrop-blur-xl{backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+        
+        /* Hero section critical styles */
+        .hero-safe-vh{min-height:100vh;min-height:100dvh}
+        .bg-dot-grid{background-image:radial-gradient(circle,#00000008 1px,transparent 1px);background-size:24px 24px}
+        
+        /* Font loading optimization */
+        @font-face{font-family:'HaraldReveryText';src:url('/fonts/HaraldReveryTextFont.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+        @font-face{font-family:'HaraldReveryMono';src:url('/fonts/HaraldReveryMonoFont.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+        
+        /* Hide elements not critical for first paint */
+        .seo-only-h1{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
+        
+        /* Prevent FOUC (Flash of Unstyled Content) */
+        .scroll-smooth{scroll-behavior:smooth}
+        
+        /* CSS Animation Timeline fallback - navbar reveal */
+        @supports not (animation-timeline: scroll()){
+            .navi_mechanic.js-animated-nav{
+                transform:translateY(-110%);
+                opacity:0;
+                transition:transform 0.3s cubic-bezier(0.23,1,0.32,1),opacity 0.3s ease;
+            }
+        }
+    </style>
+    
+    <!-- Load full CSS asynchronously with fallback -->
+    <link rel="preload" href="main.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="main.css"></noscript>
 
+    
 
     <!-- Preload LCP image (page load optimization) -->
     <link rel="preload" as="image" href="/photos/bgtexture.jpg" fetchpriority="high">
@@ -43,8 +89,7 @@
     
 
 
-    <!-- Navigation bar reveal when scrolling down (for firefox and iOS < 15.4)) -->
-    <script src="./javascript/navbar_scroll_min.js"></script>
+
     
 </head>
 
@@ -504,7 +549,8 @@
 
 
 
-
+    <!-- Navigation bar reveal when scrolling down (for firefox and iOS < 15.4)) -->
+    <script src="./javascript/navbar_scroll_min.js" defer></script>
 
 
 
@@ -554,4 +600,5 @@
 
 
 </html>
+
 
