@@ -24,6 +24,8 @@ Personal setup for this project:
 
 Then I just run:
 .\tw.exe -i input.css -o main.css --watch --content "./*.html"
+or 
+.\tw.exe -i input.css -o main.css --content "./*.html" --minify
 
 ---
 
