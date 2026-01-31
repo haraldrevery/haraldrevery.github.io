@@ -28,3 +28,7 @@ Then I just run:
 ---
 
 There is also some python code here, but that is only to generate som background svg's, to create the "topology map" to give the website some texture. 
+
+--- 
+
+All rights reserved Harald Revery
