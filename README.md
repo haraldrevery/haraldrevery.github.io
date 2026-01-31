@@ -36,3 +36,5 @@ There is also some python code here, but that is only to generate som background
 --- 
 
 All rights reserved Harald Revery
+
+ <img src="haraldrevery_website_animation.jpg" alt="Website screenshots">
