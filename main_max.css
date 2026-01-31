@@ -2355,7 +2355,7 @@ nav {
   }
   100% {
     stroke-dashoffset: 0;
-    fill-opacity: 0.021;
+    fill-opacity: 0.025;
     stroke-opacity: 0;
   }
 }
