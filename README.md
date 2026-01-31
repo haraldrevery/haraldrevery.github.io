@@ -1,6 +1,6 @@
 # Harald Revery official website
-
-![[site.png]]
+ 
+ <img src="site.png" alt="Website screenshots">
 
 ---
 
