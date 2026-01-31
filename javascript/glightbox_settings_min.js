@@ -1,0 +1,1 @@
+const lightbox=GLightbox({selector:".glightbox",touchNavigation:!0,loop:!0,zoomable:!0});
