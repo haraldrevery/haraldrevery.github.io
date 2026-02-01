@@ -397,6 +397,8 @@ nav {
 
 
 
+
+
 /* ===================================
    Topology map svg background
    =================================== */
@@ -410,12 +412,15 @@ nav {
 
 .bg-topology-map::before {
     content: "";
-    position: absolute;
-    inset: 0;
+    position: absolute; /* Absolute to the .bg-topology-map container */
+    top: 0; /* Fixed from the top of the container */
+    left: 0;
+    right: 0;
+    height: 100%; /* Takes full height of container */
     z-index: -8;
     pointer-events: none;
     
-    background-image: url('./svg/mountain_topology4.svg');
+    background-image: url('./svg/mountain_topology2.svg');
     
     /* FIX: Force width to 100%, let height adjust automatically */
     background-size: 100% auto; 
@@ -427,19 +432,20 @@ nav {
     /* PERFORMANCE FIX: Helps the browser render complex SVGs faster */
     shape-rendering: optimizeSpeed;
     
+    /* Enhanced fade-out: starts fading earlier and fades out completely at bottom */
     mask-image: linear-gradient(
       to bottom,
       transparent 0%,
-      black 10%,
-      black 90%,
-      transparent 100%
+      black 8%,
+      black 70%,
+      transparent 95%
     );
     -webkit-mask-image: linear-gradient(
       to bottom,
       transparent 0%,
-      black 10%,
-      black 90%,
-      transparent 100%
+      black 8%,
+      black 70%,
+      transparent 95%
     );
     
   }
@@ -453,6 +459,60 @@ nav {
 }
 
 
+@layer components {
+  .bg-topology-map2 {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+.bg-topology-map2::before {
+    content: "";
+    position: absolute; /* Absolute to the .bg-topology-map container */
+    top: 0; /* Fixed from the top of the container */
+    left: 0;
+    right: 0;
+    height: 100%; /* Takes full height of container */
+    z-index: -8;
+    pointer-events: none;
+    
+    background-image: url('./svg/mountain_topology2.svg');
+    
+    /* FIX: Force width to 100%, let height adjust automatically */
+    background-size: 100% auto; 
+    
+    background-position: top center; /* Start the map from the top */
+    background-repeat: no-repeat;
+    opacity: 0.1;
+  
+    /* PERFORMANCE FIX: Helps the browser render complex SVGs faster */
+    shape-rendering: optimizeSpeed;
+    
+    /* Enhanced fade-out: starts fading earlier and fades out completely at bottom */
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 8%,
+      black 70%,
+      transparent 95%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 8%,
+      black 70%,
+      transparent 95%
+    );
+    
+  }
+
+  /* Dark mode - slightly more visible */
+  @media (prefers-color-scheme: dark) {
+    .bg-topology-map2::before {
+      opacity: 0.06;
+    }
+  }
+}
 
 
 
