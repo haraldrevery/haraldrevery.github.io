@@ -1,4 +1,4 @@
-/* Performance constants */
+        /* Performance constants */
         const TWO_PI = Math.PI * 2;
         const MOUSE_INFLUENCE_DIST_SQ = 62500;
 
@@ -85,15 +85,6 @@
             const velY = new Float32Array(targetParticleCount);
             const ids = new Int16Array(targetParticleCount);
 
-            // Pre-allocate grid array
-            const grid = Array.from({ length: cols * rows }, () => []);
-            
-            // Pre-allocate bin storage (array of line coordinate arrays per bin)
-            const bins = Array.from({ length: 11 }, () => ({
-                coords: [],  // Will store [x1, y1, x2, y2, x1, y1, x2, y2, ...]
-                count: 0
-            }));
-
             let currentParticleCount = 0;
             const startTime = Date.now();
             
@@ -116,10 +107,7 @@
                     currentParticleCount++;
                 }
 
-                // Clear grid cells
-                for (let i = 0; i < grid.length; i++) {
-                    grid[i].length = 0;
-                }
+                const grid = Array.from({ length: cols * rows }, () => []);
                 
                 ctx.fillStyle = `rgba(${rgb}, 0.8)`;
                 
@@ -138,12 +126,8 @@
                     }
                 }
                 
-                // Reset bin counters (reuse arrays)
-                for (let b = 0; b <= 10; b++) {
-                    bins[b].count = 0;
-                }
+                const bins = Array.from({ length: 11 }, () => new Path2D());
                 
-                // Collect lines into bins (same binning logic as original)
                 for (let i = 0; i < currentParticleCount; i++) {
                     const x1 = posX[i], y1 = posY[i];
                     const c = Math.floor(x1 / cellSize);
@@ -168,19 +152,8 @@
                                         const dist = Math.sqrt(distSq);
                                         const alphaBin = Math.floor((1 - dist / connectionDistance) * 10);
                                         if (alphaBin >= 0 && alphaBin <= 10) {
-                                            const bin = bins[alphaBin];
-                                            const idx = bin.count * 4;
-                                            
-                                            // Expand array if needed
-                                            if (idx + 3 >= bin.coords.length) {
-                                                bin.coords.push(x1 | 0, y1 | 0, posX[idx2] | 0, posY[idx2] | 0);
-                                            } else {
-                                                bin.coords[idx] = x1 | 0;
-                                                bin.coords[idx + 1] = y1 | 0;
-                                                bin.coords[idx + 2] = posX[idx2] | 0;
-                                                bin.coords[idx + 3] = posY[idx2] | 0;
-                                            }
-                                            bin.count++;
+                                            bins[alphaBin].moveTo(x1 | 0, y1 | 0);
+                                            bins[alphaBin].lineTo(posX[idx2] | 0, posY[idx2] | 0);
                                         }
                                     }
                                 }
@@ -189,23 +162,12 @@
                     }
                 }
 
-                // Draw bins (same rendering as original - discrete opacity levels)
                 ctx.lineWidth = 0.8;
                 for (let b = 0; b <= 10; b++) {
-                    const alpha = (b / 10) * 0.82;
-                    if (alpha > 0.01 && bins[b].count > 0) {
+                    const alpha = (b / 10) * 0.82;  // <--- Change 0.8 to a different multiplier for changing opacity of the lines
+                    if (alpha > 0.01) {
                         ctx.strokeStyle = `rgba(${rgb}, ${alpha})`;
-                        ctx.beginPath();
-                        
-                        const coords = bins[b].coords;
-                        const lineCount = bins[b].count;
-                        for (let i = 0; i < lineCount; i++) {
-                            const idx = i * 4;
-                            ctx.moveTo(coords[idx], coords[idx + 1]);
-                            ctx.lineTo(coords[idx + 2], coords[idx + 3]);
-                        }
-                        
-                        ctx.stroke();
+                        ctx.stroke(bins[b]);
                     }
                 }
                 
@@ -269,22 +231,6 @@
                 this.cols = 0;
                 this.rows = 0;
                 
-                // Pre-allocate arrays
-                this.grid = [];
-                
-                // Pre-allocate bin storage (same as logo plexus)
-                this.bins = Array.from({ length: 11 }, () => ({
-                    coords: [],
-                    count: 0
-                }));
-                
-                // Store resize handler reference for cleanup
-                this.resizeHandler = () => this.handleResize();
-                this.mouseMoveHandler = (e) => {
-                    this.mouse.x = e.clientX;
-                    this.mouse.y = e.clientY;
-                };
-                
                 this.init();
             }
 
@@ -295,8 +241,11 @@
 
                 this.handleResize();
                 
-                window.addEventListener('resize', this.resizeHandler);
-                window.addEventListener('mousemove', this.mouseMoveHandler);
+                window.addEventListener('resize', () => this.handleResize());
+                window.addEventListener('mousemove', (e) => {
+                    this.mouse.x = e.clientX;
+                    this.mouse.y = e.clientY;
+                });
 
                 this.animate();
             }
@@ -311,13 +260,6 @@
                 
                 this.cols = Math.ceil(this.canvas.width / this.config.lineDistance);
                 this.rows = Math.ceil(this.canvas.height / this.config.lineDistance);
-                
-                // Resize grid array
-                const newSize = this.cols * this.rows;
-                this.grid.length = newSize;
-                for (let i = 0; i < newSize; i++) {
-                    if (!this.grid[i]) this.grid[i] = [];
-                }
             }
 
             createParticle(id) {
@@ -344,10 +286,7 @@
                 const color = isDark ? '255, 255, 255' : '0, 0, 0';
                 this.ctx.fillStyle = `rgba(${color}, 0.4)`;
                 
-                // Clear grid cells
-                for (let i = 0; i < this.grid.length; i++) {
-                    this.grid[i].length = 0;
-                }
+                const grid = Array.from({ length: this.cols * this.rows }, () => []);
 
                 this.particles.forEach((p) => {
                     const dxMouse = p.x - this.mouse.x;
@@ -368,18 +307,13 @@
                     const c = Math.floor(p.x / this.config.lineDistance);
                     const r = Math.floor(p.y / this.config.lineDistance);
                     if (c >= 0 && c < this.cols && r >= 0 && r < this.rows) {
-                        this.grid[c + r * this.cols].push(p);
+                        grid[c + r * this.cols].push(p);
                     }
                 });
 
-                // Reset bin counters
-                for (let b = 0; b <= 10; b++) {
-                    this.bins[b].count = 0;
-                }
-                
+                const bins = Array.from({ length: 11 }, () => new Path2D());
                 const connDistSq = this.config.lineDistance * this.config.lineDistance;
 
-                // Collect lines into bins (same binning logic as original)
                 this.particles.forEach(p1 => {
                     const c = Math.floor(p1.x / this.config.lineDistance);
                     const r = Math.floor(p1.y / this.config.lineDistance);
@@ -388,7 +322,7 @@
                         for (let oy = -1; oy <= 1; oy++) {
                             const nc = c + ox, nr = r + oy;
                             if (nc >= 0 && nc < this.cols && nr >= 0 && nr < this.rows) {
-                                const neighbors = this.grid[nc + nr * this.cols];
+                                const neighbors = grid[nc + nr * this.cols];
                                 for (let k = 0; k < neighbors.length; k++) {
                                     const p2 = neighbors[k];
                                     
@@ -402,19 +336,8 @@
                                         const dist = Math.sqrt(dSq);
                                         const binIdx = Math.floor((1 - dist / this.config.lineDistance) * 10);
                                         if (binIdx >= 0 && binIdx <= 10) {
-                                            const bin = this.bins[binIdx];
-                                            const idx = bin.count * 4;
-                                            
-                                            // Expand array if needed
-                                            if (idx + 3 >= bin.coords.length) {
-                                                bin.coords.push(p1.x | 0, p1.y | 0, p2.x | 0, p2.y | 0);
-                                            } else {
-                                                bin.coords[idx] = p1.x | 0;
-                                                bin.coords[idx + 1] = p1.y | 0;
-                                                bin.coords[idx + 2] = p2.x | 0;
-                                                bin.coords[idx + 3] = p2.y | 0;
-                                            }
-                                            bin.count++;
+                                            bins[binIdx].moveTo(p1.x | 0, p1.y | 0);
+                                            bins[binIdx].lineTo(p2.x | 0, p2.y | 0);
                                         }
                                     }
                                 }
@@ -423,33 +346,16 @@
                     }
                 });
 
-                // Draw bins (same rendering as original - varying lineWidth per bin)
                 for (let b = 0; b <= 10; b++) {
                     const alpha = (b / 10) * this.config.lineOpacity;
-                    if (alpha > 0.01 && this.bins[b].count > 0) {
+                    if (alpha > 0.01) {
                         this.ctx.lineWidth = (b / 10) * 1.5;
                         this.ctx.strokeStyle = `rgba(${color}, ${alpha})`;
-                        this.ctx.beginPath();
-                        
-                        const coords = this.bins[b].coords;
-                        const lineCount = this.bins[b].count;
-                        for (let i = 0; i < lineCount; i++) {
-                            const idx = i * 4;
-                            this.ctx.moveTo(coords[idx], coords[idx + 1]);
-                            this.ctx.lineTo(coords[idx + 2], coords[idx + 3]);
-                        }
-                        
-                        this.ctx.stroke();
+                        this.ctx.stroke(bins[b]);
                     }
                 }
 
                 requestAnimationFrame(() => this.animate());
-            }
-            
-            // Cleanup method
-            destroy() {
-                window.removeEventListener('resize', this.resizeHandler);
-                window.removeEventListener('mousemove', this.mouseMoveHandler);
             }
         }
 
@@ -459,3 +365,4 @@
             setTimeout(() => restartPlexus(), 150);
             setTimeout(() => restartLogoAnimations(), 1);
         });
+ 
