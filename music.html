@@ -416,8 +416,7 @@
             </div>
 
 
-
-      <!-- Audio player --> 
+    <!-- Audio player --> 
                         <div 
                             x-data="audioPlayer()"
                             x-init="init()"
@@ -524,7 +523,7 @@
                     </div>
 
                   <div class="mt-6 border-t border-black/5 dark:border-white/5 pt-4">
-                    <h3 class="font-mono text-sm uppercase tracking-widest opacity-50 mb-3">Tracklist</h3>
+                    <h3 class="font-mono text-sm uppercase tracking-widest opacity-50 mb-3 text-center">Tracklist</h3>
                     <div class="space-y-1 max-h-48 overflow-y-auto custom-scrollbar">
                       <template x-for="(track, index) in tracks" :key="index">
                         <div 
@@ -533,7 +532,7 @@
                           :class="{ 'bg-black/5 dark:bg-white/5': currentIndex === index }"
                         >
                           <div class="flex items-center gap-3">
-                            <span class="text-xs opacity-40 font-mono" x-text="index + 1"></span>
+                            <span class="text-xs opacity-40 font-mono tabular-nums w-6 inline-block text-left" x-text="index + 1"></span>
                             <div>
                               <p class="text-sm font-medium" :class="currentIndex === index ? 'text-black dark:text-white' : 'opacity-70'" x-text="track.title"></p>
                               <p class="text-xs opacity-50 uppercase" x-text="track.artist"></p>
@@ -550,6 +549,7 @@
                       </template>
                     </div>
                   </div>
+
 
             
 
