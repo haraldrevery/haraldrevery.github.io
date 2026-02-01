@@ -506,9 +506,9 @@ nav {
 
 
 
-
-
-
+/* ===================================
+   Hero page stuff
+   =================================== */
 #hero-logo-svg {
             max-height: 76vh;
             width: auto;
@@ -601,21 +601,45 @@ nav {
         }
 
 
+/* Fading background image */
+.hero-bg-image {
+  /* 1. Positioning */
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+
+  /* 2. The Image */
+  background-image: url('./photos/bgtexture.jpg'); 
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  
+  /* 3. Overall opacity at 10% */
+  opacity: 0.05;
+
+  /* 4. Fade out at the bottom to 0% opacity */
+  /* This starts the fade at 60% of the hero height and ends at the bottom */
+  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+
+  /* 5. Layering */
+  /* Your body background is at -50, logo is at z-50. 1 is safe. */
+  z-index: -40; 
+}
 
 
+/* Click to Scroll Prompt Animation */
+@keyframes fadeInDelayed {
+  from { opacity: 0; transform: translate(0%, 10px); }
+  to { opacity: 1; transform: translate(0%, 0); }
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
+#scroll-prompt {
+  animation: fadeInDelayed 1.5s ease-out forwards;
+  animation-delay: 3.7s; /* 3500ms delay */
+}
 
 
 
@@ -693,49 +717,6 @@ nav {
 
 
         
-/* Click to Scroll Prompt Animation */
-@keyframes fadeInDelayed {
-  from { opacity: 0; transform: translate(0%, 10px); }
-  to { opacity: 1; transform: translate(0%, 0); }
-}
-
-#scroll-prompt {
-  animation: fadeInDelayed 1.5s ease-out forwards;
-  animation-delay: 3.7s; /* 3500ms delay */
-}
-
-
-
-
-
-/* Fading background image */
-.hero-bg-image {
-  /* 1. Positioning */
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-
-  /* 2. The Image */
-  background-image: url('./photos/bgtexture.jpg'); 
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  
-  /* 3. Overall opacity at 10% */
-  opacity: 0.05;
-
-  /* 4. Fade out at the bottom to 0% opacity */
-  /* This starts the fade at 60% of the hero height and ends at the bottom */
-  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-
-  /* 5. Layering */
-  /* Your body background is at -50, logo is at z-50. 1 is safe. */
-  z-index: -40; 
-}
-
 
 
 
@@ -763,8 +744,6 @@ nav {
   white-space: pre;           /* Preserves the space if you have them inside spans */
 
 }
-
-
 
 @keyframes fadeUpWord {
   to {
@@ -797,6 +776,7 @@ nav {
 
 
 
+  
 
 
 

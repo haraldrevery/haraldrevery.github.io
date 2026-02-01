@@ -3,41 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <link rel="stylesheet" href="main.css"> 
     <title>Harald Revery - Official Website</title>
     <meta name="description" content="Harald Revery | From the Scandinavian forest and mountains onto the EDM stage. Explore the world of electronic music, festival, melodic house, and techno.">
     <meta name="keywords" content="harald, revery, edm, dj, electronic music, festival house, techno, mainstage, producer, music artist">
-    
-        <!-- MINIMAL Critical CSS - Only structure, NO colors/fonts that override main.css -->
-    <style>
-        /* Absolute minimum - just prevent layout shift */
-        *,::before,::after{box-sizing:border-box}
-        body{margin:0}
-        
-        /* ONLY structural navbar styles - main.css will handle colors/fonts */
-        .navi_mechanic{
-            position:fixed;
-            top:0;
-            left:0;
-            right:0;
-            z-index:200;
-            backdrop-filter:blur(16px);
-            -webkit-backdrop-filter:blur(16px);
-        }
-        
-        /* Prevent FOUC - hide navbar until CSS loads */
-        @supports not (animation-timeline: scroll()){
-            .navi_mechanic.js-animated-nav{
-                transform:translateY(-110%);
-                opacity:0;
-                transition:transform 0.3s cubic-bezier(0.23,1,0.32,1),opacity 0.3s ease;
-            }
-        }
-    </style>
-    
-    <!-- Load main.css asynchronously with fallback -->
-    <link rel="preload" href="main.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="main.css"></noscript>
 
     <!-- Preload LCP image (page load optimization) -->
     <link rel="preload" as="image" href="/photos/bgtexture.jpg" fetchpriority="high">
@@ -417,7 +386,7 @@
                     style="--delay: 0.1s"
                     data-gallery="photos">
                     <div class="overlay"></div>
-                    <img src="./photos/audioplayer_texture3_min.webp" alt="Harald Revery logo behind mountain Matterhorn" class="w-full h-full object-cover">
+                    <img src="./photos/audioplayer_texture3_min.jpg" alt="Harald Revery logo behind mountain Matterhorn" class="w-full h-full object-cover">
                   </a>
 
                 </div>
@@ -454,6 +423,11 @@
 
 
 
+
+
+
+
+
 <footer class="py-16">
   <div class="max-w-screen-xl mx-auto px-4">
     <div class="flex flex-col items-center text-center space-y-4">
@@ -473,7 +447,10 @@
         <span class="text-gray-400">|</span>
         <a href="./contact.html" class="hover:opacity-50 transition-opacity">Contact</a>
         <span class="text-gray-400">|</span>
+        <a href="./download.html" class="hover:opacity-50 transition-opacity">Download</a>        
+        <span class="text-gray-400">|</span>
         <a href="./legal.html" class="hover:opacity-50 transition-opacity">Legal</a>
+
       </div>
 
       <div class="mt-2 flex justify-center items-center gap-6 text-gray-600 dark:text-gray-300">
@@ -541,7 +518,6 @@
 
     </div>
   </div>
-</footer>
 
 
 
@@ -560,7 +536,7 @@
 
 
 <!-- Navigation bar reveal when scrolling down (for firefox and iOS < 15.4)) -->
-<script src="./javascript/navbar_scroll_min.js" defer></script>
+<script src="./javascript/navbar_scroll_min.js"></script>
 
 
 
@@ -610,8 +586,4 @@
 }
 </script>
 
-
 </html>
-
-
-
