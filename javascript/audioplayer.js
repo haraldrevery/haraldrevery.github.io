@@ -58,7 +58,7 @@ function audioPlayer() {
       {
         title: "Isolated",
         artist: "Harald Revery",
-        url: "./music/Harald_Revery_Isolated.mp3",
+        url: "./music/Harald_Revery_-_Isolated.mp3",
         color1: "#f9f9f9",
         color2: "#3f535e",
         btnColor: "bg-gradient-to-br from-white to-sky-400"
@@ -66,7 +66,7 @@ function audioPlayer() {
       {
         title: "Mystery Card",
         artist: "Harald Revery",
-        url: "./music/Harald_Revery_MysteryCard.mp3",
+        url: "./music/Harald_Revery_-_Mystery_Card.mp3",
         color1: "#a8aebd",
         color2: "#e5e9ec",
         btnColor: "bg-gradient-to-br from-white to-sky-400"
