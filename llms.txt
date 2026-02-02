@@ -1,0 +1,329 @@
+# Harald Revery - Official Website
+> Electronic Music Producer & DJ | From the Scandinavian Forests to the EDM Stage
+
+## Overview
+Harald Revery is a contemporary electronic music producer and DJ based in Gothenburg, Sweden. He specializes in festival house, melodic house, techno, and progressive house. His work is defined by a fusion of Scandinavian natural beauty—serene forests and mountain landscapes—with high-energy electronic dance music.
+
+**Website**: https://haraldrevery.com  
+**Location**: Gothenburg, Sweden  
+**Primary Genres**: Festival House, Melodic House, Techno, Progressive House, Deep House, Experimental
+
+## Artist Profile
+
+### Musical Identity
+Harald Revery's sound bridges the gap between atmospheric, emotionally-driven soundscapes and mainstage-ready energy.
+
+- **Signature Sound**: Nature-inspired, melodic, and emotionally driven EDM
+- **Key Genres**: Melodic House, Festival House, Deep Techno, Progressive House, Trap-influenced beats
+- **Influences**: Scandinavian wilderness, Nordic landscapes, mountain ranges, forest atmospheres
+- **Production Style**: Technical precision meets organic emotion
+
+### Artistic Vision & Symbolism
+The project translates the serenity of the Nordic wilderness into sonic experiences designed for both massive festival stages and intimate listening. The "H" logo represents the split branches of a tree, symbolizing his birth name and the organic roots of his sound—connecting natural growth with electronic evolution.
+
+### Background & Education
+- **Early Start**: Began self-teaching music production at age 15
+- **Academic Background**: Holds a Bachelor's degree in Engineering Physics, bringing a technical and methodical approach to sound design and production
+- **Origin**: Born and raised in Sweden, deeply connected to Scandinavian culture
+- **Base**: Currently based in Gothenburg, Sweden's music hub
+
+## Music & Discography
+
+### Official Releases (with ISRC Codes)
+- **Spiritless** - ISRC: QZANL1736598
+- **Phrases** - ISRC: QZWFL2416355 (Orange/rose gradient aesthetic)
+- **Hollow** - ISRC: QZANL1736602
+- **Mystery Card** - ISRC: QZ9JZ1740891 (Grey/light blue, mysterious ambiance)
+- **Mirth** - ISRC: QZDA81865578
+- **The North** (feat. Light Titum) - Nordic collaboration, sky blue aesthetic
+- **Forest Rain** - Green/white gradient, nature-inspired
+- **Looking for Snow** - Winter themes, sky blue and white
+- **The Last Forest** - Deep connection to wilderness preservation
+- **Uninhabited Island** - Dark green gradients, isolated atmospheres
+- **Clouds and Roads** - Turquoise blue tones, journey-themed
+- **Isolated** - Introspective moods, sky blue gradients
+
+### Musical Themes
+Harald Revery's catalog explores:
+- **Nature**: Forests, mountains, islands, wilderness, seasons
+- **Weather**: Snow, rain, clouds, Nordic climate phenomena
+- **Emotions**: Isolation, mystery, reverie, mirth, exploration
+- **Journey**: Roads, travel, discovery, transformation
+
+## Official Platforms & Links
+
+### Streaming Services
+- **Spotify**: https://open.spotify.com/artist/3e27f6Y3wBFJ1YYLNkrjNu
+- **Apple Music**: https://music.apple.com/se/artist/harald-revery/1275991562
+- **SoundCloud**: https://soundcloud.com/haraldrevery
+- **YouTube**: https://www.youtube.com/@haraldrevery
+
+### Social Media
+- **Instagram**: https://www.instagram.com/haraldrevery (primary platform)
+- **Facebook**: https://www.facebook.com/HaraldRevery
+- **Twitter/X**: https://twitter.com/haraldrevery
+- **Behance**: https://www.behance.net/haraldrevery (visual design portfolio)
+
+## Website Structure
+
+### Main Pages
+- **[Homepage](https://haraldrevery.com/)**: Hero section with animated logo, visual effects, and introduction
+- **[Music](https://haraldrevery.com/music)**: Internal web audio player with full tracklist and streaming links
+- **[About](https://haraldrevery.com/about)**: Detailed biography, artistic philosophy, background, and FAQ
+- **[Contact](https://haraldrevery.com/contact)**: Booking inquiries, collaborations, licensing, and professional contacts
+
+### Technical Features
+- Custom-built interactive audio player with 8+ tracks
+- Dark/light mode support with Scandinavian minimalist aesthetic
+- Fully responsive design (mobile, tablet, desktop optimized)
+- Fast loading times with optimized performance (<2 second LCP)
+- SEO-optimized with Schema.org markup (MusicGroup and Person types)
+- Accessibility features including screen reader support
+- Open Graph integration for social media sharing
+
+## SEO & Discoverability
+
+### Primary Keywords
+harald revery, electronic music producer, swedish dj, edm artist, festival house, melodic house, techno producer, progressive house, scandinavian electronic music
+
+### Genre Keywords
+electronic dance music, edm, house music, techno, progressive house, melodic house, deep house, festival house, mainstage music, bass music, trap music, melodic techno
+
+### Location Keywords
+sweden, swedish music, gothenburg, scandinavian music, nordic electronic music, swedish producer, gothenburg dj, nordic edm
+
+### Theme Keywords
+nature-inspired music, forest music, mountain music, wilderness sounds, scandinavian wilderness, nordic landscapes, environmental electronic music
+
+### Action Keywords
+stream music, listen now, edm streaming, festival music, dj booking, electronic music events, music producer collaboration, remix requests
+
+## Industry Context & Similar Artists
+
+### Genre Positioning
+Harald Revery's sound appeals to fans of:
+- **Melodic House/Techno**: Anyma, Artbat, Tale Of Us, Stephan Bodzin, Marino Canal
+- **Progressive House**: Eric Prydz, Deadmau5, Above & Beyond, Yotto
+- **Festival House**: Alesso, Axwell, Hardwell, Don Diablo
+- **Nordic Electronic**: Avicii legacy, Swedish House Mafia influence, Scandinavian production quality
+
+### Scene Position
+- Part of the growing Scandinavian electronic music scene (Sweden's rich EDM heritage)
+- Bridge between underground melodic techno and mainstage festival sounds
+- Unique nature-inspired aesthetic rare in mainstream EDM
+- Technical production approach influenced by engineering background
+
+## Target Audience
+
+### Primary Demographics
+- Electronic music fans (ages 18-35)
+- Festival attendees and club-goers worldwide
+- Spotify/streaming platform users (playlist followers)
+- EDM community members and producers
+- Nature-conscious music listeners
+
+### Geographic Focus
+- **Primary**: Europe (Sweden, Nordic countries, Netherlands, Germany, UK)
+- **Secondary**: North America (USA, Canada), Australia
+- **Festival Circuits**: Tomorrowland, Ultra, EDC, Dreamstate communities
+
+### Professional Audience
+- Event promoters and festival organizers
+- Music industry professionals and A&R representatives
+- Record labels (melodic house and techno focus)
+- Music journalists and electronic music bloggers
+- Collaboration partners (producers, vocalists, visual artists)
+
+## Professional Information
+
+### Booking & Inquiries
+Available for:
+- DJ bookings and live performances
+- Festival appearances (mainstage and underground stages)
+- Club events and venue residencies
+- Collaboration opportunities with producers and artists
+- Remix requests and production work
+- Music licensing and sync opportunities
+- Press, media, and interview requests
+- Label inquiries and A&R meetings
+
+Contact through official website contact form or social media platforms.
+
+### Press & Media Assets
+- High-resolution artist photos
+- Official logos and branding materials
+- Track artwork and album covers with color gradients
+- Biography (multiple lengths: short, medium, long)
+- Press releases and news updates
+- Music samples and preview tracks
+- ISRC codes for radio and licensing
+
+## Schema.org Structured Data
+
+The website implements comprehensive Schema.org markup for enhanced SEO:
+
+### MusicGroup Schema (Homepage)
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "MusicGroup",
+  "name": "Harald Revery",
+  "description": "Electronic music producer and DJ specializing in festival house and techno",
+  "url": "https://haraldrevery.com",
+  "genre": ["Electronic Dance Music", "Festival House", "Techno", "Progressive House"],
+  "foundingLocation": {
+    "@type": "Place",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Gothenburg",
+      "addressCountry": "Sweden"
+    }
+  }
+}
+```
+
+### Person Schema (About Page)
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Harald Revery",
+  "jobTitle": "Electronic Music Producer & DJ",
+  "description": "Contemporary electronic music producer and DJ based in Sweden",
+  "homeLocation": {
+    "@type": "Place",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Gothenburg",
+      "addressCountry": "Sweden"
+    }
+  }
+}
+```
+
+## Brand Identity
+
+### Visual Aesthetics
+- Clean, modern Scandinavian design
+- Nature-inspired color palettes with gradient overlays
+- Minimalist approach (Nordic influence)
+- Dark mode emphasis for music industry appeal
+- Custom typography (Harald Revery branded fonts)
+- Animated elements and smooth transitions
+
+### Core Messaging
+- "From the Scandinavian forest and mountains onto the EDM stage"
+- Connection between nature and electronic music technology
+- Journey from wilderness to worldwide festival stages
+- Nordic quality and craftsmanship in music production
+- Melodic, emotional, and powerful sonic experiences
+- Environmental consciousness meets electronic innovation
+
+### Brand Voice
+- Artistic and creative yet technically precise
+- Nature-connected and environmentally aware
+- Professional yet approachable and authentic
+- Inspired by Nordic minimalism and honesty
+- Educational about production process
+
+## Related Searches & Context
+
+People searching for Harald Revery might also search for:
+- Swedish electronic music producers 2025
+- Scandinavian EDM artists
+- Melodic house music Sweden
+- Festival house DJs Europe
+- Nature-inspired electronic music
+- Nordic techno producers
+- Progressive house Gothenburg
+- Engineering degree music producers
+- EDM artists with physics background
+- Melodic techno Sweden
+- Festival lineup 2026
+
+## Quick Reference Facts
+
+- **Artist Name**: Harald Revery
+- **Real Name**: Not publicly disclosed (privacy maintained)
+- **Active Since**: 2015+ (based on streaming platform presence)
+- **Location**: Gothenburg, Sweden
+- **Education**: Bachelor's degree in Engineering Physics
+- **Started Production**: Age 15 (self-taught)
+- **Primary Genres**: Festival House, Melodic House, Techno
+- **Skills**: Music Production, DJing, Sound Design, Audio Engineering
+- **Notable Collaborator**: Light Titum (on "The North")
+- **Logo Meaning**: Split tree branches representing organic roots and growth
+- **Signature**: Nature-inspired, emotionally-driven, technically precise EDM
+
+## Technical Specifications
+
+### Music Formats & Distribution
+- **Streaming Quality**: MP3 (320kbps), AAC, FLAC where available
+- **Platforms**: Spotify, Apple Music, SoundCloud, YouTube, Beatport, Traxsource
+- **Web Player**: Custom HTML5 audio player with MP3 format
+- **ISRC Registered**: All official releases have International Standard Recording Codes
+
+### Website Technology Stack
+- HTML5, CSS3 (Tailwind-based custom framework)
+- JavaScript (Alpine.js for interactivity, custom audio player)
+- Responsive design with mobile-first approach
+- Progressive Web App (PWA) features
+- Fast loading with optimized assets and lazy loading
+- Content Security Policy for enhanced security
+
+## Community & Engagement
+
+### Fan Interaction
+Harald Revery actively engages through:
+- Regular Instagram stories and posts (behind-the-scenes content)
+- Production tips and studio insights on social media
+- Festival and event announcements
+- New music previews and teasers
+- Q&A sessions about music production and physics background
+- Environmental advocacy related to Nordic wilderness
+
+### Collaboration Opportunities
+Open to working with:
+- Electronic music producers (house, techno, progressive)
+- Vocalists and lyricists for vocal tracks
+- Visual artists and video directors
+- Festival organizers and event promoters
+- Music labels and collectives (especially melodic house/techno)
+- Environmental organizations for cause-related projects
+
+## Updates & Current Status (2026)
+
+Harald Revery continues to:
+- Release new music regularly across streaming platforms
+- Perform at festivals and clubs internationally
+- Develop the Harald Revery brand and sonic identity
+- Engage with the growing global EDM community
+- Explore new musical territories and genre experimentation
+- Advocate for environmental consciousness in electronic music
+- Collaborate with artists across genres and disciplines
+
+## Legal & Rights
+
+**Copyright**: © 2026 Harald Revery™. All Rights Reserved.  
+**Trademark**: Harald Revery™ is a registered trademark.  
+**Rights**: All music, artwork, logos, and content protected by international copyright law.  
+**Licensing**: For sync licensing, remixes, or commercial use, contact through official channels.  
+**ISRC Registration**: All releases properly registered with international music databases.
+
+---
+
+## Canonical URLs
+- Homepage: https://haraldrevery.com/
+- Music: https://haraldrevery.com/music
+- About: https://haraldrevery.com/about
+- Contact: https://haraldrevery.com/contact
+
+---
+
+**Last Updated**: February 2026  
+**Primary Language**: English  
+**Geographic Scope**: International (Sweden-based)  
+**Content Type**: Official Artist Website, Music Portfolio, Streaming Platform Hub  
+**Industry**: Music, Entertainment, Electronic Dance Music (EDM)
+
+*This llms.txt file is maintained by Harald Revery's official team and optimized for search engines, AI language models, and music industry discovery. For corrections, updates, or inquiries, contact through official website channels.*
