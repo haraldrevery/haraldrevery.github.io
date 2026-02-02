@@ -34,7 +34,6 @@
             }
         }
     </style>
-
     
     <!-- Load main.css asynchronously with fallback -->
     <link rel="preload" href="main.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -56,11 +55,10 @@
      <!-- test CSP -->
     <meta http-equiv="Content-Security-Policy" 
       content="default-src 'self'; 
-               script-src 'self'; 
-               style-src 'self'; 
-               font-src 'self' data:;
-               img-src 'self' data: https:;
-               media-src 'self' data:;">
+               style-src 'self' 'unsafe-inline'; 
+               font-src 'self' data:; 
+               img-src 'self' data:; 
+               script-src 'self' 'unsafe-inline';">
 
     <!-- Internet icon -->
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
@@ -621,5 +619,3 @@
 
 
 </html>
-
-
