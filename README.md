@@ -25,9 +25,12 @@ Personal setup for this project:
 * Tailwind CSS v4.1.18  (tailwindcss-windows-x64.exe renamed to tw.exe)
 
 Then I just run:
+
+```
 .\tw.exe -i input.css -o main.css --watch --content "./*.html"
 or 
 .\tw.exe -i input.css -o main.css --content "./*.html" --minify
+```
 
 ---
 
