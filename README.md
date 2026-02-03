@@ -28,10 +28,18 @@ Then I just run:
 
 ```
 .\tw.exe -i input.css -o main.css --watch --content "./*.html"
-or 
+.\tw.exe -i input_prose.css -o prose.css --watch --content "./*.html"
+
 .\tw.exe -i input.css -o main.css --content "./*.html" --minify
+.\tw.exe -i input_prose.css -o prose.css --content "./*.html" --minify
 ```
 
+On  Linux:
+```
+chmod +x ./tw
+./tw -i input.css -o main.css --watch --content "./*.html"
+./tw -i input.css -o main.css --content "./*.html" --minify
+```
 ---
 
 There is also some python code here, but that is only to generate som background svg's, to create the "topology map" to give the website some texture. 
