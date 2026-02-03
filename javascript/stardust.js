@@ -11,7 +11,6 @@ const ambientCount = 5000;
 const mouse = { x: -1000, y: -1000, active: false, lastMove: Date.now() };
 let width, height, centerX, centerY;
 let perspective = 750;
-
 // Lifecycle constants
 const CYCLE_DURATION = 25000; // 25 seconds
 const DISPERSE_START = 15000; 
@@ -556,3 +555,4 @@ function setup() {
 }
 
 setup();
+
