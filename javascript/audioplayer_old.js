@@ -15,7 +15,7 @@ function audioPlayer() {
       {
         title: "Phrases",
         artist: "Harald Revery",
-        url: "./music/Harald_Revery_-_Phrases.mp3",
+        url: "./music/mp3/Harald_Revery_-_Phrases.mp3",
         color1: "#f97316",
         color2: "#e11d48",
         btnColor: "bg-gradient-to-br from-orange-500 to-rose-600"
@@ -23,7 +23,7 @@ function audioPlayer() {
       {
         title: "Forest Rain",
         artist: "Harald Revery",
-        url: "./music/Harald_Revery_-_Forest_Rain.mp3",
+        url: "./music/mp3/Harald_Revery_-_Forest_Rain.mp3",
         color1: "#8f9c4b",
         color2: "#f9f9f9",
         btnColor: "bg-gradient-to-br from-white via-green-100 to-green-500"
@@ -31,7 +31,7 @@ function audioPlayer() {
       {
         title: "Looking for Snow",
         artist: "Harald Revery",
-        url: "./music/Harald_Revery_-_Looking_For_Snow.mp3",
+        url: "./music/mp3/Harald_Revery_-_Looking_For_Snow.mp3",
         color1: "#3f535e",
         color2: "#f9f9f9",
         btnColor: "bg-gradient-to-br from-white to-sky-400"
@@ -39,7 +39,7 @@ function audioPlayer() {
       {
         title: "Uninhabited Island",
         artist: "Harald Revery",
-        url: "./music/Harald_Revery_-_Uninhabited_Island.mp3",
+        url: "./music/mp3/Harald_Revery_-_Uninhabited_Island.mp3",
         color1: "#090c10",
         color2: "#2d965c",
         btnColor: "bg-gradient-to-br from-[#090c10] to-[#2d965c]"
@@ -47,7 +47,7 @@ function audioPlayer() {
       {
         title: "Clouds and Roads",
         artist: "Harald Revery",
-        url: "./music/Harald_Revery_-_Clouds_and_Roads.mp3",
+        url: "./music/mp3/Harald_Revery_-_Clouds_and_Roads.mp3",
         color1: "#24a4b9",
         color2: "#036e7f",
         btnColor: "bg-gradient-to-br from-[#24a4b9] to-[#036e7f]"
@@ -55,7 +55,7 @@ function audioPlayer() {
       {
         title: "Isolated",
         artist: "Harald Revery",
-        url: "./music/Harald_Revery_-_Isolated.mp3",
+        url: "./music/mp3/Harald_Revery_-_Isolated.mp3",
         color1: "#f9f9f9",
         color2: "#3f535e",
         btnColor: "bg-gradient-to-br from-white to-sky-400"
@@ -63,7 +63,7 @@ function audioPlayer() {
        {
         title: "Mystery Card",
         artist: "Harald Revery",
-        url: "./music/Harald_Revery_-_Mystery_Card.mp3",
+        url: "./music/mp3/Harald_Revery_-_Mystery_Card.mp3",
         color1: "#a8aebd",
         color2: "#e5e9ec",
         btnColor: "bg-gradient-to-br from-white to-sky-400"
@@ -71,7 +71,7 @@ function audioPlayer() {
        {
         title: "The North",
         artist: "Harald Revery & Light Titum",
-        url: "./music/Harald_Revery_and_Light_Titum_-_The_North.mp3",
+        url: "./music/mp3/Harald_Revery_and_Light_Titum_-_The_North.mp3",
         color1: "#f9f9f9",
         color2: "#3f535e",
         btnColor: "bg-gradient-to-br from-white to-sky-400"
