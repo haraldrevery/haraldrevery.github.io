@@ -1,0 +1,51 @@
+<div class="scroll-sentinel absolute top-0 h-[50vh] w-full pointer-events-none"></div>
+<nav class="main-nav fixed top-0 inset-x-0 z-[200] backdrop-blur-xl
+            border-zinc-200 bg-white/80 
+            dark:border-white/10 dark:bg-neutral-950/90">
+    
+    <div class="page-container nav-desktop:h-13 h-18 flex items-center justify-between relative">
+        <a href="/index.html" class="flex items-center group z-[250] translate-y-[14%]">
+            <svg class="mr-4 fill-current h-[0.96em] w-auto text-neutral-900 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors -translate-y-[24%]" 
+                viewBox="0 0 1080 1080">
+                <path d="M477.9,730c-31.9-13.7-62.4-30.2-91-49.1c-33.4-22-64.5-47.4-92.6-75.7c-32.8-32.9-61.8-69.7-86.1-109.7 C160,416.5,130.1,325,124.3,227C171.2,144.6,246,80,335.8,46c-34.2,56.8-57.7,120.8-67.8,189.2c-3.7,24.8-5.6,50.1-5.6,75.8 c0,109.4,34.1,210.9,92.3,294.3c10,14.4,20.8,28.2,32.2,41.4C413.8,678,444.4,706,477.9,730z"/>
+                <path d="M546.2,737.8c-151.9-82.1-255.1-242.9-255.1-427.7c0-43.2,5.6-85.1,16.2-124.9C366.7,121.4,447.5,78,538.4,66.4 C454.6,151.9,403,269,403,398.2c0,53.9,9,105.7,25.5,153.9c6.3,18.3,13.6,36,22,53.2C474.6,654.9,507.1,699.7,546.2,737.8z"/>
+                <path d="M386.9,717.3v317.8H253.3V607.2C292.4,649.9,337.3,687,386.9,717.3z"/>
+                <path d="M956.1,98.2v936.8H839.9V605.3H485c-19.2-36-33.5-75.1-42.1-116.2h397V98.2H956.1z"/>
+            </svg>
+            <span class="text-neutral-900 dark:text-white font-mono text-nav tracking-[0.2em] md:tracking-[0.3em] uppercase leading-none group-hover:text-neutral-500 dark:group-hover:text-neutral-300">Harald Revery</span>
+        </a>
+
+        <div class="hidden nav-desktop:flex items-center gap-5 font-mono text-[1.2rem] uppercase tracking-[0.18em] text-neutral-500  dark:text-neutral-400 translate-y-[10%]">
+            <a href="/index.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Home</a>
+            <a href="/music.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Music</a>
+            <a href="/about.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">About</a>
+            <a href="/notebook.html" class="{% if page.url.startsWith('/notebook') %}text-neutral-800 dark:text-neutral-100{% else %}hover:text-neutral-800 dark:hover:text-neutral-100{% endif %} transition-colors">Notebook</a>            
+            <a href="/contact.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Contact</a>
+        </div>
+
+        <input type="checkbox" id="mobile-menu-toggle" class="hidden peer">
+
+        <label for="mobile-menu-toggle" class="nav-desktop:hidden z-[250] cursor-pointer p-4 -mr-4 group select-none translate-y-[6%]">
+        <span class="menu-icon-text">
+            <span class="icon-menu font-mono text-2xl text-neutral-900 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors">E</span>
+            <span class="icon-close font-mono text-2xl text-neutral-900 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors">X</span>
+        </span>
+        </label>
+
+        <div class="fixed inset-0 flex items-center justify-center min-h-screen w-screen z-[210] opacity-0 pointer-events-none -translate-y-full
+            bg-white/98 dark:bg-neutral-950/98 backdrop-blur-3xl 
+            peer-checked:opacity-100 peer-checked:pointer-events-auto peer-checked:translate-y-0 
+            transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]">
+            
+            <div class="page-container h-full flex flex-col justify-center">
+                <nav class="main-nav flex flex-col pt-42 py-10 text-center gap-10 text-neutral-900 dark:text-white font-mono text-xl uppercase tracking-[0.3em]">
+                    <a href="/index.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Home</a>
+                    <a href="/music.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Music</a>
+                    <a href="/about.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">About</a>
+                    <a href="/notebook.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Contact</a>
+                    <a href="/notebook/" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Notebook</a>  
+                </nav>
+            </div>
+        </div>
+    </div>
+</nav>

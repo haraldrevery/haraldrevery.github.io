@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/main.css"> 
+    <link rel="stylesheet" href="/prose.css">
+    
+    <title>Harald Revery - {{ title }}</title>
+    
+    {# SEO Meta Description #}
+    {% if description %}
+    <meta name="description" content="{{ description }}">
+    {% endif %}
+
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
+    <link rel="shortcut icon" href="/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#171717">
+        
+    {# Canonical URL #}
+    <link rel="canonical" href="https://haraldrevery.com{{ page.url }}">
+    
+    <link rel="preload" href="/fonts/HaraldReveryTextFont.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/HaraldReveryMonoFont.woff2" as="font" type="font/woff2" crossorigin>
+
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
+    <link rel="shortcut icon" href="/favicon.ico" sizes="any">
+    
+    {# Open Graph Meta Tags #}
+    <meta property="og:title" content="{{ title }} - Harald Revery" />
+    <meta property="og:url" content="https://haraldrevery.com{{ page.url }}" />
+    <meta property="og:type" content="article" />
+    {% if description %}
+    <meta property="og:description" content="{{ description }}" />
+    {% endif %}
+    {% if image %}
+    <meta property="og:image" content="https://haraldrevery.com{{ image }}" />
+    {% else %}
+    <meta property="og:image" content="https://haraldrevery.com/opengraphimg.jpg" />
+    {% endif %}
+    
+    {# Schema.org Structured Data for Articles #}
+    {% if layout == "post.njk" or date %}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "{{ title }}",
+      "author": {
+        "@type": "Person",
+        "name": "Harald Revery"
+      },
+      "datePublished": "{{ date.toISOString() }}",
+      "dateModified": "{{ date.toISOString() }}"{% if description %},
+      "description": "{{ description }}"{% endif %}{% if image %},
+      "image": "https://haraldrevery.com{{ image }}"{% else %},
+      "image": "https://haraldrevery.com/opengraphimg.jpg"{% endif %}
+    }
+    </script>
+    {% endif %}
+</head>
+
+<body class="min-h-screen text-zinc-900 dark:text-white">
+
+{% include "nav.njk" %}
+
+<div class="bg-topology-map"> 
+
+    {{ content | safe }}
+
+
+
+
+
+
+
+{% include "footer.njk" %}
+
+</div>
+
+<script src="/javascript/glightbox.min.js" defer></script>
+<script src="/javascript/glightbox_settings_min.js" defer></script>
+<script src="/javascript/alpine.min.js" defer></script>
+
+</body>
+</html>
