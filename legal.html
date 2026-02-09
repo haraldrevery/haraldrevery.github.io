@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="main.css"> 
-    <title>Harald Revery - Legal</title>
+    <title>Harald Revery - Privacy Policy</title>
 
     <!-- Preload LCP image (page load optimization) -->
     <link rel="preload" href="fonts/HaraldReveryTextFont.woff2" as="font" type="font/woff2" crossorigin>
@@ -17,7 +17,14 @@
                style-src 'self' 'unsafe-inline'; 
                font-src 'self' data:;
                media-src 'self' data:;">
-
+               
+    <!-- Internet icon -->
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
+    <link rel="shortcut icon" href="/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#171717">
 </head>
 
 <body class="min-h-screen text-zinc-900 dark:text-white">
@@ -28,7 +35,7 @@
             dark:border-white/10 dark:bg-neutral-950/90">
     
     <div class="page-container nav-desktop:h-13 h-18 flex items-center justify-between relative">
-        <a href="index.html" class="flex items-center group z-[250] translate-y-[14%]">
+        <a href="/index.html" class="flex items-center group z-[250] translate-y-[14%]">
             <svg class="mr-4 fill-current h-[0.96em] w-auto text-neutral-900 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors -translate-y-[24%]" 
                 viewBox="0 0 1080 1080">
                 <path d="M477.9,730c-31.9-13.7-62.4-30.2-91-49.1c-33.4-22-64.5-47.4-92.6-75.7c-32.8-32.9-61.8-69.7-86.1-109.7 C160,416.5,130.1,325,124.3,227C171.2,144.6,246,80,335.8,46c-34.2,56.8-57.7,120.8-67.8,189.2c-3.7,24.8-5.6,50.1-5.6,75.8 c0,109.4,34.1,210.9,92.3,294.3c10,14.4,20.8,28.2,32.2,41.4C413.8,678,444.4,706,477.9,730z"/>
@@ -39,11 +46,13 @@
             <span class="text-neutral-900 dark:text-white font-mono text-nav tracking-[0.2em] md:tracking-[0.3em] uppercase leading-none group-hover:text-neutral-500 dark:group-hover:text-neutral-300">Harald Revery</span>
         </a>
 
-        <div class="hidden nav-desktop:flex items-center gap-6 font-mono text-[1.2rem] uppercase tracking-[0.18em] text-neutral-500  dark:text-neutral-400 translate-y-[10%]">
-            <a href="index.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Home</a>
-            <a href="music.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Music</a>
-            <a href="about.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">About</a>
-            <a href="contact.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Contact</a>
+        <div class="hidden nav-desktop:flex items-center gap-5 font-mono text-[1.2rem] uppercase tracking-[0.18em] text-neutral-500  dark:text-neutral-400 translate-y-[10%]">
+            <a href="/index.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Home</a>
+            <a href="/music.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Music</a>
+            <a href="/about.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">About</a>
+            <a href="/notebook.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Notebook</a>            
+            <a href="/contact.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Contact</a>
+
         </div>
 
         <input type="checkbox" id="mobile-menu-toggle" class="hidden peer">
@@ -63,10 +72,11 @@
             
             <div class="page-container h-full flex flex-col justify-center">
                 <nav class="main-nav flex flex-col pt-42 py-10 text-center gap-10 text-neutral-900 dark:text-white font-mono text-xl uppercase tracking-[0.3em]">
-                    <a href="index.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Home</a>
-                    <a href="music.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Music</a>
-                    <a href="about.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors ">About</a>
-                    <a href="contact.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Contact</a>
+                    <a href="/index.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Home</a>
+                    <a href="/music.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Music</a>
+                    <a href="/about.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors ">About</a>
+                    <a href="/contact.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Contact</a>
+                    <a href="/notebook.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Notebook</a> 
                 </nav>
             </div>
         </div>
@@ -95,7 +105,7 @@
         <strong>Site Owner:</strong> Harald Mark Thirslund<br>
         <strong>Trading As:</strong> Harald Revery™<br>
         <strong>Location:</strong> Gothenburg, Sweden<br>
-        <strong>Contact:</strong> <a href="contact.html" class="underline hover:opacity-75 transition">Contact Page</a> or <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="40232f2e3421233400282132212c243225362532396e232f2d">[email&#160;protected]</a>
+        <strong>Contact:</strong> <a href="contact.html" class="underline hover:opacity-75 transition">Contact Page</a> or <a href="mailto:contact@haraldrevery.com">contact@haraldrevery.com</a></a>
       </p>
     </section>
 
@@ -246,7 +256,7 @@
   <h4 class="font-bold mt-6 mb-3 text-lg">4.4 Music Streaming & Usage Rights</h4>
   <p>The music available on this website is provided for <strong>personal, non-commercial streaming only</strong>. By accessing the audio player and streaming music on this site, you agree to the following:</p>
   <ul class="list-disc ml-5 space-y-2 mt-3">
-    <li><strong>No Downloading or Redistribution:</strong> You may not download, extract, copy, redistribute, or share the audio files made available through the streaming player. The music is intended solely for online listening through the website's interface.</li>
+    <li><strong>No Downloading or Redistribution:</strong> You may not download, extract, copy, redistribute, or share the audio files made available through the streaming player. The music is intended solely for online listening through the website's interface. Specific assets provided in the 'Download' section of this website are exempt from the no-downloading rule but remain subject to the individual license provided with the file (Personal Use).</li>
     <li><strong>No Commercial Use:</strong> You may not use the music streamed on this website for any commercial purpose, including but not limited to: advertising, public performances, film/video production, or any revenue-generating activity, without obtaining explicit written permission and proper licensing from Harald Mark Thirslund.</li>
     <li><strong>Personal Use Only:</strong> The streaming service is provided for your personal enjoyment. You may not publicly broadcast, perform, or display the music to audiences.</li>
     <li><strong>Technical Limitations:</strong> The website's audio player is provided as a convenience for promotional and demonstration purposes. We do not guarantee uninterrupted access to streaming services, compatibility with all devices or browsers, or any specific audio quality.</li>
@@ -300,6 +310,163 @@
       <p class="mt-3">In the event of severability, the parties agree that the court should endeavor to give effect to the parties' intentions as reflected in the provision, and that the other provisions of this agreement shall remain in full force and effect.</p>
     </section>
 
+
+
+
+
+
+<section>
+  <h3>9. Blog Content, Reviews & Editorial Disclaimer</h3>
+  
+  <h4 class="font-bold mt-6 mb-3 text-lg">9.1 Nature of Content</h4>
+  <p>The blog content published on this website ("Notebook") consists of personal opinions, reviews, recommendations, commentary, and editorial content created by Harald Mark Thirslund. All blog posts, articles, and written content represent the author's personal views and experiences at the time of publication and should not be construed as:</p>
+  <ul class="list-disc ml-5 space-y-2 mt-3">
+    <li>Professional advice (legal, financial, medical, technical, or otherwise)</li>
+    <li>Expert recommendations or endorsements</li>
+    <li>Factual statements verified to journalistic standards</li>
+    <li>Objective or impartial analysis</li>
+    <li>Official positions or statements on behalf of any organization, company, or third party</li>
+  </ul>
+
+  <h4 class="font-bold mt-6 mb-3 text-lg">9.2 Personal Opinion & Expression</h4>
+  <p>All blog content represents personal opinions, subjective experiences, and individual perspectives. The author reserves the right to express opinions on any topic, including but not limited to: politics, culture, technology, products, services, entertainment, and social issues. Readers are encouraged to:</p>
+  <ul class="list-disc ml-5 space-y-2 mt-3">
+    <li>Form their own independent opinions</li>
+    <li>Conduct their own research before making decisions</li>
+    <li>Consult qualified professionals for advice specific to their circumstances</li>
+    <li>Recognize that opinions expressed may not align with their own views</li>
+  </ul>
+  <p class="mt-3"><strong>Political Content:</strong> Any political commentary, analysis, or opinion expressed on this blog represents solely the personal views of the author and does not constitute political advocacy, campaigning, or endorsement of any political party, candidate, or ideology. Readers should seek diverse sources of information when forming political opinions.</p>
+
+  <h4 class="font-bold mt-6 mb-3 text-lg">9.3 AI-Assisted Content</h4>
+  <p>Some blog content may be created with the assistance of artificial intelligence (AI) tools, including but not limited to: text generation, editing assistance, research summarization, or content enhancement. When AI tools are used:</p>
+  <ul class="list-disc ml-5 space-y-2 mt-3">
+    <li>The author maintains editorial control and final responsibility for all published content</li>
+    <li>AI-generated content is reviewed and curated before publication</li>
+    <li>The author does not guarantee the accuracy of AI-assisted content</li>
+    <li>AI tools may occasionally produce errors, inaccuracies, or outdated information</li>
+  </ul>
+  <p class="mt-3">Readers are advised to independently verify information and not rely solely on any content (whether AI-assisted or human-written) for critical decisions. The use of AI assistance does not alter the disclaimer and limitation of liability provisions outlined in this section.</p>
+
+  <h4 class="font-bold mt-6 mb-3 text-lg">9.4 Product Reviews & Recommendations</h4>
+  <p>Product reviews, service recommendations, and comparative analyses published on this blog are based on the author's personal experience, research, and subjective assessment at the time of writing. These reviews are provided for informational and entertainment purposes only.</p>
+  
+  <p class="mt-3"><strong>Important Disclaimers:</strong></p>
+  <ul class="list-disc ml-5 space-y-2 mt-3">
+    <li><strong>No Guarantees:</strong> We make no guarantees, warranties, or representations regarding the accuracy, reliability, performance, quality, or suitability of any product, service, or recommendation discussed.</li>
+    <li><strong>Individual Results May Vary:</strong> Your experience with any product, service, or recommendation may differ significantly from the author's experience.</li>
+    <li><strong>Not Product Testing:</strong> Unless explicitly stated, reviews are not based on controlled testing conditions, laboratory analysis, or scientific methodology.</li>
+    <li><strong>Temporal Limitation:</strong> Products, services, prices, features, and availability change over time. Information may become outdated without notice.</li>
+    <li><strong>No Liability for Purchases:</strong> We are not responsible for any purchasing decisions you make based on blog content, nor for any dissatisfaction, financial loss, or damages resulting from products or services mentioned.</li>
+  </ul>
+
+  <h4 class="font-bold mt-6 mb-3 text-lg">9.5 Affiliate Relationships & Compensation</h4>
+  <p>This blog may contain affiliate links, sponsored content, or references to products/services for which the author may receive compensation, commissions, free products, or other benefits. When such relationships exist, they will be disclosed within the relevant content in accordance with applicable consumer protection laws and FTC guidelines.</p>
+  
+  <p class="mt-3"><strong>Transparency Commitment:</strong></p>
+  <ul class="list-disc ml-5 space-y-2 mt-3">
+    <li>Affiliate relationships do not influence the honesty of reviews or opinions expressed</li>
+    <li>The author reserves the right to provide negative reviews even for compensated products</li>
+    <li>Readers are under no obligation to use affiliate links or purchase recommended products</li>
+    <li>Commission earned from affiliate links does not increase the price you pay</li>
+  </ul>
+  
+  <p class="mt-3"><strong>Current Status:</strong> As of the "Last Updated" date of this policy, this blog does not currently participate in affiliate programs. This status may change in the future, and specific disclosures will be provided in relevant content.</p>
+
+  <h4 class="font-bold mt-6 mb-3 text-lg">9.6 Accuracy & Information Currency</h4>
+  <p>While we strive to provide accurate and current information, blog content is provided "as is" without any warranty of accuracy, completeness, or timeliness. We make no commitment to update previously published content to reflect:</p>
+  <ul class="list-disc ml-5 space-y-2 mt-3">
+    <li>Changes in facts, circumstances, or availability</li>
+    <li>New information that contradicts previous statements</li>
+    <li>Price changes, product discontinuations, or service modifications</li>
+    <li>Evolution in the author's personal opinions or perspectives</li>
+    <li>Corrections to errors or inaccuracies discovered after publication</li>
+  </ul>
+  <p class="mt-3">Readers should verify current information, especially for time-sensitive matters such as pricing, availability, technical specifications, or legal/regulatory requirements.</p>
+
+  <h4 class="font-bold mt-6 mb-3 text-lg">9.7 No Professional Advice</h4>
+  <p>Content published on this blog does <strong>NOT</strong> constitute professional advice and should not be relied upon as a substitute for consultation with qualified professionals. Specifically:</p>
+  
+  <ul class="list-disc ml-5 space-y-2 mt-3">
+    <li><strong>Not Legal Advice:</strong> No content should be interpreted as legal guidance. Consult a licensed attorney for legal matters.</li>
+    <li><strong>Not Financial Advice:</strong> No content constitutes investment, financial planning, or tax advice. Consult a certified financial advisor or tax professional.</li>
+    <li><strong>Not Medical Advice:</strong> No content should be used for diagnosis, treatment, or medical decisions. Consult a licensed healthcare provider.</li>
+    <li><strong>Not Technical/Professional Services:</strong> No content replaces the need for qualified professionals in specialized fields (engineering, architecture, etc.).</li>
+  </ul>
+  
+  <p class="mt-3">Any action you take based on blog content is strictly at your own risk, and we will not be liable for any losses, damages, or consequences arising from such actions.</p>
+
+  <h4 class="font-bold mt-6 mb-3 text-lg">9.8 Third-Party References & External Links</h4>
+  <p>Blog posts may reference third-party websites, products, services, individuals, companies, or organizations. These references do not constitute endorsements unless explicitly stated. We are not responsible for:</p>
+  <ul class="list-disc ml-5 space-y-2 mt-3">
+    <li>The accuracy of information on linked external websites</li>
+    <li>The privacy practices or content of third-party sites</li>
+    <li>The conduct, products, or services of referenced entities</li>
+    <li>Changes or discontinuation of external resources</li>
+    <li>Any damages resulting from your interaction with third parties mentioned in blog content</li>
+  </ul>
+
+  <h4 class="font-bold mt-6 mb-3 text-lg">9.9 Limitation of Liability for Blog Content</h4>
+  <p>To the maximum extent permitted by Swedish law and EU regulations, Harald Mark Thirslund (trading as Harald Revery™) shall not be liable for any direct, indirect, incidental, special, consequential, or punitive damages arising from or related to:</p>
+  <ul class="list-disc ml-5 space-y-2 mt-3">
+    <li>Reliance on opinions, recommendations, or advice published in blog content</li>
+    <li>Decisions made based on product reviews or recommendations</li>
+    <li>Purchases of products or services mentioned or linked in blog posts</li>
+    <li>Inaccurate, outdated, or incomplete information in blog content (whether AI-assisted or human-written)</li>
+    <li>Any financial loss, personal injury, property damage, or other harm resulting from following suggestions or recommendations</li>
+    <li>Disagreement with opinions or perspectives expressed</li>
+    <li>Emotional distress caused by blog content or opinions expressed</li>
+  </ul>
+  
+  <p class="mt-3"><strong>You acknowledge and agree that:</strong></p>
+  <ul class="list-disc ml-5 space-y-2 mt-3">
+    <li>You read blog content at your own risk</li>
+    <li>You are responsible for evaluating the accuracy and usefulness of any information</li>
+    <li>You will conduct your own research before making decisions</li>
+    <li>You will not hold the author liable for your interpretations or applications of blog content</li>
+  </ul>
+
+  <h4 class="font-bold mt-6 mb-3 text-lg">9.10 Intellectual Property in Blog Content</h4>
+  <p>All blog posts, articles, images, graphics, and written content published in the "Notebook" section are the intellectual property of Harald Mark Thirslund and are protected by copyright law.</p>
+  
+  <p class="mt-3"><strong>Permitted Use:</strong></p>
+  <ul class="list-disc ml-5 space-y-2 mt-3">
+    <li>You may share links to blog posts on social media or other platforms</li>
+    <li>You may quote brief excerpts (up to 300 words) with proper attribution and a link back to the original post</li>
+    <li>You may print articles for personal, non-commercial use</li>
+  </ul>
+  
+  <p class="mt-3"><strong>Prohibited Use:</strong></p>
+  <ul class="list-disc ml-5 space-y-2 mt-3">
+    <li>Republishing entire articles or substantial portions without written permission</li>
+    <li>Using blog content for commercial purposes without authorization</li>
+    <li>Removing attribution or claiming authorship of content</li>
+    <li>Modifying content and republishing as your own</li>
+  </ul>
+
+  <h4 class="font-bold mt-6 mb-3 text-lg">9.11 Right to Modify or Remove Content</h4>
+  <p>We reserve the right, at our sole discretion and without prior notice, to:</p>
+  <ul class="list-disc ml-5 space-y-2 mt-3">
+    <li>Edit, update, or correct any blog post at any time</li>
+    <li>Remove or unpublish blog posts for any reason</li>
+    <li>Change opinions or perspectives expressed in previous posts</li>
+    <li>Discontinue the blog entirely</li>
+  </ul>
+  <p class="mt-3">We are under no obligation to maintain, update, or preserve blog content indefinitely.</p>
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
   </div>
 
 
@@ -342,11 +509,11 @@
       <div class="flex text-gray-600 dark:text-gray-300 flex-wrap justify-center items-center gap-2 text-sm uppercase tracking-widest font-mono opacity-70">
         <a href="#top" class="hover:opacity-50 transition-opacity">↑ Back to top</a>
         <span class="text-gray-400">|</span>
-        <a href="./contact.html" class="hover:opacity-50 transition-opacity">Contact</a>
+        <a href="/contact.html" class="hover:opacity-50 transition-opacity">Contact</a>
         <span class="text-gray-400">|</span>
-        <a href="./download.html" class="hover:opacity-50 transition-opacity">Download</a>        
+        <a href="/download.html" class="hover:opacity-50 transition-opacity">Download</a>        
         <span class="text-gray-400">|</span>
-        <a href="./legal.html" class="hover:opacity-50 transition-opacity">Legal</a>
+        <a href="/legal.html" class="hover:opacity-50 transition-opacity">Legal</a>
 
       </div>
 
@@ -431,7 +598,6 @@
 
 
 </body>
-
 
 
 

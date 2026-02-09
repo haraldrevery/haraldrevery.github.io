@@ -1,0 +1,141 @@
+---
+layout: base.njk
+pagination:
+  data: collections.notebook_posts
+  size: 40
+  alias: paginatedPosts
+permalink: "{% if pagination.pageNumber == 0 %}notebook.html{% else %}notebook_pages/notebook-page-{{ pagination.pageNumber + 1 }}.html{% endif %}"
+eleventyComputed:
+  title: "Notebook{% if pagination.pageNumber > 0 %} - Page {{ pagination.pageNumber + 1 }}{% endif %}"
+---
+
+<div class="scroll-sentinel absolute top-0 h-[50vh] w-full pointer-events-none"></div>
+
+<h1 class="seo-only-h1">Harald Revery - Notebook</h1>
+
+<section class="py-12 pt-48 pb-16">
+    <div class="page-container">
+        <div class="max-w-4xl mx-auto text-center mb-16">
+            <h2 class="text-5xl md:text-6xl text-zinc-900 dark:text-white mb-6 uppercase tracking-wider">
+                <span class="word_animation" style="animation-delay: 0.12s">Note</span><span class="word_animation" style="animation-delay: 0.52s">book</span>
+            </h2>
+            <p class="text-xl text-neutral-600 dark:text-neutral-400 leading-relaxed max-w-2xl mx-auto">
+                                    <span class="word_animation" style="animation-delay: 0.72s">Random</span>
+                                    <span class="word_animation" style="animation-delay: 0.48s">thoughts,</span>
+                                    <span class="word_animation" style="animation-delay: 0.91s">ideas</span>
+                                    <span class="word_animation" style="animation-delay: 0.63s">and</span>
+                                    <span class="word_animation" style="animation-delay: 0.84s">guides.</span>
+                                    <span class="word_animation" style="animation-delay: 0.55s">A</span>
+                                    <span class="word_animation" style="animation-delay: 0.98s">collection</span>
+                                    <span class="word_animation" style="animation-delay: 0.46s">over</span>
+                                    <span class="word_animation" style="animation-delay: 0.77s">various</span>
+                                    <span class="word_animation" style="animation-delay: 0.69s">notes</span>
+                                    <span class="word_animation" style="animation-delay: 0.51s">for</span>
+                                    <span class="word_animation" style="animation-delay: 0.89s">different</span>
+                                    <span class="word_animation" style="animation-delay: 0.61s">projects.</span>
+            </p>
+        </div>
+    </div>
+</section>
+
+<section>
+    <div class="page-container extra_fade_effect">
+        <div class="max-w-6xl mx-auto">
+
+            <div class="flex flex-wrap justify-center gap-3">
+                {% for tag in collections.allTags %}
+                <a href="/notebook_pages/notebook_tag-{{ tag | slugify }}.html" class="px-4 py-2 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-sm uppercase tracking-widest rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">
+                    {{ tag }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+
+
+
+
+
+
+<section class="py-12 pb-24 extra_fade_effect">
+    <div class="page-container">
+        <div class="max-w-6xl mx-auto">
+            <h3 class="text-3xl text-zinc-900 dark:text-white uppercase tracking-wide mb-12">Recent Notes</h3>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                
+                {% for post in paginatedPosts %}
+                <article class="group">
+                    <a href="{{ post.url }}" class="block">
+                        
+                        <div class="aspect-video bg-neutral-200 dark:bg-neutral-800 rounded-lg overflow-hidden mb-4">
+                            {% if post.data.image %}
+                                <img src="{{ post.data.image }}" alt="{{ post.data.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                            {% else %}
+                                <div class="w-full h-full flex items-center justify-center text-neutral-400 dark:text-neutral-600">
+                                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="flex flex-wrap gap-2 mb-3">
+                            {% for tag in post.data.tags %}
+                                <a href="/notebook_pages/notebook_tag-{{ tag | slugify }}.html" class="px-3 py-1 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-xs uppercase tracking-widest rounded hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors" onclick="event.stopPropagation()">{{ tag }}</a>
+                            {% endfor %}
+                        </div>
+                        
+                        <h4 class="text-xl text-zinc-900 dark:text-white mb-3 uppercase tracking-wide group-hover:text-neutral-500 dark:group-hover:text-neutral-400 transition-colors">
+                            {{ post.data.title }}
+                        </h4>
+                        
+                        {% if post.data.description %}
+                        <p class="text-neutral-600 dark:text-neutral-400 mb-3 line-clamp-4">
+                            {{ post.data.description | truncate(150) }}
+                        </p>
+                        {% endif %}
+                        
+                        <div class="flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-500 font-mono uppercase tracking-wider">
+                            <span>{{ post.date | readableDate }}</span>
+                        </div>
+                    </a>
+                </article>
+                {% endfor %}
+                
+            </div>
+
+            {# Pagination Controls #}
+            {% if pagination.href.previous or pagination.href.next %}
+            <div class="mt-16 flex items-center justify-center gap-4">
+                {% if pagination.href.previous %}
+                <a href="{{ pagination.href.previous }}" class="px-6 py-3 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono uppercase tracking-widest rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">
+                    ← 
+                </a>
+                {% else %}
+                <span class="px-6 py-3 bg-neutral-100 dark:bg-neutral-900 text-neutral-400 dark:text-neutral-600 font-mono uppercase tracking-widest rounded-lg cursor-not-allowed">
+                    ← 
+                </span>
+                {% endif %}
+
+                <span class="px-4 py-3 text-neutral-600 dark:text-neutral-400 font-mono">
+                    Page {{ pagination.pageNumber + 1 }} of {{ pagination.pages.length }}
+                </span>
+
+                {% if pagination.href.next %}
+                <a href="{{ pagination.href.next }}" class="px-6 py-3 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono uppercase tracking-widest rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">
+                     →
+                </a>
+                {% else %}
+                <span class="px-6 py-3 bg-neutral-100 dark:bg-neutral-900 text-neutral-400 dark:text-neutral-600 font-mono uppercase tracking-widest rounded-lg cursor-not-allowed">
+                     →
+                </span>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+        </div>
+    </div>
+</section>
