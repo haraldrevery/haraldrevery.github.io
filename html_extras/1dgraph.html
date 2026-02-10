@@ -17,10 +17,8 @@ description: One-dimensional graph visualizer with interactive sliders for each 
     <!-- Set title and SEO tags here -->
     <!-- ====================================================================== -->    
     <title>Harald Revery - 1D Graph Plot</title>
-    <meta name="description" content="One dimensional visualizer with interactive sliders for each parameter. Made to easily see and compare how different one dimensional functions behave visually.">
-    <meta name="keywords" content="one dimensional, graph, mathematics, visualization, plot, interactive">
-    
-
+    <meta name="description" content="One dimensional visualizer with interactive sliders for each parameter.  Plot functions, derivatives, and integrals simultaneously with interactive parameter sliders. Compare f(x), f'(x) and ∫f(x) in real-time.">
+    <meta name="keywords" content="calculus grapher, derivative plotter, mathematics, integral visualizer, interactive function plot, numerical integration online, parameter slider graph, math education tool">
 
 
 
@@ -45,7 +43,13 @@ description: One-dimensional graph visualizer with interactive sliders for each 
     <link rel="canonical" href="https://haraldrevery.com/notebook_pages/1dgraph">
 
 
-
+     <!-- test CSP -->
+    <meta http-equiv="Content-Security-Policy" 
+        content="default-src 'self'; 
+                style-src 'self' 'unsafe-inline'; 
+                font-src 'self' data:; 
+                img-src 'self' data:; 
+                script-src 'self' 'unsafe-inline' 'unsafe-eval';">
 
 
 
@@ -635,6 +639,7 @@ description: One-dimensional graph visualizer with interactive sliders for each 
             <li><strong>Parameters:</strong>  a, b, c, d, q can be used in all function expressions.</li>
             <li><strong>Performance:</strong> Reduce plot points (50-200) for faster updates. Default is 200 points. Disable integrals for best performance.</li>
             <li>Be aware that numerical derivatives often produce "noise" near vertical asymptotes, singular points or for functions with extremely high-frequency oscillations.</li>
+            <li>The numerical integral is starting from the defined min. x, so the ∫...dx value is the integral from min. x to x in the plot. This is important to pay attention to since when integrating a function, you analytically always get a constant: ∫f(x)dx = F(x) + C. This constant is zero for all integrals in the automatic numerical plots.</li>
         </ul>
         
     </div>
@@ -765,7 +770,43 @@ description: One-dimensional graph visualizer with interactive sliders for each 
 
 </body>
 
-<!-- Alpine.js load -->
 <script src="/javascript/1dgraph_min.js" defer></script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Interactive 1D Graph Plotter",
+  "url": "https://haraldrevery.com/notebook_pages/1dgraph",
+  "author": {
+    "@type": "Person",
+    "name": "Harald Revery",
+    "url": "https://haraldrevery.com"
+  },
+  "description": "One-dimensional graph visualizer with interactive sliders. Automatically computes and plots numerical derivatives and integrals for comparison.",
+  "applicationCategory": "EducationalApplication",
+  "operatingSystem": "Any",
+  "browserRequirements": "Requires JavaScript",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock"
+  },
+  "featureList": [
+    "Real-time Numerical Differentiation",
+    "Real-time Numerical Integration (Trapezoidal/Simpson)",
+    "Interactive Parameter Sliders",
+    "Multi-function Comparison"
+  ],
+  "audience": {
+    "@type": "EducationalAudience",
+    "educationalRole": "student",
+    "audienceType": "High School, University"
+  },
+  "isAccessibleForFree": true,
+  "keywords": "Calculus, Graphing, Derivatives, Integrals, Mathematics Visualization"
+}
+</script>
 
 </html>

@@ -19,9 +19,10 @@ Main LLM models used to generate and troubleshoot code:
 * xAI: Grok
 
 ## Notebook (blog/article part)
-To get the blog ("notebook") havea nice structure and so on, I used Eleventy to generate html pages from markdown text and to create a page with all the "cards" containing sortable tags, thumbnails and date for each post on the site. Node.js was used to run Eleventy. 
+To get the blog ("notebook") havea nice structure and so on, I used Eleventy to generate html pages from markdown text and to create a page with all the "cards" containing sortable tags, thumbnails and date for each post on the site. Node.js was used to run Eleventy. Some pages contain Math.js for mathematical operations.
 * Node.js [Website](https://nodejs.org), [Github](https://github.com/nodejs/node)
 * Eleventy [Website](https://www.11ty.dev/), [Github](https://github.com/11ty/eleventy/)
+* Math.js [Website](https://mathjs.org/), [Github](https://github.com/josdejong/mathjs)
 ---
 
 Personal setup for this project:
@@ -56,4 +57,4 @@ There is also some python code here, but that is only to generate som background
 
 All rights reserved Harald Revery
 
-<img src="haraldrevery_website_animation.jpg" alt="Website screenshots">
+ <img src="haraldrevery_website_animation.jpg" alt="Website screenshots">
