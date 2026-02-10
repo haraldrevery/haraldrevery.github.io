@@ -582,43 +582,34 @@
         createVectorField(xDotExpr, yDotExpr) {
             const [a, b, c, d, q] = this.params;
             
-            // SECURITY FIX: Replace eval() with Function constructor for safer execution
-            // This prevents XSS while maintaining full mathematical functionality
-            const safeXExpr = xDotExpr.replace(/\^/g, '**');
-            const safeYExpr = yDotExpr.replace(/\^/g, '**');
+            // Make Math functions available (sin, cos, tan, exp, log, sqrt, abs, etc.)
+            const sin = Math.sin;
+            const cos = Math.cos;
+            const tan = Math.tan;
+            const exp = Math.exp;
+            const log = Math.log;
+            const sqrt = Math.sqrt;
+            const abs = Math.abs;
+            const arcsin = Math.asin;
+            const arccos = Math.acos;
+            const arctan = Math.atan;
+            const arctan2 = Math.atan2;
+            const sinh = Math.sinh;
+            const cosh = Math.cosh;
+            const tanh = Math.tanh;
+            const pow = Math.pow;
+            const PI = Math.PI;
+            const e = Math.E;
             
-            try {
-                // Create functions with explicit scope - only math operations, no browser APIs
-                const xFunc = new Function('x', 'y', 'a', 'b', 'c', 'd', 'q', 'sin', 'cos', 'tan', 'exp', 'log', 'sqrt', 'abs', 'arcsin', 'arccos', 'arctan', 'arctan2', 'sinh', 'cosh', 'tanh', 'pow', 'PI', 'e', `
-                    "use strict";
-                    return ${safeXExpr};
-                `);
-                
-                const yFunc = new Function('x', 'y', 'a', 'b', 'c', 'd', 'q', 'sin', 'cos', 'tan', 'exp', 'log', 'sqrt', 'abs', 'arcsin', 'arccos', 'arctan', 'arctan2', 'sinh', 'cosh', 'tanh', 'pow', 'PI', 'e', `
-                    "use strict";
-                    return ${safeYExpr};
-                `);
-                
-                return (x, y) => {
-                    try {
-                        // Pass only specific values - no access to window, document, etc.
-                        const dx = xFunc(x, y, a, b, c, d, q, 
-                            Math.sin, Math.cos, Math.tan, Math.exp, Math.log, 
-                            Math.sqrt, Math.abs, Math.asin, Math.acos, Math.atan, Math.atan2,
-                            Math.sinh, Math.cosh, Math.tanh, Math.pow, Math.PI, Math.E);
-                        const dy = yFunc(x, y, a, b, c, d, q,
-                            Math.sin, Math.cos, Math.tan, Math.exp, Math.log,
-                            Math.sqrt, Math.abs, Math.asin, Math.acos, Math.atan, Math.atan2,
-                            Math.sinh, Math.cosh, Math.tanh, Math.pow, Math.PI, Math.E);
-                        return [dx, dy];
-                    } catch (e) {
-                        return [0, 0];
-                    }
-                };
-            } catch (e) {
-                console.error('Error creating vector field:', e);
-                return () => [0, 0];
-            }
+            return (x, y) => {
+                try {
+                    const dx = eval(xDotExpr.replace(/\^/g, '**'));
+                    const dy = eval(yDotExpr.replace(/\^/g, '**'));
+                    return [dx, dy];
+                } catch (e) {
+                    return [0, 0];
+                }
+            };
         },
         
         handleCanvasClick(event) {
