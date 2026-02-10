@@ -628,6 +628,7 @@
             <li><strong>Parameters:</strong>  a, b, c, d, q can be used in all function expressions.</li>
             <li><strong>Performance:</strong> Reduce plot points (50-200) for faster updates. Default is 200 points. Disable integrals for best performance.</li>
             <li>Be aware that numerical derivatives often produce "noise" near vertical asymptotes, singular points or for functions with extremely high-frequency oscillations.</li>
+            <li>The numerical integral is starting from the defined min. x, so the ∫...dx value is the integral from min. x to x in the plot. This is important to pay attention to since when integrating a function, you analytically always get a constant: ∫f(x)dx = F(x) + C. Thic constant is zero for all integrals in the automatic numerical plots.</li>
         </ul>
         
     </div>

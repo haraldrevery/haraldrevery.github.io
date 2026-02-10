@@ -89,6 +89,43 @@ const app = {
                 this.plot();
             });
             
+            // Make value display clickable to edit
+            valueDisplay.style.cursor = 'pointer';
+            valueDisplay.addEventListener('click', () => {
+                const currentValue = this.params[param];
+                const newValue = prompt(`Enter new value for ${param}:`, currentValue);
+                
+                if (newValue !== null && newValue.trim() !== '') {
+                    const parsedValue = parseFloat(newValue);
+                    
+                    if (!isNaN(parsedValue)) {
+                        let min = parseFloat(slider.min);
+                        let max = parseFloat(slider.max);
+                        
+                        // If value exceeds max, update max
+                        if (parsedValue > max) {
+                            max = parsedValue;
+                            maxInput.value = max;
+                            slider.max = max;
+                        }
+                        
+                        // If value is below min, update min
+                        if (parsedValue < min) {
+                            min = parsedValue;
+                            minInput.value = min;
+                            slider.min = min;
+                        }
+                        
+                        slider.value = parsedValue;
+                        this.params[param] = parsedValue;
+                        valueDisplay.textContent = parsedValue.toFixed(2);
+                        this.plot();
+                    } else {
+                        alert('Please enter a valid number.');
+                    }
+                }
+            });
+            
             // Initialize
             this.params[param] = parseFloat(slider.value);
             valueDisplay.textContent = parseFloat(slider.value).toFixed(2);
