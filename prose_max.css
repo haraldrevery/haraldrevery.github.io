@@ -277,6 +277,9 @@
   .static {
     position: static;
   }
+  .sticky {
+    position: sticky;
+  }
   .inset-0 {
     inset: calc(var(--spacing) * 0);
   }
@@ -1119,6 +1122,12 @@
   .table {
     display: table;
   }
+  .aspect-\[2\/3\] {
+    aspect-ratio: 2/3;
+  }
+  .aspect-\[3\/2\] {
+    aspect-ratio: 3/2;
+  }
   .aspect-\[3\/4\] {
     aspect-ratio: 3/4;
   }
@@ -1130,6 +1139,12 @@
   }
   .aspect-\[5\/7\] {
     aspect-ratio: 5/7;
+  }
+  .aspect-\[9\/16\] {
+    aspect-ratio: 9/16;
+  }
+  .aspect-\[16\/9\] {
+    aspect-ratio: 16/9;
   }
   .aspect-\[16\/10\] {
     aspect-ratio: 16/10;
@@ -2109,6 +2124,9 @@
   .select-none {
     -webkit-user-select: none;
     user-select: none;
+  }
+  .\[start\:end\] {
+    start: end;
   }
   .group-hover\:scale-105 {
     &:is(:where(.group):hover *) {
