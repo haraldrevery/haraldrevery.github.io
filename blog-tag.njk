@@ -3,7 +3,7 @@ pagination:
   data: collections.paginatedTagData
   size: 1
   alias: tagData
-permalink: "notebook_pages/notebook_tag-{{ tagData.tag | slugify }}{% if tagData.pageNumber > 0 %}-page-{{ tagData.pageNumber + 1 }}{% endif %}.html"
+permalink: "notebook_pages/tag-{{ tagData.tag | slugify }}{% if tagData.pageNumber > 0 %}-page-{{ tagData.pageNumber + 1 }}{% endif %}.html"
 layout: base.njk
 eleventyComputed:
   title: "{{ tagData.tag }} - Notebook{% if tagData.pageNumber > 0 %} - Page {{ tagData.pageNumber + 1 }}{% endif %}"
@@ -54,7 +54,7 @@ eleventyComputed:
 
                         <div class="flex flex-wrap gap-2 mb-3">
                             {% for postTag in post.data.tags %}
-                                <a href="/notebook_pages/notebook_tag-{{ postTag | slugify }}.html" class="px-3 py-1 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-xs uppercase tracking-widest rounded hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">{{ postTag }}</a>
+                                <a href="/notebook_pages/tag-{{ postTag | slugify }}.html" class="px-3 py-1 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-xs uppercase tracking-widest rounded hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">{{ postTag }}</a>
                             {% endfor %}
                         </div>
                         
@@ -83,9 +83,9 @@ eleventyComputed:
                 {% if not tagData.isFirstPage %}
                 {% set prevPageNum = tagData.pageNumber %}
                 {% if prevPageNum > 1 %}
-                {% set prevPageUrl = "/notebook_pages/notebook_tag-" + (tagData.tag | slugify) + "-page-" + prevPageNum + ".html" %}
+                {% set prevPageUrl = "/notebook_pages/tag-" + (tagData.tag | slugify) + "-page-" + prevPageNum + ".html" %}
                 {% else %}
-                {% set prevPageUrl = "/notebook_pages/notebook_tag-" + (tagData.tag | slugify) + ".html" %}
+                {% set prevPageUrl = "/notebook_pages/tag-" + (tagData.tag | slugify) + ".html" %}
                 {% endif %}
                 <a href="{{ prevPageUrl }}" class="px-6 py-3 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono uppercase tracking-widest rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">
                     ← 
@@ -102,7 +102,7 @@ eleventyComputed:
 
                 {% if not tagData.isLastPage %}
                 {% set nextPageNum = tagData.pageNumber + 2 %}
-                {% set nextPageUrl = "/notebook_pages/notebook_tag-" + (tagData.tag | slugify) + "-page-" + nextPageNum + ".html" %}
+                {% set nextPageUrl = "/notebook_pages/tag-" + (tagData.tag | slugify) + "-page-" + nextPageNum + ".html" %}
                 <a href="{{ nextPageUrl }}" class="px-6 py-3 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono uppercase tracking-widest rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">
                      →
                 </a>

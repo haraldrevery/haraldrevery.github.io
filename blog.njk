@@ -44,7 +44,7 @@ eleventyComputed:
 
             <div class="flex flex-wrap justify-center gap-3">
                 {% for tag in collections.allTags %}
-                <a href="/notebook_pages/notebook_tag-{{ tag | slugify }}.html" class="px-4 py-2 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-sm uppercase tracking-widest rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">
+                <a href="/notebook_pages/tag-{{ tag | slugify }}.html" class="px-4 py-2 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-sm uppercase tracking-widest rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">
                     {{ tag }}
                 </a>
                 {% endfor %}
@@ -84,7 +84,7 @@ eleventyComputed:
 
                         <div class="flex flex-wrap gap-2 mb-3">
                             {% for tag in post.data.tags %}
-                                <a href="/notebook_pages/notebook_tag-{{ tag | slugify }}.html" class="px-3 py-1 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-xs uppercase tracking-widest rounded hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors" onclick="event.stopPropagation()">{{ tag }}</a>
+                                <a href="/notebook_pages/tag-{{ tag | slugify }}.html" class="px-3 py-1 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-xs uppercase tracking-widest rounded hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors" onclick="event.stopPropagation()">{{ tag }}</a>
                             {% endfor %}
                         </div>
                         
