@@ -3,7 +3,7 @@ title: Mouse sensitivity and keybinds for games
 date: 2022-01-01
 image: /photos/2015-2023/2019setup_min.jpg
 tags: [settings]
-description: Mouse sensitivity settings and keybinds for various games
+description: Mouse sensitivity settings and keybinds for various games.
 ---
 
 ## Just my mouse sensitivity settings for various games
