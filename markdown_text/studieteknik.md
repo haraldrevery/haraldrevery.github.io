@@ -30,6 +30,8 @@ But there are a few concepts I wish I had known earlier (or at least embraced mo
 
 - **Interleaving (within a subject)** – Mix up types of tasks/themes/concepts within the same course (e.g., different types of math problems). The brain trains itself to recognize which method should be used. In this way, you learn what to use and when. It will prepare you both for the exams and what reality will require of you later when you try to apply that knowledge.
 
+---
+
 ## Context
 
 Note that none of these tips work equally effectively for everyone; some might need to change study locations for every course, while others can stay in the same place for an entire year, etc. Others might not need to review as often or do as many exercises. Do not see this as a "magic bullet," but rather as 'tips to test', try them out and see what works best for you.
@@ -46,6 +48,7 @@ Also, if your material doesn't seem to stick, it might just be the source materi
 --- 
 
 ## Forgetting stuff might be a blessing in disguise
-No, I'm not talking about dementia/Alzheimer's disease. I'm talking about forgetting details or how to do something after a long time. I have noticed that in many cases the first time you learn and apply something, I tend to have gaps in my knowledge that I wasn't aware of at the time due to I knew *just enough* to pass the exams or solve (by chance) convenient/simpler problems that allowed a little errors. Once I had to reapply for more complex problems that are not so forgiving for errors or inaccuracies, I realized I didn't really get it the first time at all. So if you forget stuff, see it as a way to re-learn it again, but properly this time. I tend to see it as a **"second chance"** to redo something but with more precision and accuracy.
 
-I might speculate here, but I think the brain has a *"I forgot it, then it might not have been that important"* mechanic to save resources. Since when you try repeat old stuff, some stuff comes back others don't. That's where the opportunity is to fill those memory holes with more correct and useful stuff instead.
+No, I'm not talking about dementia/Alzheimer's disease. I'm talking about forgetting details or how to do something after a long time. I have noticed that in many cases the first time you learn and apply something, I tend to have gaps in my knowledge that I wasn't aware of at the time due to I knew *just enough* to pass the exams or solve (by chance) convenient/simpler problems that allowed some errors and inaccuracies. Once I had to reapply for more complex problems that are not so forgiving for errors or inaccuracies, I realized that I didn't really get it the first time at all. So if you forget stuff, see it as a way to re-learn it again, but properly this time. I tend to see it as a **"second chance"** to redo something but with more precision and accuracy.
+
+I might speculate here, but I think the brain has a *"I forgot it, then it might not have been that important"* mechanic to save resources. Since when you try repeat old stuff, some stuff comes back with ease while some stuff doesn't. That's where the opportunity is to fill those memory holes with more correct and useful stuff instead.
