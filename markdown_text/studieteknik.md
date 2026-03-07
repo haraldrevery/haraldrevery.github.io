@@ -3,7 +3,7 @@ title: Study Techniques
 date: 2025-02-28
 image: /notebook_thumbnails/studyguide_min.jpg
 tags: [education]
-description: Some tips on how to study without rushing through eveything in the end.
+description: Some tips on how to study without rushing through everything  in the end.
 ---
 
 
@@ -11,7 +11,7 @@ When it comes to learning stuff more efficiently rather than just brute forcing 
 
 ## Tips
 
-- **Study shortly before bedtime** – Preferably just repeat previous stuff; new material can lead to stress and decrease sleep quality. If you can sleep well no matter what, go a head and read what ever you want.
+- **Study shortly before bedtime** – Preferably just repeat previous stuff; new material can lead to stress and decrease sleep quality. If you can sleep well no matter what, go ahead and read whatever you want.
 
 - **Repetition!** – Study a little every day. Unfortunately, there are no shortcuts here. The brain is what it is, and this is simply how it’s built: if it is exposed to something more often, it sticks deeper. Note that this is the same reason/mechanism why propaganda/advertising is most effective when it's everywhere and you are constantly exposed to it.
 
@@ -51,7 +51,7 @@ Another little thing I have noticed is that if you spend a whole day on a proble
 
 To be completely honest here, much of what is called "study techniques" is fluff, and a lot of "pedagogical research" is just an excuse for politicians to hide the fact that many people simply aren't motivated to learn things, and in even more depressing cases: to cope with the fact that some people are just not wired to learn certain stuff (but we are not allowed to talk about *that*). And while we're at it: a lot of what's taught in school is also wrong, deceptive and a waste of time. This text isn't about dissecting propaganda and how to prioritize information, I just wanted to mention this so you don't start thinking *"everyone can learn anything"*, that is a lie! 
 
-It's good to know what your strengths/weaknesses are so you don't spend time on delusional endeavours, wasting years on pursuits that don't suit you. That being said, don't mistake this text section as an discouragement since some stuff can be hard to grasp (getting stuck can also be a sign of gaps in the current existing information). See it as a hint to pick topics/interests/careers where you have a "gut feeling" for, in that way it can help you guide you better when things do indeed get more difficult to learn. Talent without effort is worse than an average person working harder, since you won't have anything to show. *Don't give up, but also know when to give up...* I hope you get my point here.
+It's good to know what your strengths/weaknesses are so you don't spend time on delusional endeavours, wasting years on pursuits that don't suit you. That being said, don't mistake this text section as a discouragement since some stuff can be hard to grasp (getting stuck can also be a sign of gaps in the current existing information). See it as a hint to pick topics/interests/careers where you have a "gut feeling" for, in that way it can help you guide you better when things do indeed get more difficult to learn. Talent without effort is worse than an average person working harder, since you won't have anything to show. *Don't give up, but also know when to give up...* I hope you get my point here.
 
 
 
@@ -59,6 +59,6 @@ It's good to know what your strengths/weaknesses are so you don't spend time on 
 
 ## Forgetting stuff might be a blessing in disguise
 
-No, I'm not talking about dementia/Alzheimer's disease. I'm talking about forgetting details or how to do something after a long time. I have noticed that in many cases the first time you learn and apply something, I tend to have gaps in my knowledge that I wasn't aware of at the time due to I knew *just enough* to pass the exams or solve (by chance) convenient/simpler problems that allowed some errors and inaccuracies. Once I had to reapply for more complex problems that are not so forgiving for errors or inaccuracies, I realized that I didn't really get it the first time at all. So if you forget stuff, see it as a way to re-learn it again, but properly this time. I tend to see it as a **"second chance"** to redo something but with more precision and accuracy.
+No, I'm not talking about dementia/Alzheimer's disease. I'm talking about forgetting details or how to do something after a long time. I have noticed that in many cases the first time you learn and apply something, you tend to have gaps in my knowledge that I wasn't aware of at the time because I knew *just enough* to pass the exams or solve (by chance) convenient/simpler problems that allowed some errors and inaccuracies. Once I had to reapply for more complex problems that are not so forgiving for errors or inaccuracies, I realized that I didn't really get it the first time at all. So if you forget stuff, see it as a way to re-learn it again, but properly this time. I tend to see it as a **"second chance"** to redo something but with more precision and accuracy.
 
 I might speculate here, but I think the brain has a *"I forgot it, then it might not have been that important"* mechanic to save resources while keeping important information intact. Since when you try repeat old stuff, some stuff comes back with ease while some stuff doesn't. That's where the opportunity is to fill those memory holes with more correct and useful information instead.
