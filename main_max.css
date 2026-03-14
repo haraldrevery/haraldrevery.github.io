@@ -91,6 +91,7 @@
     --text-body-mobile: 1.22rem;
     --text-mono: 1.22rem;
     --text-nav: 1.4rem;
+    --tracking-body: 0.029em;
   }
 }
 @layer base {
@@ -754,9 +755,6 @@
   }
   .grid-cols-3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .grid-cols-5 {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
   .flex-col {
     flex-direction: column;
@@ -2237,7 +2235,7 @@
     font-family: var(--font-brand) !important;
     font-size: var(--text-body-mobile);
     line-height: 1.58;
-    letter-spacing: 0.025em;
+    letter-spacing: var(--tracking-body);
   }
   @media (min-width: 900px) {
     body {

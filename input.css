@@ -49,7 +49,7 @@ body::before {
     font-family: var(--font-brand) !important;
     font-size: var(--text-body-mobile); 
     line-height: 1.58;                 
-    letter-spacing: 0.025em;            
+    letter-spacing: var(--tracking-body);            
   }
 
   @media (min-width: 900px) {
