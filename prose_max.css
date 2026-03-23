@@ -2964,6 +2964,8 @@
     --tw-prose-links: var(--color-white);
     --tw-prose-counters: var(--color-white);
     --tw-prose-bullets: var(--color-white);
+    --tw-prose-quotes: var(--color-white);
+    --tw-prose-quote-borders: var(--color-white);
   }
   .prose .footnotes ol li::marker {
     color: var(--color-white) !important;

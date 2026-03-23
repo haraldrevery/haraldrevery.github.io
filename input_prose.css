@@ -154,6 +154,8 @@
     
     /* FIX: Force bullet points to be white */
     --tw-prose-bullets: var(--color-white);
+    --tw-prose-quotes: var(--color-white);        /* ← fixes blockquote text */
+    --tw-prose-quote-borders: var(--color-white); /* ← fixes the left border too */
   }
 
   /* EXTRA FIX: Explicitly target the footnote area numbers if variables fail */
