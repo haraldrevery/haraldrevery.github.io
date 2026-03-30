@@ -40,8 +40,9 @@ eleventyComputed:
                 
                 {% for post in tagData.posts %}
                 <article class="group">
+                    
+                    {# 1. Make the image block clickable #}
                     <a href="{{ post.url }}" class="block">
-                        
                         <div class="aspect-video bg-neutral-200 dark:bg-neutral-800 rounded-lg overflow-hidden mb-4">
                             {% if post.data.image %}
                                 <img src="{{ post.data.image }}" alt="{{ post.data.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
@@ -51,27 +52,33 @@ eleventyComputed:
                                 </div>
                             {% endif %}
                         </div>
+                    </a>
 
-                        <div class="flex flex-wrap gap-2 mb-3">
-                            {% for postTag in post.data.tags %}
-                                <a href="/notebook_pages/tag-{{ postTag | slugify }}.html" class="px-3 py-1 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-xs uppercase tracking-widest rounded hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">{{ postTag }}</a>
-                            {% endfor %}
-                        </div>
-                        
+                    {# 2. Tag links (now perfectly valid HTML) #}
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        {% for tag in post.data.tags %}
+                            <a href="/notebook_pages/tag-{{ tag | slugify }}.html" class="px-3 py-1 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-xs uppercase tracking-widest rounded hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">{{ tag }}</a>
+                        {% endfor %}
+                    </div>
+                    
+                    {# 3. Make the title clickable #}
+                    <a href="{{ post.url }}" class="block">
                         <h4 class="text-xl text-zinc-900 dark:text-white mb-3 uppercase tracking-wide group-hover:text-neutral-500 dark:group-hover:text-neutral-400 transition-colors">
                             {{ post.data.title }}
                         </h4>
-                        
-                        {% if post.data.description %}
-                        <p class="text-neutral-600 dark:text-neutral-400 mb-3 line-clamp-4">
-                            {{ post.data.description | truncate(150) }}
-                        </p>
-                        {% endif %}
-                        
-                        <div class="flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-500 font-mono uppercase tracking-wider">
-                            <span>{{ post.date | readableDate }}</span>
-                        </div>
                     </a>
+                    
+                    {# 4. Description and Date (unlinked, but part of the card) #}
+                    {% if post.data.description %}
+                    <p class="text-neutral-600 dark:text-neutral-400 mb-3 line-clamp-4">
+                        {{ post.data.description | truncate(150) }}
+                    </p>
+                    {% endif %}
+                    
+                    <div class="flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-500 font-mono uppercase tracking-wider">
+                        <span>{{ post.date | readableDate }}</span>
+                    </div>
+
                 </article>
                 {% endfor %}
                 
