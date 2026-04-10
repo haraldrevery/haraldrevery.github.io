@@ -458,6 +458,7 @@ applyTextSize();
 applyOutlineFontSize();
 applyUiSizeProseCompensation();
 applyFontTypes(); // Execute font assignment on boot
+applyCenterHeaders(); // <-- ADD THIS LINE to apply the saved setting on page load
 
 function applyLoadedStates() {
   // Apply visibility to preview and editor panes based on saved state
@@ -497,7 +498,6 @@ function applyLoadedStates() {
   window.applyDOMTranslations(); // Apply saved language to DOM on boot
 }
 applyLoadedStates();
-
 
 
 /* ── smartPositionDropdown ────────────────────────────────────────────────
