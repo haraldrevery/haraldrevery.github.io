@@ -11,18 +11,20 @@ Alpine.js was used for "navigation bar reveal when scroll" on older browsers and
 * Alpine.js [Website](https://alpinejs.dev/), [Github](https://github.com/alpinejs/alpine)
 * GLightbox [Website](https://biati-digital.github.io/glightbox/), [Github](https://github.com/biati-digital/glightbox)
 
-
-
 Main LLM models used to generate and troubleshoot code:
 * Anthropic: Claude AI (Sonnet 4.5)
 * Google: Gemini 
 * xAI: Grok
+* DeepSeek
 
 ## Notebook (blog/article part)
-To get the blog ("notebook") have a nice structure and so on, I used Eleventy to generate html pages from markdown text and to create a page with all the "cards" containing sortable tags, thumbnails and date for each post on the site. Node.js was used to run Eleventy. Some pages contain Math.js for mathematical operations.
+To get the blog ("notebook") have a nice structure and so on, I used Eleventy to generate html pages from markdown text and to create a page with all the "cards" containing sortable tags, thumbnails and date for each post on the site. Node.js was used to run Eleventy. Some pages contain Math.js for mathematical operations and jsPDF for PDF export support. For the text editor I used markdown-it and KaTeX to get the markdown and latex syntax to render correctly.
 * Node.js [Website](https://nodejs.org), [Github](https://github.com/nodejs/node)
 * Eleventy [Website](https://www.11ty.dev/), [Github](https://github.com/11ty/eleventy/)
 * Math.js [Website](https://mathjs.org/), [Github](https://github.com/josdejong/mathjs)
+* jsPDF [Website](https://parall.ax/products/jspdf), [Github](https://github.com/parallax/jsPDF)
+* KaTeX [Website](https://katex.org/), [Github](https://github.com/KaTeX/KaTeX)
+* markdown-it [Website](https://markdown-it.github.io/), [Github](https://github.com/markdown-it/markdown-it)
 ---
 
 Personal setup for this project:

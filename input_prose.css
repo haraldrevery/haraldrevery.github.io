@@ -50,12 +50,38 @@
     color: inherit;
   }
 
-  /* 3. List Items: Match paragraph size and line height */
-  .prose li {
-    font-size: var(--text-body); /* Uses your defined 1.22rem */
-    line-height: 1.58;            /* Matches your global body height */
+  .prose h4 {
+    @apply text-xl uppercase tracking-wide mt-10 mb-3;
+    font-weight: 400 !important;
+    color: inherit;
   }
 
+  .prose h5 {
+    @apply text-lg uppercase tracking-wide mt-8 mb-2;
+    font-weight: 400 !important;
+    color: inherit;
+  }
+
+  .prose h6 {
+    @apply text-base uppercase tracking-wide mt-6 mb-2;
+    font-weight: 400 !important;
+    color: inherit;
+  }
+
+/* 3. List Items: Match paragraph size and line height */
+  .prose li {
+    font-size: var(--text-body); /* Uses your defined 1.22rem */
+    line-height: var(--text-line-row-space);            /* Matches your global body height */
+    margin-top: 0.15em !important;    /* Reduces top spacing */
+    margin-bottom: 0.15em !important; /* Reduces bottom spacing */
+  }
+
+  /* Removes spacing if your markdown generator wraps list items in <p> tags */
+  .prose li p {
+    margin-top: 0.4em!important;
+    margin-bottom: 0.4em !important;
+  }
+  
     /* Images */
  .prose img {
     max-width: 100%;
@@ -124,17 +150,37 @@
 /* 4. Paragraph styling */
 .prose p {
   text-align: justify; /* <--- Add this */
-  line-height: 1.625;
+  line-height: var(--text-line-row-space);
   margin-bottom: 1.5rem;
 }
+
   /* 3. Global Body Styling */
   .prose p {
 
     font-family: var(--font-brand) !important;
     font-size: var(--text-body-mobile); 
-    line-height: 1.58;                 
+    line-height: var(--text-line-row-space);                 
     letter-spacing: var(--tracking-body);          
   }
+
+
+
+  
+.prose table {
+  width: 100%;
+  max-width: 100%;
+  display: table;
+}
+
+.prose td,
+.prose th {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+
+
 
   @media (min-width: 900px) {
     .prose p {
