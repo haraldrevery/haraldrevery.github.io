@@ -448,8 +448,9 @@ document.getElementById('table-cols').addEventListener('keydown', e => {
 
 /* Export function */
 function exportFile(extension = 'md') {
-  /* Sanitise the doc title the same way as before (spaces→dashes, lowercase) */
-  const baseName = (docTitle.value.trim() || 'untitled').replace(/\s+/g, '-').toLowerCase();
+  /* Sanitise the doc title: spaces to dashes, remove illegal OS characters, lowercase */
+  let baseName = (docTitle.value.trim() || 'untitled').replace(/\s+/g, '-').replace(/[<>:"/\\|?*\x00-\x1F]/g, '').toLowerCase();
+  if (!baseName) baseName = 'untitled';
   /* Apply the active filename format (suffix, prefix, or plain) */
   const filename = buildExportFilename(baseName, extension);
   const mimeType = extension === 'md' ? 'text/markdown' : 'text/plain';
@@ -791,8 +792,9 @@ function openSaveAsModal() {
   const modal = document.getElementById('save-as-modal');
   const input = document.getElementById('save-as-filename');
   
-  /* Pre-fill with the sanitized current title */
-  let baseName = (docTitle.value.trim() || 'untitled').replace(/\s+/g, '-').toLowerCase();
+  /* Pre-fill with the sanitized current title, stripping illegal OS characters */
+  let baseName = (docTitle.value.trim() || 'untitled').replace(/\s+/g, '-').replace(/[<>:"/\\|?*\x00-\x1F]/g, '').toLowerCase();
+  if (!baseName) baseName = 'untitled';
   input.value = baseName;
   
   modal.classList.add('show');
@@ -806,8 +808,8 @@ function executeSaveAs() {
   const input = document.getElementById('save-as-filename');
   let rawName = input.value.trim();
   
-  /* Aggressive sanitization: Strip everything except letters, numbers, dashes, and underscores */
-  let safeName = rawName.replace(/[^a-zA-Z0-9-_]/g, '');
+  /* OS-safe sanitization: Strip illegal filesystem characters but preserve international letters */
+  let safeName = rawName.replace(/[<>:"/\\|?*\x00-\x1F]/g, '');
   if (!safeName) safeName = 'untitled';
   
   /* Bypass filenameFormat settings, just append .md */
