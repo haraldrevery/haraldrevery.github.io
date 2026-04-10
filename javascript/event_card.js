@@ -4,12 +4,12 @@
 
 /* ─── TEXTURE IMAGE PATHS & OPACITY ───────────────────────── */
 var TEXTURE_SRCS = [
-    '/photos/audioplayer_texture0.jpg',
-    '/photos/audioplayer_texture1.jpg',
-    '/photos/audioplayer_texture2.jpg',
-    '/photos/bgtexture2.jpg',
-    '/photos/bgtexture0.jpg',
-    '/photos/audioplayer_texture3.jpg',
+    '/revery_notebook/image_assets/bg_1_max.jpg',
+    '/revery_notebook/image_assets/bg_2_max.jpg',
+    '/revery_notebook/image_assets/bg_3_max.jpg',
+    '/revery_notebook/image_assets/bg_4_max.jpg',
+    '/revery_notebook/image_assets/bg_5_max.jpg',
+    '/revery_notebook/image_assets/bg_6_max.jpg',
 ]; 
 var TEXTURE_OPACITY = 0.05;
 var _textureImage = null;
