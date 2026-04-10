@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Harald Revery - Revery Notebook</title>
+<title>Revery Notebook</title>
 
     <meta name="description" content="Revery Notebook | A place to write digital notes.">
     <meta name="keywords" content="harald, revery, markdown, latex, syntax, editor, notes, text, documentation">
@@ -23,7 +23,7 @@
                style-src 'self' 'unsafe-inline'; 
                font-src 'self' data:; 
                img-src 'self' data:; 
-               script-src 'self' 'unsafe-inline';">
+               script-src 'self';">
 
     <!-- Internet icon -->
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
@@ -35,15 +35,10 @@
 
 
 <!-- ── System theme sync — runs before paint to avoid flash ── -->
-<script>
-  (function () {
-    var mq = window.matchMedia('(prefers-color-scheme: dark)');
-    document.documentElement.setAttribute('data-theme', mq.matches ? 'dark' : 'light');
-    mq.addEventListener('change', function (e) {
-      document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
-    });
-  })();
-</script>
+<script src="/revery_notebook/jvscrpt_and_css_extra/markdown_editor_theme.js"></script> 
+
+
+
 <link rel="stylesheet" href="/main.css">
 <link rel="stylesheet" href="/prose.css">
 
@@ -389,7 +384,7 @@ body {
   /* Overlays dark bg (#0a0a0a) to mimic low opacity without needing a scrolling ::before element */
   background-image: 
     linear-gradient(rgba(10, 10, 10, calc(1 - var(--bg_oacity))), rgba(10, 10, 10, calc(1 - var(--bg_oacity)))), 
-    url('/revery_notebook/image_assets/bg_4_web.jpg');
+    url('/revery_notebook/image_assets/bg_6_web.jpg');
 }
 
 [data-theme="light"] #preview {
@@ -592,18 +587,35 @@ body {
     height: 44px;
     flex: 0 0 100%;       /* first row: all buttons */
   }
-  body[data-view="editor"] #topbar-left {
+body[data-view="editor"] #topbar-left {
     display: flex;
-    flex: 0 0 100%;       /* second row: filename only */
+    flex: 0 0 100%;
     padding: 0 12px 2px;
     align-items: center;
+    gap: 12px;
+    flex-wrap: nowrap;
   }
   
-
-  /* Hide everything in topbar-left except the title field */
-  body[data-view="editor"] #topbar-left > *:not(#doc-title) {
+  /* Show the file button wrapper and the title input, hide everything else */
+  body[data-view="editor"] #topbar-left .file-btn-wrapper {
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+  
+  body[data-view="editor"] #topbar-left #doc-title {
+    display: block;
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    border-bottom: 1px solid var(--border);
+    margin: 0;
+  }
+  
+  body[data-view="editor"] #topbar-left #wordcount,
+  body[data-view="editor"] #topbar-left #size-warning {
     display: none !important;
   }
+
   body[data-view="editor"] #doc-title {
     display: block;
     width: 100%;
@@ -1295,8 +1307,10 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
 <body data-view="editor">
 
 <div id="topbar">
+
+  
 <div id="topbar-left">
-  <div style="position: relative;">
+  <div class="file-btn-wrapper" style="position: relative;">
     <button class="tb-btn" id="btn-file"><span class="btn-label-desktop">File ▾</span><span class="btn-label-mobile">File</span></button>
     <div id="file-dropdown" class="menu-container" style="top:38px;left:0;"></div>
   </div>
@@ -1304,6 +1318,9 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
   <span id="wordcount">0 words</span>
   <span id="size-warning" style="display: none; color: #fbbf24; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: var(--tracking-wide); text-transform: uppercase; margin-left: 10px;"></span>
 </div>
+
+
+
   <div id="topbar-center">
     <div style="position: relative; display: flex; align-items: center;">
       <button id="btn-logo" title="Harald Revery — Menu">
