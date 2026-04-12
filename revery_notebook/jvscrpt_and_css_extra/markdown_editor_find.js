@@ -192,7 +192,7 @@ function highlightMatch(idx) {
   const after = text.substring(end);
   
   const escapeHtmlLocal = (str) => str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-  findBackdrop.innerHTML = escapeHtmlLocal(before) + `<mark style="background: rgba(255, 200, 60, 0.4); color: transparent; border-radius: 2px; box-shadow: 0 0 0 1px rgba(255,200,60,0.8);">${escapeHtmlLocal(match)}</mark>` + escapeHtmlLocal(after);
+  findBackdrop.innerHTML = escapeHtmlLocal(before) + `<mark class="find-highlight-mark">${escapeHtmlLocal(match)}</mark>` + escapeHtmlLocal(after);
   findBackdrop.scrollTop = editor.scrollTop;
 
   // Remember what is currently focused so we don't interrupt typing

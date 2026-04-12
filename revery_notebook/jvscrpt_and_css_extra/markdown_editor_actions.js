@@ -411,7 +411,7 @@ function buildAndInsertTable() {
   const safeRows = Math.min(rows, MAX_ROWS);
   const safeCols = Math.min(cols, MAX_COLS);
 
-  let table = '\n|';
+  let table = '\n\n|';
   for (let i = 0; i < safeCols; i++) table += ` Header ${i + 1} |`;
   table += '\n|';
   for (let i = 0; i < safeCols; i++) table += ` --- |`;
@@ -419,7 +419,7 @@ function buildAndInsertTable() {
     table += '\n|';
     for (let c = 0; c < safeCols; c++) table += ` Cell |`;
   }
-  table += '\n';
+  table += '\n\n';
 
   wrapText(table, '');
   document.getElementById('table-modal').classList.remove('show');

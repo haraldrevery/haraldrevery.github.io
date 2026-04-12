@@ -305,19 +305,11 @@ function applyUiSizeProseCompensation() {
     styleEl.id = 'ui-scale-prose-fix';
     document.head.appendChild(styleEl);
   }
-
-
   const inv    = (1 / (uiSize / 100)).toFixed(4);
   const tScale = (previewTextSize / 100).toFixed(4);
-
-
   styleEl.textContent = [
-    /* h1/h2 are overridden to fixed rem values in prose.css — compensate
-       for UI-scale bleed and apply the independent text scale             */
     `#preview .prose h1       { font-size: calc(3rem      * ${inv} * ${tScale}); }`,
     `#preview .prose h2       { font-size: calc(1.875rem  * ${inv} * ${tScale}); }`,
-    /* prose-lg base drives h3/h4 and code blocks via em — fixing the base
-       scales all children (h3, h4, pre code) automatically              */
     `#preview .prose.prose-lg { font-size: calc(1.125rem  * ${inv} * ${tScale}); }`
   ].join('\n');
 }
@@ -346,17 +338,10 @@ function applyReaderPadding() {
 }
 applyReaderPadding(); // Apply the 50% default on load
 
-/* ── Apply Custom Font Types ── */
+/* Apply Custom Font Types via CSS Variables */
 function applyFontTypes() {
-  let styleEl = document.getElementById('custom-font-types-fix');
-  if (!styleEl) {
-    styleEl = document.createElement('style');
-    styleEl.id = 'custom-font-types-fix';
-    document.head.appendChild(styleEl);
-  }
-
   const fontMap = {
-    'harald': '', // Handled by standard CSS defaults
+    'harald': '', // Handled by CSS variable fallback
     'sans': 'ui-sans-serif, system-ui, sans-serif',
     'serif': 'ui-serif, Georgia, serif',
     'mono': 'ui-monospace, "Courier New", monospace',
@@ -365,89 +350,39 @@ function applyFontTypes() {
     'courier': '"Courier New", Courier, monospace'
   };
 
-  let css = '';
   if (editorFontType !== 'harald' && fontMap[editorFontType]) {
-    css += `#editor { font-family: ${fontMap[editorFontType]} !important; }\n`;
+    document.documentElement.style.setProperty('--editor-font', fontMap[editorFontType]);
+  } else {
+    document.documentElement.style.removeProperty('--editor-font');
   }
+
   if (previewFontType !== 'harald' && fontMap[previewFontType]) {
-    const fontFamily = fontMap[previewFontType];
-    css += `html #preview .prose,
-html #preview .prose p,
-html #preview .prose li,
-html #preview .prose blockquote,
-html #preview .prose h1,
-html #preview .prose h2,
-html #preview .prose h3,
-html #preview .prose h4,
-html #preview .prose h5,
-html #preview .prose h6,
-html #preview .prose pre,
-html #preview .prose code,
-html #preview .prose em,
-html #preview .prose i,
-html #preview .prose strong,
-html #preview .prose b {
-  font-family: ${fontFamily} !important;
-}\n`;
-    /* --- FIX: Reset letter-spacing for non-Harald fonts --- */
-    css += `html #preview .prose,
-html #preview .prose p,
-html #preview .prose li,
-html #preview .prose blockquote,
-html #preview .prose h1,
-html #preview .prose h2,
-html #preview .prose h3,
-html #preview .prose h4,
-html #preview .prose h5,
-html #preview .prose h6,
-html #preview .prose pre,
-html #preview .prose code,
-html #preview .prose em,
-html #preview .prose i,
-html #preview .prose strong,
-html #preview .prose b {
-  letter-spacing: normal !important;
-}\n`;
-}
-
-// Adjust KaTeX font size: 0.7em only for Harald (which has taller x-height),
-  // reset to 1em for all other fonts so math renders at a natural size.
-  if (previewFontType === 'harald') {
-    css += `\n#preview .katex { font-size: 0.7em !important; }`;
+    document.documentElement.style.setProperty('--preview-font', fontMap[previewFontType]);
+    document.documentElement.style.setProperty('--preview-letter-spacing', 'normal');
+    document.documentElement.style.setProperty('--katex-font-size', '1em');
   } else {
-    css += `\n#preview .katex { font-size: 1em !important; }`;
+    document.documentElement.style.removeProperty('--preview-font');
+    document.documentElement.style.removeProperty('--preview-letter-spacing');
+    document.documentElement.style.setProperty('--katex-font-size', '0.7em');
   }
 
-  // Make outline font type follow the preview font type setting
-  const outlineFontFamily = (previewFontType !== 'harald' && fontMap[previewFontType])
-    ? fontMap[previewFontType]
-    : 'var(--font-brand)';
-  css += `\n#outline-nav .outline-item { font-family: ${outlineFontFamily} !important; }`;
-
-  styleEl.textContent = css;
+  const outlineFontFamily = (previewFontType !== 'harald' && fontMap[previewFontType]) 
+    ? fontMap[previewFontType] 
+    : '';
+  
+  if (outlineFontFamily) {
+    document.documentElement.style.setProperty('--outline-font', outlineFontFamily);
+  } else {
+    document.documentElement.style.removeProperty('--outline-font');
+  }
 }
 
-/* ── Apply heading centering ── */
+/* Apply heading centering via class toggle */
 function applyCenterHeaders() {
-  let styleEl = document.getElementById('center-headers-style');
   if (window.centerHeaders) {
-    if (!styleEl) {
-      styleEl = document.createElement('style');
-      styleEl.id = 'center-headers-style';
-      document.head.appendChild(styleEl);
-    }
-    styleEl.textContent = `
-      #preview .prose h1,
-      #preview .prose h2,
-      #preview .prose h3,
-      #preview .prose h4,
-      #preview .prose h5,
-      #preview .prose h6 {
-        text-align: center !important;
-      }
-    `;
+    document.body.classList.add('center-headers-active');
   } else {
-    if (styleEl) styleEl.remove();
+    document.body.classList.remove('center-headers-active');
   }
 }
 

@@ -45,10 +45,9 @@ if (typeof texmath !== 'undefined' && typeof katex !== 'undefined') {
 /* ── Force preview images to fill the prose container width (this is and odd thing... ducktape solution for image renderer) ── */
 const defaultImageRenderer = md.renderer.rules.image;
 md.renderer.rules.image = function (tokens, idx, options, env, self) {
-  tokens[idx].attrSet('style', 'width:100%');
+  tokens[idx].attrSet('class', 'preview-image-full');
   return defaultImageRenderer(tokens, idx, options, env, self);
 };
-
 
 
 
@@ -175,11 +174,10 @@ yamlHtml = `<div class="yaml-render"><div class="yaml-render-title">${properties
   let rendered = '';
   try {
     rendered = md.render(raw);
-  } catch (err) {
+} catch (err) {
     console.error("Markdown rendering failed:", err);
-    rendered = `<div style="color: #ff5555; padding: 1rem; border: 1px solid #ff5555; border-radius: 4px;"><strong>Render Error:</strong> ${escapeHtml(err.message)}</div>`;
+    rendered = `<div class="render-error-message"><strong>Render Error:</strong> ${escapeHtml(err.message)}</div>`;
   }
-
 
 
 
