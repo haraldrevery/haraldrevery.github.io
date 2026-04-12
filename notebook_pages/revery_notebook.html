@@ -231,6 +231,7 @@
   </div>
 </div>
 
+<!-- ── Legal Modal ──────────────────────────────────────────────── -->
 <div id="legal-modal" class="modal-overlay">
   <div class="modal-content mod-w-680">
     <h3>Legal</h3>
@@ -241,6 +242,7 @@
   </div>
 </div>
 
+<!-- ── User Guide Modal ──────────────────────────────────────────────── -->
 <div id="user-guide-modal" class="modal-overlay">
   <div class="modal-content mod-w-560">
     <h3>User Guide</h3>
@@ -253,121 +255,6 @@
 
 
 
-<!-- ── Legal Modal ──────────────────────────────────────────────── -->
-<div id="legal-modal" class="modal-overlay">
-  <div class="modal-content" style="max-width: 680px;"> <h3>Legal</h3>
-    <div style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; max-height: 70vh; overflow-y: auto; padding-right: 10px;">
-  </div>
-    <div class="modal-buttons" style="margin-top: 24px;">
-      <button id="legal-btn-close" class="tb-btn">Close</button>
-    </div>
-  </div>
-</div>
-
-
-<!-- ── User Guide Modal ──────────────────────────────────────────────── -->
-<div id="user-guide-modal" class="modal-overlay">
-  <div class="modal-content" style="max-width: 560px;">
-    <h3>User Guide</h3>
-
-    <div style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6;
-                max-height: 70vh; overflow-y: auto; padding-right: 10px;">
-
-      <!-- ── Keyboard Shortcuts ── -->
-      <section style="margin-bottom: 20px;">
-        <h4 style="color: var(--text); margin: 0 0 10px; font-size: 0.95rem;
-                   letter-spacing: 0.06em; text-transform: uppercase;">Keyboard Shortcuts</h4>
-        <table style="width:100%; border-collapse:collapse; font-family: var(--font-mono);
-                      font-size: 0.82rem;">
-          <tbody>
-            <tr><td style="padding:3px 0; width:52%;">Ctrl + F</td><td>Open Find / Replace</td></tr>
-            <tr><td style="padding:3px 0;">Ctrl + Z</td><td>Undo</td></tr>
-            <tr><td style="padding:3px 0;">Ctrl + Y</td><td>Redo</td></tr>
-            <tr><td style="padding:3px 0;">Ctrl + S</td><td>Export / Save file</td></tr>
-            <tr><td style="padding:3px 0;">Tab (in editor)</td><td>Insert 4 spaces</td></tr>
-          </tbody>
-        </table>
-      </section>
-
-      <hr style="border:0; border-top:1px solid var(--border); margin:14px 0; opacity:0.5;">
-
-      <!-- ── Settings Tips ── -->
-      <section style="margin-bottom: 20px;">
-        <h4 style="color: var(--text); margin: 0 0 10px; font-size: 0.95rem;
-                   letter-spacing: 0.06em; text-transform: uppercase;">Settings Tips</h4>
-        <ul style="margin:0; padding-left:18px; display:flex; flex-direction:column; gap:6px;">
-          <li><strong>Show Preview</strong> — toggle the live rendered preview on or off. Hiding it gives you a full-width editor.</li>
-          <li><strong>Show Outline</strong> — opens a heading navigator panel on the right. Click any heading to jump to it.</li>
-          <li><strong>Reader Mode</strong> — hides the editor entirely for a clean, distraction-free reading view. Press <em>Exit Reader Mode</em> to return.</li>
-          <li><strong>Mobile View</strong> — frames the preview at a phone-sized width so you can see how your content looks on small screens (don't rely on this too much...).</li>
-          <li><strong>UI Size / Text Size</strong> — "UI Size" scales menu buttons; "Text Size" scales editor and preview text.</li>
-          <li><strong>Calendar Format</strong> (Settings menu) — choose how dates are inserted when you use the date toolbar action.</li>
-          <li><strong>Drag the divider</strong> — the vertical bar between editor and preview can be dragged left or right to resize each pane.</li>
-          <li><strong>Click any preview block</strong> — jumps the editor cursor to the matching source line.</li>
-          <li><strong>CPU performance delay</strong> — Higher value = Saves battery and CPU, but not that great experience. Low value = drains more CPU and battery but smoother experience.</li>
-          <li><strong>Forced Prev. Synch.</strong> — "Forced Preview Synchronization" is a more reliable synchronization between the editor and preview window, but might feel a little janky. Use if you notice that the what you type is not visible on the preview.</li>
-        </ul>
-      </section>
-
-      <hr style="border:0; border-top:1px solid var(--border); margin:14px 0; opacity:0.5;">
-
-      <!-- ── Markdown Syntax Intro ── -->
-      <section style="margin-bottom: 8px;">
-        <h4 style="color: var(--text); margin: 0 0 10px; font-size: 0.95rem;
-                   letter-spacing: 0.06em; text-transform: uppercase;">Markdown Basics</h4>
-        <table style="width:100%; border-collapse:collapse; font-family: var(--font-mono);
-                      font-size: 0.82rem;">
-          <thead>
-            <tr style="color: var(--text); border-bottom: 1px solid var(--border);">
-              <th style="text-align:left; padding:4px 0; width:52%; font-weight:600;">You type</th>
-              <th style="text-align:left; padding:4px 0; font-weight:600;">You get</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td style="padding:4px 0;"># Heading 1</td><td>Large heading</td></tr>
-            <tr><td style="padding:4px 0;">## Heading 2</td><td>Medium heading</td></tr>
-            <tr><td style="padding:4px 0;">**bold**</td><td><strong>bold</strong></td></tr>
-            <tr><td style="padding:4px 0;">*italic*</td><td><em>italic</em></td></tr>
-            <tr><td style="padding:4px 0;">~~strikethrough~~</td><td><s>strikethrough</s></td></tr>
-            <tr><td style="padding:4px 0;">`inline code`</td><td>inline code</td></tr>
-            <tr><td style="padding:4px 0;">```<br>code block<br>```</td><td>Fenced code block</td></tr>
-            <tr><td style="padding:4px 0;">- item</td><td>Bullet list item</td></tr>
-            <tr><td style="padding:4px 0;">1. item</td><td>Numbered list item</td></tr>
-            <tr><td style="padding:4px 0;">- [ ] task</td><td>Checkbox (unchecked)</td></tr>
-            <tr><td style="padding:4px 0;">- [x] task</td><td>Checkbox (checked)</td></tr>
-            <tr><td style="padding:4px 0;">[text](url)</td><td>Hyperlink</td></tr>
-            <tr><td style="padding:4px 0;">![alt](image-url)</td><td>Inline image</td></tr>
-            <tr><td style="padding:4px 0;">&gt; quote</td><td>Blockquote</td></tr>
-            <tr><td style="padding:4px 0;">--- (own line)</td><td>Horizontal rule</td></tr>
-            <tr><td style="padding:4px 0;">| A | B |<br>|---|---|<br>| 1 | 2 |</td><td>Table</td></tr>
-            <tr><td style="padding:4px 0;">[^1] / [^1]: note</td><td>Footnote</td></tr>
-          </tbody>
-        </table>
-        <p style="margin: 12px 0 0; font-size: 0.8rem; font-style: italic;">
-          Tip: Use the <strong>Toolbar</strong> menu to insert most of these without typing them by hand.
-        </p>
-      </section>
-
-      <hr style="border:0; border-top:1px solid var(--border); margin:14px 0; opacity:0.5;">
-
-      <!-- ── Markdown Syntax Intro ── -->
-      <section style="margin-bottom: 8px;">
-        <h4 style="color: var(--text); margin: 0 0 10px; font-size: 0.95rem;
-                   letter-spacing: 0.06em; text-transform: uppercase;">Latex suppport</h4>
-
-        <p style="margin: 12px 0 0; font-size: 0.8rem; font-style: italic;">
-          This editor has LaTeX support (through "KaTeX"). Use "$$ . . . $$" for equation blocks and "$ . . . $" for having the equation in the text. <strong>Note</strong>  that after the dollar sign, no gap between the "$" and the first syntax symbol, otherwise it will not render it out correctly.
-        </p>
-      </section>
-
-
-    </div><!-- /scrollable body -->
-
-    <div class="modal-buttons" style="margin-top: 20px;">
-      <button id="user-guide-btn-close" class="tb-btn">Close</button>
-    </div>
-  </div>
-</div>
 
 
 
