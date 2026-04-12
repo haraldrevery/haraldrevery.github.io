@@ -1278,3 +1278,89 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
   #preview [data-sl]:hover { background: rgba(128,128,128,0.07); }
   .md-cal-day:hover { background: var(--bg-hover); color: var(--text); }
 }
+
+
+
+/* ── Modal CSP Layout & Typography Fixes ── */
+.modal-content.max-w-360 { max-width: 360px; }
+.modal-content.max-w-560 { max-width: 560px; }
+.modal-content.max-w-680 { max-width: 680px; }
+.mt-20 { margin-top: 20px; }
+.mt-24 { margin-top: 24px; }
+
+.modal-scrollable {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+.modal-scrollable.text-sm { font-size: 0.88rem; }
+.modal-section { margin-bottom: 20px; }
+.modal-section.mb-small { margin-bottom: 8px; }
+.modal-section.mb-tiny { margin-bottom: 4px; }
+.modal-heading {
+  color: var(--text);
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.modal-heading.about {
+  color: var(--text);
+  margin-bottom: 4px;
+  font-size: 1rem;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.modal-heading.guide { margin: 0 0 10px; }
+.modal-p { margin: 0 0 8px; }
+.modal-p.mb-0 { margin: 0; }
+.modal-p.subtitle { margin: 0 0 6px; font-weight: 600; }
+.modal-list {
+  margin: 0 0 8px;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.modal-list.gap-6 { gap: 6px; }
+.modal-list.no-style {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.modal-hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 16px 0;
+  opacity: 0.5;
+}
+.modal-lib-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.modal-lib-block {
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 12px;
+}
+.modal-lib-block p { margin: 0 0 4px; }
+.modal-lib-block p.text-xs { margin: 0; font-size: 0.82em; }
+.modal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+.modal-table th, .modal-table td { padding: 4px 0; }
+.modal-table th { text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+.modal-table th:first-child, .modal-table td:first-child { width: 52%; }
+.font-mono { font-family: var(--font-mono); }
+.font-mono-sm { font-family: var(--font-mono); font-size: 0.85em; }
+.font-mono-xs { font-family: var(--font-mono); font-size: 0.8em; }
+.italic-tip { margin: 12px 0 0; font-size: 0.8rem; font-style: italic; }
+
