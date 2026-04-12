@@ -229,32 +229,31 @@ description: A markdown editor with latex support, a nice place for digital note
 </div>
 
 <div id="about-modal" class="modal-overlay">
-  <div class="modal-content" style="max-width: 360px;"> <h3>Revery Notebook</h3>
-    
-    <div style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; max-height: 400px; overflow-y: auto; padding-right: 8px;">
-      
-      <section style="margin-bottom: 20px;">
-        <h4 style="color: var(--text-main); margin-bottom: 4px; font-size: 1rem;">½</h4>
-        <p>A markdown editor with my brand aesthetics. Simple and just works. Also as some LaTeX syntax support. </p>
-      </section>
-
-      <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 16px 0; opacity: 0.5;">
-
-      <section style="margin-bottom: 20px;">
-        <h4 style="color: var(--text-main); margin-bottom: 4px; font-size: 1rem;">Version Info</h4>
-        <ul style="list-style: none; padding: 0; margin: 0;">
-          <li><span style="font-family: var(--font-mono);">v1.0.0</span> — Stable(ish)</li>
-          <li><span style="font-family: var(--font-mono);">Build:</span> April 2026</li>
-        </ul>
-      </section>
-
-      <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 16px 0; opacity: 0.5;">
-
-
-    </div>
-
-    <div class="modal-buttons" style="margin-top: 24px;">
+  <div class="modal-content mod-w-360">
+    <h3>Revery Notebook</h3>
+    <div class="mod-scroll-about"></div>
+    <div class="modal-buttons mod-mt-24">
       <button id="about-btn-close" class="tb-btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="legal-modal" class="modal-overlay">
+  <div class="modal-content mod-w-680">
+    <h3>Legal</h3>
+    <div class="mod-scroll-legal"></div>
+    <div class="modal-buttons mod-mt-24">
+      <button id="legal-btn-close" class="tb-btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="user-guide-modal" class="modal-overlay">
+  <div class="modal-content mod-w-560">
+    <h3>User Guide</h3>
+    <div class="mod-scroll-guide"></div>
+    <div class="modal-buttons mod-mt-20">
+      <button id="user-guide-btn-close" class="tb-btn">Close</button>
     </div>
   </div>
 </div>
