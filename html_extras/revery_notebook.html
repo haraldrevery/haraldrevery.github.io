@@ -561,17 +561,15 @@ body {
   body[data-view="preview"] #editor-pane { display: none; }
   body[data-view="preview"] #preview-pane { display: flex; }
 
-  /* Hide the "Preview" label bar on mobile */
+/* Hide the "Preview" label bar on mobile */
   #preview-pane .pane-label {
     display: none !important;
   }
 
-  .yaml-render {
-    max-width: none !important;
-    margin-left: 0;
-    margin-right: 0;
-  }
   #preview { padding: 28px 20px 80px; }
+
+
+
 #editor  { 
     padding: 24px 20px 40vh; /* 40vh ensures text lifts above the virtual keyboard */
     font-size: var(--text-body-mobile);
@@ -597,12 +595,12 @@ body {
 body[data-view="editor"] #topbar-left {
     display: flex;
     flex: 0 0 100%;
-    padding: 0 12px 2px;
+    height: 44px;
+    padding: 0 20px;            /* side paddding */
     align-items: center;
     gap: 12px;
     flex-wrap: nowrap;
   }
-  
   /* Show the file button wrapper and the title input, hide everything else */
   body[data-view="editor"] #topbar-left .file-btn-wrapper {
     display: inline-flex;
@@ -625,7 +623,7 @@ body[data-view="editor"] #topbar-left {
 
   body[data-view="editor"] #doc-title {
     display: block;
-    width: 100%;
+    width: auto;
     max-width: none;
     font-size: 0.85rem;
     padding: 3px 0;
@@ -1043,12 +1041,6 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
   transition: max-width 0.25s ease;
 }
 
-/* Enforce 100% width on narrow screens regardless of the desktop setting */
-@media (max-width: 750px) {
-  #preview .prose {
-    max-width: none !important;
-  }
-}
 /* ── Find / Replace Bar ─────────────────────────────────────────────────── */
 #find-bar {
   display: none; /* shown via JS — openFindBar() sets display:flex */
@@ -1655,6 +1647,50 @@ Theory: Bundle all the JS above to one single minified version. Copy and paste t
 with ";" between them. Then minify it, then it's around 60 kB.
 Practical: No, for some reason it crashed due to the browser prever split stuff over monolith (some function are more stable if browser can pick its own order).
       -->
+
+<!--  Schema SEO thing -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Revery Notebook",
+  "headline": "A place to write digital notes.",
+  "description": "A markdown editor with my brand aesthetics. Simple and just works. Also has some LaTeX syntax support.",
+  "applicationCategory": "ProductivityApplication",
+  "operatingSystem": "Any (Web Browser)",
+  "browserRequirements": "Requires JavaScript and HTML5 localStorage",
+  "url": "https://haraldrevery.com/notebook_pages/revery_notebook",
+  "image": "https://haraldrevery.com/notebook_thumbnails/revery_notebook.jpg",
+  "softwareVersion": "1.0.0",
+  "author": {
+    "@type": "Person",
+    "name": "Harald Mark Thirslund",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Gothenburg",
+      "addressCountry": "SE"
+    }
+  },
+  "creator": {
+    "@type": "Person",
+    "name": "Harald Mark Thirslund"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock"
+  },
+  "featureList": [
+    "Live Markdown Parsing",
+    "LaTeX Math Support via KaTeX",
+    "Distraction-free Reader Mode",
+    "Local offline storage via browser localStorage",
+    "File export to .md and .txt",
+    "Customizable UI themes and typography"
+  ]
+}
+</script>
 
 
 </body>

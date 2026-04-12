@@ -1641,6 +1641,50 @@ with ";" between them. Then minify it, then it's around 60 kB.
 Practical: No, for some reason it crashed due to the browser prever split stuff over monolith (some function are more stable if browser can pick its own order).
       -->
 
+<!--  Schema SEO thing -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Revery Notebook",
+  "headline": "A place to write digital notes.",
+  "description": "A markdown editor with my brand aesthetics. Simple and just works. Also has some LaTeX syntax support.",
+  "applicationCategory": "ProductivityApplication",
+  "operatingSystem": "Any (Web Browser)",
+  "browserRequirements": "Requires JavaScript and HTML5 localStorage",
+  "url": "https://haraldrevery.com/notebook_pages/revery_notebook",
+  "image": "https://haraldrevery.com/notebook_thumbnails/revery_notebook.jpg",
+  "softwareVersion": "1.0.0",
+  "author": {
+    "@type": "Person",
+    "name": "Harald Mark Thirslund",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Gothenburg",
+      "addressCountry": "SE"
+    }
+  },
+  "creator": {
+    "@type": "Person",
+    "name": "Harald Mark Thirslund"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock"
+  },
+  "featureList": [
+    "Live Markdown Parsing",
+    "LaTeX Math Support via KaTeX",
+    "Distraction-free Reader Mode",
+    "Local offline storage via browser localStorage",
+    "File export to .md and .txt",
+    "Customizable UI themes and typography"
+  ]
+}
+</script>
+
 
 </body>
 </html>
