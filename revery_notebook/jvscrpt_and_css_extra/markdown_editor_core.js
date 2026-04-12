@@ -51,38 +51,35 @@ md.renderer.rules.image = function (tokens, idx, options, env, self) {
 
 
 
-/* ── Allowlist safe URL schemes so linkify can't emit javascript: anchors ── */
+/* ── image thing breaks here, but also can't risk exploits... ── */
 const _safeSchemes = ['http:', 'https:', 'mailto:', 'ftp:'];
+const _dangerousSchemes = ['javascript:', 'data:', 'vbscript:'];
 
+function sanitizeUrl(url) {
+  if (!url) return '';
+  // Strip leading control characters (ASCII 0–31, 127) and spaces
+  let cleaned = url.replace(/^[\x00-\x20\x7F]+/, '');
+  if (!cleaned) return '';
 
-md.normalizeLink = (url) => {
-  try { if (_safeSchemes.includes(new URL(url).protocol)) return url; } catch (_) { return url; }
-  return '';
-};
-/* ── had to put "true" to not break image renderer ── */
-
-
-/* Validate that a URL only uses an allowed protocol (http, https, mailto, ftp) or is relative.
-   Reject javascript:, data:, vbscript:, and any other non‑standard schemes. Deepseek solution tapped the exploit without breaking the images! */
-md.validateLink = (url) => {
-  // Trim and handle relative links (safe)
-  const trimmed = url.trim();
-  if (!trimmed) return false;
-
-  // Extract the scheme (case-insensitive) – simplest and safest method
-  const schemeMatch = trimmed.match(/^([a-z][a-z0-9+\-.]*):/i);
+  const schemeMatch = cleaned.match(/^([a-z][a-z0-9+\-.]*):/i);
   if (!schemeMatch) {
-    // No scheme → relative URL or fragment – safe (same origin)
-    return true;
+    // No scheme → relative URL, safe to return as is
+    return cleaned;
   }
 
-  const scheme = schemeMatch[1].toLowerCase();
-  // Only allow explicit safe schemes
-  return _safeSchemes.includes(scheme + ':');
-};
+  const scheme = schemeMatch[1].toLowerCase() + ':';
+  if (_safeSchemes.includes(scheme)) {
+    return cleaned;
+  }
+  if (_dangerousSchemes.includes(scheme)) {
+    return ''; // reject dangerous schemes
+  }
+  // Unknown scheme (tel:, magnet:, etc.) – allow
+  return cleaned;
+}
 
-
-
+md.normalizeLink = sanitizeUrl;
+md.validateLink = (url) => sanitizeUrl(url) !== '';
 
 
 

@@ -837,7 +837,19 @@ document.getElementById('save-as-btn-cancel').addEventListener('click', () => {
 });
 
 /* Keyboard support: Enter to confirm, Esc to close */
-document.getElementById('save-as-filename').addEventListener('keydown', e => {
+const saveAsInput = document.getElementById('save-as-filename');
+
+/* CSP-compliant focus/blur styling */
+saveAsInput.addEventListener('focus', () => {
+  saveAsInput.style.borderColor = 'var(--accent)';
+});
+
+saveAsInput.addEventListener('blur', () => {
+  saveAsInput.style.borderColor = 'var(--border-md)';
+});
+
+/* Keyboard support: Enter to confirm, Esc to close */
+saveAsInput.addEventListener('keydown', e => {
   if (e.key === 'Enter') { 
     executeSaveAs(); 
     e.preventDefault(); 
