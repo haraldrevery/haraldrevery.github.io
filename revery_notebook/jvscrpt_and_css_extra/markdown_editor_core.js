@@ -558,7 +558,12 @@ More information, click the ½ logo in the center top of the screen.
 editor.addEventListener('input', () => {
   clearTimeout(renderTimer);
   renderTimer = setTimeout(() => { 
-    render(); 
+    // Skip render if on mobile and currently in editor view to save CPU/battery
+    const isNarrow = window.innerWidth <= 750;
+    const isMobileEditor = isNarrow && document.body.getAttribute('data-view') === 'editor';
+    if (!isMobileEditor) {
+      render(); 
+    }
     countWords(); 
     // Auto-save the text to the browser's local storage silently
 try {

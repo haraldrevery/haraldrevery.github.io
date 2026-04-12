@@ -92,11 +92,18 @@ if (outlineDivider) {
 
 
 
-
 /* ── Mobile view toggle ── */
+let lastWasNarrow = window.innerWidth <= 750;
 function updateMobileBtn() {
   const narrow = window.innerWidth <= 750;
   btnView.style.display = narrow ? 'block' : 'none';
+  
+  // If transitioning from mobile (narrow) to desktop (!narrow), ensure preview is up-to-date
+  if (!narrow && lastWasNarrow) {
+    if (typeof render === 'function') render();
+  }
+  lastWasNarrow = narrow;
+
   if (!narrow) {
     /* Only reset to the default 33 % split if the user hasn't dragged a
        custom width this session — prevents the toggle from blowing away
@@ -108,9 +115,19 @@ function updateMobileBtn() {
 }
 btnView.addEventListener('click', () => {
   const isEditor = document.body.getAttribute('data-view') === 'editor';
+  
+  if (isEditor) {
+    // Update the preview right before switching to it on mobile
+    if (typeof render === 'function') render();
+  }
+  
   document.body.setAttribute('data-view', isEditor ? 'preview' : 'editor');
   btnView.textContent = isEditor ? window.t('Preview') : window.t('Editor');
 });
+
+
+window.addEventListener('resize', updateMobileBtn);
+updateMobileBtn();
 
 
 window.addEventListener('resize', updateMobileBtn);
