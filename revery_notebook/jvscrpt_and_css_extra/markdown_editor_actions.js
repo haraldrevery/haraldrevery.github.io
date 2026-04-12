@@ -270,6 +270,7 @@ function executeAction(action) {
               setTimeout(() => sizeWarning.style.display = 'none', 3000);
             }
           });
+
       } else {
         // 2. Insecure context: run the legacy fallback synchronously 
         // while the user gesture is still active.
@@ -277,6 +278,45 @@ function executeAction(action) {
           executeCut(); // Only delete if the fallback reported success
         } else {
           console.warn("Legacy clipboard copy failed. Text not cut.");
+        }
+      }
+      break;
+    }
+
+    case 'ctx_copy': {
+      const copyStart = editor.selectionStart;
+      const copyEnd   = editor.selectionEnd;
+      const copySel   = editor.value.substring(copyStart, copyEnd);
+      if (!copySel) break; // Nothing selected
+
+      // Helper for the legacy synchronous fallback
+      const fallbackCopy = (str) => {
+        const ta = document.createElement('textarea');
+        ta.value = str;
+        ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        let success = false;
+        try { success = document.execCommand('copy'); } catch (_) {}
+        document.body.removeChild(ta);
+        return success;
+      };
+
+      // 1. Check if we are in a secure context with the modern API
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(copySel)
+          .catch(() => {
+            // Alert the user if the API rejects the promise
+            if (typeof sizeWarning !== 'undefined') {
+              sizeWarning.style.display = 'inline';
+              sizeWarning.textContent = 'Clipboard permission denied. Copy failed.';
+              setTimeout(() => sizeWarning.style.display = 'none', 3000);
+            }
+          });
+      } else {
+        // 2. Insecure context: run the legacy fallback
+        if (!fallbackCopy(copySel)) {
+          console.warn("Legacy clipboard copy failed.");
         }
       }
       break;
@@ -498,6 +538,7 @@ document.getElementById('modal-btn-yes').addEventListener('click', () => {
   if (pendingFileAction === 'import') {
     executeImport();
   }
+  pendingFileAction = null;
   document.getElementById('new-file-modal').classList.remove('show');
 });
 
@@ -506,6 +547,7 @@ document.getElementById('modal-btn-no').addEventListener('click', () => {
   if (pendingFileAction === 'import') {
     executeImport();
   }
+  pendingFileAction = null;
   document.getElementById('new-file-modal').classList.remove('show');
 });
 
@@ -586,7 +628,7 @@ editor.addEventListener('keydown', e => {
     const s = editor.selectionStart, en = editor.selectionEnd;
     
     // Using the safe wrapper ensures Ctrl+Z works for tabs
-    insertWithUndo(s, en, '  ');
+    insertWithUndo(s, en, '    ');
     render();
     return;
   }

@@ -129,10 +129,6 @@ btnView.addEventListener('click', () => {
 window.addEventListener('resize', updateMobileBtn);
 updateMobileBtn();
 
-
-window.addEventListener('resize', updateMobileBtn);
-updateMobileBtn();
-
 /* ── Mobile Outline Drawer ────────────────────────────────────────────── */
 /* The Outline button's click is handled entirely by toggleOutline() in
    markdown_editor_menus.js, which now contains a mobile branch that calls
