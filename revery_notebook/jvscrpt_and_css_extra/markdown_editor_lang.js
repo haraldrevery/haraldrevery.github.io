@@ -259,7 +259,7 @@ window.uiTemplates = {
           </div>
           <div class="mod-lib-card">
             <p class="mod-p-4"><strong>markdown-it-texmath</strong> (texmath.js) v1.0 &nbsp;·&nbsp; <span class="mod-mono-08">MIT Licence</span></p>
-            <p class="mod-p-0-082">Copyright © 2020 Stefan Goessner. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, subject to the following condition: the above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. Source: github.com/goessner/markdown-it-texmath.</p>
+            <p class="mod-p-0-082">Copyright © 2013–2017 Stefan Goessner. Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, subject to the following condition: the above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. Source: github.com/goessner/markdown-it-texmath.</p>
           </div>
           <div class="mod-lib-card">
             <p class="mod-p-4"><strong>CodeMirror</strong> v6 &nbsp;·&nbsp; <span class="mod-mono-08">MIT Licence</span></p>
@@ -267,7 +267,7 @@ window.uiTemplates = {
           </div>
           <div class="mod-lib-card">
             <p class="mod-p-4"><strong>DOMPurify</strong> &nbsp;·&nbsp; <span class="mod-mono-08">Apache Licence 2.0</span></p>
-            <p class="mod-p-0-082">Copyright © 2015 Mario Heiderich and contributors. Source: github.com/cure53/DOMPurify.</p>
+            <p class="mod-p-0-082">Copyright © 2025 Dr.-Ing. Mario Heiderich, Cure53. Source: github.com/cure53/DOMPurify.</p>
             <details class="mod-license-details">
               <summary class="mod-license-summary">Apache License 2.0 — Full Text</summary>
               <pre class="mod-license-pre">Apache License
@@ -531,7 +531,7 @@ END OF TERMS AND CONDITIONS</pre>
           </div>
           <div class="mod-lib-card">
             <p class="mod-p-4"><strong>markdown-it-texmath</strong> (texmath.js) v1.0 &nbsp;·&nbsp; <span class="mod-mono-08">MIT-licens</span></p>
-            <p class="mod-p-0-082">Copyright © 2020 Stefan Goessner. Samma MIT-licensvillkor som ovan gäller.</p>
+            <p class="mod-p-0-082">Copyright © 2013–2017 Stefan Goessner. Samma MIT-licensvillkor som ovan gäller.</p>
           </div>
           <div class="mod-lib-card">
             <p class="mod-p-4"><strong>CodeMirror</strong> v6 &nbsp;·&nbsp; <span class="mod-mono-08">MIT-licens</span></p>
@@ -539,7 +539,7 @@ END OF TERMS AND CONDITIONS</pre>
           </div>
           <div class="mod-lib-card">
             <p class="mod-p-4"><strong>DOMPurify</strong> &nbsp;·&nbsp; <span class="mod-mono-08">Apache-licens 2.0</span></p>
-            <p class="mod-p-0-082">Copyright © 2015 Mario Heiderich och bidragsgivare. Källa: github.com/cure53/DOMPurify.</p>
+            <p class="mod-p-0-082">Copyright © 2025 Dr.-Ing. Mario Heiderich, Cure53. Källa: github.com/cure53/DOMPurify.</p>
             <details class="mod-license-details">
               <summary class="mod-license-summary">Apache License 2.0 — Fullständig text</summary>
               <pre class="mod-license-pre">Apache License
