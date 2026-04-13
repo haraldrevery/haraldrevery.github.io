@@ -30,7 +30,7 @@ description: A markdown editor with latex support, a nice place for digital note
            style-src 'self' 'unsafe-inline'; 
            font-src 'self' data:; 
            img-src 'self' data:; 
-           script-src 'self';">
+           script-src 'self' 'sha256-vvt4KWwuNr51XfE5m+hzeNEGhiOfZzG97ccfqGsPwvE=';">
 
     <!-- Internet icon -->
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
@@ -142,7 +142,7 @@ description: A markdown editor with latex support, a nice place for digital note
 
     <!-- ── Find / Replace Bar (hidden until Ctrl+F) ──────────────────────────
          Two rows: [find controls] and [replace controls].
-         Shown / hidden by markdown_editor_find.js.                         -->
+         Shown / hidden by markdown_editor_find_cm.js.                         -->
     <div id="find-bar">
       <!-- Row 1: find -->
       <div class="find-row">
@@ -164,7 +164,7 @@ description: A markdown editor with latex support, a nice place for digital note
 
     <!-- spellcheck="true" activates the browser's native red-underline spell checker.
          Change to spellcheck="false" to disable it. -->
-    <textarea id="editor" spellcheck="true" placeholder="Start writing…"></textarea>
+    <div id="cm-editor-host"></div>
   </div>
   <div id="divider"></div>
   <div id="preview-pane">
@@ -299,14 +299,19 @@ description: A markdown editor with latex support, a nice place for digital note
   </div>
 </div>
 
+
+
+<script src="/revery_notebook/jvscrpt_and_css_extra/purify.min.js" crossorigin="anonymous"></script>
 <script src="/revery_notebook/jvscrpt_and_css_extra/markdown_editor_lang.js"></script>
-<script src="/revery_notebook/jvscrpt_and_css_extra/markdown_editor_core.js"></script>
-<script src="/revery_notebook/jvscrpt_and_css_extra/markdown_editor_undo.js"></script>
-<script src="/revery_notebook/jvscrpt_and_css_extra/markdown_editor_actions.js"></script>
+<script src="/revery_notebook/jvscrpt_and_css_extra/codemirror-bundle.js"></script>
+<script src="/revery_notebook/jvscrpt_and_css_extra/markdown_editor_cm_setup.js"></script>
+<script src="/revery_notebook/jvscrpt_and_css_extra/markdown_editor_core_cm.js"></script>
+<script src="/revery_notebook/jvscrpt_and_css_extra/markdown_editor_actions_cm.js"></script>
 <script src="/revery_notebook/jvscrpt_and_css_extra/markdown_editor_menus.js"></script>
 <script src="/revery_notebook/jvscrpt_and_css_extra/markdown_editor_sync.js"></script>
 <script src="/revery_notebook/jvscrpt_and_css_extra/markdown_editor_layout.js"></script>
-<script src="/revery_notebook/jvscrpt_and_css_extra/markdown_editor_find.js"></script> 
+<script src="/revery_notebook/jvscrpt_and_css_extra/markdown_editor_find_cm.js"></script> 
+
 
 <!--  
 Theory: Bundle all the JS above to one single minified version. Copy and paste them after each other (in the same loading order) 
