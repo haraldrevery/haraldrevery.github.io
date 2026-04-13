@@ -1,8 +1,9 @@
 
- /* Replaces injected <style> for UI Size Compensation */
-#preview .prose h1 { font-size: var(--prose-h1-size, inherit) !important; }
-#preview .prose h2 { font-size: var(--prose-h2-size, inherit) !important; }
-#preview .prose.prose-lg { font-size: var(--prose-base-size, inherit) !important; }
+ /* UI Size Compensation: handled at runtime by applyUiSizeProseCompensation()
+   in markdown_editor_menus.js, which injects a <style id="ui-scale-prose-fix">
+   tag with #preview .prose h1/h2/prose-lg rules calculated from uiSize and
+   previewTextSize. Those rules have higher specificity than prose.css and take
+   effect without needing !important or CSS custom properties here. */
 
 /* Replaces injected <style> for Font Types */
 #editor { 
@@ -1333,7 +1334,113 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
 /* Libraries */
 .mod-lib-wrap { display: flex; flex-direction: column; gap: 10px; }
 .mod-lib-card { background: var(--bg-hover); border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; }
+.mod-license-details { margin-top: 8px; }
+.mod-license-summary { font-family: var(--font-mono); font-size: 0.78em; color: var(--text-muted); cursor: pointer; user-select: none; letter-spacing: 0.04em; }
+.mod-license-summary:hover { color: var(--text); }
+.mod-license-pre { white-space: pre-wrap; font-family: var(--font-mono); font-size: 0.72em; line-height: 1.55; color: var(--text-muted); margin: 8px 0 0; max-height: 260px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--scrollbar) transparent; }
 
 /* Fonts */
 .mod-mono { font-family: var(--font-mono); }
 .mod-mono-08 { font-family: var(--font-mono); font-size: 0.8em; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CodeMirror 6 — layout & compatibility overrides
+   ═══════════════════════════════════════════════════════════════════════════
+
+   The CM view's outer div receives id="editor" (set in cm_setup.js) so that
+   document.getElementById('editor') keeps working in menus.js.
+
+   The old #editor textarea CSS rules now land on this div — most are fine
+   (font, color, letter-spacing inherit to .cm-content) but padding and
+   overflow must be neutralised here because they belong on the inner layers.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* 1. Neutralise textarea-specific properties that must NOT apply to the CM wrapper */
+#editor.cm-editor {
+  padding:    0 !important;   /* padding lives on .cm-content, not the wrapper   */
+  overflow:   visible !important; /* overflow lives on .cm-scroller               */
+  resize:     none;
+  white-space: normal !important;
+  word-break: normal !important;
+  /* flex:1 from the old rule is correct and kept                               */
+}
+
+/* 2. Scrollable container: fills the wrapper, thin scrollbar */
+#editor .cm-scroller {
+  overflow:      auto;
+  flex:          1;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar) transparent;
+}
+#editor .cm-scroller::-webkit-scrollbar       { width: 4px; }
+#editor .cm-scroller::-webkit-scrollbar-track { background: transparent; }
+#editor .cm-scroller::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
+
+/* 3. Editable content layer: own padding + inherit font-size from #editor
+      so that applyTextSize() in menus.js (which sets #editor.style.fontSize)
+      cascades down here automatically.                                        */
+#editor .cm-content {
+  padding:        24px 28px;
+  font-size:      inherit;       /* inherits the JS-set size from #editor        */
+  line-height:    inherit;
+  letter-spacing: inherit;
+  caret-color:    var(--text);
+  color:          var(--text);
+  tab-size:       2;
+  min-height:     100%;
+}
+
+/* 4. Mobile padding — mirrors the old mobile #editor rule */
+@media (max-width: 750px) {
+  #editor .cm-content {
+    padding:     24px 20px 40vh;
+    font-size:   inherit;
+    line-height: var(--text-line-row-space, 1.24);
+  }
+}
+
+/* 5. Cursor and selection */
+#editor .cm-cursor,
+#editor .cm-dropCursor { border-left-color: var(--text); }
+
+#editor .cm-selectionBackground {
+  background: rgba(255, 255, 255, 0.22);
+}
+[data-theme="light"] #editor .cm-selectionBackground {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+/* highlight-flash: yellow selection during preview→editor click sync */
+#editor.highlight-flash .cm-selectionBackground {
+  background: rgba(255, 200, 60, 0.6) !important;
+}
+
+/* 6. Placeholder */
+#editor .cm-placeholder {
+  color:       var(--text-muted, rgba(0,0,0,0.4));
+  font-style:  normal;
+  pointer-events: none;
+}
+
+/* 7. No focus ring on the wrapper */
+#editor.cm-focused { outline: none; }
+
+/* 8. Find highlight marks (rendered by CM decorations via cm_setup.js) */
+#editor .cm-find-highlight {
+  background:   rgba(255, 200, 60, 0.35);
+  border-radius: 2px;
+}
+#editor .cm-find-highlight-current {
+  background:   rgba(255, 140, 0, 0.55);
+  outline:      1px solid rgba(255, 140, 0, 0.85);
+  border-radius: 2px;
+}
+
+/* 9. Subtle markdown syntax colours in the editor (optional, low-contrast) */
+[data-theme="dark"]  #editor .cm-header  { color: #d4d4d4; }
+[data-theme="light"] #editor .cm-header  { color: #222; }
+[data-theme="dark"]  #editor .cm-em      { color: #aaa; font-style: italic; }
+[data-theme="light"] #editor .cm-em      { color: #444; font-style: italic; }
+[data-theme="dark"]  #editor .cm-link    { color: #7da3c8; }
+[data-theme="light"] #editor .cm-link    { color: #2563eb; }
+

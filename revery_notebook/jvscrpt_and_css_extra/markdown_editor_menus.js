@@ -10,7 +10,7 @@ const logoDropdown    = document.getElementById('logo-dropdown');
 window.forcedSyncEnabled = false; // New Forced Sync state
 let rightClickDisabled = false; // New right click setting state
 let previewVisible = true;
-window.centerHeaders = false; // Center align headings in preview
+window.centerHeaders = true; // Center align headings in preview
 let mobileView = false;
 let readerMode = false;
 let outlineVisible = false; // Outline navigation panel (toggled via Settings)
@@ -630,15 +630,11 @@ function attachSubmenuHandlers(wrapper, sub) {
 
 
 
-
-
-
-
 // ── File Menu Definition ───────────────────────────────────────────────────
 const fileActions = [
   { label: 'New File', action: 'file_new' },
   { label: 'Import File', action: 'file_import' },
-  { type: 'submenu', label: 'Import Template ▸', items: mdTemplates },
+  { type: 'submenu', label: 'Import Template ▸', items: typeof mdTemplates !== 'undefined' ? mdTemplates : [] },
   { type: 'divider' },
   { label: 'Save as...', action: 'file_save_as' },
   { label: 'Export as .md', action: 'file_export_md' },
@@ -866,7 +862,7 @@ const readerPaddingOptions = [
   settingsDropdown.appendChild(fnFmtWrapper);
 
   // ── Text Size submenu
-  const sizeOptions = [70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220];
+  const sizeOptions = [70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 290];
 
   // ── Editor Text Size submenu
   const editorSizeWrapper = document.createElement('div');
@@ -999,7 +995,7 @@ const readerPaddingOptions = [
   settingsDropdown.appendChild(previewFontWrapper);
 
   // ── Outline Font Size submenu
-  const outlineSizeOptions = [70, 80, 90, 100, 110, 120, 130, 140, 150, 160];
+  const outlineSizeOptions = [70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240];
 
   const outlineSizeWrapper = document.createElement('div');
   outlineSizeWrapper.className = 'menu-item has-submenu';
@@ -1031,7 +1027,7 @@ const readerPaddingOptions = [
   settingsDropdown.appendChild(outlineSizeWrapper);
 
   // ── UI Menu Size submenu
-  const uiSizeOptions = [90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220];
+  const uiSizeOptions = [90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270];
   const uiSizeWrapper = document.createElement('div');
   uiSizeWrapper.className = 'menu-item has-submenu';
 
@@ -1192,26 +1188,6 @@ const readerPaddingOptions = [
     window.saveEditorSettings();
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

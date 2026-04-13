@@ -193,12 +193,20 @@ editor.addEventListener('keyup', window.triggerForcedSync);
 editor.addEventListener('click', window.triggerForcedSync);
 editor.addEventListener('input', window.triggerForcedSync);
 
+
 /* ── Line-mapped scroll sync ──────────────────────────────────────────── */
+// Cache variables to prevent heavy O(N) operations on every scroll frame
+let cachedTextLength = -1;
+let cachedLineCount = 1;
+let cachedYamlLines = 0;
+let cachedBlocks = [];
+
 function syncPreviewScroll() {
   if (window.forcedSyncEnabled) return; // Mute standard sync if forced sync is active
   
   const editorMax = editor.scrollHeight - editor.clientHeight;
   if (editorMax <= 0) return;
+  
   /* ── Fix 1: Force scroll to absolute bottom if editor is at the bottom ── */
   // Increased threshold to 16px to prevent fast-typing layout lag from breaking the bottom-lock
   if (editor.scrollTop >= editorMax - 16) {
@@ -206,28 +214,29 @@ function syncPreviewScroll() {
     return;
   }
 
-  // 1. Estimate the editor line at the top of the visible area.
-  //    We use scrollHeight / lineCount as a uniform line height estimate.
-  const rawText   = editor.value;
-  const lineCount = (rawText.match(/\n/g) || []).length + 1;
-  const lineH     = editor.scrollHeight / lineCount;
-  const topLine   = editor.scrollTop / lineH;
+  // 1. Check if we need to recalculate heavy variables (only if text changed)
+  const rawText = editor.value;
+  if (rawText.length !== cachedTextLength) {
+    cachedLineCount = (rawText.match(/\n/g) || []).length + 1;
+    const yamlMatch = rawText.match(/^---\r?\n[\s\S]*?\r?\n---/);
+    cachedYamlLines = yamlMatch ? (yamlMatch[0].match(/\n/g) || []).length : 0;
+    cachedBlocks = Array.from(preview.querySelectorAll('[data-sl]'));
+    cachedTextLength = rawText.length;
+  }
 
-  // 2. Adjust for YAML frontmatter lines (stripped before md.render).
-  const yamlMatch = rawText.match(/^---\r?\n[\s\S]*?\r?\n---/);
-  const yamlLines = yamlMatch ? (yamlMatch[0].match(/\n/g) || []).length : 0;
-  const mdLine    = Math.max(0, topLine - yamlLines);
+  // 2. Estimate the editor line at the top of the visible area.
+  const lineH   = editor.scrollHeight / cachedLineCount;
+  const topLine = editor.scrollTop / lineH;
+  const mdLine  = Math.max(0, topLine - cachedYamlLines);
 
-  // 3. Collect all source-mapped blocks.
-  const blocks = Array.from(preview.querySelectorAll('[data-sl]'));
-  if (!blocks.length) {
+  // 3. Use the cached source-mapped blocks.
+  if (!cachedBlocks.length) {
     // Fallback to percentage ratio
     preview.scrollTop = (editor.scrollTop / editorMax) * (preview.scrollHeight - preview.clientHeight);
     return;
   }
 
   // 4. Helper: get an element's scroll offset relative to #preview.
-  //    getBoundingClientRect is reliable regardless of offsetParent chains.
   const getScrollOffset = (el) => {
     const elRect      = el.getBoundingClientRect();
     const previewRect = preview.getBoundingClientRect();
@@ -237,12 +246,13 @@ function syncPreviewScroll() {
   // 5. Find the two surrounding blocks (prev ≤ mdLine < next).
   let prevBlock = null, nextBlock = null;
 
-  for (const block of blocks) {
+  for (const block of cachedBlocks) {
     const sl = parseInt(block.getAttribute('data-sl') ?? '-1', 10);
     if (isNaN(sl)) continue; // ← skip unmapped blocks instead of treating them as line 0
     if (sl <= mdLine) prevBlock = block;
     else              { nextBlock = block; break; }
   }
+  
   if (!prevBlock) {
     preview.scrollTop = 0;
     return;
@@ -250,11 +260,10 @@ function syncPreviewScroll() {
 
   if (!nextBlock) {
     /* ── Fix 2: Smooth interpolation for the last block ── */
-    // Past the last mapped block — smoothly calculate the remaining space.
     const prevLine = parseInt(prevBlock.getAttribute('data-sl'), 10);
     const prevTop  = getScrollOffset(prevBlock);
     
-    const remainingLines = lineCount - prevLine;
+    const remainingLines = cachedLineCount - prevLine;
     const currentProgress = mdLine - prevLine;
     const ratio = remainingLines > 0 ? currentProgress / remainingLines : 0;
     
@@ -274,8 +283,20 @@ function syncPreviewScroll() {
   preview.scrollTop = prevTop + t * (nextTop - prevTop);
 }
 
-// Attach the synced scroll function to the editor
-editor.addEventListener('scroll', syncPreviewScroll);
+// ── FIX: Throttle the scroll event using requestAnimationFrame ──
+// This ensures the browser only processes one scroll calculation per visual frame, 
+// protecting the main thread from locking up.
+let scrollTicking = false;
+
+editor.addEventListener('scroll', () => {
+  if (!scrollTicking) {
+    window.requestAnimationFrame(() => {
+      syncPreviewScroll();
+      scrollTicking = false;
+    });
+    scrollTicking = true;
+  }
+});
 
 
 // Below is supposed to give a better preview synch. To be honest, if it gets too bad the "forced prev. sync." is more reliable.
