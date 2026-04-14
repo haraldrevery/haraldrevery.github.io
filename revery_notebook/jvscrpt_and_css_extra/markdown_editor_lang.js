@@ -29,10 +29,10 @@ window.uiTranslations = {
   "Start writing…": { "Swedish": "Börja skriva…" },
   "Editor": { "Swedish": "Redigerare" },
   
-
 // Settings Menu Items
   "Show Preview": { "Swedish": "Visa förhandsgranskning" },
   "Show Outline": { "Swedish": "Visa disposition" },
+  "Show Word Counter": { "Swedish": "Visa ordräknare" },
   "Mobile View": { "Swedish": "Mobilvy" },
   "Reader padding ▸": { "Swedish": "Läsläge marginal ▸" },
   "Editor padding ▸": { "Swedish": "Redig. marginal ▸" },

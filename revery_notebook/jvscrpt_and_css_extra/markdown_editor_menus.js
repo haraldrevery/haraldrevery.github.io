@@ -10,6 +10,7 @@ const logoDropdown    = document.getElementById('logo-dropdown');
 window.forcedSyncEnabled = false; // New Forced Sync state
 let rightClickDisabled = false; // New right click setting state
 let previewVisible = true;
+let wordCountVisible = false; // Word count visibility state
 window.centerHeaders = true; // Center align headings in preview
 let mobileView = false;
 let readerMode = false;
@@ -45,7 +46,7 @@ const BACKGROUND_OPTIONS = [
 /* ── Settings Persistence ─────────────────────────────────────────────── */
 window.saveEditorSettings = function() {
   const settings = {
-    forcedSyncEnabled: window.forcedSyncEnabled, rightClickDisabled, previewVisible, mobileView, readerMode, outlineVisible,
+    forcedSyncEnabled: window.forcedSyncEnabled, rightClickDisabled, previewVisible, wordCountVisible, mobileView, readerMode, outlineVisible,
     uiSize, editorTextSize, previewTextSize, outlineFontSize, readerPadding, editorPadding, editorFontType, previewFontType, uiLanguage,
     currentDateFormat: window.currentDateFormat,
 
@@ -76,7 +77,10 @@ function loadEditorSettings() {
       if (s.forcedSyncEnabled !== undefined) window.forcedSyncEnabled = s.forcedSyncEnabled;
       if (s.rightClickDisabled !== undefined) rightClickDisabled = s.rightClickDisabled;
       if (s.previewVisible !== undefined) previewVisible = s.previewVisible;
+      if (s.wordCountVisible !== undefined) wordCountVisible = s.wordCountVisible;
       if (s.mobileView !== undefined) mobileView = s.mobileView;
+
+      
       if (s.readerMode !== undefined) readerMode = s.readerMode;
       if (s.outlineVisible !== undefined) outlineVisible = s.outlineVisible; // Added
     
@@ -495,7 +499,7 @@ function applyLoadedStates() {
     prPane.style.display = '';
   }
 
-  // Restore outline visibility
+// Restore outline visibility
   const outlinePane = document.getElementById('outline-pane');
   const outlineDivider = document.getElementById('outline-divider');
   if (outlinePane) outlinePane.style.display = outlineVisible ? '' : 'none';
@@ -504,8 +508,17 @@ function applyLoadedStates() {
     renderOutline();
   }
   
+  applyWordCountVisibility();
+  
   window.applyDOMTranslations(); // Apply saved language to DOM on boot
 }
+
+/* Apply Word Counter visibility */
+function applyWordCountVisibility() {
+  const wc = document.getElementById('wordcount');
+  if (wc) wc.style.display = wordCountVisible ? '' : 'none';
+}
+
 applyLoadedStates();
 
 
@@ -783,6 +796,24 @@ function buildSettingsMenu() {
     settingsDropdown.classList.remove('show');
   };
   settingsDropdown.appendChild(toggleBtn);
+
+// ── Toggle Word Counter item
+  const wcBtn = document.createElement('button');
+  wcBtn.className = 'menu-item';
+  const wcCheck = document.createElement('span');
+  wcCheck.className = 'menu-item-check';
+  wcCheck.textContent = wordCountVisible ? '■' : '□';
+  wcBtn.appendChild(wcCheck);
+  wcBtn.appendChild(document.createTextNode(window.t('Show Word Counter')));
+  wcBtn.onclick = (e) => {
+    e.stopPropagation();
+    wordCountVisible = !wordCountVisible;
+    settingsDropdown.classList.remove('show');
+    buildSettingsMenu();
+    applyWordCountVisibility();
+    if (typeof window.saveEditorSettings === 'function') window.saveEditorSettings();
+  };
+  settingsDropdown.appendChild(wcBtn);
 
 // ── Desktop-only toggles (hidden on real mobile screens)
   if (window.innerWidth > 750) {
