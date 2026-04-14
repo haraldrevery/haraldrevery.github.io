@@ -139,10 +139,16 @@
     '&.highlight-flash .cm-selectionBackground': {
       backgroundColor: 'rgba(255,200,60,0.6) !important',
     },
-    // Fix unreadable syntax highlighting colors in dark mode. 
-    // This strips the hardcoded light-theme colors but keeps structural formatting (bold, italic, underline).
+    // Fix unreadable syntax highlighting colors in dark mode.
     '[data-theme="dark"] & .cm-content span:not(.cm-placeholder)': {
       color: 'var(--text) !important',
+    },
+    // Strip bold, font-size changes, and underlines that defaultHighlightStyle applies
+    // to heading, strong, link, and url tokens — the editor renders as plain text.
+    '.cm-content span:not(.cm-placeholder)': {
+      fontWeight: 'normal !important',
+      textDecoration: 'none !important',
+      fontSize: 'inherit !important',
     },
     // Find mark: all matches
     '.cm-find-highlight': {
