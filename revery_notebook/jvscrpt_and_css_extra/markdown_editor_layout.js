@@ -22,6 +22,9 @@ divider.addEventListener('touchstart', onDividerStart, { passive: false });
 
 const onDocumentMove = e => {
   if (!dragging && !outlineDragging) return;
+  
+  // Prevent the browser from hijacking the drag gesture to scroll the page
+  if (e.cancelable) e.preventDefault();
 
   const currentX = getClientX(e);
 
