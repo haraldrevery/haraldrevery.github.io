@@ -53,6 +53,19 @@ window.uiTranslations = {
   "Deactivate Right Click": { "Swedish": "Inaktivera högerklick" },
   "Center Headers": { "Swedish": "Centrera rubriker" },
   
+  
+  // Background submenu (Settings)
+  "Background ▸": { "Swedish": "Bakgrund ▸" },
+  "None": { "Swedish": "Ingen" },
+  "Galdhøpiggen": { "Swedish": "Galdhøpiggen" },
+  "Rocks": { "Swedish": "Klippor" },
+  "Matterhorn": { "Swedish": "Matterhorn" },
+  "Alpern": { "Swedish": "Alperna" },
+  "Grass": { "Swedish": "Gräs" },
+  "Tree": { "Swedish": "Träden" },
+  "Tjurpannan": { "Swedish": "Tjurpannan" },
+
+
   // File Menu
   "New File": { "Swedish": "Ny fil" },
   "Import File": { "Swedish": "Importera fil" },

@@ -8,7 +8,7 @@ const btnLogo         = document.getElementById('btn-logo');
 const logoDropdown    = document.getElementById('logo-dropdown');
 
 window.forcedSyncEnabled = false; // New Forced Sync state
-let rightClickDisabled = false; // New right click setting state
+let rightClickDisabled = true; // New right click setting state
 let previewVisible = true;
 let wordCountVisible = false; // Word count visibility state
 window.centerHeaders = true; // Center align headings in preview
@@ -35,11 +35,11 @@ let selectedBackground = 'bg_6'; // Active background image key
 const BACKGROUND_OPTIONS = [
   { label: 'None',        val: 'none',   url: null },
   { label: 'Galdhøpiggen', val: 'bg_1',   url: '/revery_notebook/image_assets/bg_1_web.jpg' },
-  { label: 'Klippor',     val: 'bg_2',   url: '/revery_notebook/image_assets/bg_2_web.jpg'  },
+  { label: 'Rocks',     val: 'bg_2',   url: '/revery_notebook/image_assets/bg_2_web.jpg'  },
   { label: 'Matterhorn',  val: 'bg_3',   url: '/revery_notebook/image_assets/bg_3_web.jpg'  },
   { label: 'Alpern',      val: 'bg_4',   url: '/revery_notebook/image_assets/bg_4_web.jpg'  },
-  { label: 'Gräs',       val: 'bg_5',   url: '/revery_notebook/image_assets/bg_5_web.jpg'  },
-  { label: 'Träden',        val: 'bg_6',   url: '/revery_notebook/image_assets/bg_6_web.jpg'  },
+  { label: 'Grass',       val: 'bg_5',   url: '/revery_notebook/image_assets/bg_5_web.jpg'  },
+  { label: 'Tree',        val: 'bg_6',   url: '/revery_notebook/image_assets/bg_6_web.jpg'  },
   { label: 'Tjurpannan',        val: 'bg_7',   url: '/revery_notebook/image_assets/bg_7_web.jpg'  }
 ];
 
