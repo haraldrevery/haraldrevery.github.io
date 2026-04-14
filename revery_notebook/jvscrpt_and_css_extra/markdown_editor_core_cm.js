@@ -362,11 +362,18 @@ let savedIndicatorTimer = null;
 function showSavedIndicator() {
   /* Cancel any previous timer so rapid saves don't stack */
   clearTimeout(savedIndicatorTimer);
+  // Temporarily ensure word counter is visible to show the saved message
+  const wasHidden = wordcount.style.display === 'none';
+  if (wasHidden) {
+    wordcount.style.display = '';
+  }
   wordcount.textContent = window.t('File saved');
   wordcount.style.color  = '#22c55e'; /* green-500 */
   savedIndicatorTimer = setTimeout(() => {
     wordcount.style.color = '';
     countWords();
+    // Restore the word counter visibility based on user setting
+    applyWordCountVisibility();
   }, 2000);
 }
 
