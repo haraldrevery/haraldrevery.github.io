@@ -124,8 +124,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 44px;
-  padding: 0 20px;
+  height: 2.2rem; /* Scales up with internal buttons to prevent clipping */
+  padding: 0 1.25rem;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   background: var(--bg);
@@ -161,8 +161,8 @@ body {
 #btn-logo svg {
   /* ── LOGO SIZE ─────────────────────────────────────────────────────────────
      Change height to scale the logo. The SVG viewBox is 1:1, so width
-     will always equal height. E.g. 24px = smaller, 36px = larger.        */
-  height: 24px;      /* SVG logo size tweak */
+     will always equal height. E.g. 1.5rem = smaller, 2.25rem = larger.   */
+  height: 1.2rem;      /* SVG logo size tweak, scales with UI text size */
   width: auto;
   display: block;
   fill: currentColor;
@@ -212,7 +212,7 @@ body {
   font-size: 0.7rem;
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
-  padding: 6px 12px 3px 12px; /* FONTFIX Top: 6px, Bottom: 3px. Shifts text 1px down. */
+  padding: 0.375rem 0.75rem 0.1875rem 0.75rem; /* FONTFIX Top: 0.375rem, Bottom: 0.1875rem. */
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
   border-radius: 2px;
@@ -237,7 +237,7 @@ body {
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   border-radius: 4px;
   z-index: 100;
-  min-width: 180px;
+  min-width: 8rem; /* Changed from 200px to scale proportionally with UI size */
   padding: 4px 0;
   flex-direction: column;
   /* overflow: visible keeps submenus from being clipped.
@@ -261,7 +261,7 @@ body {
   font-family: var(--font-mono);
   font-size: 0.75rem;
   text-align: left;
-  padding: 9px 16px 6px 16px; /* FONTFIX Top: 9px, Bottom: 6px. Shifts text 1px down. */
+  padding: 0.5625rem 1rem 0.375rem 1rem; /* FONTFIX Top: 0.5625rem, Bottom: 0.375rem. */
   cursor: pointer;
   transition: background 0.1s;
 
@@ -271,8 +271,8 @@ body {
   line-height: 1;
 
   touch-action: manipulation;
+  white-space: nowrap; /* Forces container expansion to prevent text stacking */
 }
-
 /* Also add to other clickable elements for consistency */
 .outline-item,
 .find-btn {
@@ -618,7 +618,7 @@ body[data-view="editor"] #topbar-left {
   }
 
 
-  .tb-btn { padding: 7px 10px 5px 10px; font-size: 0.82rem; }
+  .tb-btn { padding: 0.4375rem 0.625rem 0.3125rem 0.625rem; font-size: 0.82rem; }
 
   .btn-label-mobile  { display: inline; }
   .btn-label-desktop { display: none; }
@@ -704,7 +704,7 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
   border: 1px solid var(--border-md);
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   border-radius: 4px;
-  min-width: 160px;
+  min-width: 6rem; /* Changed from 160px to scale proportionally with UI size */
   padding: 4px 0;
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar) transparent;
@@ -980,6 +980,14 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
 /* Outline pane on narrow mobile: slide-in drawer overlay in preview mode */
 @media (max-width: 750px) {
   #outline-divider { display: none !important; }
+
+
+  /* Prevent horizontal overflow on mobile */
+  .menu-container {
+    min-width: auto;
+    width: 90vw;
+    max-width: 90vw;
+  }
 
   /* Outline becomes an anchored dropdown instead of a side drawer */
   #outline-pane {
