@@ -332,7 +332,7 @@ body {
   font-size: 0.96rem;
   line-height: 1.7;
   letter-spacing: 0.01em;
-  padding: 24px 28px;
+  padding: var(--editor-padding, 24px 28px);
   overflow-y: auto;
   tab-size: 2;
   white-space: pre-wrap;
@@ -372,14 +372,14 @@ body {
   /* Overlays dark bg (#0a0a0a) to mimic low opacity without needing a scrolling ::before element */
   background-image: 
     linear-gradient(rgba(10, 10, 10, calc(1 - var(--bg_oacity))), rgba(10, 10, 10, calc(1 - var(--bg_oacity)))), 
-    url('/revery_notebook/image_assets/bg_6_web.jpg');
+    var(--preview-bg-image, none);
 }
 
 [data-theme="light"] #preview {
   /* Overlays light bg (#fafaf8) to mimic low opacity without needing a scrolling ::before element */
   background-image: 
     linear-gradient(rgba(250, 250, 248, calc(1 - var(--bg_oacity))), rgba(250, 250, 248, calc(1 - var(--bg_oacity)))), 
-    url('/revery_notebook/image_assets/bg_1_web.jpg');
+    var(--preview-bg-image, none);
 }
 
 /* Ensure all preview content sits above the background */
@@ -552,7 +552,7 @@ body {
 
 
 #editor  { 
-    padding: 24px 20px 40vh; /* 40vh ensures text lifts above the virtual keyboard */
+    padding: var(--editor-padding-mobile, 24px 20px 40vh); /* 40vh ensures text lifts above the virtual keyboard */
     font-size: var(--text-body-mobile);
     line-height: var(--text-line-row-space);
   }
@@ -807,16 +807,15 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
   /* --bg-panel in dark mode is #111111 */
   background-image: 
     linear-gradient(rgba(17, 17, 17, calc(1 - var(--bg_oacity))), rgba(17, 17, 17, calc(1 - var(--bg_oacity)))), 
-    url('/revery_notebook/image_assets/bg_6_web.jpg');
+    var(--preview-bg-image, none);
 }
 
 [data-theme="light"] #preview-pane.mobile-preview #preview {
   /* --bg-panel in light mode is #ffffff */
   background-image: 
     linear-gradient(rgba(255, 255, 255, calc(1 - var(--bg_oacity))), rgba(255, 255, 255, calc(1 - var(--bg_oacity)))), 
-    url('/revery_notebook/image_assets/bg_3_web.jpg');
+    var(--preview-bg-image, none);
 }
-
 /* apply mobile font scale inside the phone frame */
 #preview-pane.mobile-preview .prose p,
 #preview-pane.mobile-preview .prose li {
@@ -1380,7 +1379,7 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
       so that applyTextSize() in menus.js (which sets #editor.style.fontSize)
       cascades down here automatically.                                        */
 #editor .cm-content {
-  padding:        24px 28px;
+  padding:        var(--editor-padding, 24px 28px);
   font-size:      inherit;       /* inherits the JS-set size from #editor        */
   line-height:    inherit;
   letter-spacing: inherit;
@@ -1393,7 +1392,7 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
 /* 4. Mobile padding — mirrors the old mobile #editor rule */
 @media (max-width: 750px) {
   #editor .cm-content {
-    padding:     24px 20px 40vh;
+    padding:     var(--editor-padding-mobile, 24px 20px 40vh);
     font-size:   inherit;
     line-height: var(--text-line-row-space, 1.24);
   }

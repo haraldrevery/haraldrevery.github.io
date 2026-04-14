@@ -29,11 +29,14 @@ window.uiTranslations = {
   "Start writing…": { "Swedish": "Börja skriva…" },
   "Editor": { "Swedish": "Redigerare" },
   
-  // Settings Menu Items
+
+// Settings Menu Items
   "Show Preview": { "Swedish": "Visa förhandsgranskning" },
   "Show Outline": { "Swedish": "Visa disposition" },
   "Mobile View": { "Swedish": "Mobilvy" },
   "Reader padding ▸": { "Swedish": "Läsläge marginal ▸" },
+  "Editor padding ▸": { "Swedish": "Redig. marginal ▸" },
+  "Default": { "Swedish": "Standard" },
   "Calendar format ▸": { "Swedish": "Kalenderformat ▸" },
   "Filename format ▸": { "Swedish": "Filnamnsformat ▸" },
   "Editor text size ▸": { "Swedish": "Redig. textstorlek ▸" },

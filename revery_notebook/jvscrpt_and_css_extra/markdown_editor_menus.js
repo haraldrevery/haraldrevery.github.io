@@ -21,20 +21,40 @@ let previewTextSize = 140; // Preview prose font scale in %
 let outlineFontSize = 140; // Outline panel font scale in %, independent of editor/preview text
 
 let readerPadding = window.innerWidth <= 750 ? 'default' : '40'; // Reader mode content width: 'default' | '80' | '60' | '50'
+let editorPadding = 'default'; // Editor padding: 'default' | '5%' | '10%' | '15%' | '20%' | '25%' | '30%'
 let editorFontType = 'harald'; // Editor font style ('harald' is default)
+
 let previewFontType = 'harald'; // Preview font style ('harald' is default)
 let uiLanguage = window.uiLanguage; // UI Language setting (synced from lang.js)
+let selectedBackground = 'bg_6'; // Active background image key
+
+/* ── Background image options ─────────────────────────────────────────────
+   To add a new background: append a new entry to this array.
+   { label: 'Display Name', val: 'unique-key', url: '/path/to/image.jpg' }  */
+const BACKGROUND_OPTIONS = [
+  { label: 'None',        val: 'none',   url: null },
+  { label: 'Galdhøpiggen', val: 'bg_1',   url: '/revery_notebook/image_assets/bg_1_web.jpg' },
+  { label: 'Klippor',     val: 'bg_2',   url: '/revery_notebook/image_assets/bg_2_web.jpg'  },
+  { label: 'Matterhorn',  val: 'bg_3',   url: '/revery_notebook/image_assets/bg_3_web.jpg'  },
+  { label: 'Alpern',      val: 'bg_4',   url: '/revery_notebook/image_assets/bg_4_web.jpg'  },
+  { label: 'Gräs',       val: 'bg_5',   url: '/revery_notebook/image_assets/bg_5_web.jpg'  },
+  { label: 'Träden',        val: 'bg_6',   url: '/revery_notebook/image_assets/bg_6_web.jpg'  },
+  { label: 'Tjurpannan',        val: 'bg_7',   url: '/revery_notebook/image_assets/bg_7_web.jpg'  }
+];
 
 /* ── Settings Persistence ─────────────────────────────────────────────── */
 window.saveEditorSettings = function() {
   const settings = {
     forcedSyncEnabled: window.forcedSyncEnabled, rightClickDisabled, previewVisible, mobileView, readerMode, outlineVisible,
-    uiSize, editorTextSize, previewTextSize, outlineFontSize, readerPadding, editorFontType, previewFontType, uiLanguage,
+    uiSize, editorTextSize, previewTextSize, outlineFontSize, readerPadding, editorPadding, editorFontType, previewFontType, uiLanguage,
     currentDateFormat: window.currentDateFormat,
+
+    
     filenameFormat: window.filenameFormat,
     renderDelay: typeof renderDelay !== 'undefined' ? renderDelay : 50,
     savedEditorWidth: window.savedEditorWidth || '',
-    centerHeaders: window.centerHeaders
+    centerHeaders: window.centerHeaders,
+    selectedBackground
   };
 
   try {
@@ -67,6 +87,7 @@ function loadEditorSettings() {
       if (s.outlineFontSize !== undefined) outlineFontSize = s.outlineFontSize;
       
       if (s.readerPadding !== undefined) readerPadding = s.readerPadding;
+      if (s.editorPadding !== undefined) editorPadding = s.editorPadding;
       if (s.editorFontType !== undefined) editorFontType = s.editorFontType;
       if (s.previewFontType !== undefined) previewFontType = s.previewFontType;
       if (s.uiLanguage !== undefined) uiLanguage = s.uiLanguage;
@@ -80,6 +101,7 @@ function loadEditorSettings() {
         if (/^\d+(\.\d+)?(px|%)$/.test(w)) window.savedEditorWidth = w;
       }
     if (s.centerHeaders !== undefined) window.centerHeaders = s.centerHeaders;
+    if (s.selectedBackground !== undefined) selectedBackground = s.selectedBackground;
     }
   } catch (e) {}
 }
@@ -338,6 +360,57 @@ function applyReaderPadding() {
 }
 applyReaderPadding(); // Apply the 50% default on load
 
+
+function applyEditorPadding() {
+  const map = {
+    'default': '24px 28px',
+    '95%': '24px 2.5%',
+    '90%': '24px 5%',
+    '85%': '24px 7.5%',
+    '80%': '24px 10%',
+    '75%': '24px 12.5%',
+    '70%': '24px 15%',
+    '60%': '24px 20%',
+    '50%': '24px 25%',
+    '40%': '24px 30%',
+    '30%': '24px 35%',
+    '25%': '24px 40%'
+  };
+  const mapMobile = {
+    'default': '24px 20px 40vh',
+    '95%': '24px 2.5% 40vh',
+    '90%': '24px 5% 40vh',
+    '85%': '24px 7.5% 40vh',
+    '80%': '24px 10% 40vh',
+    '75%': '24px 12.5% 40vh',
+    '70%': '24px 15% 40vh',
+    '60%': '24px 20% 40vh',
+    '50%': '24px 25% 40vh',
+    '40%': '24px 30% 40vh',
+    '30%': '24px 35% 40vh',
+    '25%': '24px 25% 40vh',
+  };
+  const val = map[editorPadding] || '24px 28px';
+  const valMobile = mapMobile[editorPadding] || '24px 20px 40vh';
+  document.documentElement.style.setProperty('--editor-padding', val);
+  document.documentElement.style.setProperty('--editor-padding-mobile', valMobile);
+}
+applyEditorPadding();
+
+
+
+/* Apply background image to the preview area via CSS variable */
+function applyBackground() {
+  const opt = BACKGROUND_OPTIONS.find(o => o.val === selectedBackground);
+  if (!opt || opt.val === 'none') {
+    document.documentElement.style.removeProperty('--preview-bg-image');
+  } else {
+    document.documentElement.style.setProperty('--preview-bg-image', `url('${opt.url}')`);
+  }
+}
+
+/* Apply Custom Font Types via CSS Variables */
+
 /* Apply Custom Font Types via CSS Variables */
 function applyFontTypes() {
   const fontMap = {
@@ -394,6 +467,7 @@ applyOutlineFontSize();
 applyUiSizeProseCompensation();
 applyFontTypes(); // Execute font assignment on boot
 applyCenterHeaders(); // <-- ADD THIS LINE to apply the saved setting on page load
+applyBackground();
 
 function applyLoadedStates() {
   // Apply visibility to preview and editor panes based on saved state
@@ -787,6 +861,56 @@ const readerPaddingOptions = [
   attachSubmenuHandlers(readerPadWrapper, readerPadSub);
   settingsDropdown.appendChild(readerPadWrapper);
 
+// ── Editor Padding submenu
+const editorPaddingOptions = [
+  { label: '100%',  val: 'default' },
+  { label: '95%',      val: '95%' },
+  { label: '90%',      val: '90%' },
+  { label: '85%',      val: '85%' },
+  { label: '80%',      val: '80%' },
+  { label: '75%',      val: '75%' },
+  { label: '70%',      val: '70%' },
+  { label: '60%',      val: '60%' },
+  { label: '50%',      val: '50%' },
+  { label: '40%',      val: '40%' },
+  { label: '30%',      val: '30%' },
+  { label: '25%',      val: '25%' }  
+];
+
+
+
+
+
+  const editorPadWrapper = document.createElement('div');
+  editorPadWrapper.className = 'menu-item has-submenu';
+
+  const editorPadLabel = document.createElement('span');
+  editorPadLabel.textContent = window.t('Editor padding ▸');
+  editorPadWrapper.appendChild(editorPadLabel);
+
+  const editorPadSub = document.createElement('div');
+  editorPadSub.className = 'submenu';
+  editorPadSub.style.display = 'none';
+
+  editorPaddingOptions.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'menu-item';
+    btn.textContent = (editorPadding === opt.val ? '■ ' : '\u00a0\u00a0') + window.t(opt.label);
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      editorPadding = opt.val;
+      applyEditorPadding();
+      settingsDropdown.classList.remove('show');
+      buildSettingsMenu();
+      if (typeof window.saveEditorSettings === 'function') window.saveEditorSettings();
+    };
+    editorPadSub.appendChild(btn);
+  });
+
+  editorPadWrapper.appendChild(editorPadSub);
+  attachSubmenuHandlers(editorPadWrapper, editorPadSub);
+  settingsDropdown.appendChild(editorPadWrapper);
+
   // ── Calendar Format Submenu
   const formatOptions = [
     { label: 'YYYY-MM-DD', val: 'YYYY-MM-DD' },
@@ -1026,6 +1150,37 @@ const readerPaddingOptions = [
   attachSubmenuHandlers(outlineSizeWrapper, outlineSizeSub);
   settingsDropdown.appendChild(outlineSizeWrapper);
 
+  // ── Background Image submenu
+  const bgWrapper = document.createElement('div');
+  bgWrapper.className = 'menu-item has-submenu';
+
+  const bgLabel = document.createElement('span');
+  bgLabel.textContent = window.t('Background ▸');
+  bgWrapper.appendChild(bgLabel);
+
+  const bgSub = document.createElement('div');
+  bgSub.className = 'submenu';
+  bgSub.style.display = 'none';
+
+  BACKGROUND_OPTIONS.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'menu-item';
+    btn.textContent = (selectedBackground === opt.val ? '■ ' : '\u00a0\u00a0') + window.t(opt.label);
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      selectedBackground = opt.val;
+      applyBackground();
+      settingsDropdown.classList.remove('show');
+      buildSettingsMenu();
+      if (typeof window.saveEditorSettings === 'function') window.saveEditorSettings();
+    };
+    bgSub.appendChild(btn);
+  });
+
+  bgWrapper.appendChild(bgSub);
+  attachSubmenuHandlers(bgWrapper, bgSub);
+  settingsDropdown.appendChild(bgWrapper);
+
   // ── UI Menu Size submenu
   const uiSizeOptions = [90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270];
   const uiSizeWrapper = document.createElement('div');
@@ -1191,8 +1346,6 @@ const readerPaddingOptions = [
 
 
 
-
-
 function togglePreview() {
   previewVisible = !previewVisible;
   
@@ -1222,9 +1375,6 @@ function toggleReaderMode() {
   readerMode = !readerMode;
   document.body.classList.toggle('reader-mode-active', readerMode);
   if (readerMode) {
-    if (!previewVisible) {
-      previewVisible = true;
-    }
     edPane.style.display = 'none';
     divider.style.display = 'none';
     prPane.style.display = '';

@@ -105,7 +105,7 @@
       fontFamily: 'var(--editor-font, var(--font-brand, inherit))',
       color: 'var(--text)',
     },
-    // Scrollable container
+// Scrollable container
     '.cm-scroller': {
       overflow: 'auto',
       fontFamily: 'inherit',
@@ -115,7 +115,7 @@
     },
     // Editable content
     '.cm-content': {
-      padding: '24px 28px',
+      padding: 'var(--editor-padding, 24px 28px)',
       lineHeight: '1.7',
       letterSpacing: '0.01em',
       caretColor: 'var(--text)',
