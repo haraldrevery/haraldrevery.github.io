@@ -94,10 +94,13 @@ function loadEditorSettings() {
       if (s.editorPadding !== undefined) editorPadding = s.editorPadding;
       if (s.editorFontType !== undefined) editorFontType = s.editorFontType;
       if (s.previewFontType !== undefined) previewFontType = s.previewFontType;
-      if (s.uiLanguage !== undefined) uiLanguage = s.uiLanguage;
+      if (s.uiLanguage !== undefined) {
+                uiLanguage = s.uiLanguage;
+                window.uiLanguage = s.uiLanguage; // Keep global translation engine in sync!
+              }
       if (s.currentDateFormat !== undefined) window.currentDateFormat = s.currentDateFormat;
 
-      if (s.filenameFormat !== undefined) window.filenameFormat = s.filenameFormat;
+      if (s.filenameFormat !== undefined) window.filenameFormat = s.filenameFormat;      
       if (s.renderDelay !== undefined && typeof renderDelay !== 'undefined') renderDelay = s.renderDelay;
       if (s.savedEditorWidth !== undefined) {
         const w = String(s.savedEditorWidth);
@@ -168,11 +171,16 @@ window.applyDOMTranslations = function() {
   updateTitle('#find-replace-one', 'Replace current match (Enter)');
   updateTitle('#find-replace-all', 'Replace all matches');
 
-  // --- Toggle view button (initial label) --------------------------------
+// --- Toggle view button (initial label) --------------------------------
   const toggleViewBtn = document.getElementById('btn-toggle-view');
-  if (toggleViewBtn && toggleViewBtn.style.display !== 'none') {
-    toggleViewBtn.textContent = window.t('Preview');
+  if (toggleViewBtn) {
+    const isEditor = document.body.getAttribute('data-view') === 'editor';
+    toggleViewBtn.textContent = isEditor ? window.t('Preview') : window.t('Editor');
   }
+
+  // --- Inject translations for CSS pseudo-elements (Code block copy buttons) ---
+  document.documentElement.style.setProperty('--str-copy', `"${window.t('Copy')}"`);
+  document.documentElement.style.setProperty('--str-copied', `"${window.t('Copied!')}"`);
 
   // --- Save As modal ------------------------------------------------------
   updateTxt('#save-as-modal .modal-content h3', 'Save As');
@@ -1093,10 +1101,10 @@ const editorPaddingOptions = [
   editorFontSub.className = 'submenu';
   editorFontSub.style.display = 'none';
 
-  fontTypeOptions.forEach(opt => {
+ fontTypeOptions.forEach(opt => {
     const btn = document.createElement('button');
     btn.className = 'menu-item';
-    btn.textContent = (previewFontType === opt.val ? '■ ' : '\u00a0\u00a0') + window.t(opt.label);
+    btn.textContent = (editorFontType === opt.val ? '■ ' : '\u00a0\u00a0') + window.t(opt.label);
     btn.onclick = (e) => {
       e.stopPropagation();
       editorFontType = opt.val;
@@ -1156,7 +1164,7 @@ const editorPaddingOptions = [
   fontTypeOptions.forEach(opt => {
     const btn = document.createElement('button');
     btn.className = 'menu-item';
-    btn.textContent = (previewFontType === opt.val ? '■ ' : '\u00a0\u00a0') + opt.label;
+    btn.textContent = (previewFontType === opt.val ? '■ ' : '\u00a0\u00a0') + window.t(opt.label);
     btn.onclick = (e) => {
       e.stopPropagation();
       previewFontType = opt.val;

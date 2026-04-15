@@ -340,8 +340,14 @@ function executeAction(action) {
 
       const handleFeedback = (success) => {
         if (success) {
-          btnToolbar.textContent = window.t('Copied!');
-          setTimeout(() => btnToolbar.textContent = window.t('Toolbar ▾'), 1200);
+          const desktop = btnToolbar.querySelector('.btn-label-desktop');
+          const mobile = btnToolbar.querySelector('.btn-label-mobile');
+          if (desktop) desktop.textContent = window.t('Copied!');
+          if (mobile) mobile.textContent = window.t('Copied!');
+          setTimeout(() => {
+            if (desktop) desktop.textContent = window.t('Toolbar ▾');
+            if (mobile) mobile.textContent = window.t('Tool.');
+          }, 1200);
         } else {
           console.warn("Copy MD failed.");
         }

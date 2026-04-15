@@ -12,7 +12,7 @@ try {
 window.uiTranslations = {
   // Panes & Topbar
   "Markdown": { "Swedish": "Markdown" },
-  "Preview": { "Swedish": "Förhandsgranskning" },
+  "Preview": { "Swedish": "Förhandsgr." },
   "Outline": { "Swedish": "Disposition" },
   "File ▾": { "Swedish": "Arkiv ▾" },
   "File": { "Swedish": "Arkiv" },
