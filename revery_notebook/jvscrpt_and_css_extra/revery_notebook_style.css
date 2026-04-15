@@ -564,24 +564,32 @@ body {
   #topbar       { padding: 0 4px; justify-content: stretch; gap: 0; }
   #topbar-right { flex: 1; justify-content: space-evenly; gap: 0; }
 
-  /* ── Filename bar: visible below the button row in editor mode ── */
+
+/* ── Filename bar & Button row spacing in editor mode ── */
   body[data-view="editor"] #topbar {
     flex-wrap: wrap;
-    height: auto;         /* override the fixed 44px so the second row fits */
-    padding-bottom: 5px;
+    height: auto;         
+    padding-top: 8px;     /* Consistent top padding */
+    padding-bottom: 8px;  /* Consistent bottom padding */
+    gap: 8px;             /* Space between the two rows */
   }
-  body[data-view="editor"] #topbar-right {
-    height: 44px;
-    flex: 0 0 100%;       /* first row: all buttons */
-  }
-body[data-view="editor"] #topbar-left {
+  body[data-view="editor"] #topbar-left {
     display: flex;
     flex: 0 0 100%;
-    height: 44px;
-    padding: 0 20px;            /* side paddding */
+    height: auto;         /* Let padding scale the height naturally */
+    padding: 4px 20px;    /* Consistent top/bottom padding + sides */
     align-items: center;
     gap: 12px;
     flex-wrap: nowrap;
+    order: 2;             /* Force file info row to the top */
+  }
+  body[data-view="editor"] #topbar-right {
+    display: flex;
+    flex: 0 0 100%;       
+    height: auto;         /* Let padding scale the height naturally */
+    padding: 4px 0;       /* Consistent top/bottom padding */
+    align-items: center;
+    order: 1;             /* Force buttons row to the bottom */
   }
   /* Show the file button wrapper and the title input, hide everything else */
   body[data-view="editor"] #topbar-left .file-btn-wrapper {
@@ -727,7 +735,6 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
   text-align: center;
   opacity: 0.65;
 }
-
 /* ── Mobile Menu Scroll & Accordion Fix ── */
 @media (max-width: 750px) {
   .menu-container {
@@ -735,6 +742,8 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     padding: 8px 0;
+    max-width: calc(100vw - 32px);
+    width: auto;
   }
   
   .menu-item.has-submenu {
@@ -984,11 +993,11 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
   #outline-divider { display: none !important; }
 
 
-  /* Prevent horizontal overflow on mobile */
+/* Prevent horizontal overflow on mobile */
   .menu-container {
     min-width: auto;
-    width: 90vw;
-    max-width: 90vw;
+    width: auto;
+    max-width: calc(100vw - 32px);
   }
 
   /* Outline becomes an anchored dropdown instead of a side drawer */

@@ -541,18 +541,35 @@ function smartPositionDropdown(el) {
   el.style.removeProperty('top');
   el.style.removeProperty('max-height');
   el.style.removeProperty('overflow-y');
+  el.style.removeProperty('left');   // Clean up horizontal overrides
+  el.style.removeProperty('right');  // Clean up horizontal overrides
+  el.style.removeProperty('width');  // Clean up horizontal overrides
 
   // ── Mobile branch: force scrollable menu with max-height ──
   if (window.innerWidth <= 750) {
-    const parentTop = el.offsetParent ? el.offsetParent.getBoundingClientRect().top : 0;
-    const TOPBAR = 44;
-    const MARGIN = 8;
+    // Grab full bounding rect to get the parent's X position
+    const parentRect = el.offsetParent ? el.offsetParent.getBoundingClientRect() : { top: 0, left: 0 };
+    const TOPBAR = 94;
+    const MARGIN = 62;
     const availH = window.innerHeight - TOPBAR - MARGIN;
+    
     el.style.maxHeight = Math.max(availH, 120) + 'px';
     el.style.overflowY = 'auto';
-    el.style.top = (TOPBAR - parentTop) + 'px';
+    
+    // Vertically shift the dropdown below the topbar
+    el.style.top = (TOPBAR - parentRect.top) + 'px';
+
+    // --- Fix horizontal squishing ---
+    // Offset negatively to reach the screen's left edge, then add the 16px margin
+    el.style.left = (MARGIN - parentRect.left) + 'px';
+    
+    // Force explicit width to span viewport minus margins (32px total)
+    el.style.width = (window.innerWidth - (MARGIN * 2)) + 'px';
+    el.style.right = 'auto';
+
     return;
   }
+
 
   const rect   = el.getBoundingClientRect();
   const vpH    = window.innerHeight;
