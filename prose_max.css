@@ -1267,6 +1267,9 @@
   .h-full {
     height: 100%;
   }
+  .h-screen {
+    height: 100vh;
+  }
   .max-h-48 {
     max-height: calc(var(--spacing) * 48);
   }
