@@ -378,7 +378,9 @@ function applyEditorPadding() {
     '50%': '24px 25%',
     '40%': '24px 30%',
     '30%': '24px 35%',
-    '25%': '24px 40%'
+    '25%': '24px 40%',
+    '20%': '24px 42%',
+    '15%': '24px 45%'
   };
   const mapMobile = {
     'default': '24px 20px 40vh',
@@ -393,6 +395,8 @@ function applyEditorPadding() {
     '40%': '24px 30% 40vh',
     '30%': '24px 35% 40vh',
     '25%': '24px 25% 40vh',
+    '20%': '24px 20% 40vh',
+    '15%': '24px 15% 40vh'
   };
   const val = map[editorPadding] || '24px 28px';
   const valMobile = mapMobile[editorPadding] || '24px 20px 40vh';
@@ -922,9 +926,10 @@ const editorPaddingOptions = [
   { label: '50%',      val: '50%' },
   { label: '40%',      val: '40%' },
   { label: '30%',      val: '30%' },
-  { label: '25%',      val: '25%' }  
+  { label: '25%',      val: '25%' },
+  { label: '20%',      val: '20%' },
+  { label: '15%',      val: '15%' }
 ];
-
 
 
 

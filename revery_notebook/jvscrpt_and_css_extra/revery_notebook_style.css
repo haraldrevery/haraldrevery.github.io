@@ -620,12 +620,12 @@ body {
     border-bottom: 1px solid var(--border);
   }
 
-  /* Keep buttons away from screen edges in preview/reader mode */
+/* Keep buttons away from screen edges in preview/reader mode */
   body[data-view="preview"] #topbar,
   body.reader-mode-active #topbar {
-    padding: 0 12px;
+    height: auto;
+    padding: 12px 12px;
   }
-
 
   .tb-btn { padding: 0.4375rem 0.625rem 0.3125rem 0.625rem; font-size: 0.82rem; }
 
