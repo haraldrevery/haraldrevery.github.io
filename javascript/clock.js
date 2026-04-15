@@ -41,8 +41,46 @@
         arc.style.strokeDasharray = circumference;
         arc.style.strokeDashoffset = circumference;
 
-        const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
         const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        const DAYS_SV   = ['Söndag','Måndag','Tisdag','Onsdag','Torsdag','Fredag','Lördag'];
+        const MONTHS_SV = ['Januari','Februari','Mars','April','Maj','Juni','Juli','Augusti','September','Oktober','November','December'];
+
+        const UI_STRINGS = {
+            en: {
+                timerBtn:    'Timer',
+                alarmBtn:    'Alarm',
+                settingsBtn: 'Settings',
+                startTimer:  'Start Timer',
+                setAlarm:    'Set Alarm',
+                cancel:      'Cancel',
+                alarmLabel:  'set alarm time (24 h)',
+                timerActive: 'TIMER ACTIVE',
+            },
+            sv: {
+                timerBtn:    'Timer',
+                alarmBtn:    'Alarm',
+                settingsBtn: 'Inställningar',
+                startTimer:  'Starta timer',
+                setAlarm:    'Ställ in alarm',
+                cancel:      'Avbryt',
+                alarmLabel:  'ange alarmtid (24 h)',
+                timerActive: 'NEDRÄKNING',
+            }
+        };
+
+        let currentLang = (function () {
+            try { return localStorage.getItem('clock-lang') || 'en'; } catch (e) { return 'en'; }
+        })();
+
+        function getISOWeek(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const day = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - day);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        }
+
         function pad(n) { return String(n).padStart(2, '0'); }
         function tzLabel() {
             const off = -new Date().getTimezoneOffset();
@@ -58,29 +96,28 @@
 
         const timeEl = document.getElementById('clock-time');
         const dateEl = document.getElementById('clock-date');
-        const tzEl = document.getElementById('clock-timezone');
-        
+        const tzEl   = document.getElementById('clock-timezone');
+
         let lastSec = -1;
         tzEl.textContent = tzLabel();
 
-        let isTimerMode = false;
-        let isAlarming = false;
-        let timerEndMs = 0;
+        let isTimerMode  = false;
+        let isAlarming   = false;
+        let timerEndMs   = 0;
         let timerTotalMs = 0;
 
         // Alarm state
-        let alarmIsSet = false;
-        let alarmHour = -1;
+        let alarmIsSet  = false;
+        let alarmHour   = -1;
         let alarmMinute = -1;
 
-        const modal = document.getElementById('timer-modal');
-        const btnStart = document.getElementById('btn-start');
-        const btnCancel = document.getElementById('btn-cancel');
-        const inHr = document.getElementById('t-hr');
-        const inMin = document.getElementById('t-min');
-        const inSec = document.getElementById('t-sec');
+        const modal      = document.getElementById('timer-modal');
+        const btnStart   = document.getElementById('btn-start');
+        const btnCancel  = document.getElementById('btn-cancel');
+        const inHr       = document.getElementById('t-hr');
+        const inMin      = document.getElementById('t-min');
+        const inSec      = document.getElementById('t-sec');
         const alarmSound = document.getElementById('alarm-sound');
-
 
         // List of available alarm sounds (edit paths to match your actual files)
         const alarmSoundList = [
@@ -97,35 +134,85 @@
             alarmSound.play().catch(e => console.log("Audio play prevented:", e));
         }
 
-
-        
         // Mode tab elements
-        const modeTimerBtn = document.getElementById('mode-timer-btn');
-        const modeAlarmBtn = document.getElementById('mode-alarm-btn');
-        const timerSection = document.getElementById('timer-section');
-        const alarmSection = document.getElementById('alarm-section');
-        const inAHr = document.getElementById('a-hr');
-        const inAMin = document.getElementById('a-min');
+        const modeTimerBtn    = document.getElementById('mode-timer-btn');
+        const modeAlarmBtn    = document.getElementById('mode-alarm-btn');
+        const modeSettingsBtn = document.getElementById('mode-settings-btn');
+        const timerSection    = document.getElementById('timer-section');
+        const alarmSection    = document.getElementById('alarm-section');
+        const settingsSection = document.getElementById('settings-section');
+        const inAHr           = document.getElementById('a-hr');
+        const inAMin          = document.getElementById('a-min');
+        const langEnBtn       = document.getElementById('lang-en-btn');
+        const langSvBtn       = document.getElementById('lang-sv-btn');
+        const alarmLabelEl    = document.getElementById('alarm-label');
+
+        function applyUILanguage(lang) {
+            const s = UI_STRINGS[lang];
+            modeTimerBtn.textContent    = s.timerBtn;
+            modeAlarmBtn.textContent    = s.alarmBtn;
+            modeSettingsBtn.textContent = s.settingsBtn;
+            btnCancel.textContent       = s.cancel;
+            alarmLabelEl.textContent    = s.alarmLabel;
+            // Update start button text only when a functional tab is active
+            if (modeAlarmBtn.classList.contains('active')) {
+                btnStart.textContent = s.setAlarm;
+            } else if (!modeSettingsBtn.classList.contains('active')) {
+                btnStart.textContent = s.startTimer;
+            }
+            langEnBtn.classList.toggle('active', lang === 'en');
+            langSvBtn.classList.toggle('active', lang === 'sv');
+            lastSec = -1; // force date re-render with new locale
+        }
 
         // Switch to Timer tab
         modeTimerBtn.addEventListener('click', () => {
             modeTimerBtn.classList.add('active');
             modeAlarmBtn.classList.remove('active');
-            timerSection.style.display = '';
-            alarmSection.style.display = 'none';
-            btnStart.textContent = 'Start Timer';
+            modeSettingsBtn.classList.remove('active');
+            timerSection.style.display    = '';
+            alarmSection.style.display    = 'none';
+            settingsSection.style.display = 'none';
+            btnStart.style.display = '';
+            btnStart.textContent = UI_STRINGS[currentLang].startTimer;
         });
 
         // Switch to Alarm tab — pre-fill with current time
         modeAlarmBtn.addEventListener('click', () => {
             modeAlarmBtn.classList.add('active');
             modeTimerBtn.classList.remove('active');
-            alarmSection.style.display = '';
-            timerSection.style.display = 'none';
-            btnStart.textContent = 'Set Alarm';
+            modeSettingsBtn.classList.remove('active');
+            alarmSection.style.display    = '';
+            timerSection.style.display    = 'none';
+            settingsSection.style.display = 'none';
+            btnStart.style.display = '';
+            btnStart.textContent = UI_STRINGS[currentLang].setAlarm;
             const now = new Date();
-            inAHr.value = pad(now.getHours());
+            inAHr.value  = pad(now.getHours());
             inAMin.value = pad(now.getMinutes());
+        });
+
+        // Switch to Settings tab
+        modeSettingsBtn.addEventListener('click', () => {
+            modeSettingsBtn.classList.add('active');
+            modeTimerBtn.classList.remove('active');
+            modeAlarmBtn.classList.remove('active');
+            settingsSection.style.display = '';
+            timerSection.style.display    = 'none';
+            alarmSection.style.display    = 'none';
+            btnStart.style.display = 'none';
+        });
+
+        // Language selection
+        langEnBtn.addEventListener('click', () => {
+            currentLang = 'en';
+            try { localStorage.setItem('clock-lang', 'en'); } catch (e) {}
+            applyUILanguage('en');
+        });
+        langSvBtn.addEventListener('click', () => {
+            currentLang = 'sv';
+            try { localStorage.setItem('clock-lang', 'sv'); } catch (e) {}
+            applyUILanguage('sv');
         });
 
         function renderTimeString(h, m, s) {
@@ -137,21 +224,25 @@
 
         timeEl.addEventListener('click', () => {
             if (isAlarming) {
-                isAlarming = false;
+                isAlarming  = false;
                 isTimerMode = false;
-                alarmIsSet = false;
+                alarmIsSet  = false;
                 timeEl.classList.remove('clock-blink');
                 alarmSound.pause();
                 alarmSound.currentTime = 0;
-                lastSec = -1; 
+                lastSec = -1;
                 return;
             }
             if (isTimerMode || alarmIsSet) {
                 // Cancel whatever is running
                 isTimerMode = false;
-                alarmIsSet = false;
+                alarmIsSet  = false;
                 lastSec = -1;
             } else {
+                // If settings tab was last active, switch back to timer before opening
+                if (modeSettingsBtn.classList.contains('active')) {
+                    modeTimerBtn.click();
+                }
                 modal.classList.add('active');
             }
         });
@@ -190,14 +281,17 @@
             inp.addEventListener('blur', () => { inp.value = pad(parseInt(inp.value || 0)); });
         });
 
+        // Apply persisted language on load
+        applyUILanguage(currentLang);
+
         function tick() {
             const nowTime = Date.now();
             const now = new Date(nowTime);
 
             if (!isTimerMode) {
-                const h = now.getHours();
-                const m = now.getMinutes();
-                const s = now.getSeconds();
+                const h  = now.getHours();
+                const m  = now.getMinutes();
+                const s  = now.getSeconds();
                 const ms = now.getMilliseconds();
 
                 const frac = (s + ms / 1000) / 60;
@@ -216,27 +310,32 @@
                         alarmIsSet = false;
                         isAlarming = true;
                         timeEl.classList.add('clock-blink');
-                        playRandomAlarmSound();   // <-- changed
+                        playRandomAlarmSound();
                     }
 
                     if (alarmIsSet) {
                         dateEl.textContent = `ALARM ${pad(alarmHour)}:${pad(alarmMinute)}`;
                     } else {
-                        dateEl.textContent = `${DAYS[now.getDay()]}, ${ordinal(now.getDate())} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+                        if (currentLang === 'sv') {
+                            const week = getISOWeek(now);
+                            dateEl.textContent = `${DAYS_SV[now.getDay()]}, Vecka ${week}, ${now.getDate()} ${MONTHS_SV[now.getMonth()]} ${now.getFullYear()}`;
+                        } else {
+                            dateEl.textContent = `${DAYS[now.getDay()]}, ${ordinal(now.getDate())} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+                        }
                     }
                 }
 
             } else {
                 if (isAlarming) {
-                    arc.style.strokeDashoffset = circumference; 
+                    arc.style.strokeDashoffset = circumference;
                 } else {
                     let remaining = timerEndMs - nowTime;
-                    
+
                     if (remaining <= 0) {
                         remaining = 0;
                         isAlarming = true;
                         timeEl.classList.add('clock-blink');
-                        playRandomAlarmSound();   // <-- changed
+                        playRandomAlarmSound();
                     }
 
                     const frac = remaining / timerTotalMs;
@@ -249,7 +348,7 @@
                         const m = Math.floor((totalSecs % 3600) / 60);
                         const s = totalSecs % 60;
                         renderTimeString(h, m, s);
-                        dateEl.textContent = "TIMER ACTIVE"; 
+                        dateEl.textContent = UI_STRINGS[currentLang].timerActive;
                     }
                 }
             }
