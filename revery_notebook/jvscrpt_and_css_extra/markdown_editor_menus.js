@@ -203,10 +203,10 @@ window.applyDOMTranslations = function() {
   const cancelTableBtn = document.getElementById('table-btn-cancel');
   if (cancelTableBtn) cancelTableBtn.textContent = window.t('Cancel');
 
- // New File modal
+// New File modal
   updateTxt('#new-file-modal .modal-content h3', 'Unsaved Changes');
-  updateTxt('#modal-btn-yes', 'Yes, Export');
-  updateTxt('#modal-btn-no', 'No, Delete it');
+  updateTxt('#modal-btn-export', 'Export .md');
+  updateTxt('#modal-btn-clear', 'Clear Editor');
   updateTxt('#modal-btn-cancel', 'Cancel');
   const modalMsg = document.getElementById('modal-msg');
 
@@ -214,9 +214,9 @@ window.applyDOMTranslations = function() {
 
   if (modalMsg) {
     if (typeof pendingFileAction !== 'undefined' && pendingFileAction === 'import') {
-      modalMsg.textContent = window.t("Do you want to export your current work before importing a new file? If you don't export, your current text will be lost forever.");
+      modalMsg.textContent = window.t("Export your work using the \"Export .md\" button. Once the file is safely on your hard drive, click \"Clear Editor\" to proceed with the import.");
     } else {
-      modalMsg.textContent = window.t("Do you want to export your current work before starting a new file? If you don't export, your current text will be lost forever.");
+      modalMsg.textContent = window.t("Export your work using the \"Export .md\" button. Once the file is safely on your hard drive, click \"Clear Editor\".");
     }
   }
  // Date picker modal

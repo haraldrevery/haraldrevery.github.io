@@ -685,7 +685,7 @@ function newFile() {
   if (editor.value.trim().length > 0) {
     pendingFileAction = 'new';
     // Update modal text for "New"
-    document.getElementById('modal-msg').innerText = window.t("Do you want to export your current work before starting a new file? If you don't export, your current text will be lost forever.");
+    document.getElementById('modal-msg').innerText = window.t("Export your work using the \"Export .md\" button. Once the file is safely on your hard drive, click \"Clear Editor\".");
     document.getElementById('new-file-modal').classList.add('show');
   } else {
     // If it's already empty, just clear it safely
@@ -705,19 +705,22 @@ function executeClear() {
 }
 
 /* Modal Button Event Listeners */
-document.getElementById('modal-btn-yes').addEventListener('click', () => {
+
+/* Export button: triggers the download ONLY. Does NOT clear the editor.
+   The modal intentionally stays open so the user can verify the file
+   landed safely on disk before committing to the destructive clear. */
+document.getElementById('modal-btn-export').addEventListener('click', () => {
   exportFile('md');
-  executeClear();
-  if (pendingFileAction === 'import') {
-    executeImport();
-  }
-  pendingFileAction = null;
-  document.getElementById('new-file-modal').classList.remove('show');
+  // Deliberately does NOT call executeClear() here.
 });
 
-document.getElementById('modal-btn-no').addEventListener('click', () => {
+/* Clear Editor button: the destructive action, fully decoupled from the
+   export. The user clicks this themselves once satisfied. Captured
+   pendingFileAction before the clear so import can still proceed. */
+document.getElementById('modal-btn-clear').addEventListener('click', () => {
+  const savedAction = pendingFileAction;
   executeClear();
-  if (pendingFileAction === 'import') {
+  if (savedAction === 'import') {
     executeImport();
   }
   pendingFileAction = null;
@@ -730,11 +733,15 @@ document.getElementById('modal-btn-cancel').addEventListener('click', () => {
   document.getElementById('new-file-modal').classList.remove('show');
 });
 
+
+
+
+
 function importFile() {
   if (editor.value.trim().length > 0) {
     pendingFileAction = 'import';
     // Update modal text for "Import"
-    document.getElementById('modal-msg').innerText = window.t("Do you want to export your current work before importing a new file? If you don't export, your current text will be lost forever.");
+    document.getElementById('modal-msg').innerText = window.t("Export your work using the \"Export .md\" button. Once the file is safely on your hard drive, click \"Clear Editor\" to proceed with the import.");
     document.getElementById('new-file-modal').classList.add('show');
   } else {
     executeImport();

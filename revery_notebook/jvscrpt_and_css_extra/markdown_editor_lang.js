@@ -66,13 +66,14 @@ window.uiTranslations = {
   "Tjurpannan": { "Swedish": "Tjurpannan" },
 
 
-  // File Menu
+// File Menu
   "New File": { "Swedish": "Ny fil" },
   "Import File": { "Swedish": "Importera fil" },
   "Import Template ▸": { "Swedish": "Importera mall ▸" },
   "Save as...": { "Swedish": "Spara som..." },
   "Export as .md": { "Swedish": "Exportera som .md" },
   "Export as .txt": { "Swedish": "Exportera som .txt" },
+  "Export as .html": { "Swedish": "Exportera som .html" },
   
   // Toolbar Menu & Context Menu
   "Cut (Marked)": { "Swedish": "Klipp (markerat)" },
@@ -142,10 +143,13 @@ window.uiTranslations = {
   "Restart": { "Swedish": "Starta Om" },
   "Leave": { "Swedish": "Lämna" },
   
-  // New/Import Modal
+// New/Import Modal
   "Unsaved Changes": { "Swedish": "Osparade ändringar" },
-  "Do you want to export your current work before starting a new file? If you don't export, your current text will be lost forever.": { "Swedish": "Vill du expotera ditt nuvarande arbete innan du påbörjar en ny fil? Om du inte expoterar kommer din nuvarande text att förloras för alltid." },
-  "Do you want to export your current work before importing a new file? If you don't export, your current text will be lost forever.": { "Swedish": "Vill du expotera ditt nuvarande arbete innan du importerar en ny fil? Om du inte expoterar kommer din nuvarande text att förloras för alltid." },
+  "Clear Editor": { "Swedish": "Töm redigeraren" },
+  "Export your work using the \"Export .md\" button. Once the file is safely on your hard drive, click \"Clear Editor\" to proceed with the import.": { "Swedish": "Exportera ditt arbete med knappen \"Exportera .md\". När filen är säkert sparad på din hårddisk, klicka på \"Töm redigeraren\" för att fortsätta med importen." },
+  "Export your work using the \"Export .md\" button. Once the file is safely on your hard drive, click \"Clear Editor\".": { "Swedish": "Exportera ditt arbete med knappen \"Exportera .md\". När filen är säkert sparad på din hårddisk, klicka på \"Töm redigeraren\"." },
+  "Do you want to export your current work before starting a new file? If you don't export, your current text will be lost forever.": { "Swedish": "Vill du exportera ditt nuvarande arbete innan du påbörjar en ny fil? Om du inte exporterar kommer din nuvarande text att förloras för alltid." },
+  "Do you want to export your current work before importing a new file? If you don't export, your current text will be lost forever.": { "Swedish": "Vill du exportera ditt nuvarande arbete innan du importerar en ny fil? Om du inte exporterar kommer din nuvarande text att förloras för alltid." },
   "Yes, Export": { "Swedish": "Ja, exportera" },
   "No, Delete it": { "Swedish": "Nej, radera den" },
   

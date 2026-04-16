@@ -642,7 +642,7 @@ body {
   body[data-view="preview"] #topbar,
   body.reader-mode-active #topbar {
     height: auto;
-    padding: 12px 12px;
+    padding: 8px 4px; /* Matched Editor mode's outer padding */
   }
 
   .tb-btn { padding: 0.4375rem 0.625rem 0.3125rem 0.625rem; font-size: 0.82rem; }
@@ -661,6 +661,11 @@ body {
     display: none;
   }
 
+  /* FIX: Hide the empty menu wrapper divs to eliminate ghost flex gaps */
+  body[data-view="preview"] #topbar-right > div {
+    display: none !important;
+  }
+
   body[data-view="preview"] #topbar-right {
     display: flex;
     width: 100%;
@@ -671,9 +676,10 @@ body {
   body[data-view="preview"] #topbar-right,
   body.reader-mode-active #topbar-right {
     justify-content: flex-start;
-    gap: 8px;                 /* consistent spacing between buttons */
+    padding: 4px 20px; /* Matched Editor mode's inner padding */
+    gap: 12px;         /* Matched Editor mode's gap */
+    margin-left: 0;
   }
-
   /* In preview mode: swap order so Outline appears before Preview */
   body[data-view="preview"] #btn-reader-outline {
     order: 2;
