@@ -584,27 +584,28 @@ body {
     padding-bottom: 8px;  /* Consistent bottom padding */
     gap: 8px;             /* Space between the two rows */
   }
-  body[data-view="editor"] #topbar-left {
+body[data-view="editor"] #topbar-left {
     display: flex;
     flex: 0 0 100%;
-    height: auto;         /* Let padding scale the height naturally */
-    padding: 4px 20px;    /* Consistent top/bottom padding + sides */
+    box-sizing: border-box; /* Fix: Absorbs the 40px padding into the 100% width */
+    height: auto;         
+    padding: 4px 20px;    
     align-items: center;
     gap: 12px;
     flex-wrap: nowrap;
-    order: 2;             /* Force file info row to the top */
+    order: 2;             
   }
   body[data-view="editor"] #topbar-right {
     display: flex;
-    flex: 0 0 100%;       
-    height: auto;         /* Let padding scale the height naturally */
-    padding: 4px 20px;    /* Consistent top/bottom padding + sides */
+    flex: 0 0 100%;
+    box-sizing: border-box; /* Fix: Absorbs the 40px padding into the 100% width */
+    height: auto;         
+    padding: 4px 20px;    
     align-items: center;
-    justify-content: flex-start;  /* ← new: left-align buttons */
-    gap: 12px;                   /* optional: consistent spacing */
-    order: 1;             /* Force buttons row to the bottom */
+    justify-content: flex-start;  
+    gap: 12px;                   
+    order: 1;             
   }
-
 /* Hide export button only in edit mode on mobile */
   body[data-view="editor"] #btn-export {
     display: none !important;
