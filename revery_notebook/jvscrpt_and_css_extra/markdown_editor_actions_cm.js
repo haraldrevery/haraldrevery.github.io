@@ -165,6 +165,7 @@ function executeAction(action) {
     case 'file_save_as': openSaveAsModal(); break;
     case 'file_export_md': exportFile('md'); break;
     case 'file_export_txt': exportFile('txt'); break;
+    case 'file_export_html': exportHtmlFile(); break;
 
     case 'table':
       /* Open the native-style table modal instead of unreliable prompt() dialogs */
@@ -518,10 +519,161 @@ function exportFile(extension = 'md') {
   // Fallback: revoke after 30 seconds even if focus event never fires
   setTimeout(revoke, 30000);
 
-  /* ── Show "File saved" after a short delay (assume success, but don't mislead) ── */
+/* ── Show "File saved" after a short delay (assume success, but don't mislead) ── */
   setTimeout(() => showSavedIndicator(), 500);
 }
 
+
+/* ── HTML Prose Export ────────────────────────────────────────────────────
+   Clones the live preview, strips all editor-only artefacts (copy buttons,
+   source-map attributes, flash classes, inline-code wrappers), then wraps
+   the result in a self-contained HTML document with minimal inline CSS.
+   The YAML frontmatter block, if present, is exported as a small metadata
+   table above the prose body.                                             */
+function exportHtmlFile() {
+  const proseEl = preview.querySelector('.prose');
+  if (!proseEl) return; // Nothing rendered yet
+
+  /* ── 1. Clone the prose node so the live DOM is never touched ── */
+  const clone = proseEl.cloneNode(true);
+
+  /* Remove code copy buttons injected by postProcessCodeBlocks() */
+  clone.querySelectorAll('.code-copy-btn').forEach(btn => btn.remove());
+
+  /* Unwrap inline-code-wrappers: replace the span with its <code> child */
+  clone.querySelectorAll('.inline-code-wrapper').forEach(wrapper => {
+    const code = wrapper.querySelector('code');
+    if (code) {
+      wrapper.replaceWith(code);
+    } else {
+      wrapper.replaceWith(...wrapper.childNodes);
+    }
+  });
+
+  /* Strip source-map data attributes (editor-only metadata) */
+  clone.querySelectorAll('[data-sl]').forEach(el => {
+    el.removeAttribute('data-sl');
+    el.removeAttribute('data-sl-end');
+  });
+
+  /* Remove any leftover animation classes */
+  clone.querySelectorAll('.preview-flash').forEach(el => el.classList.remove('preview-flash'));
+
+  /* ── 2. Build an optional YAML metadata table ── */
+  let yamlBlock = '';
+  const yamlPills = preview.querySelectorAll('.yaml-pill');
+  if (yamlPills.length > 0) {
+    const rows = Array.from(yamlPills).map(pill => {
+      const key = pill.querySelector('.yaml-key')?.textContent ?? '';
+      const val = pill.querySelector('.yaml-value')?.textContent ?? '';
+      return `<tr><th>${escapeHtml(key)}</th><td>${escapeHtml(val)}</td></tr>`;
+    }).join('\n      ');
+    yamlBlock = `<table class="yaml-meta">\n      ${rows}\n    </table>\n    `;
+  }
+
+  /* ── 3. Document title ── */
+  const docTitleText = docTitle.value.trim() || 'Untitled';
+
+  /* ── 4. Inline CSS — no external dependencies ── */
+  const inlineCSS = `
+    :root {
+      --bg: #ffffff; --text: #1a1a1a; --text-muted: #6b7280;
+      --border: #e5e7eb; --code-bg: #f3f4f6;
+      --pre-bg: #1e1e2e; --pre-text: #cdd6f4;
+      --link: #2563eb; --accent: #6366f1;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 1.125rem; line-height: 1.75;
+      color: var(--text); background: var(--bg);
+      max-width: 720px; margin: 0 auto; padding: 3rem 2rem 6rem;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-weight: 700; line-height: 1.25;
+      margin-top: 2em; margin-bottom: 0.5em; color: var(--text);
+    }
+    h1 { font-size: 2.25rem; margin-top: 1rem; }
+    h2 { font-size: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.25em; }
+    h3 { font-size: 1.25rem; }
+    h4, h5, h6 { font-size: 1rem; }
+    p { margin-bottom: 1.25em; }
+    a { color: var(--link); text-decoration: underline; }
+    a:hover { text-decoration: none; }
+    ul, ol { margin: 0 0 1.25em 1.75em; }
+    li { margin-bottom: 0.25em; }
+    li > ul, li > ol { margin-top: 0.25em; margin-bottom: 0; }
+    blockquote {
+      border-left: 4px solid var(--accent); margin: 1.5em 0;
+      padding: 0.5em 1.25em; color: var(--text-muted); font-style: italic;
+    }
+    code {
+      font-family: 'Courier New', Courier, monospace; font-size: 0.875em;
+      background: var(--code-bg); padding: 0.15em 0.4em;
+      border-radius: 3px; color: #d63384;
+    }
+    pre {
+      background: var(--pre-bg); color: var(--pre-text);
+      padding: 1.25em 1.5em; border-radius: 6px;
+      overflow-x: auto; margin: 1.5em 0; line-height: 1.5;
+    }
+    pre code {
+      background: none; padding: 0; color: inherit;
+      font-size: 0.875rem; border-radius: 0;
+    }
+    table { width: 100%; border-collapse: collapse; margin: 1.5em 0; font-size: 0.95em; }
+    th, td { border: 1px solid var(--border); padding: 0.5em 0.75em; text-align: left; }
+    th { background: var(--code-bg); font-weight: 600; font-family: system-ui, sans-serif; }
+    tr:nth-child(even) td { background: #fafafa; }
+    img { max-width: 100%; height: auto; display: block; margin: 1.5em 0; border-radius: 4px; }
+    hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
+    .yaml-meta { margin-bottom: 2rem; border-radius: 6px; overflow: hidden; font-size: 0.85rem; }
+    .yaml-meta th { text-transform: uppercase; font-size: 0.72em; letter-spacing: 0.05em; color: var(--text-muted); width: 1%; white-space: nowrap; }
+    input[type="checkbox"] { margin-right: 0.4em; }
+    .footnotes { border-top: 1px solid var(--border); margin-top: 3em; padding-top: 1em; font-size: 0.875rem; color: var(--text-muted); }
+    .katex-display { overflow-x: auto; }
+  `.replace(/^ {4}/gm, ''); // de-indent to keep the file tidy
+
+  /* ── 5. Assemble the full document ── */
+  const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(docTitleText)}</title>
+  <style>${inlineCSS}  </style>
+</head>
+<body>
+  ${yamlBlock}${clone.innerHTML}
+</body>
+</html>`;
+
+  /* ── 6. Build filename and trigger download (same pattern as exportFile) ── */
+  let baseName = (docTitle.value.trim() || 'untitled')
+    .replace(/\s+/g, '-')
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, '')
+    .toLowerCase();
+  if (!baseName) baseName = 'untitled';
+  const filename = buildExportFilename(baseName, 'html');
+
+  const blob    = new Blob([fullHtml], { type: 'text/html' });
+  const blobUrl = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { href: blobUrl, download: filename });
+  a.click();
+
+  let revoked = false;
+  const revoke = () => {
+    if (revoked) return;
+    revoked = true;
+    URL.revokeObjectURL(blobUrl);
+    window.removeEventListener('focus', revoke);
+  };
+  window.addEventListener('focus', revoke, { once: true });
+  setTimeout(revoke, 30000);
+  setTimeout(() => showSavedIndicator(), 500);
+}
 
 
 btnExport.addEventListener('click', () => exportFile('md'));
