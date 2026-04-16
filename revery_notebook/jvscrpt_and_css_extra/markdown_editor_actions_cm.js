@@ -164,6 +164,7 @@ function executeAction(action) {
     case 'file_export_md': exportFile('md'); break;
     case 'file_export_txt': exportFile('txt'); break;
     case 'file_export_html': exportHtmlFile(); break;
+    case 'file_export_tex': exportLatexFile(); break;
 
     case 'table':
       /* Open the native-style table modal instead of unreliable prompt() dialogs */
@@ -683,6 +684,327 @@ function exportHtmlFile() {
     revoked = true;
     URL.revokeObjectURL(blobUrl);
     window.removeEventListener('focus', revoke);
+  };
+  window.addEventListener('focus', revoke, { once: true });
+setTimeout(revoke, 30000);
+  setTimeout(() => showSavedIndicator(), 500);
+}
+
+
+/* ── LaTeX Prose Export ────────────────────────────────────────────────────
+   Converts the current Markdown document to a minimal but fully compilable
+   .tex file.  What is exported:
+     • YAML frontmatter  → \title, \author, \date
+     • Fenced code blocks → verbatim environments
+     • Math $…$ / $$…$$ → passed through unchanged (already LaTeX)
+     • Markdown tables   → tabular (labeled table_1, table_2, …)
+     • Block images      → figure  (labeled image_1, image_2, …)
+     • Headings, lists, blockquotes, bold, italic, strikethrough, footnotes
+     • All prose LaTeX special chars are escaped                           */
+function exportLatexFile() {
+  let raw = editor.value;
+
+  /* ── 1. Extract YAML frontmatter metadata ── */
+  let metaTitle  = docTitle.value.trim() || 'Untitled';
+  let metaDate   = '\\today';
+  let metaAuthor = '';
+
+  const frontmatterMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (frontmatterMatch) {
+    const yml = frontmatterMatch[1];
+    const ymlGet = (key) => {
+      const m = yml.match(new RegExp(`^${key}:\\s*["']?(.+?)["']?\\s*$`, 'm'));
+      return m ? m[1] : '';
+    };
+    if (ymlGet('title'))  metaTitle  = ymlGet('title');
+    if (ymlGet('date'))   metaDate   = ymlGet('date');
+    if (ymlGet('author')) metaAuthor = ymlGet('author');
+    raw = raw.slice(frontmatterMatch[0].length).replace(/^\r?\n/, '');
+  }
+
+  /* ── 2. Collect footnote definitions  [^id]: text  (stripped from body) ── */
+  const footnoteMap = {};
+  raw = raw.replace(/^\[\^([^\]]+)\]:\s*(.+)$/gm, (_, id, text) => {
+    footnoteMap[id.trim()] = text.trim();
+    return '';
+  });
+
+  /* ── 3. LaTeX special-char escape (prose only — never applied to math/verbatim) ── */
+  function latexEsc(str) {
+    if (!str) return '';
+    return str
+      .replace(/\\/g, '\x00BKSL\x00')          // protect backslash first
+      .replace(/&/g,  '\\&')
+      .replace(/%/g,  '\\%')
+      .replace(/\$/g, '\\$')
+      .replace(/#/g,  '\\#')
+      .replace(/_/g,  '\\_')
+      .replace(/\{/g, '\\{')
+      .replace(/\}/g, '\\}')
+      .replace(/~/g,  '\\textasciitilde{}')
+      .replace(/\^/g, '\\textasciicircum{}')
+      .replace(/\x00BKSL\x00/g, '\\textbackslash{}');
+  }
+
+/* ── 4. Protected-block system: shield code/math from escaping ── */
+  const protectedBlocks = [];
+  let   pbIdx = 0;
+  const protect = (latexStr) => {
+    const ph = `\x02PH${pbIdx++}\x03`;
+    protectedBlocks.push({ ph, content: latexStr });
+    return ph;
+  };
+const restoreProtected = (str) => {
+    // Loop backwards to ensure nested blocks (like math inside tables) are restored correctly
+    for (let i = protectedBlocks.length - 1; i >= 0; i--) {
+      str = str.split(protectedBlocks[i].ph).join(protectedBlocks[i].content);
+    }
+    return str;
+  };
+
+  /* 4a. Fenced code blocks  ```lang … ``` */
+  raw = raw.replace(/```[^\n`]*\n([\s\S]*?)```/g, (_, code) =>
+    protect(`\\begin{verbatim}\n${code.replace(/\n+$/, '')}\n\\end{verbatim}`)
+  );
+
+  /* 4b. Display math  $$ … $$ (Preserves original $$ formatting) */
+  raw = raw.replace(/\$\$([\s\S]*?)\$\$/g, (_, math) =>
+    protect(`$$${math}$$`)
+  );
+
+  /* 4c. Inline math  $ … $ (Allows multi-line math by removing newline restriction) */
+  raw = raw.replace(/(?<!\\)\$([^$]+?)\$/g, (_, math) =>
+    protect(`$${math}$`)
+  );
+
+  /* 4d. Bracket display math \[ … \] (Prevents escaping of brackets) */
+  raw = raw.replace(/\\\[([\s\S]*?)\\\]/g, (_, math) =>
+    protect(`\\[${math}\\]`)
+  );
+
+  /* 4e. Bracket inline math \( … \) (Prevents escaping of parentheses) */
+  raw = raw.replace(/\\\(([\s\S]*?)\\\)/g, (_, math) =>
+    protect(`\\(${math}\\)`)
+  );
+
+  /* ── 5. Markdown tables ── */
+  let tableIdx = 0;
+  raw = raw.replace(
+    /^(\|[^\n]+\|\s*\r?\n\|[-| :]+\|\s*\r?\n(?:\|[^\n]+\|\s*\r?\n?)*)/gm,
+    (block) => {
+      const tlines = block.trim().split(/\r?\n/).filter(l => l.trim().startsWith('|'));
+      if (tlines.length < 2) return block;
+      const parseRow = (l) => l.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+      const headers = parseRow(tlines[0]);
+      const rows    = tlines.slice(2).map(parseRow);
+      const cols    = headers.length;
+      tableIdx++;
+      let tex = `\\begin{table}[h]\n\\centering\n` +
+                  `\\begin{tabular}{| ${Array(cols).fill('l').join(' | ')} |}\n\\hline\n`;
+        // Use processInline instead of latexEsc to support math, bold, italic, etc.
+        tex    += headers.map(c => processInline(c)).join(' & ') + ' \\\\[2pt]\n\\hline\n';
+        for (const row of rows) {
+          const cells = Array.from({ length: cols }, (_, k) => processInline(row[k] || ''));
+          tex += cells.join(' & ') + ' \\\\\n';
+        }
+        tex += `\\hline\n\\end{tabular}\n` +
+               `\\caption{Table ${tableIdx}}\n\\label{table_${tableIdx}}\n\\end{table}`;
+        return protect(tex);
+    }
+  );
+
+  /* ── 6. Block images  ![alt](src)  on a line by themselves ── */
+  let imageIdx = 0;
+  raw = raw.replace(/^!\[([^\]]*)\]\(([^)\s]+)[^)]*\)\s*$/gm, (_, alt, src) => {
+    imageIdx++;
+    const tex = [
+      `\\begin{figure}[h]`,
+      `\\centering`,
+      `% NOTE: replace the path below with a local path for compilation`,
+      `\\includegraphics[width=0.8\\textwidth]{${src}}`,
+      `\\caption{${latexEsc(alt || `Figure ${imageIdx}`)}}`,
+      `\\label{image_${imageIdx}}`,
+      `\\end{figure}`
+    ].join('\n');
+    return protect(tex);
+  });
+
+  /* ── 7. Inline Markdown → LaTeX ── */
+
+  /* processInlinePart: operates on a single segment known to contain no PH placeholders */
+  function processInlinePart(text) {
+    if (!text) return '';
+    const ip  = [];
+    let   ii  = 0;
+    const iSave = (s) => { const p = `\x04I${ii++}\x05`; ip.push({ p, s }); return p; };
+
+    /* Order matters: most-specific patterns first */
+    text = text.replace(/\*\*\*(.+?)\*\*\*/g, (_, t) => iSave(`\\textbf{\\textit{${latexEsc(t)}}}`));
+    text = text.replace(/___(.+?)___/g,         (_, t) => iSave(`\\textbf{\\textit{${latexEsc(t)}}}`));
+    text = text.replace(/\*\*(.+?)\*\*/g,  (_, t) => iSave(`\\textbf{${latexEsc(t)}}`));
+    text = text.replace(/__(.+?)__/g,       (_, t) => iSave(`\\textbf{${latexEsc(t)}}`));
+    text = text.replace(/\*([^*\n]+?)\*/g,  (_, t) => iSave(`\\textit{${latexEsc(t)}}`));
+    text = text.replace(/(?<![\\a-zA-Z0-9])_([^_\n]+?)_(?![a-zA-Z0-9])/g,
+                                            (_, t) => iSave(`\\textit{${latexEsc(t)}}`));
+    text = text.replace(/~~(.+?)~~/g,       (_, t) => iSave(`\\sout{${latexEsc(t)}}`));
+    text = text.replace(/`([^`\n]+)`/g,     (_, c) => iSave(`\\texttt{${latexEsc(c)}}`));
+    /* Inline images before links so  ![…](…)  is never matched as  […](…) */
+    text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,
+                        (_, a, s) => iSave(`\\textit{[Image: ${latexEsc(a || s)}]}`));
+    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g,
+                        (_, t, u) => iSave(`\\href{${u}}{${latexEsc(t)}}`));
+    text = text.replace(/\[\^([^\]]+)\]/g, (_, id) => {
+      const def = footnoteMap[id.trim()];
+      return iSave(`\\footnote{${latexEsc(def || id)}}`);
+    });
+
+    /* Escape remaining raw text, being careful not to touch iSave placeholders */
+    text = text.split(/(\x04I\d+\x05)/).map((part, idx) =>
+      idx % 2 === 1 ? part : latexEsc(part)
+    ).join('');
+
+    for (const { p, s } of ip) text = text.split(p).join(s);
+    return text;
+  }
+
+  /* processInline: splits a line by outer PH placeholders so they pass through untouched */
+  function processInline(text) {
+    return text.split(/(\x02PH\d+\x03)/).map((seg, idx) =>
+      idx % 2 === 1 ? seg : processInlinePart(seg)
+    ).join('');
+  }
+
+  /* ── 8. Block-level parsing ── */
+  const lines  = raw.split('\n');
+  const output = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line    = lines[i];
+    const trimmed = line.trim();
+
+    /* Protected-block placeholder sitting on its own line */
+    if (/^\x02PH\d+\x03$/.test(trimmed)) { output.push(trimmed); i++; continue; }
+
+    /* Headings  #  to  ###### */
+    const hm = trimmed.match(/^(#{1,6})\s+(.*)/);
+    if (hm) {
+      const cmds = ['\\section', '\\subsection', '\\subsubsection',
+                    '\\paragraph', '\\subparagraph', '\\subparagraph'];
+      output.push(`${cmds[hm[1].length - 1]}{${processInline(hm[2])}}`);
+      i++; continue;
+    }
+
+    /* Horizontal rule  ---  ***  ___ */
+    if (/^(\*{3,}|-{3,}|_{3,})\s*$/.test(trimmed)) {
+      output.push('\n\\bigskip\\hrule\\bigskip\n');
+      i++; continue;
+    }
+
+    /* Blockquote: consume consecutive  >  lines */
+    if (/^>/.test(trimmed)) {
+      const qLines = [];
+      while (i < lines.length && /^\s*>/.test(lines[i])) {
+        qLines.push(lines[i].replace(/^\s*>\s?/, ''));
+        i++;
+      }
+      output.push(`\\begin{quote}\n${qLines.map(processInline).join('\n')}\n\\end{quote}`);
+      continue;
+    }
+
+    /* Ordered list: consume consecutive  N.  lines */
+    if (/^\d+\.\s/.test(trimmed)) {
+      const items = [];
+      while (i < lines.length && /^\s*\d+\.\s/.test(lines[i])) {
+        items.push(lines[i].replace(/^\s*\d+\.\s+/, ''));
+        i++;
+      }
+      output.push(
+        `\\begin{enumerate}\n` +
+        items.map(t => `  \\item ${processInline(t)}`).join('\n') +
+        `\n\\end{enumerate}`
+      );
+      continue;
+    }
+
+    /* Unordered list (including task lists): consume consecutive  - / * / +  lines */
+    if (/^[-*+]\s/.test(trimmed)) {
+      const items = [];
+      while (i < lines.length && /^\s*[-*+]\s/.test(lines[i])) {
+        items.push(lines[i]);
+        i++;
+      }
+      const itemLines = items.map(l => {
+        const tm = l.match(/^\s*[-*+]\s+\[( |x|X)\]\s+(.*)/);
+        if (tm) {
+          const checked = tm[1].toLowerCase() === 'x';
+          return `  \\item[${checked ? '$\\boxtimes$' : '$\\square$'}] ${processInline(tm[2])}`;
+        }
+        return `  \\item ${processInline(l.replace(/^\s*[-*+]\s+/, ''))}`;
+      });
+      output.push(`\\begin{itemize}\n${itemLines.join('\n')}\n\\end{itemize}`);
+      continue;
+    }
+
+    /* Empty line */
+    if (/^\s*$/.test(line)) { output.push(''); i++; continue; }
+
+    /* Regular paragraph line */
+    output.push(processInline(line));
+    i++;
+  }
+
+  /* ── 9. Restore protected blocks ── */
+  let body = restoreProtected(output.join('\n'));
+
+  /* ── 10. Assemble the complete .tex document ── */
+  const hasMeta = !!(metaTitle || metaAuthor);
+  const docParts = [
+    `\\documentclass{article}`,
+    `\\usepackage[utf8]{inputenc}`,
+    `\\usepackage[T1]{fontenc}`,
+    `\\usepackage{amsmath}`,
+    `\\usepackage{amssymb}`,
+    `\\usepackage{graphicx}`,
+    `\\usepackage{hyperref}`,
+    `\\usepackage{longtable}`,
+    `\\usepackage[normalem]{ulem}`,
+    `\\usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm,marginparwidth=15mm,headheight=14pt]{geometry}`,
+    `\\usepackage[font=small,labelfont=bf]{subcaption}`,
+    `\\renewcommand\\thesubfigure{(\\alph{subfigure})}`,
+    `\\usepackage{multirow}`,
+    `\\usepackage{booktabs}`,
+    `\\usepackage{xcolor}`,
+    `\\usepackage[font=small,labelfont=bf,position=above]{caption}`,
+    `\\setlength{\\parindent}{0pt}`,
+    `\\setlength{\\parskip}{0.5em}`,
+    ``,
+    `\\title{${latexEsc(metaTitle)}}`,
+    `\\author{${latexEsc(metaAuthor)}}`,
+    `\\date{${metaDate}}`,
+    ``,
+    `\\begin{document}`,
+    hasMeta ? `\\maketitle\n` : ``,
+    body.trim(),
+    ``,
+    `\\end{document}`,
+    ``
+  ];
+  /* Collapse runs of 3+ newlines down to 2 (one blank line) */
+  const tex = docParts.join('\n').replace(/\n{3,}/g, '\n\n');
+
+  /* ── 11. Download (same pattern as exportFile / exportHtmlFile) ── */
+  let baseName = (docTitle.value.trim() || 'untitled')
+    .replace(/\s+/g, '-').replace(/[<>:"/\\|?*\x00-\x1F]/g, '').toLowerCase();
+  if (!baseName) baseName = 'untitled';
+  const filename = buildExportFilename(baseName, 'tex');
+  const blob     = new Blob([tex], { type: 'text/plain' });
+  const blobUrl  = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { href: blobUrl, download: filename });
+  a.click();
+  let revoked = false;
+  const revoke = () => {
+    if (!revoked) { revoked = true; URL.revokeObjectURL(blobUrl); window.removeEventListener('focus', revoke); }
   };
   window.addEventListener('focus', revoke, { once: true });
   setTimeout(revoke, 30000);

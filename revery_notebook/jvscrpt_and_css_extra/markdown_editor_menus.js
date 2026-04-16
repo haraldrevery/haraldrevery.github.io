@@ -755,7 +755,8 @@ const fileActions = [
   { label: 'Save as...', action: 'file_save_as' },
   { label: 'Export as .md', action: 'file_export_md' },
   { label: 'Export as .txt', action: 'file_export_txt' },
-  { label: 'Export as .html', action: 'file_export_html' }
+  { label: 'Export as .html', action: 'file_export_html' },
+  { label: 'Export as .tex', action: 'file_export_tex' }
 ];
 /* Populate Menus — supports submenus */
 function buildMenu(container, actions) {
