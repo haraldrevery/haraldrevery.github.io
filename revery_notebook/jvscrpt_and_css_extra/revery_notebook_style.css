@@ -567,11 +567,11 @@ body {
     font-size: var(--text-body-mobile);
     line-height: var(--text-line-row-space);
   }
-#topbar-center { display: none; }
-  #wordcount     { display: none; }
+  #topbar-center { display: none; }
   #topbar-left   { display: none; }
 
   #topbar       { padding: 0 4px; justify-content: stretch; gap: 0; }
+
   #topbar-right { flex: 1; justify-content: space-evenly; gap: 0; }
 
 
@@ -615,7 +615,7 @@ body {
     flex-shrink: 0;
   }
   
-  body[data-view="editor"] #topbar-left #doc-title {
+body[data-view="editor"] #topbar-left #doc-title {
     display: block;
     flex: 1;
     min-width: 0;
@@ -624,9 +624,13 @@ body {
     margin: 0;
   }
   
-  body[data-view="editor"] #topbar-left #wordcount,
   body[data-view="editor"] #topbar-left #size-warning {
     display: none !important;
+  }
+
+  body[data-view="editor"] #topbar-left #wordcount {
+    flex-shrink: 0;
+    white-space: nowrap;
   }
 
   body[data-view="editor"] #doc-title {
@@ -1221,10 +1225,18 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
    ══════════════════════════════════════════════════════════════════════ */
 @media print {
 
-  /* 1. Un-clip the body so the full rendered content can flow across pages */
+/* 1. Un-clip the body so the full rendered content can flow across pages */
   html, body {
     height: auto !important;
     overflow: visible !important;
+    background: none !important;
+  }
+
+  /* Turn off the global animated background gradient/texture */
+  body::before {
+    display: none !important;
+    animation: none !important;
+    background: none !important;
   }
 
   /* 2. Hide everything that isn't the preview */
