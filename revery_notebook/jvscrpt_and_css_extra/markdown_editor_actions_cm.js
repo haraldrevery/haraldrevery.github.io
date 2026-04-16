@@ -548,7 +548,7 @@ function exportHtmlFile() {
     }
   });
 
-  /* Strip source-map data attributes (editor-only metadata) */
+/* Strip source-map data attributes (editor-only metadata) */
   clone.querySelectorAll('[data-sl]').forEach(el => {
     el.removeAttribute('data-sl');
     el.removeAttribute('data-sl-end');
@@ -556,6 +556,22 @@ function exportHtmlFile() {
 
   /* Remove any leftover animation classes */
   clone.querySelectorAll('.preview-flash').forEach(el => el.classList.remove('preview-flash'));
+
+  /* Clean up KaTeX for native MathML rendering in export */
+  clone.querySelectorAll('.katex').forEach(katexEl => {
+    const mathTag = katexEl.querySelector('math');
+    if (mathTag) {
+      // KaTeX appends the raw LaTeX string as a direct text node inside <math>.
+      // We iterate over direct children to remove only these raw syntax nodes.
+      Array.from(mathTag.childNodes).forEach(child => {
+        if (child.nodeType === Node.TEXT_NODE) {
+          child.remove(); 
+        }
+      });
+      // Replace the bulky KaTeX wrappers with just the clean, native MathML tag
+      katexEl.replaceWith(mathTag);
+    }
+  });
 
   /* ── 2. Build an optional YAML metadata table ── */
   let yamlBlock = '';
