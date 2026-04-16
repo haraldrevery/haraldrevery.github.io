@@ -15,6 +15,7 @@ const menuActions = [
   { type: 'divider' },
   { label: 'Task List', action: 'task_list' },
   { label: 'Insert Table', action: 'table' },
+  { label: 'Insert Date', action: 'insert_date' },
   { label: 'Horizontal Rule', action: 'hr' },
   { label: 'Footnote', action: 'footnote' },
   { type: 'divider' },
@@ -30,14 +31,11 @@ const contextMenuExtra = [
   { label: 'Copy (Marked)',           action: 'ctx_copy' },
   { label: 'Paste',                   action: 'ctx_paste' },
   { type: 'divider' },
-  { label: 'Insert Date',             action: 'insert_date' },
-  { type: 'divider' },
   { label: 'Ordered List (Marked)',   action: 'list_ordered' },
   { label: 'Unordered List (Marked)', action: 'list_unordered' },
   { type: 'divider' },
   { label: 'Clear Format (Marked)',   action: 'clear_format' }
 ];
-
 // Global date format setting
 window.currentDateFormat = 'YYYY-MM-DD';
 
