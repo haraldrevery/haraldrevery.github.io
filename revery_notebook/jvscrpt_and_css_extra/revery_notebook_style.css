@@ -203,6 +203,7 @@ body {
 
 #doc-title::placeholder { color: var(--text-dim); }
 #wordcount {
+  display: inline-block;
   font-family: var(--font-mono);
   font-size: 0.72rem;
   letter-spacing: var(--tracking-wide);
@@ -622,21 +623,25 @@ body[data-view="editor"] #topbar-left #doc-title {
     width: auto;
     border-bottom: 1px solid var(--border);
     margin: 0;
-  }
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
   
   body[data-view="editor"] #topbar-left #size-warning {
     display: none !important;
   }
 
-  body[data-view="editor"] #topbar-left #wordcount {
+body[data-view="editor"] #topbar-left #wordcount {
     flex-shrink: 0;
     white-space: nowrap;
-  }
-
+    min-width: 4rem;
+    text-align: right;
+}
   body[data-view="editor"] #doc-title {
     display: block;
     width: auto;
-    max-width: none;
+    max-width: 40vw;
     font-size: 0.85rem;
     padding: 3px 0;
     border-bottom: 1px solid var(--border);

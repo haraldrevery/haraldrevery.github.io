@@ -528,7 +528,7 @@ function applyLoadedStates() {
 /* Apply Word Counter visibility */
 function applyWordCountVisibility() {
   const wc = document.getElementById('wordcount');
-  if (wc) wc.style.display = wordCountVisible ? '' : 'none';
+  if (wc) wc.style.display = wordCountVisible ? 'inline-block' : 'none';
 }
 
 applyLoadedStates();
