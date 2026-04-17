@@ -767,10 +767,16 @@ const restoreProtected = (str) => {
     protect(`\\begin{verbatim}\n${code.replace(/\n+$/, '')}\n\\end{verbatim}`)
   );
 
-  /* 4b. Display math  $$ … $$ (Preserves original $$ formatting) */
-  raw = raw.replace(/\$\$([\s\S]*?)\$\$/g, (_, math) =>
-    protect(`$$${math}$$`)
-  );
+  /* 4b. Display math  $$ … $$ → labelled equation environment */
+  let eqCounter = 0;
+  raw = raw.replace(/\$\$([\s\S]*?)\$\$/g, (_, math) => {
+    eqCounter++;
+    // Trim surrounding whitespace for cleaner output
+    const trimmedMath = math.trim();
+    return protect(
+      `\\begin{equation}\\label{equation_${eqCounter}}\n${trimmedMath}\n\\end{equation}`
+    );
+  });
 
   /* 4c. Inline math  $ … $ (Allows multi-line math by removing newline restriction) */
   raw = raw.replace(/(?<!\\)\$([^$]+?)\$/g, (_, math) =>
@@ -787,7 +793,7 @@ const restoreProtected = (str) => {
     protect(`\\(${math}\\)`)
   );
 
-  /* ── 5. Markdown tables ── */
+/* ── 5. Markdown tables ── */
   let tableIdx = 0;
   raw = raw.replace(
     /^(\|[^\n]+\|\s*\r?\n\|[-| :]+\|\s*\r?\n(?:\|[^\n]+\|\s*\r?\n?)*)/gm,
@@ -800,16 +806,22 @@ const restoreProtected = (str) => {
       const cols    = headers.length;
       tableIdx++;
       let tex = `\\begin{table}[h]\n\\centering\n` +
-                  `\\begin{tabular}{| ${Array(cols).fill('l').join(' | ')} |}\n\\hline\n`;
-        // Use processInline instead of latexEsc to support math, bold, italic, etc.
-        tex    += headers.map(c => processInline(c)).join(' & ') + ' \\\\[2pt]\n\\hline\n';
-        for (const row of rows) {
-          const cells = Array.from({ length: cols }, (_, k) => processInline(row[k] || ''));
-          tex += cells.join(' & ') + ' \\\\\n';
-        }
-        tex += `\\hline\n\\end{tabular}\n` +
-               `\\caption{Table ${tableIdx}}\n\\label{table_${tableIdx}}\n\\end{table}`;
-        return protect(tex);
+                    `\\renewcommand{\\arraystretch}{1.8}\n` +
+                    `\\begin{tabular}{| ${Array(cols).fill('l').join(' | ')} |}\n\\hline\n`;
+          
+          // Wrap headers in \textbf{} and use a custom thick \hrule beneath it
+          tex    += headers.map(c => `\\textbf{${processInline(c)}}`).join(' & ') + ' \\\\\n\\noalign{\\hrule height 1.2pt}\n';
+          
+          for (let r = 0; r < rows.length; r++) {
+            const row = rows[r];
+            const cells = Array.from({ length: cols }, (_, k) => processInline(row[k] || ''));
+            // Add standard horizontal lines after each row and at the bottom
+            tex += cells.join(' & ') + ' \\\\\n\\hline\n';
+          }
+          
+          tex += `\\end{tabular}\n` +
+                 `\\caption{Table ${tableIdx}}\n\\label{table_${tableIdx}}\n\\end{table}`;
+          return protect(tex);
     }
   );
 

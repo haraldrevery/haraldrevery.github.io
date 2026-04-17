@@ -74,7 +74,7 @@ window.uiTranslations = {
   "Export as .md": { "Swedish": "Exportera som .md" },
   "Export as .txt": { "Swedish": "Exportera som .txt" },
   "Export as .html": { "Swedish": "Exportera som .html" },
-  
+  "Export as .tex": { "Swedish": "Exportera som .tex" },
   // Toolbar Menu & Context Menu
   "Cut (Marked)": { "Swedish": "Klipp (markerat)" },
   "Copy (Marked)": { "Swedish": "Kopiera (markerat)" },
