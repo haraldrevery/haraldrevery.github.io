@@ -1528,3 +1528,48 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
 [data-theme="dark"]  #editor .cm-link    { color: #7da3c8; }
 [data-theme="light"] #editor .cm-link    { color: #2563eb; }
 
+
+/* ================================================= */
+/* OVERRIDE TO FIX THE DARK/LIGHT MODE TOGGLE */
+/* ================================================= */
+
+/* Custom Code & Code Block Styling */
+.prose code {
+  font-family: var(--font-mono) !important;
+  font-weight: 400 !important;
+  background-color: rgba(0, 0, 0, 0.05);    /* Light subtle background */
+  color: var(--color-black);
+  padding: 0.125rem 0.25rem;                /* Small padding */
+  border-radius: 0.25rem;                   /* Rounded corners */
+}
+
+/* Updated to respect the manual dark class toggle */
+.dark .prose code {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: var(--color-white);
+}
+
+.prose pre {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Updated to respect the manual dark class toggle */
+.dark .prose pre {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.prose thead th {
+    font-weight: 400 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.96em; /* Slightly smaller if using uppercase */
+
+    border-bottom: 1.2px solid rgba(0, 0, 0, 0.8); /* A solid line for the whole row */
+    padding-bottom: 8px; /* Control the gap exactly */
+}
+
+/* Updated to respect the manual dark class toggle */
+.dark .prose thead th {
+    /* A light gray or semi-transparent white works best for your dark aesthetic */
+    border-bottom: 1.2px solid rgba(255, 255, 255, 0.8);
+}
