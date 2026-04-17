@@ -796,7 +796,7 @@ const restoreProtected = (str) => {
 /* ── 5. Markdown tables ── */
   let tableIdx = 0;
   raw = raw.replace(
-    /^(\|[^\n]+\|\s*\r?\n\|[-| :]+\|\s*\r?\n(?:\|[^\n]+\|\s*\r?\n?)*)/gm,
+    /^(\|[^\n]+\|[ \t]*\r?\n\|[-| :]+\|[ \t]*\r?\n(?:\|[^\n]+\|[ \t]*\r?\n?)*)/gm,
     (block) => {
       const tlines = block.trim().split(/\r?\n/).filter(l => l.trim().startsWith('|'));
       if (tlines.length < 2) return block;
@@ -879,12 +879,20 @@ const restoreProtected = (str) => {
     return text;
   }
 
-  /* processInline: splits a line by outer PH placeholders so they pass through untouched */
+/* processInline: splits a line by outer PH placeholders so they pass through untouched */
   function processInline(text) {
     return text.split(/(\x02PH\d+\x03)/).map((seg, idx) =>
       idx % 2 === 1 ? seg : processInlinePart(seg)
     ).join('');
   }
+
+  /* Convert Setext headings to ATX headings before parsing */
+  raw = raw.replace(/^([^\n\r]+)\r?\n(=+|-+)\s*$/gm, (match, title, border) => {
+    // Ignore empty lines or protected block placeholders
+    if (!title.trim() || title.trim().startsWith('\x02PH')) return match;
+    const level = border[0] === '=' ? '#' : '##';
+    return `${level} ${title.trim()}`;
+  });
 
   /* ── 8. Block-level parsing ── */
   const lines  = raw.split('\n');
@@ -899,11 +907,12 @@ const restoreProtected = (str) => {
     if (/^\x02PH\d+\x03$/.test(trimmed)) { output.push(trimmed); i++; continue; }
 
     /* Headings  #  to  ###### */
-    const hm = trimmed.match(/^(#{1,6})\s+(.*)/);
+    const hm = trimmed.match(/^(#{1,6})(?:\s+(.*?)(?:\s+#+)?)?$/);
     if (hm) {
       const cmds = ['\\section', '\\subsection', '\\subsubsection',
                     '\\paragraph', '\\subparagraph', '\\subparagraph'];
-      output.push(`${cmds[hm[1].length - 1]}{${processInline(hm[2])}}`);
+      const title = hm[2] || '';
+      output.push(`${cmds[hm[1].length - 1]}{${processInline(title)}}`);
       i++; continue;
     }
 
@@ -920,7 +929,16 @@ const restoreProtected = (str) => {
         qLines.push(lines[i].replace(/^\s*>\s?/, ''));
         i++;
       }
-      output.push(`\\begin{quote}\n${qLines.map(processInline).join('\n')}\n\\end{quote}`);
+      const parsedQLines = qLines.map(l => {
+        const ht = l.trim().match(/^(#{1,6})(?:\s+(.*?)(?:\s+#+)?)?$/);
+        if (ht) {
+          const cmds = ['\\section', '\\subsection', '\\subsubsection', '\\paragraph', '\\subparagraph', '\\subparagraph'];
+          const title = ht[2] || '';
+          return `${cmds[ht[1].length - 1]}{${processInline(title)}}`;
+        }
+        return processInline(l);
+      });
+      output.push(`\\begin{quote}\n${parsedQLines.join('\n')}\n\\end{quote}`);
       continue;
     }
 
@@ -991,6 +1009,16 @@ const restoreProtected = (str) => {
     `\\setlength{\\parindent}{0pt}`,
     `\\setlength{\\parskip}{0.5em}`,
     ``,
+    `\\usepackage{microtype}`,
+    `\\usepackage{setspace}`,
+    `\\setstretch{1.15}`,
+    `\\hypersetup{`,
+    `  colorlinks=true,`,
+    `  linkcolor=blue!60!black,`, 
+    `  urlcolor=blue!60!black,`,
+    `  citecolor=blue!60!black`,
+    `}`,
+    `\\usepackage{hyperref}`, 
     `\\title{${latexEsc(metaTitle)}}`,
     `\\author{${latexEsc(metaAuthor)}}`,
     `\\date{${metaDate}}`,

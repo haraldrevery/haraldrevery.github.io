@@ -96,9 +96,9 @@ if (outlineDivider) {
 
 
 /* ── Mobile view toggle ── */
-let lastWasNarrow = window.innerWidth <= 750;
+let lastWasNarrow = window.innerWidth <= 820;
 function updateMobileBtn() {
-  const narrow = window.innerWidth <= 750;
+  const narrow = window.innerWidth <= 820;
   btnView.style.display = narrow ? 'block' : 'none';
   
   // If transitioning from mobile (narrow) to desktop (!narrow), ensure preview is up-to-date

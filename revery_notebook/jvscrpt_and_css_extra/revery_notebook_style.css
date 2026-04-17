@@ -76,7 +76,6 @@ html #preview .prose b {
   /* ── Reader mode content max-width (set via Settings → Reader padding) ── */
   --reader-max-width: none;
 }
-
 /* ── Editor UI Themes ── */
 [data-theme="dark"] {
   --bg:         #0a0a0a;
@@ -84,6 +83,8 @@ html #preview .prose b {
   --bg-hover:   #1a1a1a;
   --border:     rgba(255,255,255,0.08);
   --border-md:  rgba(255,255,255,0.14);
+  --theme-divider: rgba(255,255,255,0.08);
+  --theme-divider-hover: rgba(255,255,255,0.14);
   --text:       #f5f5f5;
   --text-muted: rgba(255, 255, 255, 0.46);
   --text-dim:   rgba(255,255,255,0.18);
@@ -98,6 +99,8 @@ html #preview .prose b {
   --bg-hover:   #f2f2ef;
   --border:     rgba(0,0,0,0.07);
   --border-md:  rgba(0,0,0,0.14);
+  --theme-divider: rgba(0,0,0,0.07);
+  --theme-divider-hover: rgba(0,0,0,0.14);
   --text:       #171717;
   --text-muted: rgba(0,0,0,0.46);
   --text-dim:   rgba(0,0,0,0.18);
@@ -292,7 +295,7 @@ body {
 
 
 .menu-item:hover { background: var(--bg-hover); }
-.menu-divider { height: 1px; background: var(--border); margin: 4px 0; }
+.menu-divider { height: 1px; background: var(--theme-divider); margin: 4px 0; }
 
 /* ── Layout: two panes ── */
 #workspace {
@@ -304,14 +307,14 @@ body {
 /* ── Divider ── */
 #divider {
   width: 1px;
-  background: var(--border);
+  background-color: var(--theme-divider);
   flex-shrink: 0;
   cursor: col-resize;
   position: relative;
-  transition: background 0.15s;
+
   touch-action: none;
 }
-#divider:hover, #divider.dragging { background: var(--border-md); }
+#divider:hover, #divider.dragging { background-color: var(--theme-divider-hover); }
 #divider::after { content: ''; position: absolute; inset: 0 -12px; z-index: 10; }
 
 /* ── Editor pane (Defaults to 33.33%) ── */
@@ -376,6 +379,28 @@ body {
 /* Disable the old pseudo-element (opacity trick moved to background gradients below) */
 #preview::before {
   display: none; 
+}
+
+
+/* ── Force Preview Prose to follow Editor Theme (Overrides Tailwind OS Media Queries) ── */
+#preview .prose {
+  --tw-prose-body: var(--text);
+  --tw-prose-headings: var(--text);
+  --tw-prose-lead: var(--text-muted);
+  --tw-prose-links: var(--text);
+  --tw-prose-bold: var(--text);
+  --tw-prose-counters: var(--text-muted);
+  --tw-prose-bullets: var(--text-muted);
+  --tw-prose-hr: var(--border-md);
+  --tw-prose-quotes: var(--text);
+  --tw-prose-quote-borders: var(--border-md);
+  --tw-prose-captions: var(--text-muted);
+  --tw-prose-code: var(--text);
+  --tw-prose-pre-code: var(--text);
+  --tw-prose-pre-bg: var(--bg-panel);
+  --tw-prose-th-borders: var(--border-md);
+  --tw-prose-td-borders: var(--border);
+  color: var(--text);
 }
 
 
@@ -547,7 +572,7 @@ body {
 
 
 /* ── Mobile / narrow ── */
-@media (max-width: 750px) {
+@media (max-width: 820px) {
   #divider { display: none; }
   #editor-pane { width: 100% !important; flex: 1; }
   #preview-pane { display: none; flex: 1; }
@@ -725,7 +750,7 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
 
 
 
-@media (max-width: 750px) {
+@media (max-width: 820px) {
   #btn-reader-mode { display: none !important; }
 }
 
@@ -770,7 +795,7 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
   opacity: 0.65;
 }
 /* ── Mobile Menu Scroll & Accordion Fix ── */
-@media (max-width: 750px) {
+@media (max-width: 820px) {
   .menu-container {
     overflow-y: auto;
     overflow-x: hidden;
@@ -961,14 +986,13 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
 /* ── Outline resize divider (between preview-pane and outline-pane) ── */
 #outline-divider {
   width: 1px;
-  background: var(--border);
+  background-color: var(--theme-divider);
   flex-shrink: 0;
   cursor: col-resize;
   position: relative;
-  transition: background 0.15s;
   touch-action: none;
 }
-#outline-divider:hover, #outline-divider.dragging { background: var(--border-md); }
+#outline-divider:hover, #outline-divider.dragging { background-color: var(--theme-divider-hover); }
 #outline-divider::after { content: ''; position: absolute; inset: 0 -12px; z-index: 10; }
 #outline-nav {
   flex: 1;
@@ -1023,7 +1047,7 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
   text-transform: uppercase;
 }
 /* Outline pane on narrow mobile: slide-in drawer overlay in preview mode */
-@media (max-width: 750px) {
+@media (max-width: 820px) {
   #outline-divider { display: none !important; }
 
 
@@ -1451,7 +1475,7 @@ body:not(.reader-mode-active) #btn-reader-outline { display: none !important; }
 }
 
 /* 4. Mobile padding — mirrors the old mobile #editor rule */
-@media (max-width: 750px) {
+@media (max-width: 820px) {
   #editor .cm-content {
     padding:     var(--editor-padding-mobile, 24px 20px 40vh);
     font-size:   inherit;

@@ -53,6 +53,11 @@ window.uiTranslations = {
   "Deactivate Right Click": { "Swedish": "Inaktivera högerklick" },
   "Center Headers": { "Swedish": "Centrera rubriker" },
   
+  // Theme submenu (Settings)
+  "Theme ▸": { "Swedish": "Tema ▸" },
+  "System": { "Swedish": "System" },
+  "Light": { "Swedish": "Ljust" },
+  "Dark": { "Swedish": "Mörkt" },
   
   // Background submenu (Settings)
   "Background ▸": { "Swedish": "Bakgrund ▸" },

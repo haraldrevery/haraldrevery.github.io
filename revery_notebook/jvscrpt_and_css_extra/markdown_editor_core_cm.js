@@ -193,13 +193,13 @@ let rendered = '';
 
 
   
-  /* FIX: Cache the scroll position before wiping the DOM.
+/* FIX: Cache the scroll position before wiping the DOM.
      When innerHTML is completely replaced, browsers natively reset
      the container's scrollTop to 0. KaTeX equations are highly nested,
      making this layout collapse extremely jarring. */
   const currentScroll = preview.scrollTop;
 
-  preview.innerHTML = yamlHtml + '<div class="prose prose-lg dark:prose-invert max-w-none text-zinc-900 dark:text-white mx-auto">' + rendered + '</div>';
+  preview.innerHTML = yamlHtml + '<div class="prose prose-lg max-w-none mx-auto">' + rendered + '</div>';
 
   /* FIX: Restore the scroll position immediately after DOM insertion */
   preview.scrollTop = currentScroll;
@@ -556,7 +556,7 @@ editor.addEventListener('input', () => {
   clearTimeout(renderTimer);
   renderTimer = setTimeout(() => { 
     // Skip render if on mobile and currently in editor view to save CPU/battery
-    const isNarrow = window.innerWidth <= 750;
+    const isNarrow = window.innerWidth <= 820;
     const isMobileEditor = isNarrow && document.body.getAttribute('data-view') === 'editor';
     if (!isMobileEditor) {
       render(); 

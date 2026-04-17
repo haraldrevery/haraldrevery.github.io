@@ -15,13 +15,14 @@ window.centerHeaders = true; // Center align headings in preview
 let mobileView = false;
 let readerMode = false;
 let outlineVisible = false; // Outline navigation panel (toggled via Settings)
+let themeMode = 'system'; // 'system', 'light', 'dark'
 
 let uiSize  = 140; // UI menu font scale in %, applied to <html> (90–200 in 10% steps)
 let editorTextSize = 150; // Editor textarea font scale in %
 let previewTextSize = 140; // Preview prose font scale in %
 let outlineFontSize = 140; // Outline panel font scale in %, independent of editor/preview text
 
-let readerPadding = window.innerWidth <= 750 ? 'default' : '40'; // Reader mode content width: 'default' | '80' | '60' | '50'
+let readerPadding = window.innerWidth <= 820 ? 'default' : '40'; // Reader mode content width: 'default' | '80' | '60' | '50'
 let editorPadding = 'default'; // Editor padding: 'default' | '5%' | '10%' | '15%' | '20%' | '25%' | '30%'
 let editorFontType = 'harald'; // Editor font style ('harald' is default)
 
@@ -55,7 +56,8 @@ window.saveEditorSettings = function() {
     renderDelay: typeof renderDelay !== 'undefined' ? renderDelay : 50,
     savedEditorWidth: window.savedEditorWidth || '',
     centerHeaders: window.centerHeaders,
-    selectedBackground
+    selectedBackground,
+    themeMode
   };
 
   try {
@@ -109,6 +111,7 @@ function loadEditorSettings() {
       }
     if (s.centerHeaders !== undefined) window.centerHeaders = s.centerHeaders;
     if (s.selectedBackground !== undefined) selectedBackground = s.selectedBackground;
+    if (s.themeMode !== undefined) themeMode = s.themeMode;
     }
   } catch (e) {}
 }
@@ -558,7 +561,7 @@ function smartPositionDropdown(el) {
   el.style.removeProperty('width');  // Clean up horizontal overrides
 
   // ── Mobile branch: force scrollable menu with max-height ──
-  if (window.innerWidth <= 750) {
+  if (window.innerWidth <= 820) {
     // Grab full bounding rect to get the parent's X position
     const parentRect = el.offsetParent ? el.offsetParent.getBoundingClientRect() : { top: 0, left: 0 };
     const TOPBAR = 94;
@@ -663,7 +666,7 @@ function attachSubmenuHandlers(wrapper, sub) {
 
     // ── Mobile layout bailout ──
     // On narrow screens, CSS handles submenus as relative accordions.
-    if (window.innerWidth <= 750) {
+    if (window.innerWidth <= 820) {
       sub.style.removeProperty('position');
       sub.style.removeProperty('left');
       sub.style.removeProperty('right');
@@ -847,7 +850,7 @@ function buildSettingsMenu() {
   settingsDropdown.appendChild(wcBtn);
 
 // ── Desktop-only toggles (hidden on real mobile screens)
-  if (window.innerWidth > 750) {
+  if (window.innerWidth > 820) {
     // ── Outline Navigation toggle
     const outlineBtn = document.createElement('button');
     outlineBtn.className = 'menu-item';
@@ -1209,9 +1212,46 @@ const editorPaddingOptions = [
     outlineSizeSub.appendChild(btn);
   });
 
-  outlineSizeWrapper.appendChild(outlineSizeSub);
+outlineSizeWrapper.appendChild(outlineSizeSub);
   attachSubmenuHandlers(outlineSizeWrapper, outlineSizeSub);
   settingsDropdown.appendChild(outlineSizeWrapper);
+
+  // ── Theme Mode submenu
+  const themeOptions = [
+    { label: 'System', val: 'system' },
+    { label: 'Light', val: 'light' },
+    { label: 'Dark', val: 'dark' }
+  ];
+
+  const themeWrapper = document.createElement('div');
+  themeWrapper.className = 'menu-item has-submenu';
+
+  const themeLabel = document.createElement('span');
+  themeLabel.textContent = window.t('Theme ▸');
+  themeWrapper.appendChild(themeLabel);
+
+  const themeSub = document.createElement('div');
+  themeSub.className = 'submenu';
+  themeSub.style.display = 'none';
+
+  themeOptions.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'menu-item';
+    btn.textContent = (themeMode === opt.val ? '■ ' : '\u00a0\u00a0') + window.t(opt.label);
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      themeMode = opt.val;
+      if (window.setThemeMode) window.setThemeMode(themeMode);
+      settingsDropdown.classList.remove('show');
+      buildSettingsMenu();
+      if (typeof window.saveEditorSettings === 'function') window.saveEditorSettings();
+    };
+    themeSub.appendChild(btn);
+  });
+
+  themeWrapper.appendChild(themeSub);
+  attachSubmenuHandlers(themeWrapper, themeSub);
+  settingsDropdown.appendChild(themeWrapper);
 
   // ── Background Image submenu
   const bgWrapper = document.createElement('div');
@@ -1470,7 +1510,7 @@ function toggleMobileView() {
    is populated with the current document's headings.                     */
 function toggleOutline() {
   /* ── Mobile: show as dropdown anchored to the Outline button ───────── */
-  if (window.innerWidth <= 750) {
+  if (window.innerWidth <= 820) {
     const isOpening = !document.body.classList.contains('mobile-outline-open');
     document.body.classList.toggle('mobile-outline-open');
 
@@ -1532,7 +1572,7 @@ function toggleOutline() {
 
 // Reposition the mobile outline when the window is resized (only if it's open)
 window.addEventListener('resize', function() {
-  if (window.innerWidth <= 750 && document.body.classList.contains('mobile-outline-open')) {
+  if (window.innerWidth <= 820 && document.body.classList.contains('mobile-outline-open')) {
     const outlinePane = document.getElementById('outline-pane');
     const outlineBtn = document.getElementById('btn-reader-outline');
     if (outlinePane && outlineBtn) {
