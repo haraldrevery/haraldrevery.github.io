@@ -42,6 +42,106 @@ description: Just a clock. Click the time to set a timer or an alarm. Click the 
 
 
     <style>
+        /* ================================================
+        Hover hide of dark/light mode button and webadress (start)
+        ================================================  */
+        /* Text Overlay Legacy */
+        .text-overlay_legacy {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            z-index: 100;
+            font-family: 'HaraldMono', monospace;
+            font-size: 1.1rem;
+            line-height: var(--text-line-row-space);
+            color: rgba(0, 0, 0, 0.7);
+            pointer-events: auto; /* Changed to auto to detect hover */
+            user-select: none;
+        }
+
+        /* Fade-in and expand corner hit-area for mouse users */
+        @media (hover: hover) {
+            .text-overlay_legacy {
+                opacity: 0;
+                transition: opacity 0.4s ease;
+            }
+            .text-overlay_legacy:hover {
+                opacity: 1;
+            }
+            .text-overlay_legacy::after {
+                content: '';
+                position: absolute;
+                top: -3rem;
+                right: -3rem;
+                bottom: -3rem;
+                left: -3rem;
+                z-index: -1;
+            }
+        }
+
+        .dark .text-overlay_legacy {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Dark Mode Toggle */
+        .mode-toggle_legacy {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 9999;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-family: 'HaraldMono', monospace;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            user-select: none;
+            color: rgba(0, 0, 0, 0.8);
+        }
+
+        .dark .mode-toggle_legacy {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .mode-toggle_legacy:hover {
+            transform: scale(1.1);
+        }
+
+        /* Fade-in and expand corner hit-area for mouse users */
+        @media (hover: hover) {
+            .mode-toggle_legacy {
+                opacity: 0;
+                transition: all 0.3s ease, opacity 0.4s ease;
+            }
+            .mode-toggle_legacy:hover {
+                opacity: 1;
+            }
+            .mode-toggle_legacy::after {
+                content: '';
+                position: absolute;
+                top: -3rem;
+                right: -3rem;
+                bottom: -3rem;
+                left: -3rem;
+                z-index: -1;
+            }
+        }
+
+        /* ================================================
+        Hover hide of dark/light mode button and webadress (end)
+        ================================================  */
+
+
+
+
+
+
+
+
+
         :root {
             --time-y-offset: 1.4vh;
         }
