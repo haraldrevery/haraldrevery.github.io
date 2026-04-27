@@ -35,6 +35,9 @@
 
 
     <style>
+        /* ================================================
+        Hover hide of dark/light mode button and webadress (start)
+        ================================================  */
         /* Text Overlay Legacy */
         .text-overlay_legacy {
             position: fixed;
@@ -73,7 +76,7 @@
             color: rgba(255, 255, 255, 0.7);
         }
 
-/* Dark Mode Toggle */
+        /* Dark Mode Toggle */
         .mode-toggle_legacy {
             position: fixed;
             bottom: 2rem;
@@ -120,7 +123,9 @@
             }
         }
 
-
+        /* ================================================
+        Hover hide of dark/light mode button and webadress (end)
+        ================================================  */
 
 
 
@@ -766,12 +771,30 @@
             opacity: 0.07;
         }
 
-        .dark .bg-texture_legacy {
+       .dark .bg-texture_legacy {
             background-image: url('/revery_notebook/image_assets/bg_3_web.jpg');
             opacity: 0.4;
             mix-blend-mode: overlay;
         }
 
+/* Missing Hourglass Classes */
+#hg-stream-dot.flowing {
+    opacity: 1.0 !important;
+}
+
+.hg-time-small {
+    font-size: min(5vw, 2.5vh) !important;
+    /* Pushes the text down by adding relative viewport units */
+    transform: translate(-50%, calc(-20% + var(--time-y-offset) + min(35vw, 30vh))) !important;
+    opacity: 0.4 !important; 
+}
+
+/* Keeps it obviously interactive on hover */
+.hg-time-small:hover {
+    opacity: 0.7 !important;
+    transform: translate(-50%, calc(-20% + var(--time-y-offset) + min(35vw, 30vh))) !important;
+}
+    </style>
 
     </style>
 </head>
@@ -787,6 +810,26 @@
                     <circle class="clock-ring-track" r="270" stroke-width="1"/>
                     <circle class="clock-ring-progress" id="clock-progress-arc" r="270" stroke-width="1.5" transform="rotate(-90)"/>
                 </svg>
+
+                    <svg class="clock-svg-ring" id="clock-hourglass-svg" width="600" height="600" viewBox="-300 -300 600 600" xmlns="http://www.w3.org/2000/svg" style="display: none; opacity: 0.52;">
+                        <g opacity="1.0" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M -90 -240 C -90 -100, -4 -60, -3 0 C -3 60, -90 100, -90 240" />
+                            <path d="M 90 -240 C 90 -100, 4 -60, 3 0 C 3 60, 90 100, 90 240" />
+                            <line x1="-120" y1="-240" x2="120" y2="-240"/>
+                            <line x1="-120" y1="240" x2="120" y2="240"/>
+                        </g>
+                        <clipPath id="top-bulb-clip">
+                            <path d="M -90 -240 C -90 -100, -4 -60, -3 0 L 3 0 C 4 -60, 90 -100, 90 -240 Z"/>
+                        </clipPath>
+                        <clipPath id="bot-bulb-clip">
+                            <path d="M -3 0 C -3 60, -90 100, -90 240 L 90 240 C 90 100, 3 60, 3 0 Z"/>
+                        </clipPath>
+                        <g fill="currentColor" opacity="1.0">
+                            <rect id="hg-top-sand" x="-100" y="-240" width="200" height="240" clip-path="url(#top-bulb-clip)" />
+                            <rect id="hg-bot-sand" x="-100" y="0" width="200" height="0" clip-path="url(#bot-bulb-clip)" />
+                        </g>
+                        <rect id="hg-stream-dot" x="-1.5" y="-10" width="3" height="20" fill="currentColor" style="opacity: 0; transition: opacity 0.2s;" />
+                    </svg>
 
                 <div class="clock-time" id="clock-time" title="Click to set timer">00:00:00</div>
             </div>
@@ -821,6 +864,12 @@
                     <div class="timer-mode-row">
                         <button class="timer-mode-btn" id="lang-en-btn">EN — English</button>
                         <button class="timer-mode-btn" id="lang-sv-btn">SV — Svenska</button>
+                    </div>
+
+                    <div id="anim-settings-label" style="font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.14em;opacity:0.45;text-align:center;text-transform:uppercase;margin-top:1.2rem;margin-bottom:0.75rem;">Animation</div>
+                    <div class="timer-mode-row">
+                        <button class="timer-mode-btn" id="anim-ring-btn">Ring</button>
+                        <button class="timer-mode-btn" id="anim-hg-btn">Hourglass</button>
                     </div>
                 </div>
                 <div class="timer-buttons">
