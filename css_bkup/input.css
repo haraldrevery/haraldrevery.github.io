@@ -323,9 +323,9 @@ nav {
     z-index: -10;
     pointer-events: none;
     
-    background-image: radial-gradient(circle, var(--dot-color) 1.5px, transparent 1.5px);
-    background-size: 32px 32px;
-    mask-image: radial-gradient(circle at center, black 40%, transparent 95%);
+    background-image: radial-gradient(circle, var(--dot-color) 1.1px, transparent 1.1px);
+    background-size: 7px 7px;
+    mask-image: radial-gradient(circle at center, black 20%, transparent 95%);
 
 /* 2. Link the animation to the scroll progress */
     animation: parallax-dots linear both;
@@ -411,7 +411,7 @@ nav {
   /* Dark mode - slightly more visible */
   @media (prefers-color-scheme: dark) {
     .bg-topology-map::before {
-      opacity: 0.06;
+      opacity: 0.07;
     }
   }
 }

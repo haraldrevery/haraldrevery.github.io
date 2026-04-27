@@ -9,6 +9,8 @@
   --text-mono: 1.22rem;
   --text-nav: 1.4rem;
 
+
+  --katex-font-size: 0.7em;      /* scaling the MathML for the blog (hope the revery notebook editor doesn't jank) */
   --text-line-row-space: 1.24;   /* space between the rows/lines of text */
   --tracking-body: 0.029em;     /* global letter-spacing (space between characters/letters)*/
 

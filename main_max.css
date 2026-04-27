@@ -92,6 +92,7 @@
     --text-body-mobile: 1.22rem;
     --text-mono: 1.22rem;
     --text-nav: 1.4rem;
+    --katex-font-size: 0.7em;
     --text-line-row-space: 1.24;
     --tracking-body: 0.029em;
   }
@@ -2641,9 +2642,9 @@ nav {
     inset: -120px 0;
     z-index: -10;
     pointer-events: none;
-    background-image: radial-gradient(circle, var(--dot-color) 1.5px, transparent 1.5px);
-    background-size: 32px 32px;
-    mask-image: radial-gradient(circle at center, black 40%, transparent 95%);
+    background-image: radial-gradient(circle, var(--dot-color) 1.1px, transparent 1.1px);
+    background-size: 7px 7px;
+    mask-image: radial-gradient(circle at center, black 20%, transparent 95%);
     animation: parallax-dots linear both;
     animation-timeline: view();
     animation-range: entry 0% exit 100%;
@@ -2690,7 +2691,7 @@ nav {
   }
   @media (prefers-color-scheme: dark) {
     .bg-topology-map::before {
-      opacity: 0.06;
+      opacity: 0.07;
     }
   }
 }

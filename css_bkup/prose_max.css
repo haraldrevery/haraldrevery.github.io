@@ -92,6 +92,7 @@
     --text-body-mobile: 1.22rem;
     --text-mono: 1.22rem;
     --text-nav: 1.4rem;
+    --katex-font-size: 0.7em;
     --text-line-row-space: 1.24;
     --tracking-body: 0.029em;
   }
@@ -1266,6 +1267,9 @@
   }
   .h-full {
     height: 100%;
+  }
+  .h-screen {
+    height: 100vh;
   }
   .max-h-48 {
     max-height: calc(var(--spacing) * 48);
@@ -3248,6 +3252,9 @@
   .prose figcaption {
     color: var(--color-neutral-400);
   }
+}
+.prose math {
+  font-size: var(--katex-font-size);
 }
 @property --tw-translate-x {
   syntax: "*";

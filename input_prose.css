@@ -326,3 +326,7 @@
       color: var(--color-neutral-400);
     }
   }
+
+  
+/* Scale all <math> elements down for HaraldText, note if the "revery notebook" editor has a odd latex renderer size, remove this */
+.prose math                   { font-size: var(--katex-font-size); }

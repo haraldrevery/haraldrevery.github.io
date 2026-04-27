@@ -1,13 +1,15 @@
 const markdownIt = require("markdown-it");
 const markdownItAttrs = require("markdown-it-attrs");
 const markdownItLinkAttributes = require("markdown-it-link-attributes");
+const markdownItTexmath = require("markdown-it-texmath");
+const katex = require("katex");
 const fs = require("fs");
 const path = require("path");
 const matter = require("gray-matter");
 
 module.exports = function(eleventyConfig) {
 
-  // 1. Markdown Library Settings
+// 1. Markdown Library Settings
   let markdownLibrary = markdownIt({
     html: true,
     breaks: false,
@@ -22,6 +24,14 @@ module.exports = function(eleventyConfig) {
     attrs: {
       target: "_blank",
       rel: "noopener noreferrer"
+    }
+  })
+ .use(markdownItTexmath, {
+    engine: katex,
+    delimiters: ["dollars", "brackets"],      // \(...\) for inline, \[...\] for display blocks
+    katexOptions: {
+      output: "mathml",
+      throwOnError: false
     }
   });
   
