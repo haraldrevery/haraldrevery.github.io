@@ -629,7 +629,7 @@ nav {
 
         /* SVG Shape Waves - Implosion Rings */
         .wave-echo {
-            fill: none !important;
+            fill: none;
             stroke: rgba(0, 0, 0, 0.5);
             stroke-width: 1px;
             transform-origin: center;
@@ -665,7 +665,7 @@ nav {
         /* Dark mode support */
         @media (prefers-color-scheme: dark) {
             .wave-echo {
-                stroke: rgba(255, 255, 255, 0.4) !important;
+                stroke: rgba(255, 255, 255, 0.4);
             }
         }
 
