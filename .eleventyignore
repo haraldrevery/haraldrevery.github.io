@@ -19,6 +19,7 @@ package.json
 package-lock.json
 CLAUDE.md
 update_to_git_guide.md
+page_builder/
 input.css
 main.css
 prose.css

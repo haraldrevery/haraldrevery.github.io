@@ -18,6 +18,10 @@ Desktop.ini
 npm-debug.log*
 *.log
 
+# Python bytecode (page_builder/)
+__pycache__/
+*.pyc
+
 # Tailwind standalone binaries — EXCLUDED because each exceeds GitHub's 100 MB
 # per-file limit (git push would be rejected). They are local-only build tools;
 # keep them in your zip backups. See update_to_git_guide.md.
