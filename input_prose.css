@@ -337,8 +337,18 @@
    Markup is generated in post.njk; the checkbox drives visibility via :checked.
    =================================== */
 
-/* The hidden checkbox that stores the open/closed state (no JS). */
-.article-outline-toggle { position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; }
+/* The hidden checkbox that stores the open/closed state (no JS).
+   position: fixed keeps it inside the viewport (bottom-right), so toggling it
+   via the label doesn't scroll the focused control into view / jump to top. */
+.article-outline-toggle {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
 
 /* Corner toggle button (the <label>) */
 .article-outline-btn {
