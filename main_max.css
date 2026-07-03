@@ -98,6 +98,7 @@
     --text-nav: 1.4rem;
     --katex-font-size: 0.7em;
     --text-line-row-space: 1.24;
+    --leading-body: 1.5;
     --tracking-body: 0.029em;
     --color-brand: #0f3d81;
     --color-backdrop-light-edge: #dedede;
@@ -2365,7 +2366,7 @@
   body {
     font-family: var(--font-brand) !important;
     font-size: var(--text-body-mobile);
-    line-height: var(--text-line-row-space);
+    line-height: var(--leading-body);
     letter-spacing: var(--tracking-body);
   }
   @media (min-width: 900px) {

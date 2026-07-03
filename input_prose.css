@@ -71,7 +71,7 @@
 /* 3. List Items: Match paragraph size and line height */
   .prose li {
     font-size: var(--text-body); /* Uses your defined 1.22rem */
-    line-height: var(--text-line-row-space);            /* Matches your global body height */
+    line-height: var(--leading-body);            /* Body-copy line-height */
     margin-top: 0.15em !important;    /* Reduces top spacing */
     margin-bottom: 0.15em !important; /* Reduces bottom spacing */
   }
@@ -126,6 +126,11 @@
   margin-bottom: 1.5rem;
 }
 
+/* Keep headings tight even though body copy line-height is now looser (1.5) */
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  line-height: var(--text-line-row-space);
+}
+
 .prose h1 { font-size: 3rem; margin-top: 5rem; } /* text-5xl */
 
 /* Desktop: text-6xl (Typically 1024px and up) */
@@ -150,7 +155,7 @@
 /* 4. Paragraph styling */
 .prose p {
   text-align: justify; /* <--- Add this */
-  line-height: var(--text-line-row-space);
+  line-height: var(--leading-body);
   margin-bottom: 1.5rem;
 }
 
@@ -158,9 +163,9 @@
   .prose p {
 
     font-family: var(--font-brand) !important;
-    font-size: var(--text-body-mobile); 
-    line-height: var(--text-line-row-space);                 
-    letter-spacing: var(--tracking-body);          
+    font-size: var(--text-body-mobile);
+    line-height: var(--leading-body);
+    letter-spacing: var(--tracking-body);
   }
 
 

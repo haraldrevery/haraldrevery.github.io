@@ -98,6 +98,7 @@
     --text-nav: 1.4rem;
     --katex-font-size: 0.7em;
     --text-line-row-space: 1.24;
+    --leading-body: 1.5;
     --tracking-body: 0.029em;
     --color-brand: #0f3d81;
     --color-backdrop-light-edge: #dedede;
@@ -3050,7 +3051,7 @@
   }
   .prose li {
     font-size: var(--text-body);
-    line-height: var(--text-line-row-space);
+    line-height: var(--leading-body);
     margin-top: 0.15em !important;
     margin-bottom: 0.15em !important;
   }
@@ -3092,6 +3093,9 @@
   font-weight: 400 !important;
   margin-bottom: 1.5rem;
 }
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  line-height: var(--text-line-row-space);
+}
 .prose h1 {
   font-size: 3rem;
   margin-top: 5rem;
@@ -3112,13 +3116,13 @@
 }
 .prose p {
   text-align: justify;
-  line-height: var(--text-line-row-space);
+  line-height: var(--leading-body);
   margin-bottom: 1.5rem;
 }
 .prose p {
   font-family: var(--font-brand) !important;
   font-size: var(--text-body-mobile);
-  line-height: var(--text-line-row-space);
+  line-height: var(--leading-body);
   letter-spacing: var(--tracking-body);
 }
 .prose table {

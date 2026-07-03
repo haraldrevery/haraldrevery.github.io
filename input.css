@@ -47,9 +47,9 @@ body::before {
   /* 3. Global Body Styling */
   body {
     font-family: var(--font-brand) !important;
-    font-size: var(--text-body-mobile); 
-    line-height: var(--text-line-row-space);                 
-    letter-spacing: var(--tracking-body);            
+    font-size: var(--text-body-mobile);
+    line-height: var(--leading-body);
+    letter-spacing: var(--tracking-body);
   }
 
   @media (min-width: 900px) {

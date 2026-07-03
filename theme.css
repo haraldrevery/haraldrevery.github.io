@@ -11,7 +11,8 @@
 
 
   --katex-font-size: 0.7em;      /* scaling the MathML for the blog (hope the revery notebook editor doesn't jank) */
-  --text-line-row-space: 1.24;   /* space between the rows/lines of text */
+  --text-line-row-space: 1.24;   /* tight line-height — headings & display text */
+  --leading-body: 1.5;           /* body-copy line-height (paragraphs, list items) */
   --tracking-body: 0.029em;     /* global letter-spacing (space between characters/letters)*/
 
   /* Colors */
