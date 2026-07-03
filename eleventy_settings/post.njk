@@ -1,7 +1,7 @@
 ---
 layout: base.njk
 ---
-{% set body = content | addAnchors | staggerHeadings %}
+{% set body = content | addAnchors %}
 {% set outline = body | toc %}
 
 {% if outline %}
@@ -17,7 +17,7 @@ layout: base.njk
 </label>
 {% endif %}
 
-<div class="page-container pt-24 pb-12">
+<div class="page-container pt-24 pb-12 extra_fade_effect">
     <article class="mx-auto">
         
         <div class="mb-8">
@@ -31,7 +31,7 @@ layout: base.njk
                 {{ date | readableDate }}
             </time>
             <h1 class="text-5xl md:text-6xl text-zinc-900 dark:text-white mt-4 mb-4 uppercase tracking-wider">
-                {{ title | staggerWords | safe }}
+                {{ title }}
             </h1>
         </div>
         
