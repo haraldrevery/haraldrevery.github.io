@@ -1,0 +1,26 @@
+# Ignore the output folder and the output file so we don't loop
+notebook_pages/
+information/
+notebook.html
+
+# Ignore your static files so Eleventy doesn't try to process them
+index.html
+music.html
+about.html
+contact.html
+download.html
+legal.html
+
+# Ignore assets/configs
+node_modules/
+revery_notebook/
+licence/
+package.json
+package-lock.json
+CLAUDE.md
+update_to_git_guide.md
+input.css
+main.css
+prose.css
+eleventy.config.js
+README.md

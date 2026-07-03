@@ -1,0 +1,64 @@
+---
+permalink: /sitemap.xml
+eleventyExcludeFromCollections: true
+site_url: "https://haraldrevery.com"
+# Static, hand-written pages (excluded from Eleventy via .eleventyignore, so they
+# must be listed here). `loc` matches each page's <link rel="canonical">.
+# `file` is used to read the real last-modified time for <lastmod>.
+staticPages:
+  - loc: "/"
+    file: "index.html"
+    changefreq: weekly
+    priority: "1.0"
+  - loc: "/music"
+    file: "music.html"
+    changefreq: weekly
+    priority: "0.9"
+  - loc: "/about"
+    file: "about.html"
+    changefreq: monthly
+    priority: "0.8"
+  - loc: "/contact"
+    file: "contact.html"
+    changefreq: monthly
+    priority: "0.8"
+  - loc: "/notebook.html"
+    file: "notebook.html"
+    changefreq: weekly
+    priority: "0.8"
+  - loc: "/download"
+    file: "download.html"
+    changefreq: monthly
+    priority: "0.6"
+  - loc: "/legal.html"
+    file: "legal.html"
+    changefreq: yearly
+    priority: "0.5"
+---
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{%- for sp in staticPages %}
+  <url>
+    <loc>{{ site_url }}{{ sp.loc }}</loc>
+    <lastmod>{{ sp.file | fileModDate | isoDate }}</lastmod>
+    <changefreq>{{ sp.changefreq }}</changefreq>
+    <priority>{{ sp.priority }}</priority>
+  </url>
+{%- endfor %}
+{%- for post in collections.notebook_posts %}
+  <url>
+    <loc>{{ site_url }}{{ post.url }}</loc>
+    <lastmod>{{ post.date | isoDate }}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+{%- endfor %}
+{%- for t in collections.paginatedTagData %}
+  <url>
+    <loc>{{ site_url }}/notebook_pages/tag-{{ t.tag | slugify }}{% if t.pageNumber > 0 %}-page-{{ t.pageNumber + 1 }}{% endif %}.html</loc>
+    <lastmod>{{ buildDate | isoDate }}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+{%- endfor %}
+</urlset>

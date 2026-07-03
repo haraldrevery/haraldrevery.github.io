@@ -1,0 +1,29 @@
+# Dependencies (reinstall with `npm install`)
+node_modules/
+revery_notebook/build_tools/node_modules/
+
+# Stale duplicate CSS backups
+css_bkup/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*~
+.idea/
+.vscode/
+
+# Logs
+npm-debug.log*
+*.log
+
+# Tailwind standalone binaries — EXCLUDED because each exceeds GitHub's 100 MB
+# per-file limit (git push would be rejected). They are local-only build tools;
+# keep them in your zip backups. See update_to_git_guide.md.
+tailwindcss-linux-x64
+tw.exe
+
+# NOTE: intentionally NOT ignored (must stay committed):
+#   - Built output: main.css, main_max.css, prose.css, prose_max.css, notebook_pages/
+#     (GitHub Pages serves this folder as-is; there is no CI build step)
