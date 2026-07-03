@@ -177,11 +177,18 @@
   word-break: break-word;
   overflow-wrap: break-word;
   white-space: normal;
+<<<<<<< HEAD
   vertical-align: middle;
+=======
+>>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
 }
 
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
   @media (min-width: 900px) {
     .prose p {
       font-size: var(--text-body); /* V1 Desktop Scaling */

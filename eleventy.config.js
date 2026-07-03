@@ -61,6 +61,13 @@ module.exports = function(eleventyConfig) {
           return null;
         }
         
+<<<<<<< HEAD
+=======
+        // DEBUG: Log what we're seeing
+        console.log(`[DEBUG] Processing ${file}`);
+        console.log(`[DEBUG] Description from frontmatter: "${parsed.data.description}"`);
+        
+>>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
         // Create a virtual collection item that looks like a real Eleventy item
         const item = {
           url: parsed.data.permalink || `/notebook_pages/${file}`,
@@ -73,7 +80,14 @@ module.exports = function(eleventyConfig) {
           },
           date: parsed.data.date ? new Date(parsed.data.date) : new Date()
         };
+<<<<<<< HEAD
 
+=======
+        
+        console.log(`[DEBUG] Item data.description: "${item.data.description}"`);
+        console.log('---');
+        
+>>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
         return item;
       }).filter(item => item !== null); // Remove null items (drafts)
     }
@@ -233,6 +247,7 @@ module.exports = function(eleventyConfig) {
     return str.substring(0, length).trim() + '...';
   });
 
+<<<<<<< HEAD
   // Sitemap helpers: format any date as YYYY-MM-DD (W3C sitemap format)
   eleventyConfig.addFilter("isoDate", (dateObj) => {
     return new Date(dateObj).toISOString().slice(0, 10);
@@ -251,6 +266,8 @@ module.exports = function(eleventyConfig) {
   // Build timestamp (used as <lastmod> for generated tag pages)
   eleventyConfig.addGlobalData("buildDate", () => new Date());
 
+=======
+>>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
   // 5. Process and copy html_extras files to notebook_pages (strip frontmatter)
   eleventyConfig.on('eleventy.before', async () => {
     const outputDir = './notebook_pages';

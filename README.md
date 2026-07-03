@@ -18,11 +18,16 @@ Main LLM models used to generate and troubleshoot code:
 * DeepSeek
 
 ## Notebook (blog/article part)
+<<<<<<< HEAD
 To get the blog ("notebook") have a nice structure and so on, I used Eleventy to generate html pages from markdown text and to create a page with all the "cards" containing sortable tags, thumbnails and date for each post on the site. Node.js was used to run Eleventy. Some pages contain Math.js for mathematical operations and jsPDF for PDF export support. 
+=======
+To get the blog ("notebook") have a nice structure and so on, I used Eleventy to generate html pages from markdown text and to create a page with all the "cards" containing sortable tags, thumbnails and date for each post on the site. Node.js was used to run Eleventy. Some pages contain Math.js for mathematical operations and jsPDF for PDF export support. For the text editor I used markdown-it and KaTeX to get the markdown and latex syntax to render correctly.
+>>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
 * Node.js [Website](https://nodejs.org), [Github](https://github.com/nodejs/node)
 * Eleventy [Website](https://www.11ty.dev/), [Github](https://github.com/11ty/eleventy/)
 * Math.js [Website](https://mathjs.org/), [Github](https://github.com/josdejong/mathjs)
 * jsPDF [Website](https://parall.ax/products/jspdf), [Github](https://github.com/parallax/jsPDF)
+<<<<<<< HEAD
 
 ## Revery Notebook (markdown editor)
 For the text editor I used CodeMirror, markdown-it and KaTeX to get the markdown and latex syntax to render and work correctly. I used highlight.js to make code blocks have colors for different programming languages. DOMPurify is used to some safety precautions.
@@ -34,6 +39,10 @@ For the text editor I used CodeMirror, markdown-it and KaTeX to get the markdown
 * CodeMirror [Website](https://codemirror.net/), [Github](https://github.com/codemirror/dev) 
 * DOMPurify [Website](https://cure53.de/purify), [Github](https://github.com/cure53/dompurify) 
 
+=======
+* KaTeX [Website](https://katex.org/), [Github](https://github.com/KaTeX/KaTeX)
+* markdown-it [Website](https://markdown-it.github.io/), [Github](https://github.com/markdown-it/markdown-it)
+>>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
 ---
 
 Personal setup for this project:
@@ -48,11 +57,16 @@ Just double click the "dev.bat" and it will run tailwind live.
 ```
 
 On Linux, be in the folder and run:
+<<<<<<< HEAD
 
 ```
 chmod +x dev.sh
 chmod +x tailwindcss-linux-x64
 ./dev.sh
+=======
+```
+chmod +x dev.sh
+>>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
 ```
 
 To build the notebook section, run

@@ -1,0 +1,4 @@
+{
+  "layout": "post.njk",
+  "permalink": "notebook_pages/{{ page.fileSlug }}.html"
+}

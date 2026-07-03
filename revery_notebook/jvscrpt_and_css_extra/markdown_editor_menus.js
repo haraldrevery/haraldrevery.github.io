@@ -1732,6 +1732,7 @@ editor.addEventListener('contextmenu', (e) => {
   settingsDropdown.classList.remove('show');
   fileDropdown.classList.remove('show');
   if (logoDropdown) logoDropdown.classList.remove('show');
+<<<<<<< HEAD
 
   
          // Clear any previous scrolling constraints
@@ -1766,6 +1767,29 @@ editor.addEventListener('contextmenu', (e) => {
           }
         // Add this block to signal the CSS to flip the submenu left
           if (posX + menuWidth + 160 > window.innerWidth) {
+=======
+  // 1. Show the menu hidden first to measure its size
+  contextMenu.style.visibility = 'hidden';
+  contextMenu.classList.add('show');
+
+  const menuWidth = contextMenu.offsetWidth;
+  const menuHeight = contextMenu.offsetHeight;
+  // 2. Calculate coordinates
+  let posX = e.pageX;
+  let posY = e.pageY;
+
+  // 3. Flip/Shift if it would go off-screen
+  // Horizontal check
+  if (posX + menuWidth > window.innerWidth) {
+    posX = window.innerWidth - menuWidth - 10;
+  }
+  // Vertical check (the fix for your issue)
+  if (posY + menuHeight > window.innerHeight) {
+    posY = window.innerHeight - menuHeight - 10;
+  }
+// Add this block to signal the CSS to flip the submenu left
+  if (posX + menuWidth + 160 > window.innerWidth) {
+>>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
     contextMenu.classList.add('align-right');
   } else {
     contextMenu.classList.remove('align-right');
