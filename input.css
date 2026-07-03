@@ -748,7 +748,7 @@ nav {
 
 #scroll-prompt {
   animation: fadeInDelayed 1.5s ease-out forwards;
-  animation-delay: 3.7s; /* 3500ms delay */
+  animation-delay: 3.7s; /* 3700ms delay */
 }
 
 
@@ -887,7 +887,7 @@ nav {
   .extra_fade_effect_long {
     animation: extra_fade_effect_long 1.2s ease-in forwards;
     opacity: 0;
-    animation-delay: 2.8s; /* 3500ms delay */
+    animation-delay: 2.8s; /* 2800ms delay */
   }
 
   
@@ -2288,7 +2288,7 @@ iframe.wait-autoplay {
 .gdesc-inner,
 .gdesc-inner p,
 .gdesc-inner * {
-  color: #ececec !important;              /* zinc-900 for light mode */
+  color: #ececec !important;              /* light caption text over the dark lightbox overlay */
 }
 
 .gdesc-bottom .gdesc-inner {
