@@ -73,7 +73,7 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--bg);
+  background: transparent; /* let the site's animated body::before gradient show through */
   color: var(--ink);
   font-family: var(--font-text);
   font-size: calc(14px * var(--ui-scale));
@@ -84,6 +84,18 @@ html, body {
 }
 
 #root { min-height: 100vh; }
+
+/* Site coherence: the animated gradient (body::before) and topology background
+   come from main.css. Make the gradient follow the app's theme toggle
+   (data-theme) rather than only the OS setting, using the site's own tokens. */
+[data-theme="light"] body::before {
+  background-image: linear-gradient(to bottom right, var(--color-backdrop-light-edge), var(--color-backdrop-light-center), var(--color-backdrop-light-edge));
+}
+[data-theme="dark"] body::before {
+  background-image: linear-gradient(to bottom right, var(--color-backdrop-dark-start), var(--color-backdrop-dark-mid), var(--color-backdrop-dark-end));
+}
+/* The .bg-topology-map wrapper should span the whole app so the SVG shows. */
+body > .bg-topology-map { min-height: 100vh; }
 
 .app {
   max-width: 1480px;
