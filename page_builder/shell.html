@@ -5,51 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/main.css"> 
     <link rel="stylesheet" href="/prose.css">
-    
-    <title>Harald Revery - survival - Notebook</title>
-    
-    
+
+    <!-- ====================================================================== -->
+    <!-- Set title and SEO tags here -->
+    <!-- ====================================================================== -->    
+    <title>{{TITLE}}</title>
+    <meta name="description" content="{{DESCRIPTION}}">
+    <meta name="keywords" content="{{KEYWORDS}}">
     
 
+    <!-- Preload LCP image (page load optimization) -->
+    <link rel="preload" href="/fonts/HaraldReveryTextFont.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/HaraldReveryMonoFont.woff2" as="font" type="font/woff2" crossorigin>
+
+
+    <!-- ====================================================================== -->
+    <!-- Social media share here and the website adress -->
+    <!-- ====================================================================== -->      
+    <!--  Open Graph (social media image thing) -->
+    <meta property="og:title" content="{{OG_TITLE}}" />
+    <meta property="og:description" content="{{OG_DESC}}" />
+    <meta property="og:image" content="{{OG_IMAGE}}" />
+    <meta property="og:url" content="{{OG_URL}}" />
+    <meta property="og:type" content="website" />
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{CANONICAL}}">
+
+
+
+
+<!-- Internet icon -->
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
     <link rel="shortcut icon" href="/favicon.ico" sizes="any">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="manifest" href="/site.webmanifest">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#171717">
-        
-    
-    <link rel="canonical" href="https://haraldrevery.com/notebook_pages/tag-survival.html">
-    
-    <link rel="preload" href="/fonts/HaraldReveryTextFont.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="/fonts/HaraldReveryMonoFont.woff2" as="font" type="font/woff2" crossorigin>
 
-    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
-    <link rel="shortcut icon" href="/favicon.ico" sizes="any">
-    
-    
-    <meta property="og:title" content="survival - Notebook - Harald Revery" />
-    <meta property="og:url" content="https://haraldrevery.com/notebook_pages/tag-survival.html" />
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Harald Revery" />
-    
-    
-    <meta property="og:image" content="https://haraldrevery.com/opengraphimg.jpg" />
-    
-
-    
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="survival - Notebook - Harald Revery" />
-    
-    
-    <meta name="twitter:image" content="https://haraldrevery.com/opengraphimg.jpg" />
-    
-    
-    
-    
 </head>
 
-<body class="min-h-screen text-zinc-900 dark:text-white">
+<body class="min-h-screen text-black dark:text-white">
 
 <div class="scroll-sentinel absolute top-0 h-[50vh] w-full pointer-events-none"></div>
 <nav class="main-nav fixed top-0 inset-x-0 z-[200] backdrop-blur-xl
@@ -72,11 +67,13 @@
             <a href="/index.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Home</a>
             <a href="/music.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Music</a>
             <a href="/about.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">About</a>
-            <a href="/notebook.html" class="text-neutral-800 dark:text-neutral-100 transition-colors">Notebook</a>            
+            <a href="/notebook.html" class="text-neutral-800 dark:text-neutral-100 hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Notebook</a>            
             <a href="/contact.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Contact</a>
+
         </div>
 
         <input type="checkbox" id="mobile-menu-toggle" class="hidden peer">
+        
 
         <label for="mobile-menu-toggle" class="nav-desktop:hidden z-[250] cursor-pointer p-4 -mr-4 group select-none translate-y-[6%]">
         <span class="menu-icon-text">
@@ -94,7 +91,7 @@
                 <nav class="main-nav flex flex-col pt-42 py-10 text-center gap-10 text-neutral-900 dark:text-white font-mono text-xl uppercase tracking-[0.3em]">
                     <a href="/index.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Home</a>
                     <a href="/music.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Music</a>
-                    <a href="/about.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">About</a>
+                    <a href="/about.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors ">About</a>
                     <a href="/contact.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Contact</a>
                     <a href="/notebook.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Notebook</a>  
                 </nav>
@@ -104,94 +101,59 @@
 </nav>
 
 
+<!-- svg background start -->
 <div class="bg-topology-map"> 
 
-    
-<div class="scroll-sentinel absolute top-0 h-[50vh] w-full pointer-events-none"></div>
+<!-- start margins -->  
+<div  class="page-container pt-24 pb-12 extra_fade_effect">
 
-<section class="py-12 pt-48 pb-16">
-    <div class="page-container">
-        <div class="max-w-4xl mx-auto text-center mb-16">
-            <h1 class="text-5xl md:text-6xl text-zinc-900 dark:text-white mb-6 uppercase tracking-wider">
-                Notebook
-            </h1>
 
-                <p class="text-xl text-neutral-600 dark:text-neutral-400 leading-relaxed max-w-2xl mx-auto">
-                    Notes tagged with <span class="px-3 pt-1.5 pb-0.5 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-xs uppercase tracking-widest rounded">survival</span>
-                </p>
 
-            <div class="mt-6">
-                <a href="/notebook.html" class="text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors uppercase tracking-wider">
-                    ← Back to All Notes
-                </a>
-            </div>
-        </div>
-    </div>
-</section>
+            <a href="/notebook.html" class="inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider">
+               ← Back to Notebook
+            </a>
 
-<section class="py-12 pb-24 extra_fade_effect">
-    <div class="page-container">
-        <div class="max-w-6xl mx-auto">
-            <h3 class="text-3xl text-zinc-900 dark:text-white uppercase tracking-wide mb-12">survival Notes</h3>
 
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                
-                
-                <article class="group">
-                    
-                    
-                    <a href="/notebook_pages/6_months.html" class="block">
-                        <div class="aspect-video bg-neutral-200 dark:bg-neutral-800 rounded-lg overflow-hidden mb-4">
-                            
-                                <img src="/photos/2015-2023/waitinginrain2019may_min.jpg" alt="6 months survival" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                            
-                        </div>
-                    </a>
 
-                        
-                        <div class="flex flex-wrap gap-2 mb-3">
-                            
-                                <a href="/notebook_pages/tag-survival.html" class="px-3 pt-1 pb-0.5 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-xs uppercase tracking-widest rounded hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">survival</a>
-                            
-                        </div>
-                    
-                    
-                    <a href="/notebook_pages/6_months.html" class="block">
-                        <h4 class="text-xl text-zinc-900 dark:text-white mb-3 uppercase tracking-wide group-hover:text-neutral-500 dark:group-hover:text-neutral-400 transition-colors">
-                            6 months survival
-                        </h4>
-                    </a>
-                    
-                    
-                    
-                    <p class="text-neutral-600 dark:text-neutral-400 mb-3 line-clamp-4">
-                        What to stack up when trying to survive for 6 months (AI generated).
-                    </p>
-                    
-                    
-                    <div class="flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-500 font-mono uppercase tracking-wider">
-                        <span>February 5, 2011</span>
-                    </div>
+<!-- ====================================================================== -->
+<!-- Content starts here -->
+{{CONTENT}}
+<!-- Content stops here -->
+<!-- ====================================================================== -->
 
-                </article>
-                
-                
-            </div>
 
-            
-            
-        </div>
-    </div>
-</section>
+
+<!-- ====================================================================== -->
+<!-- Date --> 
+<!-- ====================================================================== -->  
+ <div class="pt-24">
+  <hr>
+  <div class="py-2">
+    <time class="text-sm font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider" datetime="{{DATE_ISO}}">
+    {{DATE_HUMAN}}
+    </time>
+  </div>
+</div>
+
+<!-- End margins -->   
+</div>
 
 
 
 
 
 
+  <!-- Go back link -->  
+  <div class="page-container pt-6">
+        <a href="/notebook.html" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">
+          ← NOTEBOOK FRONT PAGE
+        </a>
+      </div>
 
 
 
+
+<!-- Footer -->   
 <footer class="py-16">
   <div class="max-w-screen-xl mx-auto px-4">
     <div class="flex flex-col items-center text-center space-y-4">
@@ -285,11 +247,34 @@
 </footer>
 
 
-</div>
 
-<script src="/javascript/glightbox.min.js" defer></script>
-<script src="/javascript/glightbox_settings_min.js" defer></script>
-<script src="/javascript/alpine.min.js" defer></script>
+
+
+<!-- svg background end -->
+ </div>
+
+
+
+
+
 
 </body>
+
+
+
+<!-- GLightbox load -->
+<script src="/javascript/glightbox.min.js" defer></script>
+<!-- GLightbox settings -->
+<script src="/javascript/glightbox_settings_min.js" defer></script>
+
+<!-- Alpine.js load -->
+<script src="/javascript/alpine.min.js" defer></script>
+
+
+
+<!-- ====================================================================== -->
+<!-- Set Schema SEO here (ask promt an LLM to do it for you after you have done everything else) -->
+<!-- ====================================================================== --> 
+{{JSONLD}}
+
 </html>

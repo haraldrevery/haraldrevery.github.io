@@ -16,8 +16,8 @@ Now there are some issues:
 # Secondary issues
 
 - Outline support on markdown generated articles (preferably without js and can be toggled on/off in the lower right corner of the view port)
-- A way to automatically make text have the random delay in animation of text (eleventy doing this for markdown articles). 
 - Eleventy has a npm dependacy, after it has been tweaked I want a linux and a windows binary of it so users don't have to use "npm install" every time they open the project on a new PC (good to be prepared in case of npm servers being down etc, being less dependent).
+-
 
 # Future features
 - A webapp to generate create photography pages (drag and drop / automatic grids that are then js free, except for the glightbox slider). This can be contained in its own folder. 
