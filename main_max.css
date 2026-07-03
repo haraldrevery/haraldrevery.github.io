@@ -2346,7 +2346,7 @@
   }
   @media (prefers-color-scheme: dark) {
     body::before {
-      background-image: linear-gradient(to bottom right, var(--color-backdrop-dark-start), var(--color-backdrop-dark-mid), var(--color-backdrop-dark-end)) !important;
+      background-image: linear-gradient(to bottom right, var(--color-backdrop-dark-start), var(--color-backdrop-dark-mid), var(--color-backdrop-dark-end));
     }
   }
   @media (prefers-color-scheme: dark) {
@@ -2364,7 +2364,7 @@
     }
   }
   body {
-    font-family: var(--font-brand) !important;
+    font-family: var(--font-brand);
     font-size: var(--text-body-mobile);
     line-height: var(--leading-body);
     letter-spacing: var(--tracking-body);
