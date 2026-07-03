@@ -6,7 +6,7 @@ layout: base.njk
 
 {% if outline %}
 {# No-JS article outline: hidden checkbox drives the toggle; visible by default #}
-<input type="checkbox" id="article-outline-toggle" class="article-outline-toggle" checked>
+<input type="checkbox" id="article-outline-toggle" class="article-outline-toggle">
 <aside class="article-outline-panel">
     <p class="article-outline-heading">On this page</p>
     {{ outline | safe }}
