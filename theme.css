@@ -17,6 +17,13 @@
   /* Colors */
   --color-brand: #0f3d81;       /* accent / focus-outline blue */
 
+  /* Page backdrop — the body::before animated gradient (light + dark) */
+  --color-backdrop-light-edge:   #dedede;
+  --color-backdrop-light-center: #ffffff;
+  --color-backdrop-dark-start:   #000000;
+  --color-backdrop-dark-mid:     #141414;
+  --color-backdrop-dark-end:     #262626;
+
   /* Breakpoints and Animations */
   --breakpoint-md: 768px;
   --breakpoint-lg: 1024px;

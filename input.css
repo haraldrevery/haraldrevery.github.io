@@ -13,23 +13,23 @@ body::before {
   width: 120%;
   height: 120%;
   z-index: -50; 
-  background-image: linear-gradient(to bottom right, #dedede, #ffffff, #dedede);
+  background-image: linear-gradient(to bottom right, var(--color-backdrop-light-edge), var(--color-backdrop-light-center), var(--color-backdrop-light-edge));
   background-size: 200% 200%;
   animation: gradient-shift 15s ease infinite;
   will-change: transform;
   pointer-events: none;
-  background-color: #ffffff;
+  background-color: var(--color-backdrop-light-center);
 }
 
 /* 3. Dark Mode for EVERYONE */
 @media (prefers-color-scheme: dark) {
   body::before {
-    background-image: linear-gradient(to bottom right, #000000, #141414, #262626) !important;
+    background-image: linear-gradient(to bottom right, var(--color-backdrop-dark-start), var(--color-backdrop-dark-mid), var(--color-backdrop-dark-end)) !important;
   }
 }
 @media (prefers-color-scheme: dark) {
     body {
-      background-color: #000000; /* Pure black to match your dark gradient start */
+      background-color: var(--color-backdrop-dark-start); /* Pure black to match your dark gradient start */
     }
   }
   /* 2. Responsive Root Scaling (V1 Logic) */

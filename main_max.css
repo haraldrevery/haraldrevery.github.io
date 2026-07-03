@@ -100,6 +100,11 @@
     --text-line-row-space: 1.24;
     --tracking-body: 0.029em;
     --color-brand: #0f3d81;
+    --color-backdrop-light-edge: #dedede;
+    --color-backdrop-light-center: #ffffff;
+    --color-backdrop-dark-start: #000000;
+    --color-backdrop-dark-mid: #141414;
+    --color-backdrop-dark-end: #262626;
   }
 }
 @layer base {
@@ -2331,21 +2336,21 @@
     width: 120%;
     height: 120%;
     z-index: -50;
-    background-image: linear-gradient(to bottom right, #dedede, #ffffff, #dedede);
+    background-image: linear-gradient(to bottom right, var(--color-backdrop-light-edge), var(--color-backdrop-light-center), var(--color-backdrop-light-edge));
     background-size: 200% 200%;
     animation: gradient-shift 15s ease infinite;
     will-change: transform;
     pointer-events: none;
-    background-color: #ffffff;
+    background-color: var(--color-backdrop-light-center);
   }
   @media (prefers-color-scheme: dark) {
     body::before {
-      background-image: linear-gradient(to bottom right, #000000, #141414, #262626) !important;
+      background-image: linear-gradient(to bottom right, var(--color-backdrop-dark-start), var(--color-backdrop-dark-mid), var(--color-backdrop-dark-end)) !important;
     }
   }
   @media (prefers-color-scheme: dark) {
     body {
-      background-color: #000000;
+      background-color: var(--color-backdrop-dark-start);
     }
   }
   html {
