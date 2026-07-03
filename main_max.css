@@ -2648,14 +2648,6 @@ nav {
     }
   }
 }
-@keyframes parallax-dots {
-  from {
-    transform: translateY(-80px);
-  }
-  to {
-    transform: translateY(80px);
-  }
-}
 @layer components {
   .bg-dot-grid_M {
     position: relative;

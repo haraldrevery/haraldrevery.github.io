@@ -357,10 +357,7 @@ nav {
    Dot grid background M
    =================================== */
 
-@keyframes parallax-dots {
-  from { transform: translateY(-80px); }
-  to { transform: translateY(80px); }
-}
+/* NOTE: @keyframes parallax-dots is defined once above (identical duplicate removed). */
 
 @layer components {
   .bg-dot-grid_M {
