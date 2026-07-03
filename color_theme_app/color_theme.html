@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Color Workbench</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div id="root"></div>
+
+<!-- Self-hosted React (no CDN, CSP-friendly). Swap to react.production.min.js
+     for a smaller/faster build when you deploy. -->
+<script src="react.development.js"></script>
+<script src="react-dom.development.js"></script>
+
+<!-- Plain-JS data + helpers (expose window.CSS_NAMED_COLORS / window.ColorUtil) -->
+<script src="color-names.js"></script>
+<script src="color-utils.js"></script>
+
+<!-- App, pre-compiled from the .jsx sources by `node build.js` (no runtime Babel).
+     Loaded in dependency order; app.js mounts <App/> to #root. -->
+<script src="picker.js"></script>
+<script src="theme-tools.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
