@@ -3148,7 +3148,7 @@ nav {
   fill: url(#logoGradientDark_legacy);
 }
 .wave-echo_legacy {
-  fill: none !important;
+  fill: none;
   stroke: rgba(0, 0, 0, 0.5);
   stroke-width: 1px;
   transform-origin: center;
@@ -3187,7 +3187,7 @@ nav {
   animation-delay: 1.3s;
 }
 .dark .wave-echo_legacy {
-  stroke: rgba(255, 255, 255, 0.4) !important;
+  stroke: rgba(255, 255, 255, 0.4);
 }
 .mode-toggle_legacy {
   position: fixed;
