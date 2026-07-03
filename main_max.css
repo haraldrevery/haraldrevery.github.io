@@ -2949,6 +2949,13 @@ nav {
     transform: translateY(0);
   }
 }
+@media (prefers-reduced-motion: reduce) {
+  .word_animation {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+}
 @keyframes extra_fade_effect {
   from {
     opacity: 0;

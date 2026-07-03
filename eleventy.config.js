@@ -306,6 +306,79 @@ module.exports = function(eleventyConfig) {
     return html + "</ul>";
   });
 
+  // Automate the word-stagger reveal (no client JS): wrap each word in a
+  // <span class="word_animation"> with a small, DETERMINISTIC delay (reproducible
+  // builds). Skips code/pre/math/tables/svg so KaTeX and code blocks are untouched.
+  // Reader mode strips this CSS entirely; a prefers-reduced-motion fallback in
+  // input.css keeps the text visible when animations are off.
+  eleventyConfig.addFilter("staggerWords", (html) => {
+    if (!html) return html;
+    const PROTECT = new Set(["code", "pre", "kbd", "samp", "math", "svg", "script", "style", "table", "textarea"]);
+    const MAX_DELAY = 0.5; // seconds — quick shimmer, not a slow reveal
+    let depth = 0;         // nesting depth inside a protected element
+    let i = 0;             // running word index -> deterministic delay
+    let out = "";
+    const re = /<!--[\s\S]*?-->|<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>|[^<]+/g;
+    let m;
+    while ((m = re.exec(html)) !== null) {
+      const tok = m[0];
+      if (tok[0] === "<") {
+        out += tok;
+        if (m[1] && !tok.startsWith("<!--") && !tok.endsWith("/>")) {
+          const tag = m[1].toLowerCase();
+          if (PROTECT.has(tag)) depth += tok[1] === "/" ? -1 : 1;
+          if (depth < 0) depth = 0;
+        }
+        continue;
+      }
+      if (depth > 0) { out += tok; continue; }   // inside code/math/etc.
+      out += tok.replace(/\S+/g, (w) => {
+        // staggerWords is used on the plain-text article title, so HTML-escape.
+        const esc = w.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const d = (((i++ * 0.6180339887) % 1) * MAX_DELAY).toFixed(2);
+        return `<span class="word_animation" style="animation-delay:${d}s">${esc}</span>`;
+      });
+    }
+    return out;
+  });
+
+  // Like staggerWords, but only wraps words INSIDE headings (h1–h6) — used for
+  // article bodies so section headings get the reveal while paragraphs stay calm
+  // and performant (a full article of per-word spans would jank + hurt reading).
+  // Still skips code/math inside a heading.
+  eleventyConfig.addFilter("staggerHeadings", (html) => {
+    if (!html) return html;
+    const PROTECT = new Set(["code", "pre", "kbd", "samp", "math", "svg"]);
+    let headingDepth = 0, protectDepth = 0, i = 0;
+    let out = "";
+    const re = /<!--[\s\S]*?-->|<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>|[^<]+/g;
+    let m;
+    while ((m = re.exec(html)) !== null) {
+      const tok = m[0];
+      if (tok[0] === "<") {
+        out += tok;
+        if (m[1] && !tok.startsWith("<!--") && !tok.endsWith("/>")) {
+          const tag = m[1].toLowerCase();
+          const closing = tok[1] === "/";
+          if (/^h[1-6]$/.test(tag)) headingDepth += closing ? -1 : 1;
+          else if (PROTECT.has(tag)) protectDepth += closing ? -1 : 1;
+          if (headingDepth < 0) headingDepth = 0;
+          if (protectDepth < 0) protectDepth = 0;
+        }
+        continue;
+      }
+      if (headingDepth > 0 && protectDepth === 0) {
+        out += tok.replace(/\S+/g, (w) => {
+          const d = (((i++ * 0.6180339887) % 1) * 0.6).toFixed(2);
+          return `<span class="word_animation" style="animation-delay:${d}s">${w}</span>`;
+        });
+      } else {
+        out += tok;
+      }
+    }
+    return out;
+  });
+
   // 5. Process and copy html_extras files to notebook_pages (strip frontmatter)
   eleventyConfig.on('eleventy.before', async () => {
     const outputDir = './notebook_pages';

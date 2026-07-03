@@ -855,6 +855,17 @@ nav {
   }
 }
 
+/* Reduced-motion / reader-safety: show words immediately with no animation.
+   Also prevents invisible text if animations are force-disabled by the browser
+   or an accessibility tool (the words default to opacity:0). */
+@media (prefers-reduced-motion: reduce) {
+  .word_animation {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+}
+
 
 
 
