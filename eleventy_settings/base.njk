@@ -32,12 +32,8 @@
     {# Open Graph Meta Tags #}
     <meta property="og:title" content="{{ title }} - Harald Revery" />
     <meta property="og:url" content="https://haraldrevery.com{{ page.url }}" />
-<<<<<<< HEAD
     <meta property="og:type" content="{% if layout == "post.njk" or date %}article{% else %}website{% endif %}" />
     <meta property="og:site_name" content="Harald Revery" />
-=======
-    <meta property="og:type" content="article" />
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
     {% if description %}
     <meta property="og:description" content="{{ description }}" />
     {% endif %}
@@ -46,7 +42,6 @@
     {% else %}
     <meta property="og:image" content="https://haraldrevery.com/opengraphimg.jpg" />
     {% endif %}
-<<<<<<< HEAD
 
     {# Twitter Card #}
     <meta name="twitter:card" content="summary_large_image" />
@@ -59,8 +54,6 @@
     {% else %}
     <meta name="twitter:image" content="https://haraldrevery.com/opengraphimg.jpg" />
     {% endif %}
-=======
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
     
     {# Schema.org Structured Data for Articles #}
     {% if layout == "post.njk" or date %}

@@ -5,34 +5,21 @@ pagination:
   size: 40
   alias: paginatedPosts
 permalink: "{% if pagination.pageNumber == 0 %}notebook.html{% else %}notebook_pages/notebook-page-{{ pagination.pageNumber + 1 }}.html{% endif %}"
-<<<<<<< HEAD
 description: "The Notebook by Harald Revery — personal notes, essays, and interactive experiments on music, mathematics, physics, and photography."
-=======
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
 eleventyComputed:
   title: "Notebook{% if pagination.pageNumber > 0 %} - Page {{ pagination.pageNumber + 1 }}{% endif %}"
 ---
 
 <div class="scroll-sentinel absolute top-0 h-[50vh] w-full pointer-events-none"></div>
 
-<<<<<<< HEAD
 
-=======
-<h1 class="seo-only-h1">Harald Revery - Notebook</h1>
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
 
 <section class="py-12 pt-48 pb-16">
     <div class="page-container">
         <div class="max-w-4xl mx-auto text-center mb-16">
-<<<<<<< HEAD
             <h1 class="text-5xl md:text-6xl text-zinc-900 dark:text-white mb-6 uppercase tracking-wider">
                 <span class="word_animation" style="animation-delay: 0.12s">Note</span><span class="word_animation" style="animation-delay: 0.52s">book</span>
             </h1>
-=======
-            <h2 class="text-5xl md:text-6xl text-zinc-900 dark:text-white mb-6 uppercase tracking-wider">
-                <span class="word_animation" style="animation-delay: 0.12s">Note</span><span class="word_animation" style="animation-delay: 0.52s">book</span>
-            </h2>
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
             <p class="text-xl text-neutral-600 dark:text-neutral-400 leading-relaxed max-w-2xl mx-auto">
                         <span class="word_animation" style="animation-delay: 0.72s">Personal</span>
                         <span class="word_animation" style="animation-delay: 0.88s">thoughts,</span>

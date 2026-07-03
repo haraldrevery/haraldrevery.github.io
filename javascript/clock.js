@@ -101,7 +101,6 @@
         let lastSec = -1;
         tzEl.textContent = tzLabel();
 
-<<<<<<< HEAD
         // ── Hourglass state ──────────────────────────────────────
         let animStyle = (function () {
             try { return localStorage.getItem('clock-anim') || 'ring'; } catch (e) { return 'ring'; }
@@ -111,8 +110,6 @@
         let hgInitialized = false;
         // ────────────────────────────────────────────────────────
 
-=======
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
         let isTimerMode  = false;
         let isAlarming   = false;
         let timerEndMs   = 0;
@@ -131,15 +128,9 @@
         const inSec      = document.getElementById('t-sec');
         const alarmSound = document.getElementById('alarm-sound');
 
-<<<<<<< HEAD
         // List of available alarm sounds
         const alarmSoundList = [
             '/audio/mp3/timer_alarm_1.mp3',
-=======
-        // List of available alarm sounds (edit paths to match your actual files)
-        const alarmSoundList = [
-            '/audio/mp3/timer_alarm_1.mp3',      // keep original as fallback
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
             '/audio/mp3/timer_alarm_2.mp3',
             '/audio/mp3/timer_alarm_3.mp3'
         ];
@@ -148,11 +139,7 @@
             const randomIndex = Math.floor(Math.random() * alarmSoundList.length);
             const selectedSound = alarmSoundList[randomIndex];
             alarmSound.src = selectedSound;
-<<<<<<< HEAD
             alarmSound.load();
-=======
-            alarmSound.load();                  // optional but ensures new src is ready
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
             alarmSound.play().catch(e => console.log("Audio play prevented:", e));
         }
 
@@ -169,7 +156,6 @@
         const langSvBtn       = document.getElementById('lang-sv-btn');
         const alarmLabelEl    = document.getElementById('alarm-label');
 
-<<<<<<< HEAD
         // ── Hourglass DOM refs ───────────────────────────────────
         const hgSvg       = document.getElementById('clock-hourglass-svg');
         const hgTopSand   = document.getElementById('hg-top-sand');
@@ -179,8 +165,6 @@
         const animHgBtn   = document.getElementById('anim-hg-btn');
         // ────────────────────────────────────────────────────────
 
-=======
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
         function applyUILanguage(lang) {
             const s = UI_STRINGS[lang];
             modeTimerBtn.textContent    = s.timerBtn;
@@ -188,10 +172,6 @@
             modeSettingsBtn.textContent = s.settingsBtn;
             btnCancel.textContent       = s.cancel;
             alarmLabelEl.textContent    = s.alarmLabel;
-<<<<<<< HEAD
-=======
-            // Update start button text only when a functional tab is active
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
             if (modeAlarmBtn.classList.contains('active')) {
                 btnStart.textContent = s.setAlarm;
             } else if (!modeSettingsBtn.classList.contains('active')) {
@@ -199,7 +179,6 @@
             }
             langEnBtn.classList.toggle('active', lang === 'en');
             langSvBtn.classList.toggle('active', lang === 'sv');
-<<<<<<< HEAD
             lastSec = -1;
         }
 
@@ -221,11 +200,6 @@
         }
         // ────────────────────────────────────────────────────────
 
-=======
-            lastSec = -1; // force date re-render with new locale
-        }
-
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
         // Switch to Timer tab
         modeTimerBtn.addEventListener('click', () => {
             modeTimerBtn.classList.add('active');
@@ -276,15 +250,12 @@
             applyUILanguage('sv');
         });
 
-<<<<<<< HEAD
         // Animation style selection
         if (animRingBtn) {
             animRingBtn.addEventListener('click', () => applyAnimStyle('ring'));
             animHgBtn.addEventListener('click',   () => applyAnimStyle('hourglass'));
         }
 
-=======
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
         function renderTimeString(h, m, s) {
             const str = `${pad(h)}:${pad(m)}:${pad(s)}`;
             timeEl.innerHTML = str.split('').map(c =>
@@ -294,17 +265,11 @@
 
         timeEl.addEventListener('click', () => {
             if (isAlarming) {
-<<<<<<< HEAD
                 isAlarming    = false;
                 isTimerMode   = false;
                 alarmIsSet    = false;
                 hgInitialized = false;
                 lastHour      = -1;
-=======
-                isAlarming  = false;
-                isTimerMode = false;
-                alarmIsSet  = false;
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
                 timeEl.classList.remove('clock-blink');
                 alarmSound.pause();
                 alarmSound.currentTime = 0;
@@ -313,20 +278,12 @@
             }
             if (isTimerMode || alarmIsSet) {
                 // Cancel whatever is running
-<<<<<<< HEAD
                 isTimerMode   = false;
                 alarmIsSet    = false;
                 hgInitialized = false;
                 lastHour      = -1;
                 lastSec       = -1;
             } else {
-=======
-                isTimerMode = false;
-                alarmIsSet  = false;
-                lastSec = -1;
-            } else {
-                // If settings tab was last active, switch back to timer before opening
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
                 if (modeSettingsBtn.classList.contains('active')) {
                     modeTimerBtn.click();
                 }
@@ -359,7 +316,6 @@
                     isTimerMode  = true;
                     alarmIsSet   = false;
                     lastSec      = -1;
-<<<<<<< HEAD
 
                     // Rotate hourglass to nearest upright position for timer mode.
                     // hgFlipCount must be even so isFlipped=false and the top bulb drains.
@@ -372,8 +328,6 @@
                         hgInitialized = true;
                         lastHour = -1;
                     }
-=======
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
                 }
             }
             modal.classList.remove('active');
@@ -383,7 +337,6 @@
             inp.addEventListener('blur', () => { inp.value = pad(parseInt(inp.value || 0)); });
         });
 
-<<<<<<< HEAD
         applyUILanguage(currentLang);
         applyAnimStyle(animStyle);
 
@@ -453,10 +406,6 @@ function updateHourglass(progress, timerMode) {
     hgStreamDot.classList.toggle('flowing', flowing);
 }
         // ────────────────────────────────────────────────────────
-=======
-        // Apply persisted language on load
-        applyUILanguage(currentLang);
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
 
         function tick() {
             const nowTime = Date.now();
@@ -468,10 +417,7 @@ function updateHourglass(progress, timerMode) {
                 const s  = now.getSeconds();
                 const ms = now.getMilliseconds();
 
-<<<<<<< HEAD
                 // ── Ring arc ──
-=======
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
                 const frac = (s + ms / 1000) / 60;
                 if (m % 2 === 0) {
                     arc.style.strokeDashoffset = circumference * (1 - frac);
@@ -479,7 +425,6 @@ function updateHourglass(progress, timerMode) {
                     arc.style.strokeDashoffset = -circumference * frac;
                 }
 
-<<<<<<< HEAD
                 // ── Hourglass (clock mode) ──
                 if (animStyle === 'hourglass') {
                     if (!hgInitialized) {
@@ -505,8 +450,6 @@ function updateHourglass(progress, timerMode) {
                     updateHourglass(hourProgress, false);
                 }
 
-=======
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
                 if (s !== lastSec) {
                     lastSec = s;
                     renderTimeString(h, m, s);
@@ -532,26 +475,17 @@ function updateHourglass(progress, timerMode) {
                 }
 
             } else {
-<<<<<<< HEAD
                 // ── Timer mode ──
                 if (isAlarming) {
                     arc.style.strokeDashoffset = circumference;
                     if (animStyle === 'hourglass') {
                         updateHourglass(1, true);
                     }
-=======
-                if (isAlarming) {
-                    arc.style.strokeDashoffset = circumference;
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
                 } else {
                     let remaining = timerEndMs - nowTime;
 
                     if (remaining <= 0) {
-<<<<<<< HEAD
                         remaining  = 0;
-=======
-                        remaining = 0;
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
                         isAlarming = true;
                         timeEl.classList.add('clock-blink');
                         playRandomAlarmSound();
@@ -560,14 +494,11 @@ function updateHourglass(progress, timerMode) {
                     const frac = remaining / timerTotalMs;
                     arc.style.strokeDashoffset = circumference * (1 - frac);
 
-<<<<<<< HEAD
                     // ── Hourglass (timer mode) ──
                     if (animStyle === 'hourglass') {
                         updateHourglass(1 - frac, true);
                     }
 
-=======
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
                     const totalSecs = Math.ceil(remaining / 1000);
                     if (totalSecs !== lastSec) {
                         lastSec = totalSecs;

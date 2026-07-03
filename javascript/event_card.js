@@ -534,10 +534,6 @@ function drawCard(ctx, w, h, isExport) {
         ctx.font        = '400 ' + dateSz + 'px HaraldMono, monospace';
         ctx.fillStyle   = S.dateColor;
         ctx.textAlign   = S.align; // <-- NEW: Center / Right alignment applied
-<<<<<<< HEAD
-=======
-        ctx.textAlign   = S.align; // <-- NEW: Center / Right alignment applied
->>>>>>> 285f75cd7440e0b1dab144305a5e77fd6508707c
         try { ctx.letterSpacing = (dateSz * STYLE.tracking) + 'px'; } catch(e){}  
         ctx.fillText(dateStr, titleX, initialY + dateSz * 0.9);
 
