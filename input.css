@@ -353,55 +353,6 @@ nav {
 }
 
 
-/* ===================================
-   Dot grid background M
-   =================================== */
-
-/* NOTE: @keyframes parallax-dots is defined once above (identical duplicate removed). */
-
-@layer components {
-  .bg-dot-grid_M {
-    position: relative;
-    isolation: isolate;
-    overflow: hidden; /* Important: keeps the moving dots inside the section */
-  }
-
-  .bg-dot-grid_M::before {
-    content: "";
-    position: absolute;
-    /* Make it taller than the section so it has room to slide */
-    inset: -120px 0; 
-    z-index: -10;
-    pointer-events: none;
-    
-    background-image: radial-gradient(circle, var(--dot-color) 1.5px, transparent 1.5px);
-    background-size: 20px 20px;
-    mask-image: radial-gradient(circle at center, black 20%, transparent 95%);
-
-/* 2. Link the animation to the scroll progress */
-    animation: parallax-dots linear both;
-    animation-timeline: view();
-    animation-range: entry 0% exit 100%;
-    
-    will-change: transform;
-  }
-/* CORRECT - checks for view() support */
-@supports not (animation-timeline: view()) {
-  .bg-dot-grid_M::before {
-    animation: none !important;
-    transform: translateY(0) !important;
-  }
-}
-  /* Dot colors */
-  .bg-dot-grid_M {
-    --dot-color: rgba(0, 0, 0, 0.12);
-  }
-  @media (prefers-color-scheme: dark) {
-    .bg-dot-grid_M {
-      --dot-color: rgba(255, 255, 255, 0.1);
-    }
-  }
-}
 
 
 
