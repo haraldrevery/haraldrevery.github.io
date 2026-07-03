@@ -4,6 +4,7 @@ information/
 notebook.html
 
 # Ignore your static files so Eleventy doesn't try to process them
+404.html
 index.html
 music.html
 about.html
