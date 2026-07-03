@@ -99,6 +99,7 @@
     --katex-font-size: 0.7em;
     --text-line-row-space: 1.24;
     --tracking-body: 0.029em;
+    --color-brand: #0f3d81;
   }
 }
 @layer base {
@@ -3692,7 +3693,7 @@ nav {
   stroke: #fff;
 }
 .gbtn.focused {
-  outline: 2px solid #0f3d81;
+  outline: 2px solid var(--color-brand);
 }
 iframe.wait-autoplay {
   opacity: 0;

@@ -14,8 +14,8 @@
   --text-line-row-space: 1.24;   /* space between the rows/lines of text */
   --tracking-body: 0.029em;     /* global letter-spacing (space between characters/letters)*/
 
-  /* Layout Spacing */
-  --spacing-container-px: 5%; 
+  /* Colors */
+  --color-brand: #0f3d81;       /* accent / focus-outline blue */
 
   /* Breakpoints and Animations */
   --breakpoint-md: 768px;

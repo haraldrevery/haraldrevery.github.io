@@ -1816,7 +1816,7 @@ nav {
 }
 
 .gbtn.focused {
-  outline: 2px solid #0f3d81;
+  outline: 2px solid var(--color-brand);
 }
 
 iframe.wait-autoplay {
