@@ -251,6 +251,61 @@ module.exports = function(eleventyConfig) {
   // Build timestamp (used as <lastmod> for generated tag pages)
   eleventyConfig.addGlobalData("buildDate", () => new Date());
 
+  // Article outline (no client JS): inject id="" into <h2>/<h3> so anchor links work.
+  // Runs at build time on rendered markdown HTML. Respects an existing id (e.g. from
+  // markdown-it-attrs) and de-duplicates slugs so every id is unique.
+  eleventyConfig.addFilter("addAnchors", (content) => {
+    if (!content) return content;
+    const seen = {};
+    const toSlug = (s) => s
+      .replace(/<[^>]+>/g, "")      // strip inline tags
+      .toLowerCase()
+      .replace(/&[a-z]+;/g, "")     // drop HTML entities
+      .replace(/[^\w\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
+    return content.replace(/<h([23])([^>]*)>([\s\S]*?)<\/h\1>/g, (m, level, attrs, inner) => {
+      if (/\bid\s*=/.test(attrs)) return m;            // keep author-supplied id
+      let base = toSlug(inner) || "section";
+      let slug = base, i = 1;
+      while (seen[slug]) { i++; slug = `${base}-${i}`; }
+      seen[slug] = true;
+      return `<h${level}${attrs} id="${slug}">${inner}</h${level}>`;
+    });
+  });
+
+  // Build a nested <ul> outline (H2 with H3 nested) from already-anchored content.
+  // Reads the real id="" values so it always matches addAnchors. Returns "" when
+  // there are fewer than 2 headings (so the toggle can be hidden on short posts).
+  eleventyConfig.addFilter("toc", (content) => {
+    if (!content) return "";
+    const heads = [];
+    const re = /<h([23])[^>]*\bid="([^"]+)"[^>]*>([\s\S]*?)<\/h\1>/g;
+    let m;
+    while ((m = re.exec(content)) !== null) {
+      heads.push({ level: +m[1], id: m[2], text: m[3].replace(/<[^>]+>/g, "").trim() });
+    }
+    if (heads.length < 2) return "";
+    let html = '<ul class="article-outline-list">';
+    let openLi = false, openSub = false;
+    for (const h of heads) {
+      if (h.level === 2) {
+        if (openSub) { html += "</ul>"; openSub = false; }
+        if (openLi) { html += "</li>"; openLi = false; }
+        html += `<li><a href="#${h.id}">${h.text}</a>`;
+        openLi = true;
+      } else {
+        if (!openLi) { html += `<li><a href="#${h.id}">${h.text}</a></li>`; continue; }
+        if (!openSub) { html += '<ul class="article-outline-sublist">'; openSub = true; }
+        html += `<li><a href="#${h.id}">${h.text}</a></li>`;
+      }
+    }
+    if (openSub) html += "</ul>";
+    if (openLi) html += "</li>";
+    return html + "</ul>";
+  });
+
   // 5. Process and copy html_extras files to notebook_pages (strip frontmatter)
   eleventyConfig.on('eleventy.before', async () => {
     const outputDir = './notebook_pages';

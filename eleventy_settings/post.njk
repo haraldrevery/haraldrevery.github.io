@@ -1,6 +1,22 @@
 ---
 layout: base.njk
 ---
+{% set body = content | addAnchors %}
+{% set outline = body | toc %}
+
+{% if outline %}
+{# No-JS article outline: hidden checkbox drives the toggle; visible by default #}
+<input type="checkbox" id="article-outline-toggle" class="article-outline-toggle" checked>
+<aside class="article-outline-panel">
+    <p class="article-outline-heading">On this page</p>
+    {{ outline | safe }}
+</aside>
+<label for="article-outline-toggle" class="article-outline-btn" title="Toggle outline" aria-label="Toggle outline">
+    <span class="article-outline-icon-open" aria-hidden="true">☰</span>
+    <span class="article-outline-icon-close" aria-hidden="true">✕</span>
+</label>
+{% endif %}
+
 <div class="page-container pt-24 pb-12 extra_fade_effect">
     <article class="mx-auto">
         
@@ -20,7 +36,7 @@ layout: base.njk
         </div>
         
         <div class="prose prose-lg max-w-none text-zinc-900 dark:text-white">
-            {{ content | safe }}
+            {{ body | safe }}
         </div>
         
     </article>
