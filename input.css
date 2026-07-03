@@ -832,7 +832,7 @@ nav {
 
 /* Fading Words Animation (No-JS) */
 .text-container {
-  opacity: 1 !important;
+  opacity: 1;
 }
 
 /* Fading Words Animation */
@@ -1097,7 +1097,7 @@ nav {
             max-width: 81vw;
             will-change: transform;
             transform-style: preserve-3d;
-            overflow: visible !important;
+            overflow: visible;
             pointer-events: auto;
         }
 
