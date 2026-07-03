@@ -187,7 +187,7 @@ class App(tk.Tk):
         self.image_var.trace_add("write", lambda *a: self.meta.__setitem__("image", self.image_var.get()))
         ttk.Button(imgrow, text="Pick…", command=self._pick_card_image).pack(side="left", padx=4)
         self.draft_var = tk.BooleanVar(value=bool(self.meta.get("draft", False)))
-        ttk.Checkbutton(top, text="Draft (build unlisted — not shown in the Notebook index)",
+        ttk.Checkbutton(top, text="Draft (Eleventy skips it — no page is built; the source file stays)",
                         variable=self.draft_var,
                         command=lambda: self.meta.__setitem__("draft", self.draft_var.get())).pack(anchor="w", pady=2)
 

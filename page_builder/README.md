@@ -20,7 +20,8 @@ tkinter 8.6). On a bare Linux box you may need `sudo apt install python3-tk`.
 ## How to use
 1. **Page details** (top): title, date, tags, description, and the card image
    (the thumbnail shown on the Notebook index — "Pick…" grabs the `_min`).
-   Tick **Draft** to build the page *unlisted* (not shown in the index/sitemap).
+   Tick **Draft** and Eleventy will skip the page entirely (no page is built /
+   copied to `notebook_pages/`); the source file stays so you can keep editing.
 2. **Blocks** (left): **+ Add** a block, reorder with ↑ / ↓, **Dup**licate, **Del**ete.
 3. **Block editor** (right): fill the selected block's fields.
    - **Photo gallery** → "Add images from repo…" multi-selects photos; each gets
