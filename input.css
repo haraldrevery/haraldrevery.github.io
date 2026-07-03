@@ -889,14 +889,10 @@ nav {
 
 
 
-/* A container to just put fading elements in */
-@keyframes extra_fade_effect_long {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
-
+  /* extra_fade_effect_long: identical fade to .extra_fade_effect (shares its
+     keyframe), just delayed. */
   .extra_fade_effect_long {
-    animation: extra_fade_effect_long 1.2s ease-in forwards;
+    animation: extra_fade_effect 1.2s ease-in forwards;
     opacity: 0;
     animation-delay: 2.8s; /* 2800ms delay */
   }

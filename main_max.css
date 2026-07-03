@@ -2968,16 +2968,8 @@ nav {
   animation: extra_fade_effect 1.2s ease-in forwards;
   opacity: 0;
 }
-@keyframes extra_fade_effect_long {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
 .extra_fade_effect_long {
-  animation: extra_fade_effect_long 1.2s ease-in forwards;
+  animation: extra_fade_effect 1.2s ease-in forwards;
   opacity: 0;
   animation-delay: 2.8s;
 }
