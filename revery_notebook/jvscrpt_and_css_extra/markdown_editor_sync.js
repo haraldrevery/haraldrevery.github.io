@@ -1,6 +1,37 @@
 // editor-sync.js
+
+/* NEW GUARD: Catch middle-clicks (which often bypass standard click listeners) */
+preview.addEventListener('auxclick', function (e) {
+  const linkEl = e.target.closest('a');
+  if (linkEl) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+});
+
 /* ── Updated: Preview → Editor : click to highlight source block ───────────────────── */
 preview.addEventListener('click', function (e) {
+
+  // NEW GUARD: Intercept and disable all link navigation to prevent app from acting like a browser
+  const linkEl = e.target.closest('a');
+  if (linkEl) {
+    e.preventDefault();  // Stops the webview from navigating to the URL
+    e.stopPropagation(); // Stops your editor from jumping around
+    
+    // Optional UX: Flash a safe, existing UI warning so the user isn't confused why the link is dead
+    if (typeof window.showStatusWarning === 'function') {
+      window.showStatusWarning('link-blocked',
+        'External links are disabled.',
+        { priority: 10, ttl: 3000 });
+    }
+    return; // Exit early, do nothing else
+  }
+
+  // Prevent crashes if the user clicks a broken image or a raw media file wrapper
+  if (e.target.tagName === 'IMG' || window._showingUnsupportedFile) {
+    return;
+  }
+
   const raw = editor.value;
 /* NEW: Check if an individual YAML pill was clicked */
   const pillEl = e.target.closest('.yaml-pill');
@@ -147,7 +178,9 @@ window.triggerForcedSync = function() {
   clearTimeout(forcedSyncTimer);
   // Use the same user‑adjustable delay as the main render debounce.
   // Fallback to 1000ms if renderDelay is undefined (should never happen).
-  const delay = (typeof renderDelay !== 'undefined') ? renderDelay : 1000;
+  // Slow hardware mode applies the same 400 ms floor as the main render.
+  let delay = (typeof renderDelay !== 'undefined') ? renderDelay : 1000;
+  if (window.slowHardwareMode) delay = Math.max(delay, 400);
   forcedSyncTimer = setTimeout(() => {
     window.forceSyncToCursor();
   }, delay);

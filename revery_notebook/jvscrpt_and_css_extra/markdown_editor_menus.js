@@ -9,13 +9,14 @@ const logoDropdown    = document.getElementById('logo-dropdown');
 
 window.forcedSyncEnabled = false; // New Forced Sync state
 let rightClickDisabled = true; // New right click setting state
+let lineNumbersVisible = false; // Line number visibility state
 let previewVisible = true;
 let wordCountVisible = false; // Word count visibility state
 window.centerHeaders = true; // Center align headings in preview
 let mobileView = false;
 let readerMode = false;
 let outlineVisible = false; // Outline navigation panel (toggled via Settings)
-let themeMode = 'system'; // 'system', 'light', 'dark'
+let themeMode = 'system'; // 'system', 'light', 'dark', 'paper', 'forest'
 
 let uiSize  = 140; // UI menu font scale in %, applied to <html> (90–200 in 10% steps)
 let editorTextSize = 150; // Editor textarea font scale in %
@@ -29,24 +30,32 @@ let editorFontType = 'harald'; // Editor font style ('harald' is default)
 let previewFontType = 'harald'; // Preview font style ('harald' is default)
 let uiLanguage = window.uiLanguage; // UI Language setting (synced from lang.js)
 let selectedBackground = 'bg_6'; // Active background image key
+let slowHardwareMode = false;    // One switch for older machines — see setSlowHardwareMode
+let backgroundOpacity = null;    // null = per-theme CSS default; number 0.01–1 overrides
+let livePreviewMode = false;     // Obsidian-style in-editor rendering — see setLivePreviewMode
+const CUSTOM_BG_KEY = 'revery_custom_bg'; // data: URL of an imported background (outside the settings JSON)
+window.slowHardwareMode = false; // Mirror read by core/sync/native_api/sidebar at call time
+let editorBgGradient = false;     // true = gradient fade, false = solid colour
+let logoPosition = 'center';      // top bar logo: 'center' | 'left' (Advanced Options)
 
 /* ── Background image options ─────────────────────────────────────────────
    To add a new background: append a new entry to this array.
    { label: 'Display Name', val: 'unique-key', url: '/path/to/image.jpg' }  */
 const BACKGROUND_OPTIONS = [
   { label: 'None',        val: 'none',   url: null },
-  { label: 'Galdhøpiggen', val: 'bg_1',   url: '/revery_notebook/image_assets/bg_1_web.jpg' },
-  { label: 'Rocks',     val: 'bg_2',   url: '/revery_notebook/image_assets/bg_2_web.jpg'  },
-  { label: 'Matterhorn',  val: 'bg_3',   url: '/revery_notebook/image_assets/bg_3_web.jpg'  },
-  { label: 'Alpern',      val: 'bg_4',   url: '/revery_notebook/image_assets/bg_4_web.jpg'  },
-  { label: 'Grass',       val: 'bg_5',   url: '/revery_notebook/image_assets/bg_5_web.jpg'  },
-  { label: 'Tree',        val: 'bg_6',   url: '/revery_notebook/image_assets/bg_6_web.jpg'  },
-  { label: 'Tjurpannan',        val: 'bg_7',   url: '/revery_notebook/image_assets/bg_7_web.jpg'  }
+  { label: 'Galdhøpiggen', val: 'bg_1',   url: '../image_assets/bg_1_max.jpg' },
+  { label: 'Rocks',     val: 'bg_2',   url: '../image_assets/bg_2_max.jpg'  },
+  { label: 'Matterhorn',  val: 'bg_3',   url: '../image_assets/bg_3_max.jpg'  },
+  { label: 'Alpern',      val: 'bg_4',   url: '../image_assets/bg_4_max.jpg'  },
+  { label: 'Grass',       val: 'bg_5',   url: '../image_assets/bg_5_max.jpg'  },
+  { label: 'Tree',        val: 'bg_6',   url: '../image_assets/bg_6_max.jpg'  },
+  { label: 'Tjurpannan',        val: 'bg_7',   url: '../image_assets/bg_7_max.jpg'  }
 ];
 
 /* ── Settings Persistence ─────────────────────────────────────────────── */
 window.saveEditorSettings = function() {
   const settings = {
+    lineNumbersVisible,
     forcedSyncEnabled: window.forcedSyncEnabled, rightClickDisabled, previewVisible, wordCountVisible, mobileView, readerMode, outlineVisible,
     uiSize, editorTextSize, previewTextSize, outlineFontSize, readerPadding, editorPadding, editorFontType, previewFontType, uiLanguage,
     currentDateFormat: window.currentDateFormat,
@@ -55,17 +64,25 @@ window.saveEditorSettings = function() {
     filenameFormat: window.filenameFormat,
     renderDelay: typeof renderDelay !== 'undefined' ? renderDelay : 50,
     savedEditorWidth: window.savedEditorWidth || '',
+    savedSidebarWidth: window.savedSidebarWidth || '',
     centerHeaders: window.centerHeaders,
     selectedBackground,
-    themeMode
+    themeMode,
+    editorBgGradient,
+    slowHardwareMode,
+    backgroundOpacity,
+    livePreviewMode,
+    logoPosition
   };
 
   try {
     localStorage.setItem('revery_md_settings', JSON.stringify(settings));
   } catch (e) {
-    if ((e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') && sizeWarning) {
-      sizeWarning.style.display = 'inline';
-      sizeWarning.textContent = 'Storage full! Settings could not be saved. Export your file to free up space.';
+    if ((e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')
+        && typeof window.showStatusWarning === 'function') {
+      window.showStatusWarning('storage-full',
+        'Storage full! Settings could not be saved. Export your file to free up space.',
+        { priority: 100 });
     }
   }
 };
@@ -76,6 +93,12 @@ function loadEditorSettings() {
     const stored = localStorage.getItem('revery_md_settings');
     if (stored) {
       const s = JSON.parse(stored);
+      if (s.lineNumbersVisible !== undefined) {
+        lineNumbersVisible = s.lineNumbersVisible;
+        if (typeof window.setLineNumbersVisible === 'function') {
+          window.setLineNumbersVisible(lineNumbersVisible);
+        }
+      }
       if (s.forcedSyncEnabled !== undefined) window.forcedSyncEnabled = s.forcedSyncEnabled;
       if (s.rightClickDisabled !== undefined) rightClickDisabled = s.rightClickDisabled;
       if (s.previewVisible !== undefined) previewVisible = s.previewVisible;
@@ -109,9 +132,20 @@ function loadEditorSettings() {
         // Only accept pixel or percentage values; discard anything else
         if (/^\d+(\.\d+)?(px|%)$/.test(w)) window.savedEditorWidth = w;
       }
+      if (s.savedSidebarWidth !== undefined) {
+        const sw = String(s.savedSidebarWidth);
+        if (/^\d+(\.\d+)?px$/.test(sw)) window.savedSidebarWidth = sw;
+      }
     if (s.centerHeaders !== undefined) window.centerHeaders = s.centerHeaders;
     if (s.selectedBackground !== undefined) selectedBackground = s.selectedBackground;
+    if (s.slowHardwareMode !== undefined) { slowHardwareMode = !!s.slowHardwareMode; window.slowHardwareMode = slowHardwareMode; }
+    if (typeof s.backgroundOpacity === 'number' && s.backgroundOpacity > 0 && s.backgroundOpacity <= 1) {
+      backgroundOpacity = s.backgroundOpacity;
+    }
+    if (s.livePreviewMode !== undefined) livePreviewMode = !!s.livePreviewMode;
     if (s.themeMode !== undefined) themeMode = s.themeMode;
+    if (s.editorBgGradient !== undefined) editorBgGradient = s.editorBgGradient;
+    if (s.logoPosition === 'left' || s.logoPosition === 'center') logoPosition = s.logoPosition;
     }
   } catch (e) {}
 }
@@ -145,7 +179,8 @@ window.applyDOMTranslations = function() {
   updateTxt('#btn-export .btn-label-mobile', 'Export');
   updateTxt('#editor-pane .pane-label', 'Markdown');
   updateTxt('#preview-pane .pane-label', 'Preview');
-  updateTxt('#outline-pane .pane-label', 'Outline');
+  // Target the title span only — the pane label also hosts the +/- font buttons.
+  updateTxt('#outline-pane-title', 'Outline');
   updateTxt('#preview-empty span', 'Nothing here yet');
   
   updateTitle('#btn-logo', 'Harald Revery — Menu');
@@ -285,6 +320,31 @@ if (guideModalContent) {
 const guideTitle = document.querySelector('#user-guide-modal .modal-content h3');
 if (guideTitle) guideTitle.textContent = window.t('User Guide');
 // Refresh word counter to apply the new language
+
+
+  updateTxt('#sidebar-folder-name', 'No folder open');
+  const sidebarButtons = [
+    { id: 'sidebar-projects-btn',   titleKey: 'Switch project…' },
+    { id: 'sidebar-open-folder',    titleKey: 'Open folder…' },
+    { id: 'sidebar-new-file',       titleKey: 'New .md file in root folder' },
+    { id: 'sidebar-new-folder',     titleKey: 'New folder in root folder' },
+    { id: 'sidebar-search-btn',     titleKey: 'Search project (Ctrl+Shift+F)' },
+    { id: 'sidebar-view-btn',       titleKey: 'Switch to card view' },
+    { id: 'sidebar-sort-btn',       titleKey: 'Sort files…' },
+    { id: 'sidebar-card-smaller',   titleKey: 'Smaller cards' },
+    { id: 'sidebar-card-larger',    titleKey: 'Larger cards' }
+  ];
+  updateTitle('#btn-sidebar', 'Open project folder');
+  updateTitle('#btn-sidebar-mobile', 'Open project folder');
+  updateTitle('#win-btn-min', 'Minimize');
+  updateTitle('#win-btn-max', 'Maximize / Restore');
+  updateTitle('#win-btn-close', 'Close');
+  sidebarButtons.forEach(({ id, titleKey }) => {
+    const el = document.getElementById(id);
+    if (el) el.title = window.t(titleKey);
+  });
+
+
 countWords();
 };
 
@@ -326,6 +386,26 @@ function applyOutlineFontSize() {
   document.documentElement.style.setProperty('--outline-font-size', ((0.76 * scale) / uiScale).toFixed(3) + 'rem');
 }
 
+/* Canonical setter — shared by the Settings submenu and the +/- buttons
+   on the outline panel. Clamps to the submenu's own range, persists,
+   and keeps the Settings checkmark in sync. Touches ONLY the outline
+   font variable, nothing else in the UI. */
+window.setOutlineFontSize = function (pct) {
+  outlineFontSize = Math.max(70, Math.min(240, Math.round(pct / 10) * 10));
+  applyOutlineFontSize();
+  if (typeof window.saveEditorSettings === 'function') window.saveEditorSettings();
+  if (typeof buildSettingsMenu === 'function') buildSettingsMenu();
+};
+window.getOutlineFontSize = function () { return outlineFontSize; };
+
+/* The +/- buttons on the outline panel header. */
+(function initOutlineSizeButtons() {
+  const plus  = document.getElementById('outline-font-plus');
+  const minus = document.getElementById('outline-font-minus');
+  if (plus)  plus.addEventListener('click',  (e) => { e.stopPropagation(); window.setOutlineFontSize(outlineFontSize + 10); });
+  if (minus) minus.addEventListener('click', (e) => { e.stopPropagation(); window.setOutlineFontSize(outlineFontSize - 10); });
+})();
+
 /* Apply UI size: injects a <style> override that counteracts the root
    font-size change for prose headings, which use hardcoded rem values in
    prose.css (h1=3rem, h2=1.875rem) and the prose-lg base (1.125rem) that
@@ -344,10 +424,12 @@ function applyUiSizeProseCompensation() {
   }
   const inv    = (1 / (uiSize / 100)).toFixed(4);
   const tScale = (previewTextSize / 100).toFixed(4);
+  /* .lp-render is the live preview's rendered-block scope: it must get
+     the exact same compensation or its headings drift from the preview. */
   styleEl.textContent = [
-    `#preview .prose h1       { font-size: calc(3rem      * ${inv} * ${tScale}); }`,
-    `#preview .prose h2       { font-size: calc(1.875rem  * ${inv} * ${tScale}); }`,
-    `#preview .prose.prose-lg { font-size: calc(1.125rem  * ${inv} * ${tScale}); }`
+    `:is(#preview, .lp-render) .prose h1       { font-size: calc(3rem      * ${inv} * ${tScale}); }`,
+    `:is(#preview, .lp-render) .prose h2       { font-size: calc(1.875rem  * ${inv} * ${tScale}); }`,
+    `:is(#preview, .lp-render) .prose.prose-lg { font-size: calc(1.125rem  * ${inv} * ${tScale}); }`
   ].join('\n');
 }
 
@@ -418,8 +500,26 @@ applyEditorPadding();
 
 
 
-/* Apply background image to the preview area via CSS variable */
+/* Apply background image to the preview area via CSS variable.
+   Slow hardware mode suppresses the image (large JPEG decode + composite)
+   without touching the user's selectedBackground choice — turning the mode
+   off restores their background.                                          */
 function applyBackground() {
+  if (slowHardwareMode) {
+    document.documentElement.style.removeProperty('--preview-bg-image');
+    return;
+  }
+  if (selectedBackground === 'custom') {
+    let dataUrl = null;
+    try { dataUrl = localStorage.getItem(CUSTOM_BG_KEY); } catch (_) {}
+    if (dataUrl) {
+      document.documentElement.style.setProperty('--preview-bg-image', `url("${dataUrl}")`);
+    } else {
+      /* The stored image is gone (storage cleared) — fall back to none. */
+      document.documentElement.style.removeProperty('--preview-bg-image');
+    }
+    return;
+  }
   const opt = BACKGROUND_OPTIONS.find(o => o.val === selectedBackground);
   if (!opt || opt.val === 'none') {
     document.documentElement.style.removeProperty('--preview-bg-image');
@@ -428,7 +528,262 @@ function applyBackground() {
   }
 }
 
-/* Apply Custom Font Types via CSS Variables */
+/* ── Background opacity ────────────────────────────────────────────────
+   The stylesheet simulates image opacity per theme with an overlay
+   gradient driven by --bg_oacity (the historical variable name is
+   missing its 'p' — kept for compatibility with all existing CSS).
+   Only override when the user picked a value; otherwise each theme's
+   own subtle default applies, so existing setups look unchanged.      */
+window.setBackgroundOpacity = function (v) {
+  backgroundOpacity = (typeof v === 'number' && v > 0 && v <= 1) ? v : null;
+  if (backgroundOpacity !== null) {
+    document.documentElement.style.setProperty('--bg_oacity', String(backgroundOpacity));
+  } else {
+    document.documentElement.style.removeProperty('--bg_oacity');
+  }
+  if (typeof window.saveEditorSettings === 'function') window.saveEditorSettings();
+};
+
+/* ── Custom background import ──────────────────────────────────────────
+   The imported image is stored as a data: URL in localStorage — never
+   the filesystem — so it behaves identically in web, Electron and Tauri
+   and cannot interact with any file-safety code path. The picker
+   downscales through a canvas so the stored string stays small.       */
+window.applyCustomBackgroundImage = function (dataUrl) {
+  try {
+    localStorage.setItem(CUSTOM_BG_KEY, dataUrl);
+  } catch (e) {
+    if (typeof window.showStatusWarning === 'function') {
+      window.showStatusWarning('storage-full',
+        'Storage full! The image is too large to keep as a background.',
+        { priority: 100, ttl: 5000 });
+    }
+    return false;
+  }
+  selectedBackground = 'custom';
+  applyBackground();
+  if (typeof window.saveEditorSettings === 'function') window.saveEditorSettings();
+  return true;
+};
+
+window.removeCustomBackgroundImage = function () {
+  try { localStorage.removeItem(CUSTOM_BG_KEY); } catch (_) {}
+  if (selectedBackground === 'custom') selectedBackground = 'bg_6';
+  applyBackground();
+  if (typeof window.saveEditorSettings === 'function') window.saveEditorSettings();
+};
+
+function importCustomBackgroundFile(file) {
+  if (!file || !file.type || !file.type.startsWith('image/')) return;
+  /* Read via FileReader into a data: URL — NOT URL.createObjectURL. The
+     img-src CSP (both wrappers and the web deploy) allows data: but not
+     blob:, so a blob-URL image silently fails to decode. That was the
+     bug in the first version of this feature.                          */
+  const reader = new FileReader();
+  reader.onerror = () => console.warn('[Background] Could not read the chosen file.');
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX_DIM = 2560; // plenty for a behind-text background
+      const scale = Math.min(1, MAX_DIM / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+      const w = Math.max(1, Math.round((img.naturalWidth  || 1) * scale));
+      const h = Math.max(1, Math.round((img.naturalHeight || 1) * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      let dataUrl;
+      try {
+        dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      } catch (e) {
+        console.warn('[Background] Could not re-encode the image:', e);
+        return;
+      }
+      if (window.applyCustomBackgroundImage(dataUrl)) {
+        /* The per-theme default overlay leaves the image at ~3%
+           visibility — right for the built-in textures, invisible for a
+           photo the user just imported. Give a clearly visible starting
+           point; the Background opacity submenu tunes it from there.  */
+        if (backgroundOpacity === null) window.setBackgroundOpacity(0.35);
+        buildSettingsMenu();
+      }
+    };
+    img.onerror = () => console.warn('[Background] Could not decode the chosen image.');
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ── Slow hardware mode ────────────────────────────────────────────────
+   One switch for older machines (slow HDD, low RAM, weak CPU/GPU). It
+   only reduces work FREQUENCY and visual load — every disk write keeps
+   the exact same atomic-write + fsync durability guarantees. Effects:
+     • sidebar auto-save debounce 1.5s→4s, forced save 10s→20s
+     • crash-backup debounce 2s→5s, forced backup 15s→30s (native_api)
+       (worst case lost typing on a hard crash grows from ~2s to ~5s)
+     • preview render delay floored at 400 ms (user setting untouched)
+     • background image disabled (solid color)
+     • file-card text previews and image thumbnails skipped
+     • tree renders in smaller chunks so slow CPUs stay responsive
+   Everything reads window.slowHardwareMode at call time, so toggling
+   takes effect immediately — no restart needed.                        */
+window.setSlowHardwareMode = function (on) {
+  slowHardwareMode = !!on;
+  window.slowHardwareMode = slowHardwareMode;
+  document.body.classList.toggle('slow-hw-active', slowHardwareMode);
+  applyBackground();
+  if (typeof window.saveEditorSettings === 'function') window.saveEditorSettings();
+};
+
+/* ── Live Preview (experimental) ───────────────────────────────────────
+   Obsidian-style: formatting renders inside the editor and the side
+   preview pane hides (CSS body class — the user's own previewVisible
+   choice is untouched underneath and returns on toggle-off). The editor
+   extension is installed through the cm_setup compartment; decorations
+   are display-only, so the document text, saving and undo are never
+   affected. See LIVE_PREVIEW_DESIGN.md.                                */
+window.setLivePreviewMode = function (on) {
+  livePreviewMode = !!on;
+  window.livePreviewMode = livePreviewMode;
+  document.body.classList.toggle('live-preview-active', livePreviewMode);
+  if (typeof window.setLivePreviewExtension === 'function') {
+    window.setLivePreviewExtension(
+      (livePreviewMode && typeof window.buildLivePreviewExtension === 'function')
+        ? window.buildLivePreviewExtension()
+        : []
+    );
+  }
+  if (typeof window.saveEditorSettings === 'function') window.saveEditorSettings();
+};
+
+/* ── Custom fonts ─────────────────────────────────────────────────────────
+   User-added fonts for the Editor/Preview font menus. Two kinds:
+   - 'file'   → an imported .ttf/.otf/.woff/.woff2 stored as a data URL
+                (CSP already allows font-src data: in every shell) and
+                registered through ONE regenerated <style id="custom-fonts-css">
+                under a generated family name (RvCustom-<id>, so it can
+                never collide with a system font).
+   - 'system' → just an OS font family NAME — CSS resolves installed
+                fonts by name on every platform, no API needed.
+   Same store conventions as custom templates: versioned single key,
+   validated on load, caps, errors returned not thrown.                  */
+const CUSTOM_FONT_KEY = 'revery_custom_fonts';
+const CUSTOM_FONT_MAX = 8;
+const CUSTOM_FONT_MAX_BYTES = 4 * 1024 * 1024;      // raw file size
+const CUSTOM_FONT_EXT_RE = /\.(ttf|otf|woff2?)$/i;
+
+function _validCustomFont(f) {
+  return f && typeof f.id === 'string' && /^[a-z0-9-]{1,40}$/.test(f.id)
+    && typeof f.label === 'string' && f.label.trim() && f.label.length <= 40
+    && (f.kind === 'file' || f.kind === 'system')
+    && typeof f.family === 'string' && f.family.trim() && f.family.length <= 80
+    && (f.kind === 'system' || (typeof f.data === 'string' && f.data.startsWith('data:')));
+}
+
+function _loadCustomFonts() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CUSTOM_FONT_KEY) || '{}');
+    return (Array.isArray(raw.fonts) ? raw.fonts : []).filter(_validCustomFont);
+  } catch (e) {
+    console.warn('[fonts] custom-font storage unreadable, starting empty:', e);
+    return [];
+  }
+}
+
+function _saveCustomFonts(fonts) {
+  try {
+    localStorage.setItem(CUSTOM_FONT_KEY, JSON.stringify({ v: 1, fonts }));
+    return null;
+  } catch (e) {
+    return window.t('Could not save font (storage full?).');
+  }
+}
+
+/* One <style> holds every file-kind @font-face; regenerated wholesale so
+   create/delete can never leave stale faces behind. */
+function _applyCustomFontFaces() {
+  let styleEl = document.getElementById('custom-fonts-css');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'custom-fonts-css';
+    document.head.appendChild(styleEl);
+  }
+  styleEl.textContent = _loadCustomFonts()
+    .filter((f) => f.kind === 'file')
+    .map((f) => `@font-face { font-family: '${f.family}'; src: url('${f.data}'); font-display: swap; }`)
+    .join('\n');
+}
+
+/* Menu value 'custom:<id>' → CSS font-family stack, for applyFontTypes. */
+function _customFontMapEntries() {
+  const entries = {};
+  _loadCustomFonts().forEach((f) => {
+    entries['custom:' + f.id] = `"${f.family.replace(/"/g, '')}", sans-serif`;
+  });
+  return entries;
+}
+
+/** Add a custom font. { kind:'file'|'system', label, family?, data? }.
+    file-kind gets a generated collision-proof family; system-kind uses the
+    given family name. Returns {ok, id} or {ok:false, error}. */
+window.createCustomFont = function ({ kind, label, family, data } = {}) {
+  label = String(label || '').trim();
+  if (!label) return { ok: false, error: window.t('Font name is required.') };
+  if (label.length > 40) return { ok: false, error: window.t('Font name is too long.') };
+
+  const fonts = _loadCustomFonts();
+  if (fonts.length >= CUSTOM_FONT_MAX) return { ok: false, error: window.t('Too many custom fonts.') };
+  if (fonts.some((f) => f.label === label)) {
+    return { ok: false, error: window.t('A font with this name already exists.') };
+  }
+
+  const id = (label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'font')
+    .slice(0, 24) + '-' + Date.now().toString(36).slice(-4);
+  let entry;
+  if (kind === 'file') {
+    if (typeof data !== 'string' || !data.startsWith('data:')) {
+      return { ok: false, error: window.t('Unsupported font file type.') };
+    }
+    /* base64 ≈ 4/3 of raw bytes */
+    if (data.length > CUSTOM_FONT_MAX_BYTES * 1.4) {
+      return { ok: false, error: window.t('The font file is too large.') };
+    }
+    entry = { id, label, kind: 'file', family: 'RvCustom-' + id, data };
+  } else if (kind === 'system') {
+    family = String(family || '').trim();
+    if (!family) return { ok: false, error: window.t('Font name is required.') };
+    entry = { id, label, kind: 'system', family: family.slice(0, 80) };
+  } else {
+    return { ok: false, error: 'unknown kind' };
+  }
+
+  fonts.push(entry);
+  const err = _saveCustomFonts(fonts);
+  if (err) return { ok: false, error: err };
+
+  _applyCustomFontFaces();
+  applyFontTypes();
+  if (typeof buildSettingsMenu === 'function') buildSettingsMenu();
+  return { ok: true, id };
+};
+
+/** Remove a custom font; any slot using it reverts to the Harald default. */
+window.deleteCustomFont = function (id) {
+  const fonts = _loadCustomFonts();
+  const idx = fonts.findIndex((f) => f.id === id);
+  if (idx === -1) return { ok: false, error: 'not found' };
+  fonts.splice(idx, 1);
+  const err = _saveCustomFonts(fonts);
+  if (err) return { ok: false, error: err };
+
+  const val = 'custom:' + id;
+  if (editorFontType === val) editorFontType = 'harald';
+  if (previewFontType === val) previewFontType = 'harald';
+  _applyCustomFontFaces();
+  applyFontTypes();
+  window.saveEditorSettings();
+  if (typeof buildSettingsMenu === 'function') buildSettingsMenu();
+  return { ok: true };
+};
 
 /* Apply Custom Font Types via CSS Variables */
 function applyFontTypes() {
@@ -439,7 +794,8 @@ function applyFontTypes() {
     'mono': 'ui-monospace, "Courier New", monospace',
     'arial': 'Arial, Helvetica, sans-serif',
     'times': '"Times New Roman", Times, serif',
-    'courier': '"Courier New", Courier, monospace'
+    'courier': '"Courier New", Courier, monospace',
+    ..._customFontMapEntries()
   };
 
   if (editorFontType !== 'harald' && fontMap[editorFontType]) {
@@ -458,6 +814,13 @@ function applyFontTypes() {
     document.documentElement.style.setProperty('--katex-font-size', '0.7em');
   }
 
+  /* The Harald face has no real bold, so prose.css renders bold text as
+     underlined regular weight — but ONLY under this class. Any other preview
+     font falls through to normal bold (Tailwind's own strong weights).
+     Same branch condition as above, so the class always tracks the var. */
+  document.documentElement.classList.toggle('preview-font-harald',
+    !(previewFontType !== 'harald' && fontMap[previewFontType]));
+
   const outlineFontFamily = (previewFontType !== 'harald' && fontMap[previewFontType]) 
     ? fontMap[previewFontType] 
     : '';
@@ -466,6 +829,156 @@ function applyFontTypes() {
     document.documentElement.style.setProperty('--outline-font', outlineFontFamily);
   } else {
     document.documentElement.style.removeProperty('--outline-font');
+  }
+}
+
+/* ── Advanced Options ────────────────────────────────────────────────────
+   Small, generic settings registry + popup (logo dropdown → Advanced
+   Options). Each entry renders as a label row with ■/□ choice buttons —
+   adding a future option is ONE object here, no new UI code:
+     { label, choices: [[value, label], …], get(), set(value) }        */
+
+/* The logo (button + its dropdown, wrapped in one positioned div) lives in
+   #topbar-center by default; 'left' moves that wrapper to the front of
+   #topbar-left — left of the project-folder and File buttons. The wrapper
+   is position:relative, so the dropdown anchor travels with it; a body
+   class lets CSS re-anchor the dropdown at the screen edge. */
+function applyLogoPosition() {
+  const logoBtn = document.getElementById('btn-logo');
+  const center = document.getElementById('topbar-center');
+  const left = document.getElementById('topbar-left');
+  const dropdown = document.getElementById('logo-dropdown');
+  if (!logoBtn || !center || !left || !dropdown) return;
+  const wrap = logoBtn.parentElement;
+  if (logoPosition === 'left') {
+    if (wrap.parentElement !== left) left.insertBefore(wrap, left.firstChild);
+    document.body.classList.add('logo-left');
+    /* The dropdown's centering (left:50% + translateX) is an INLINE style
+       in index.html, so it must be overridden inline too (a stylesheet
+       rule always loses) — anchor to the wrapper's left edge so the menu
+       stays inside the viewport at the screen corner. */
+    dropdown.style.left = '0';
+    dropdown.style.transform = 'none';
+  } else {
+    if (wrap.parentElement !== center) center.appendChild(wrap);
+    document.body.classList.remove('logo-left');
+    dropdown.style.left = '50%';
+    dropdown.style.transform = 'translateX(-50%)';
+  }
+}
+
+window.setLogoPosition = function (pos) {
+  logoPosition = pos === 'left' ? 'left' : 'center';
+  applyLogoPosition();
+  window.saveEditorSettings();
+};
+
+const advancedOptions = [
+  {
+    label: 'Top bar logo position',
+    choices: [['center', 'Centered'], ['left', 'Left corner']],
+    get: () => logoPosition,
+    set: (v) => window.setLogoPosition(v),
+  },
+  /* Future advanced settings: append entries here. */
+];
+
+function openAdvancedOptions() {
+  const existing = document.getElementById('advanced-options-modal');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'advanced-options-modal';
+  overlay.className = 'modal-overlay show';
+
+  const content = document.createElement('div');
+  content.className = 'modal-content';
+
+  const heading = document.createElement('h3');
+  heading.textContent = window.t('Advanced Options');
+  content.appendChild(heading);
+
+  /* Each option renders as an app-style dropdown (same .export-dd classes
+     and ■/□ idiom the export modal uses), not stacked buttons. */
+  const closeMenus = () =>
+    content.querySelectorAll('.export-dd-menu.open').forEach((m) => m.classList.remove('open'));
+
+  advancedOptions.forEach((opt) => {
+    const row = document.createElement('div');
+    row.className = 'export-row';
+    const label = document.createElement('label');
+    label.textContent = window.t(opt.label);
+    row.appendChild(label);
+
+    const dd = document.createElement('div');
+    dd.className = 'export-dd';
+    const btn = document.createElement('button');
+    btn.className = 'export-dd-btn';
+    const menu = document.createElement('div');
+    menu.className = 'export-dd-menu';
+
+    const labelFor = () => {
+      const cur = opt.choices.find((c) => String(c[0]) === String(opt.get()));
+      return cur ? window.t(cur[1]) : String(opt.get());
+    };
+    const items = opt.choices.map(([value, choiceLabel]) => {
+      const item = document.createElement('button');
+      item.className = 'export-dd-item';
+      const paint = () => {
+        item.textContent = (String(value) === String(opt.get()) ? '■  ' : '□  ') + window.t(choiceLabel);
+      };
+      paint();
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        opt.set(value);
+        btn.textContent = labelFor() + '  ▾';
+        items.forEach((it) => it.paint());
+        menu.classList.remove('open');
+      });
+      item.paint = paint;
+      menu.appendChild(item);
+      return item;
+    });
+    btn.textContent = labelFor() + '  ▾';
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const wasOpen = menu.classList.contains('open');
+      closeMenus();
+      if (!wasOpen) menu.classList.add('open');
+    });
+    dd.appendChild(btn);
+    dd.appendChild(menu);
+    row.appendChild(dd);
+    content.appendChild(row);
+  });
+
+  /* Clicking anywhere in the modal that isn't a dropdown closes any open
+     dropdown (same behavior as the export modal). */
+  content.addEventListener('click', (e) => {
+    if (!e.target.closest('.export-dd')) closeMenus();
+  });
+
+  const buttons = document.createElement('div');
+  buttons.className = 'modal-buttons';
+  const close = document.createElement('button');
+  close.className = 'modal-btn';
+  close.textContent = window.t('Close');
+  close.onclick = () => overlay.remove();
+  buttons.appendChild(close);
+  content.appendChild(buttons);
+
+  overlay.appendChild(content);
+  overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+window.openAdvancedOptions = openAdvancedOptions;
+
+/* Apply editor background: gradient (default) or solid (uses --editor-bg-start) */
+function applyEditorBgStyle() {
+  if (editorBgGradient) {
+    document.documentElement.classList.remove('editor-bg-solid');
+  } else {
+    document.documentElement.classList.add('editor-bg-solid');
   }
 }
 
@@ -484,9 +997,17 @@ document.documentElement.style.fontSize = uiSize + '%';
 applyTextSize();
 applyOutlineFontSize();
 applyUiSizeProseCompensation();
+_applyCustomFontFaces(); // Register imported @font-face fonts before first paint
 applyFontTypes(); // Execute font assignment on boot
+applyLogoPosition(); // Restore the saved logo position on boot
 applyCenterHeaders(); // <-- ADD THIS LINE to apply the saved setting on page load
 applyBackground();
+applyEditorBgStyle();
+if (backgroundOpacity !== null) {
+  document.documentElement.style.setProperty('--bg_oacity', String(backgroundOpacity));
+}
+window.setSlowHardwareMode(slowHardwareMode); // sync body class + bg suppression on boot
+window.setLivePreviewMode(livePreviewMode);   // install editor extension + hide pane if saved on
 
 function applyLoadedStates() {
   // Apply visibility to preview and editor panes based on saved state
@@ -749,21 +1270,231 @@ function attachSubmenuHandlers(wrapper, sub) {
 
 
 
+/* ── Custom template creator ────────────────────────────────────────────
+   Small modal (same pattern/classes as the export modal): template name +
+   content textarea, Cancel / Create. Create goes through
+   window.createCustomTemplate (validation + persistence + menu rebuild);
+   on error the modal stays open and shows the message. */
+function openTemplateCreator(kind) {
+  const existing = document.getElementById('template-creator-modal');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'template-creator-modal';
+  overlay.className = 'modal-overlay show';
+
+  const content = document.createElement('div');
+  content.className = 'modal-content';
+
+  const heading = document.createElement('h3');
+  heading.textContent = window.t('New template…').replace(/…$/, '');
+  content.appendChild(heading);
+
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.className = 'export-text tmpl-name';
+  nameInput.placeholder = window.t('Template name');
+  content.appendChild(nameInput);
+
+  const textarea = document.createElement('textarea');
+  textarea.className = 'tmpl-textarea';
+  textarea.value = kind === 'yaml'
+    ? '---\ntitle: Title of document\nauthor: Mr. Revery\n---\n\n'
+    : '# Title\n\n';
+  content.appendChild(textarea);
+
+  const errNote = document.createElement('div');
+  errNote.className = 'tmpl-error';
+  content.appendChild(errNote);
+
+  const buttons = document.createElement('div');
+  buttons.className = 'modal-buttons';
+  const cancel = document.createElement('button');
+  cancel.className = 'modal-btn';
+  cancel.textContent = window.t('Cancel');
+  cancel.onclick = () => overlay.remove();
+  const create = document.createElement('button');
+  create.className = 'modal-btn modal-btn-primary';
+  create.textContent = window.t('Create');
+  create.onclick = () => {
+    const res = (typeof window.createCustomTemplate === 'function')
+      ? window.createCustomTemplate(kind, nameInput.value, textarea.value)
+      : { ok: false, error: 'unavailable' };
+    if (res.ok) { overlay.remove(); return; }
+    errNote.textContent = res.error || '';
+  };
+  buttons.appendChild(cancel);
+  buttons.appendChild(create);
+  content.appendChild(buttons);
+
+  overlay.appendChild(content);
+  overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+  nameInput.focus();
+}
+window.openTemplateCreator = openTemplateCreator;
+
+/* ── Custom font importer ────────────────────────────────────────────────
+   Popup for the font menus' "Custom font…" entry. Two sources:
+   - a font FILE (.ttf/.otf/.woff/.woff2 → data URL, works in every shell:
+     CSP already allows font-src data:), or
+   - an INSTALLED font, by name — CSS resolves installed families by name
+     on every platform; where the Chromium-only queryLocalFonts() API
+     exists (Electron) the input gains a datalist of real font names.
+   A sample line previews the pending font before adding. */
+function openFontImporter() {
+  const existing = document.getElementById('font-importer-modal');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'font-importer-modal';
+  overlay.className = 'modal-overlay show';
+  const content = document.createElement('div');
+  content.className = 'modal-content';
+
+  const heading = document.createElement('h3');
+  heading.textContent = window.t('Custom font…').replace(/…$/, '');
+  content.appendChild(heading);
+
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.className = 'export-text tmpl-name';
+  nameInput.placeholder = window.t('Font name');
+  content.appendChild(nameInput);
+
+  /* pending = what Add will submit. */
+  let pending = { kind: null, family: '', data: null };
+
+  /* Source A: font file. */
+  const fileBtn = document.createElement('button');
+  fileBtn.className = 'modal-btn';
+  fileBtn.textContent = window.t('Choose font file…');
+  const fileNote = document.createElement('span');
+  fileNote.className = 'font-imp-note';
+  fileBtn.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.ttf,.otf,.woff,.woff2';
+    input.onchange = () => {
+      const f = input.files && input.files[0];
+      if (!f) return;
+      if (!/\.(ttf|otf|woff2?)$/i.test(f.name)) { errNote.textContent = window.t('Unsupported font file type.'); return; }
+      if (f.size > 4 * 1024 * 1024) { errNote.textContent = window.t('The font file is too large.'); return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        pending = { kind: 'file', family: null, data: reader.result };
+        fileNote.textContent = f.name;
+        sysInput.value = '';
+        errNote.textContent = '';
+        if (!nameInput.value.trim()) nameInput.value = f.name.replace(/\.[^.]+$/, '');
+        /* Preview via a temporary face under a reserved family name. */
+        previewStyle.textContent =
+          `@font-face { font-family: 'RvCustomPreview'; src: url('${reader.result}'); font-display: swap; }`;
+        sample.style.fontFamily = "'RvCustomPreview', sans-serif";
+      };
+      reader.readAsDataURL(f);
+    };
+    input.click();
+  });
+  const fileRow = document.createElement('div');
+  fileRow.className = 'font-imp-row';
+  fileRow.appendChild(fileBtn);
+  fileRow.appendChild(fileNote);
+  content.appendChild(fileRow);
+
+  /* Source B: installed font by name (datalist where the API exists). */
+  const sysInput = document.createElement('input');
+  sysInput.type = 'text';
+  sysInput.className = 'export-text tmpl-name';
+  sysInput.placeholder = window.t('Installed font name');
+  const dl = document.createElement('datalist');
+  dl.id = 'font-importer-syslist';
+  sysInput.setAttribute('list', dl.id);
+  if (typeof window.queryLocalFonts === 'function') {
+    window.queryLocalFonts().then((fonts) => {
+      const seen = new Set();
+      fonts.forEach((f) => {
+        if (seen.has(f.family)) return;
+        seen.add(f.family);
+        const o = document.createElement('option');
+        o.value = f.family;
+        dl.appendChild(o);
+      });
+    }).catch(() => { /* permission denied / unavailable — typed name still works */ });
+  }
+  sysInput.addEventListener('input', () => {
+    const fam = sysInput.value.trim();
+    if (!fam) return;
+    pending = { kind: 'system', family: fam, data: null };
+    fileNote.textContent = '';
+    errNote.textContent = '';
+    if (!nameInput.value.trim()) nameInput.value = fam;
+    sample.style.fontFamily = `"${fam.replace(/"/g, '')}", sans-serif`;
+  });
+  content.appendChild(sysInput);
+  content.appendChild(dl);
+
+  const previewStyle = document.createElement('style');
+  content.appendChild(previewStyle);
+  const sample = document.createElement('div');
+  sample.className = 'font-imp-sample';
+  sample.textContent = 'AaBb ÅäÖ 0123 — The quick brown fox';
+  content.appendChild(sample);
+
+  const errNote = document.createElement('div');
+  errNote.className = 'tmpl-error';
+  content.appendChild(errNote);
+
+  const buttons = document.createElement('div');
+  buttons.className = 'modal-buttons';
+  const cancel = document.createElement('button');
+  cancel.className = 'modal-btn';
+  cancel.textContent = window.t('Cancel');
+  cancel.onclick = () => overlay.remove();
+  const add = document.createElement('button');
+  add.className = 'modal-btn modal-btn-primary';
+  add.textContent = window.t('Add');
+  add.onclick = () => {
+    if (!pending.kind) { errNote.textContent = window.t('Choose a font file or type an installed font name.'); return; }
+    const res = window.createCustomFont({
+      kind: pending.kind, label: nameInput.value, family: pending.family, data: pending.data,
+    });
+    if (res.ok) { overlay.remove(); return; }
+    errNote.textContent = res.error || '';
+  };
+  buttons.appendChild(cancel);
+  buttons.appendChild(add);
+  content.appendChild(buttons);
+
+  overlay.appendChild(content);
+  overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+  nameInput.focus();
+}
+window.openFontImporter = openFontImporter;
+
 // ── File Menu Definition ───────────────────────────────────────────────────
 const fileActions = [
   { label: 'New File', action: 'file_new' },
   { label: 'Import File', action: 'file_import' },
-  { type: 'submenu', label: 'Import Template ▸', items: typeof mdTemplates !== 'undefined' ? mdTemplates : [] },
+  { type: 'submenu', label: 'Import Template ▸', items: typeof mdTemplates !== 'undefined' ? mdTemplates : [], customKind: 'md' },
   { type: 'divider' },
   { label: 'Save as...', action: 'file_save_as' },
   { label: 'Export as .md', action: 'file_export_md' },
   { label: 'Export as .txt', action: 'file_export_txt' },
   { label: 'Export as .html', action: 'file_export_html' },
-  { label: 'Export as .tex', action: 'file_export_tex' }
+  { label: 'Export as .pdf', action: 'file_export_pdf' },
+  { label: 'LaTeX project (.zip)', action: 'file_export_tex' },
+  { type: 'divider', desktopOnly: true },
+  /* Whole-project zip export — desktop only (web mode has no project). */
+  { label: 'Zip Project Export', action: 'file_zip_export', desktopOnly: true }
 ];
 /* Populate Menus — supports submenus */
 function buildMenu(container, actions) {
   actions.forEach(item => {
+    /* Entries that need a native backend are omitted in web mode
+       (native_api.js loads in <head>, so isDesktop is settled here). */
+    if (item.desktopOnly && !(window.NativeAPI && window.NativeAPI.isDesktop)) return;
     if (item.type === 'divider') {
       const div = document.createElement('div');
       div.className = 'menu-divider';
@@ -783,15 +1514,46 @@ function buildMenu(container, actions) {
       item.items.forEach(subItem => {
         const subBtn = document.createElement('button');
         subBtn.className = 'menu-item';
-        subBtn.textContent = window.t(subItem.label);
+        /* User-authored template names are shown verbatim (not translated). */
+        subBtn.textContent = subItem.custom ? subItem.label : window.t(subItem.label);
         subBtn.onclick = (e) => {
           e.stopPropagation();
           insertWithUndo(0, 0, subItem.content);
           render();
           container.classList.remove('show');
         };
+        if (subItem.custom && item.customKind) {
+          const del = document.createElement('span');
+          del.className = 'tmpl-del';
+          del.textContent = '✕';
+          del.title = window.t('Delete template');
+          del.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!confirm(window.t('Delete template') + ` "${subItem.label}"?`)) return;
+            if (typeof window.deleteCustomTemplate === 'function') {
+              window.deleteCustomTemplate(item.customKind, subItem.label);
+            }
+          });
+          subBtn.appendChild(del);
+        }
         sub.appendChild(subBtn);
       });
+
+      /* Menus with a customKind offer creating a user template. */
+      if (item.customKind) {
+        const divi = document.createElement('div');
+        divi.className = 'menu-divider';
+        sub.appendChild(divi);
+        const newBtn = document.createElement('button');
+        newBtn.className = 'menu-item';
+        newBtn.textContent = window.t('New template…');
+        newBtn.onclick = (e) => {
+          e.stopPropagation();
+          container.classList.remove('show');
+          openTemplateCreator(item.customKind);
+        };
+        sub.appendChild(newBtn);
+      }
 
       wrapper.appendChild(sub);
       attachSubmenuHandlers(wrapper, sub);
@@ -848,6 +1610,28 @@ function buildSettingsMenu() {
     if (typeof window.saveEditorSettings === 'function') window.saveEditorSettings();
   };
   settingsDropdown.appendChild(wcBtn);
+
+
+// ── Toggle Line Numbers item
+  const lnBtn = document.createElement('button');
+  lnBtn.className = 'menu-item';
+  const lnCheck = document.createElement('span');
+  lnCheck.className = 'menu-item-check';
+  lnCheck.textContent = lineNumbersVisible ? '■' : '□';
+  lnBtn.appendChild(lnCheck);
+  lnBtn.appendChild(document.createTextNode(window.t('Show Line Numbers')));
+  lnBtn.onclick = (e) => {
+    e.stopPropagation();
+    lineNumbersVisible = !lineNumbersVisible;
+    if (typeof window.setLineNumbersVisible === 'function') {
+      window.setLineNumbersVisible(lineNumbersVisible);
+    }
+    settingsDropdown.classList.remove('show');
+    buildSettingsMenu();
+    if (typeof window.saveEditorSettings === 'function') window.saveEditorSettings();
+  };
+  settingsDropdown.appendChild(lnBtn);
+
 
 // ── Desktop-only toggles (hidden on real mobile screens)
   if (window.innerWidth > 820) {
@@ -1086,14 +1870,61 @@ const editorPaddingOptions = [
 
   // ── Editor Font Type Submenu
   const fontTypeOptions = [
-    { label: 'Harald Revery Font', val: 'harald' }, 
+    { label: 'Harald Revery Font', val: 'harald' },
     { label: 'System Sans-Serif',  val: 'sans' },
     { label: 'System Serif',       val: 'serif' },
     { label: 'System Monospace',   val: 'mono' },
     { label: 'Arial',              val: 'arial' },
     { label: 'Times New Roman',    val: 'times' },
-    { label: 'Courier New',        val: 'courier' }
+    { label: 'Courier New',        val: 'courier' },
+    /* User-imported fonts (labels shown verbatim, never translated). */
+    ..._loadCustomFonts().map((f) => ({ label: f.label, val: 'custom:' + f.id, customId: f.id }))
   ];
+
+  /* Shared row builder for both font submenus: standard select rows, a ✕
+     on custom rows (same idiom as custom templates), and a trailing
+     "Custom font…" row that opens the importer. */
+  const buildFontRows = (sub, getVal, setVal) => {
+    fontTypeOptions.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'menu-item';
+      btn.textContent = (getVal() === opt.val ? '■ ' : '  ')
+        + (opt.customId ? opt.label : window.t(opt.label));
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        setVal(opt.val);
+        applyFontTypes();
+        window.saveEditorSettings();
+        settingsDropdown.classList.remove('show');
+        buildSettingsMenu();
+      };
+      if (opt.customId) {
+        const del = document.createElement('span');
+        del.className = 'tmpl-del';
+        del.textContent = '✕';
+        del.title = window.t('Delete font');
+        del.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (!confirm(window.t('Delete font') + ` "${opt.label}"?`)) return;
+          window.deleteCustomFont(opt.customId);
+        });
+        btn.appendChild(del);
+      }
+      sub.appendChild(btn);
+    });
+    const divi = document.createElement('div');
+    divi.className = 'menu-divider';
+    sub.appendChild(divi);
+    const addBtn = document.createElement('button');
+    addBtn.className = 'menu-item';
+    addBtn.textContent = '  ' + window.t('Custom font…');
+    addBtn.onclick = (e) => {
+      e.stopPropagation();
+      settingsDropdown.classList.remove('show');
+      openFontImporter();
+    };
+    sub.appendChild(addBtn);
+  };
 
   const editorFontWrapper = document.createElement('div');
   editorFontWrapper.className = 'menu-item has-submenu';
@@ -1106,19 +1937,7 @@ const editorPaddingOptions = [
   editorFontSub.className = 'submenu';
   editorFontSub.style.display = 'none';
 
- fontTypeOptions.forEach(opt => {
-    const btn = document.createElement('button');
-    btn.className = 'menu-item';
-    btn.textContent = (editorFontType === opt.val ? '■ ' : '\u00a0\u00a0') + window.t(opt.label);
-    btn.onclick = (e) => {
-      e.stopPropagation();
-      editorFontType = opt.val;
-      applyFontTypes(); 
-      settingsDropdown.classList.remove('show');
-      buildSettingsMenu();
-    };
-    editorFontSub.appendChild(btn);
-  });
+ buildFontRows(editorFontSub, () => editorFontType, (v) => { editorFontType = v; });
 
   editorFontWrapper.appendChild(editorFontSub);
   attachSubmenuHandlers(editorFontWrapper, editorFontSub);
@@ -1166,19 +1985,7 @@ const editorPaddingOptions = [
   previewFontSub.className = 'submenu';
   previewFontSub.style.display = 'none';
 
-  fontTypeOptions.forEach(opt => {
-    const btn = document.createElement('button');
-    btn.className = 'menu-item';
-    btn.textContent = (previewFontType === opt.val ? '■ ' : '\u00a0\u00a0') + window.t(opt.label);
-    btn.onclick = (e) => {
-      e.stopPropagation();
-      previewFontType = opt.val;
-      applyFontTypes();
-      settingsDropdown.classList.remove('show');
-      buildSettingsMenu();
-    };
-    previewFontSub.appendChild(btn);
-  });
+  buildFontRows(previewFontSub, () => previewFontType, (v) => { previewFontType = v; });
 
   previewFontWrapper.appendChild(previewFontSub);
   attachSubmenuHandlers(previewFontWrapper, previewFontSub);
@@ -1204,10 +2011,8 @@ const editorPaddingOptions = [
     btn.textContent = (outlineFontSize === pct ? '■ ' : '\u00a0\u00a0') + pct + '%';
     btn.onclick = (e) => {
       e.stopPropagation();
-      outlineFontSize = pct;
-      applyOutlineFontSize();
+      window.setOutlineFontSize(pct); // canonical: applies + persists + resyncs
       settingsDropdown.classList.remove('show');
-      buildSettingsMenu();
     };
     outlineSizeSub.appendChild(btn);
   });
@@ -1217,11 +2022,13 @@ outlineSizeWrapper.appendChild(outlineSizeSub);
   settingsDropdown.appendChild(outlineSizeWrapper);
 
   // ── Theme Mode submenu
-  const themeOptions = [
-    { label: 'System', val: 'system' },
-    { label: 'Light', val: 'light' },
-    { label: 'Dark', val: 'dark' }
-  ];
+const themeOptions = [
+  { label: 'System', val: 'system' },
+  { label: 'Light',  val: 'light'  },
+  { label: 'Dark',   val: 'dark'   },
+  { label: 'Paper',  val: 'paper'  },
+  { label: 'Forest', val: 'forest' }
+];
 
   const themeWrapper = document.createElement('div');
   themeWrapper.className = 'menu-item has-submenu';
@@ -1249,9 +2056,32 @@ outlineSizeWrapper.appendChild(outlineSizeSub);
     themeSub.appendChild(btn);
   });
 
+// ── Gradient / Solid toggle (appended at the bottom of the Theme submenu)
+  const bgStyleDivider = document.createElement('div');
+  bgStyleDivider.className = 'menu-divider';
+  themeSub.appendChild(bgStyleDivider);
+
+  const bgStyleBtn = document.createElement('button');
+  bgStyleBtn.className = 'menu-item';
+  const bgStyleCheck = document.createElement('span');
+  bgStyleCheck.className = 'menu-item-check';
+  bgStyleCheck.textContent = editorBgGradient ? '■' : '□';
+  bgStyleBtn.appendChild(bgStyleCheck);
+  bgStyleBtn.appendChild(document.createTextNode(window.t('Editor gradient bg')));
+  bgStyleBtn.onclick = (e) => {
+    e.stopPropagation();
+    editorBgGradient = !editorBgGradient;
+    applyEditorBgStyle();
+    buildSettingsMenu();
+    if (typeof window.saveEditorSettings === 'function') window.saveEditorSettings();
+  };
+  themeSub.appendChild(bgStyleBtn);
+
   themeWrapper.appendChild(themeSub);
   attachSubmenuHandlers(themeWrapper, themeSub);
   settingsDropdown.appendChild(themeWrapper);
+
+  // ── Background Image submenu
 
   // ── Background Image submenu
   const bgWrapper = document.createElement('div');
@@ -1280,9 +2110,88 @@ outlineSizeWrapper.appendChild(outlineSizeSub);
     bgSub.appendChild(btn);
   });
 
+  // No background (solid theme color)
+  const bgNoneBtn = document.createElement('button');
+  bgNoneBtn.className = 'menu-item';
+  bgNoneBtn.textContent = (selectedBackground === 'none' ? '■ ' : '\u00a0\u00a0') + window.t('No background');
+  bgNoneBtn.onclick = (e) => {
+    e.stopPropagation();
+    selectedBackground = 'none';
+    applyBackground();
+    settingsDropdown.classList.remove('show');
+    buildSettingsMenu();
+    if (typeof window.saveEditorSettings === 'function') window.saveEditorSettings();
+  };
+  bgSub.appendChild(bgNoneBtn);
+
+  // Import a custom image (stored locally as a downscaled data: URL)
+  const bgCustomBtn = document.createElement('button');
+  bgCustomBtn.className = 'menu-item';
+  bgCustomBtn.textContent = (selectedBackground === 'custom' ? '■ ' : '\u00a0\u00a0') + window.t('Custom image…');
+  bgCustomBtn.onclick = (e) => {
+    e.stopPropagation();
+    settingsDropdown.classList.remove('show');
+    const picker = document.createElement('input');
+    picker.type = 'file';
+    picker.accept = 'image/*';
+    picker.onchange = () => {
+      if (picker.files && picker.files[0]) importCustomBackgroundFile(picker.files[0]);
+    };
+    picker.click();
+  };
+  bgSub.appendChild(bgCustomBtn);
+
+  let hasCustomBg = false;
+  try { hasCustomBg = !!localStorage.getItem(CUSTOM_BG_KEY); } catch (_) {}
+  if (hasCustomBg) {
+    const bgRemoveBtn = document.createElement('button');
+    bgRemoveBtn.className = 'menu-item';
+    bgRemoveBtn.textContent = '\u00a0\u00a0' + window.t('Remove custom image');
+    bgRemoveBtn.onclick = (e) => {
+      e.stopPropagation();
+      window.removeCustomBackgroundImage();
+      settingsDropdown.classList.remove('show');
+      buildSettingsMenu();
+    };
+    bgSub.appendChild(bgRemoveBtn);
+  }
+
   bgWrapper.appendChild(bgSub);
   attachSubmenuHandlers(bgWrapper, bgSub);
   settingsDropdown.appendChild(bgWrapper);
+
+  // ── Background opacity submenu (null = each theme's subtle default)
+  const bgOpacityOptions = [
+    { label: window.t('Theme default'), val: null },
+    { label: '3%',  val: 0.03 }, { label: '5%',  val: 0.05 },
+    { label: '8%',  val: 0.08 }, { label: '12%', val: 0.12 },
+    { label: '20%', val: 0.20 }, { label: '30%', val: 0.30 },
+    { label: '50%', val: 0.50 }, { label: '75%', val: 0.75 },
+    { label: '100%', val: 1 },
+  ];
+  const bgOpWrapper = document.createElement('div');
+  bgOpWrapper.className = 'menu-item has-submenu';
+  const bgOpLabel = document.createElement('span');
+  bgOpLabel.textContent = window.t('Background opacity ▸');
+  bgOpWrapper.appendChild(bgOpLabel);
+  const bgOpSub = document.createElement('div');
+  bgOpSub.className = 'submenu';
+  bgOpSub.style.display = 'none';
+  bgOpacityOptions.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'menu-item';
+    btn.textContent = (backgroundOpacity === opt.val ? '■ ' : '\u00a0\u00a0') + opt.label;
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      window.setBackgroundOpacity(opt.val);
+      settingsDropdown.classList.remove('show');
+      buildSettingsMenu();
+    };
+    bgOpSub.appendChild(btn);
+  });
+  bgOpWrapper.appendChild(bgOpSub);
+  attachSubmenuHandlers(bgOpWrapper, bgOpSub);
+  settingsDropdown.appendChild(bgOpWrapper);
 
   // ── UI Menu Size submenu
   const uiSizeOptions = [90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270];
@@ -1385,6 +2294,40 @@ outlineSizeWrapper.appendChild(outlineSizeSub);
   delayWrapper.appendChild(delaySub);
   attachSubmenuHandlers(delayWrapper, delaySub);
   settingsDropdown.appendChild(delayWrapper);
+
+  // ── Slow Hardware Mode Toggle (groups with the CPU delay above)
+  const shBtn = document.createElement('button');
+  shBtn.className = 'menu-item';
+  const shCheck = document.createElement('span');
+  shCheck.className = 'menu-item-check';
+  shCheck.textContent = slowHardwareMode ? '■' : '□';
+  shBtn.appendChild(shCheck);
+  shBtn.appendChild(document.createTextNode(window.t('Slow Hardware Mode')));
+  shBtn.title = window.t('For older machines: fewer disk writes, calmer rendering, no background image. Saves keep full crash-safety.');
+  shBtn.onclick = (e) => {
+    e.stopPropagation();
+    window.setSlowHardwareMode(!slowHardwareMode);
+    settingsDropdown.classList.remove('show');
+    buildSettingsMenu();
+  };
+  settingsDropdown.appendChild(shBtn);
+
+  // ── Live Preview Toggle (experimental)
+  const lpBtn = document.createElement('button');
+  lpBtn.className = 'menu-item';
+  const lpCheck = document.createElement('span');
+  lpCheck.className = 'menu-item-check';
+  lpCheck.textContent = livePreviewMode ? '■' : '□';
+  lpBtn.appendChild(lpCheck);
+  lpBtn.appendChild(document.createTextNode(window.t('Live Preview (experimental)')));
+  lpBtn.title = window.t('Render formatting inside the editor; markdown symbols show on the line you are editing. Hides the side preview while active.');
+  lpBtn.onclick = (e) => {
+    e.stopPropagation();
+    window.setLivePreviewMode(!livePreviewMode);
+    settingsDropdown.classList.remove('show');
+    buildSettingsMenu();
+  };
+  settingsDropdown.appendChild(lpBtn);
 
   const rcDivider = document.createElement('div');
   rcDivider.className = 'menu-divider';
@@ -1628,6 +2571,16 @@ function buildLogoMenu() {
   };
   logoDropdown.appendChild(guideBtn);
 
+  const advBtn = document.createElement('button');
+  advBtn.className = 'menu-item';
+  advBtn.textContent = window.t('Advanced Options');
+  advBtn.onclick = (e) => {
+    e.stopPropagation();
+    logoDropdown.classList.remove('show');
+    openAdvancedOptions();
+  };
+  logoDropdown.appendChild(advBtn);
+
   const div = document.createElement('div');
   div.className = 'menu-divider';
   logoDropdown.appendChild(div);
@@ -1720,30 +2673,34 @@ if (btnLogo) {
 }
 /* Context Menu Logic with Smart Positioning */
 editor.addEventListener('contextmenu', (e) => {
-  // If Deactivate Right Click is enabled, intercept immediately.
   if (rightClickDisabled) {
-    return; // Don't trigger the custom context menu (allows native browser menu)
+    return;
   }
 
   e.preventDefault();
   toolbarDropdown.classList.remove('show');
-
-  
   settingsDropdown.classList.remove('show');
   fileDropdown.classList.remove('show');
   if (logoDropdown) logoDropdown.classList.remove('show');
 
-  
-         // Clear any previous scrolling constraints
+  // --- FIX: Rebuild the context menu to ensure it contains the correct editor actions
+  contextMenu.innerHTML = '';
+  buildMenu(contextMenu, [...menuActions, ...contextMenuExtra]);
+
+// Clear any previous scrolling constraints
           contextMenu.style.removeProperty('max-height');
           contextMenu.style.removeProperty('overflow-y');
 
           // 1. Show the menu hidden first to measure its size
+          contextMenu.style.display = ''; 
           contextMenu.style.visibility = 'hidden';
           contextMenu.classList.add('show');
 
           const menuWidth = contextMenu.offsetWidth;
           const menuHeight = contextMenu.offsetHeight;
+
+
+
           
           // 2. Calculate coordinates
           let posX = e.pageX;

@@ -101,6 +101,12 @@ function updateMobileBtn() {
   const narrow = window.innerWidth <= 820;
   btnView.style.display = narrow ? 'block' : 'none';
   
+  if (!narrow && document.body.getAttribute('data-view') === 'sidebar') {
+    document.body.setAttribute('data-view', 'editor');
+    const btnMobile = document.getElementById('btn-sidebar-mobile');
+    if (btnMobile) btnMobile.classList.remove('active');
+  }
+
   // If transitioning from mobile (narrow) to desktop (!narrow), ensure preview is up-to-date
   if (!narrow && lastWasNarrow) {
     if (typeof render === 'function') render();
@@ -117,7 +123,8 @@ function updateMobileBtn() {
   }
 }
 btnView.addEventListener('click', () => {
-  const isEditor = document.body.getAttribute('data-view') === 'editor';
+  const currentView = document.body.getAttribute('data-view');
+  const isEditor = currentView === 'editor';
   
   if (isEditor) {
     // Update the preview right before switching to it on mobile
@@ -126,8 +133,10 @@ btnView.addEventListener('click', () => {
   
   document.body.setAttribute('data-view', isEditor ? 'preview' : 'editor');
   btnView.textContent = isEditor ? window.t('Preview') : window.t('Editor');
+  
+  const btnMobile = document.getElementById('btn-sidebar-mobile');
+  if (btnMobile) btnMobile.classList.remove('active');
 });
-
 
 window.addEventListener('resize', updateMobileBtn);
 updateMobileBtn();

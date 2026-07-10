@@ -2,7 +2,7 @@
 // ── Menu Actions Definition ────────────────────────────────────────────────
 const menuActions = [
   // Safely fallback to empty array if the external file didn't load
-  { type: 'submenu', label: 'Insert YAML ▸', items: typeof yamlTemplates !== 'undefined' ? yamlTemplates : [] },
+  { type: 'submenu', label: 'Insert YAML ▸', items: typeof yamlTemplates !== 'undefined' ? yamlTemplates : [], customKind: 'yaml' },
   { type: 'divider' },
   { label: 'Bold (Ctrl+B)', action: 'bold' },
   { label: 'Italic (Ctrl+I)', action: 'italic' },
@@ -164,7 +164,9 @@ function executeAction(action) {
     case 'file_export_md': exportFile('md'); break;
     case 'file_export_txt': exportFile('txt'); break;
     case 'file_export_html': exportHtmlFile(); break;
-    case 'file_export_tex': exportLatexFile(); break;
+    case 'file_export_pdf': window.exporterOpen('pdf'); break;
+    case 'file_export_tex': window.exporterOpen('latex'); break;
+    case 'file_zip_export': exportProjectZip(); break;
 
     case 'table':
       /* Open the native-style table modal instead of unreliable prompt() dialogs */
@@ -234,55 +236,64 @@ function executeAction(action) {
       const cutSel   = editor.value.substring(cutStart, cutEnd);
       if (!cutSel) break; // Nothing selected
 
-      // Helper to safely execute the visual cut
-      const executeCut = () => {
-        insertWithUndo(cutStart, cutEnd, '');
-        render();
-        countWords();
+      /* Single-transaction cut (G5 fix):
+           1. Confirm the clipboard write succeeds.
+           2. Verify the selection still matches what we captured (the
+              user may have moved the cursor during an async clipboard
+              wait, in which case we leave the document untouched —
+              the data is on the clipboard, equivalent to a copy).
+           3. Delete in ONE insertWithUndo so a single Ctrl+Z restores. */
+
+      const performDeletion = () => {
+        if (editor.selectionStart === cutStart &&
+            editor.selectionEnd   === cutEnd   &&
+            editor.value.substring(cutStart, cutEnd) === cutSel) {
+          insertWithUndo(cutStart, cutEnd, '');
+          render();
+          countWords();
+        }
+        /* If the document moved on us, do nothing: clipboard already
+           has the data, so the user effectively got a copy. Better
+           than deleting the wrong region. */
       };
 
-      // Helper for the legacy synchronous fallback
-      const fallbackCopy = (str) => {
+      const reportClipboardFailure = (logMsg) => {
+        console.warn(logMsg);
+      if (typeof window.showStatusWarning === 'function') {
+          window.showStatusWarning('clipboard',
+            'Clipboard permission denied. Nothing was cut.',
+            { priority: 30, ttl: 3000 });
+        }
+      };
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(cutSel)
+          .then(performDeletion)
+          .catch(() => reportClipboardFailure('navigator.clipboard.writeText rejected.'));
+      } else {
+        // Insecure-context fallback: legacy synchronous clipboard.
         const ta = document.createElement('textarea');
-        ta.value = str;
+        ta.value = cutSel;
         ta.style.position = 'fixed'; ta.style.opacity = '0';
         document.body.appendChild(ta);
         ta.focus(); ta.select();
         let success = false;
         try { success = document.execCommand('copy'); } catch (_) {}
         document.body.removeChild(ta);
-        return success;
-      };
 
-      // 1. Check if we are in a secure context with the modern API
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(cutSel)
-          .then(() => {
-            // Success: Only delete the text once the promise resolves
-            executeCut();
-          })
-          .catch(() => {
-            // If the API rejects, it's too late to run the fallback.
-            // Alert the user instead of deleting their data.
-            if (typeof sizeWarning !== 'undefined') {
-              sizeWarning.style.display = 'inline';
-              sizeWarning.textContent = 'Clipboard permission denied. Cut failed.';
-              setTimeout(() => sizeWarning.style.display = 'none', 3000);
-            }
-          });
-
-      } else {
-        // 2. Insecure context: run the legacy fallback synchronously 
-        // while the user gesture is still active.
-        if (fallbackCopy(cutSel)) {
-          executeCut(); // Only delete if the fallback reported success
+        if (success) {
+          // The textarea trick stole focus and selection — restore them
+          // so performDeletion's stability check passes.
+          editor.focus();
+          editor.setSelectionRange(cutStart, cutEnd);
+          performDeletion();
         } else {
-          console.warn("Legacy clipboard copy failed. Text not cut.");
+          reportClipboardFailure('Legacy execCommand("copy") failed.');
         }
       }
       break;
     }
-
+    
     case 'ctx_copy': {
       const copyStart = editor.selectionStart;
       const copyEnd   = editor.selectionEnd;
@@ -307,11 +318,11 @@ function executeAction(action) {
         navigator.clipboard.writeText(copySel)
           .catch(() => {
             // Alert the user if the API rejects the promise
-            if (typeof sizeWarning !== 'undefined') {
-              sizeWarning.style.display = 'inline';
-              sizeWarning.textContent = 'Clipboard permission denied. Copy failed.';
-              setTimeout(() => sizeWarning.style.display = 'none', 3000);
-            }
+          if (typeof window.showStatusWarning === 'function') {
+          window.showStatusWarning('clipboard',
+            'Clipboard permission denied. Copy failed.',
+            { priority: 30, ttl: 3000 });
+        }
           });
       } else {
         // 2. Insecure context: run the legacy fallback
@@ -493,19 +504,49 @@ document.getElementById('table-cols').addEventListener('keydown', e => {
 
 
 /* Export function */
-function exportFile(extension = 'md') {
+async function exportFile(extension = 'md') {
   /* Sanitise the doc title: spaces to dashes, remove illegal OS characters, lowercase */
   let baseName = (docTitle.value.trim() || 'untitled').replace(/\s+/g, '-').replace(/[<>:"/\\|?*\x00-\x1F]/g, '').toLowerCase();
   if (!baseName) baseName = 'untitled';
   /* Apply the active filename format (suffix, prefix, or plain) */
   const filename = buildExportFilename(baseName, extension);
   const mimeType = extension === 'md' ? 'text/markdown' : 'text/plain';
-  const blob    = new Blob([editor.value], { type: mimeType });
+  const content  = editor.value;
+
+  if (window.NativeAPI && (window.NativeAPI.env === 'electron' || window.NativeAPI.env === 'tauri')) {
+    try {
+      const result = await window.NativeAPI.saveFile(filename, content);
+      if (result && result.saved) {
+        showSavedIndicator();
+      }
+      // result.saved === false → user cancelled; intentionally silent.
+    } catch (err) {
+      console.error('[exportFile] Save failed:', err);
+      try {
+        await window.NativeAPI.showMessageBox({
+          type:    'error',
+          title:   'Export Failed',
+          message: `Could not save "${filename}".`,
+          detail:  String(err && err.message ? err.message : err) +
+                   '\n\nYour document is unchanged. Common causes: read-only ' +
+                   'destination, disk full, or another program holding the file open.',
+          buttons: ['OK'],
+          defaultId: 0,
+        });
+      } catch (dialogErr) {
+        // If the dialog itself fails, the console.error above is the only
+        // record. Nothing more we can do.
+        console.error('[exportFile] Could not show error dialog:', dialogErr);
+      }
+    }
+    return;
+  }
+  /* ── Tauri / web: blob download (Tauri auto-completes; web keeps old behaviour) ── */
+  const blob    = new Blob([content], { type: mimeType });
   const blobUrl = URL.createObjectURL(blob);
   const a = Object.assign(document.createElement('a'), { href: blobUrl, download: filename });
   a.click();
 
-  /* ── Safe revoke: long timeout + revoke when user returns from file picker ── */
   let revoked = false;
   const revoke = () => {
     if (revoked) return;
@@ -513,15 +554,48 @@ function exportFile(extension = 'md') {
     URL.revokeObjectURL(blobUrl);
     window.removeEventListener('focus', revoke);
   };
-  // Revoke when the user returns to the page (file picker closed)
   window.addEventListener('focus', revoke, { once: true });
-  // Fallback: revoke after 30 seconds even if focus event never fires
   setTimeout(revoke, 30000);
 
-/* ── Show "File saved" after a short delay (assume success, but don't mislead) ── */
+  /* Tauri always succeeds (auto-download); web keeps existing behaviour */
   setTimeout(() => showSavedIndicator(), 500);
 }
 
+/* ── Zip project export (desktop only) ────────────────────────────────────
+   The backend owns the save dialog and reads only inside the project root;
+   this side just triggers it and reports the outcome. No password option
+   by design — classic zip encryption is broken and would only pretend to
+   protect the notes.                                                      */
+async function exportProjectZip() {
+  const rootPath = (typeof window.sidebarGetRootPath === 'function')
+    ? window.sidebarGetRootPath() : null;
+  if (!rootPath) {
+    await window.NativeAPI.showMessageBox({
+      type: 'info',
+      title: window.t('Zip Project Export'),
+      message: window.t('Open a project folder first.'),
+    });
+    return;
+  }
+  try {
+    const res = await window.NativeAPI.exportProjectZip();
+    if (!res || res.canceled) return; // user backed out of the dialog — silent
+    const mb = (res.bytes / (1024 * 1024)).toFixed(1);
+    await window.NativeAPI.showMessageBox({
+      type: 'info',
+      title: window.t('Zip Project Export'),
+      message: window.t('Project exported.'),
+      detail: `${res.entries} ${window.t('items')} (${mb} MB)\n${res.path}`,
+    });
+  } catch (err) {
+    await window.NativeAPI.showMessageBox({
+      type: 'error',
+      title: window.t('Zip Project Export'),
+      message: window.t('The zip export failed.'),
+      detail: String((err && err.message) || err),
+    });
+  }
+}
 
 /* ── HTML Prose Export ────────────────────────────────────────────────────
    Clones the live preview, strips all editor-only artefacts (copy buttons,
@@ -529,7 +603,7 @@ function exportFile(extension = 'md') {
    the result in a self-contained HTML document with minimal inline CSS.
    The YAML frontmatter block, if present, is exported as a small metadata
    table above the prose body.                                             */
-function exportHtmlFile() {
+async function exportHtmlFile() {
   const proseEl = preview.querySelector('.prose');
   if (!proseEl) return; // Nothing rendered yet
 
@@ -673,6 +747,18 @@ function exportHtmlFile() {
   if (!baseName) baseName = 'untitled';
   const filename = buildExportFilename(baseName, 'html');
 
+/* ── Electron: native Save dialog gives a guaranteed success/cancel result ── */
+if (window.NativeAPI && (window.NativeAPI.env === 'electron' || window.NativeAPI.env === 'tauri')) {
+    try {
+        const result = await window.NativeAPI.saveFile(filename, fullHtml);
+      if (result && result.saved) showSavedIndicator();
+    } catch (err) {
+      console.error('[exportHtmlFile] Save failed:', err);
+    }
+    return;
+  }
+
+  /* ── Tauri / web: blob download ── */
   const blob    = new Blob([fullHtml], { type: 'text/html' });
   const blobUrl = URL.createObjectURL(blob);
   const a = Object.assign(document.createElement('a'), { href: blobUrl, download: filename });
@@ -686,10 +772,9 @@ function exportHtmlFile() {
     window.removeEventListener('focus', revoke);
   };
   window.addEventListener('focus', revoke, { once: true });
-setTimeout(revoke, 30000);
+  setTimeout(revoke, 30000);
   setTimeout(() => showSavedIndicator(), 500);
 }
-
 
 /* ── LaTeX Prose Export ────────────────────────────────────────────────────
    Converts the current Markdown document to a minimal but fully compilable
@@ -701,377 +786,31 @@ setTimeout(revoke, 30000);
      • Block images      → figure  (labeled image_1, image_2, …)
      • Headings, lists, blockquotes, bold, italic, strikethrough, footnotes
      • All prose LaTeX special chars are escaped                           */
-function exportLatexFile() {
-  let raw = editor.value;
-
-  /* ── 1. Extract YAML frontmatter metadata ── */
-  let metaTitle  = docTitle.value.trim() || 'Untitled';
-  let metaDate   = '\\today';
-  let metaAuthor = '';
-
-  const frontmatterMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-  if (frontmatterMatch) {
-    const yml = frontmatterMatch[1];
-    const ymlGet = (key) => {
-      const m = yml.match(new RegExp(`^${key}:\\s*["']?(.+?)["']?\\s*$`, 'm'));
-      return m ? m[1] : '';
-    };
-    if (ymlGet('title'))  metaTitle  = ymlGet('title');
-    if (ymlGet('date'))   metaDate   = ymlGet('date');
-    if (ymlGet('author')) metaAuthor = ymlGet('author');
-    raw = raw.slice(frontmatterMatch[0].length).replace(/^\r?\n/, '');
-  }
-
-  /* ── 2. Collect footnote definitions  [^id]: text  (stripped from body) ── */
-  const footnoteMap = {};
-  raw = raw.replace(/^\[\^([^\]]+)\]:\s*(.+)$/gm, (_, id, text) => {
-    footnoteMap[id.trim()] = text.trim();
-    return '';
-  });
-
-  /* ── 3. LaTeX special-char escape (prose only — never applied to math/verbatim) ── */
-  function latexEsc(str) {
-    if (!str) return '';
-    return str
-      .replace(/\\/g, '\x00BKSL\x00')          // protect backslash first
-      .replace(/&/g,  '\\&')
-      .replace(/%/g,  '\\%')
-      .replace(/\$/g, '\\$')
-      .replace(/#/g,  '\\#')
-      .replace(/_/g,  '\\_')
-      .replace(/\{/g, '\\{')
-      .replace(/\}/g, '\\}')
-      .replace(/~/g,  '\\textasciitilde{}')
-      .replace(/\^/g, '\\textasciicircum{}')
-      .replace(/\x00BKSL\x00/g, '\\textbackslash{}');
-  }
-
-/* ── 4. Protected-block system: shield code/math from escaping ── */
-  const protectedBlocks = [];
-  let   pbIdx = 0;
-  const protect = (latexStr) => {
-    const ph = `\x02PH${pbIdx++}\x03`;
-    protectedBlocks.push({ ph, content: latexStr });
-    return ph;
-  };
-const restoreProtected = (str) => {
-    // Loop backwards to ensure nested blocks (like math inside tables) are restored correctly
-    for (let i = protectedBlocks.length - 1; i >= 0; i--) {
-      str = str.split(protectedBlocks[i].ph).join(protectedBlocks[i].content);
-    }
-    return str;
-  };
-
-  /* 4a. Fenced code blocks  ```lang … ``` */
-  raw = raw.replace(/```[^\n`]*\n([\s\S]*?)```/g, (_, code) =>
-    protect(`\\begin{verbatim}\n${code.replace(/\n+$/, '')}\n\\end{verbatim}`)
-  );
-
-  /* 4b. Display math  $$ … $$ → labelled equation environment */
-  let eqCounter = 0;
-  raw = raw.replace(/\$\$([\s\S]*?)\$\$/g, (_, math) => {
-    eqCounter++;
-    // Trim surrounding whitespace for cleaner output
-    const trimmedMath = math.trim();
-    return protect(
-      `\\begin{equation}\\label{equation_${eqCounter}}\n${trimmedMath}\n\\end{equation}`
-    );
-  });
-
-  /* 4c. Inline math  $ … $ (Allows multi-line math by removing newline restriction) */
-  raw = raw.replace(/(?<!\\)\$([^$]+?)\$/g, (_, math) =>
-    protect(`$${math}$`)
-  );
-
-  /* 4d. Bracket display math \[ … \] (Prevents escaping of brackets) */
-  raw = raw.replace(/\\\[([\s\S]*?)\\\]/g, (_, math) =>
-    protect(`\\[${math}\\]`)
-  );
-
-  /* 4e. Bracket inline math \( … \) (Prevents escaping of parentheses) */
-  raw = raw.replace(/\\\(([\s\S]*?)\\\)/g, (_, math) =>
-    protect(`\\(${math}\\)`)
-  );
-
-/* ── 5. Markdown tables ── */
-  let tableIdx = 0;
-  raw = raw.replace(
-    /^(\|[^\n]+\|[ \t]*\r?\n\|[-| :]+\|[ \t]*\r?\n(?:\|[^\n]+\|[ \t]*\r?\n?)*)/gm,
-    (block) => {
-      const tlines = block.trim().split(/\r?\n/).filter(l => l.trim().startsWith('|'));
-      if (tlines.length < 2) return block;
-      const parseRow = (l) => l.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim());
-      const headers = parseRow(tlines[0]);
-      const rows    = tlines.slice(2).map(parseRow);
-      const cols    = headers.length;
-      tableIdx++;
-      let tex = `\\begin{table}[h]\n\\centering\n` +
-                    `\\renewcommand{\\arraystretch}{1.8}\n` +
-                    `\\begin{tabular}{| ${Array(cols).fill('l').join(' | ')} |}\n\\hline\n`;
-          
-          // Wrap headers in \textbf{} and use a custom thick \hrule beneath it
-          tex    += headers.map(c => `\\textbf{${processInline(c)}}`).join(' & ') + ' \\\\\n\\noalign{\\hrule height 1.2pt}\n';
-          
-          for (let r = 0; r < rows.length; r++) {
-            const row = rows[r];
-            const cells = Array.from({ length: cols }, (_, k) => processInline(row[k] || ''));
-            // Add standard horizontal lines after each row and at the bottom
-            tex += cells.join(' & ') + ' \\\\\n\\hline\n';
-          }
-          
-          tex += `\\end{tabular}\n` +
-                 `\\caption{Table ${tableIdx}}\n\\label{table_${tableIdx}}\n\\end{table}`;
-          return protect(tex);
-    }
-  );
-
-  /* ── 6. Block images  ![alt](src)  on a line by themselves ── */
-  let imageIdx = 0;
-  raw = raw.replace(/^!\[([^\]]*)\]\(([^)\s]+)[^)]*\)\s*$/gm, (_, alt, src) => {
-    imageIdx++;
-    const tex = [
-      `\\begin{figure}[h]`,
-      `\\centering`,
-      `% NOTE: replace the path below with a local path for compilation`,
-      `\\includegraphics[width=0.8\\textwidth]{${src}}`,
-      `\\caption{${latexEsc(alt || `Figure ${imageIdx}`)}}`,
-      `\\label{image_${imageIdx}}`,
-      `\\end{figure}`
-    ].join('\n');
-    return protect(tex);
-  });
-
-  /* ── 7. Inline Markdown → LaTeX ── */
-
-  /* processInlinePart: operates on a single segment known to contain no PH placeholders */
-  function processInlinePart(text) {
-    if (!text) return '';
-    const ip  = [];
-    let   ii  = 0;
-    const iSave = (s) => { const p = `\x04I${ii++}\x05`; ip.push({ p, s }); return p; };
-
-    /* Order matters: most-specific patterns first */
-    text = text.replace(/\*\*\*(.+?)\*\*\*/g, (_, t) => iSave(`\\textbf{\\textit{${latexEsc(t)}}}`));
-    text = text.replace(/___(.+?)___/g,         (_, t) => iSave(`\\textbf{\\textit{${latexEsc(t)}}}`));
-    text = text.replace(/\*\*(.+?)\*\*/g,  (_, t) => iSave(`\\textbf{${latexEsc(t)}}`));
-    text = text.replace(/__(.+?)__/g,       (_, t) => iSave(`\\textbf{${latexEsc(t)}}`));
-    text = text.replace(/\*([^*\n]+?)\*/g,  (_, t) => iSave(`\\textit{${latexEsc(t)}}`));
-    text = text.replace(/(?<![\\a-zA-Z0-9])_([^_\n]+?)_(?![a-zA-Z0-9])/g,
-                                            (_, t) => iSave(`\\textit{${latexEsc(t)}}`));
-    text = text.replace(/~~(.+?)~~/g,       (_, t) => iSave(`\\sout{${latexEsc(t)}}`));
-    text = text.replace(/`([^`\n]+)`/g,     (_, c) => iSave(`\\texttt{${latexEsc(c)}}`));
-    /* Inline images before links so  ![…](…)  is never matched as  […](…) */
-    text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,
-                        (_, a, s) => iSave(`\\textit{[Image: ${latexEsc(a || s)}]}`));
-    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g,
-                        (_, t, u) => iSave(`\\href{${u}}{${latexEsc(t)}}`));
-    text = text.replace(/\[\^([^\]]+)\]/g, (_, id) => {
-      const def = footnoteMap[id.trim()];
-      return iSave(`\\footnote{${latexEsc(def || id)}}`);
-    });
-
-    /* Escape remaining raw text, being careful not to touch iSave placeholders */
-    text = text.split(/(\x04I\d+\x05)/).map((part, idx) =>
-      idx % 2 === 1 ? part : latexEsc(part)
-    ).join('');
-
-    for (const { p, s } of ip) text = text.split(p).join(s);
-    return text;
-  }
-
-/* processInline: splits a line by outer PH placeholders so they pass through untouched */
-  function processInline(text) {
-    return text.split(/(\x02PH\d+\x03)/).map((seg, idx) =>
-      idx % 2 === 1 ? seg : processInlinePart(seg)
-    ).join('');
-  }
-
-  /* Convert Setext headings to ATX headings before parsing */
-  raw = raw.replace(/^([^\n\r]+)\r?\n(=+|-+)\s*$/gm, (match, title, border) => {
-    // Ignore empty lines or protected block placeholders
-    if (!title.trim() || title.trim().startsWith('\x02PH')) return match;
-    const level = border[0] === '=' ? '#' : '##';
-    return `${level} ${title.trim()}`;
-  });
-
-  /* ── 8. Block-level parsing ── */
-  const lines  = raw.split('\n');
-  const output = [];
-  let i = 0;
-
-  while (i < lines.length) {
-    const line    = lines[i];
-    const trimmed = line.trim();
-
-    /* Protected-block placeholder sitting on its own line */
-    if (/^\x02PH\d+\x03$/.test(trimmed)) { output.push(trimmed); i++; continue; }
-
-    /* Headings  #  to  ###### */
-    const hm = trimmed.match(/^(#{1,6})(?:\s+(.*?)(?:\s+#+)?)?$/);
-    if (hm) {
-      const cmds = ['\\section', '\\subsection', '\\subsubsection',
-                    '\\paragraph', '\\subparagraph', '\\subparagraph'];
-      const title = hm[2] || '';
-      output.push(`${cmds[hm[1].length - 1]}{${processInline(title)}}`);
-      i++; continue;
-    }
-
-    /* Horizontal rule  ---  ***  ___ */
-    if (/^(\*{3,}|-{3,}|_{3,})\s*$/.test(trimmed)) {
-      output.push('\n\\bigskip\\hrule\\bigskip\n');
-      i++; continue;
-    }
-
-    /* Blockquote: consume consecutive  >  lines */
-    if (/^>/.test(trimmed)) {
-      const qLines = [];
-      while (i < lines.length && /^\s*>/.test(lines[i])) {
-        qLines.push(lines[i].replace(/^\s*>\s?/, ''));
-        i++;
-      }
-      const parsedQLines = qLines.map(l => {
-        const ht = l.trim().match(/^(#{1,6})(?:\s+(.*?)(?:\s+#+)?)?$/);
-        if (ht) {
-          const cmds = ['\\section', '\\subsection', '\\subsubsection', '\\paragraph', '\\subparagraph', '\\subparagraph'];
-          const title = ht[2] || '';
-          return `${cmds[ht[1].length - 1]}{${processInline(title)}}`;
-        }
-        return processInline(l);
-      });
-      output.push(`\\begin{quote}\n${parsedQLines.join('\n')}\n\\end{quote}`);
-      continue;
-    }
-
-    /* Ordered list: consume consecutive  N.  lines */
-    if (/^\d+\.\s/.test(trimmed)) {
-      const items = [];
-      while (i < lines.length && /^\s*\d+\.\s/.test(lines[i])) {
-        items.push(lines[i].replace(/^\s*\d+\.\s+/, ''));
-        i++;
-      }
-      output.push(
-        `\\begin{enumerate}\n` +
-        items.map(t => `  \\item ${processInline(t)}`).join('\n') +
-        `\n\\end{enumerate}`
-      );
-      continue;
-    }
-
-    /* Unordered list (including task lists): consume consecutive  - / * / +  lines */
-    if (/^[-*+]\s/.test(trimmed)) {
-      const items = [];
-      while (i < lines.length && /^\s*[-*+]\s/.test(lines[i])) {
-        items.push(lines[i]);
-        i++;
-      }
-      const itemLines = items.map(l => {
-        const tm = l.match(/^\s*[-*+]\s+\[( |x|X)\]\s+(.*)/);
-        if (tm) {
-          const checked = tm[1].toLowerCase() === 'x';
-          return `  \\item[${checked ? '$\\boxtimes$' : '$\\square$'}] ${processInline(tm[2])}`;
-        }
-        return `  \\item ${processInline(l.replace(/^\s*[-*+]\s+/, ''))}`;
-      });
-      output.push(`\\begin{itemize}\n${itemLines.join('\n')}\n\\end{itemize}`);
-      continue;
-    }
-
-    /* Empty line */
-    if (/^\s*$/.test(line)) { output.push(''); i++; continue; }
-
-    /* Regular paragraph line */
-    output.push(processInline(line));
-    i++;
-  }
-
-  /* ── 9. Restore protected blocks ── */
-  let body = restoreProtected(output.join('\n'));
-
-  /* ── 10. Assemble the complete .tex document ── */
-  const hasMeta = !!(metaTitle || metaAuthor);
-  const docParts = [
-    `\\documentclass{article}`,
-    `\\usepackage[utf8]{inputenc}`,
-    `\\usepackage[T1]{fontenc}`,
-    `\\usepackage{amsmath}`,
-    `\\usepackage{amssymb}`,
-    `\\usepackage{graphicx}`,
-    `\\usepackage{hyperref}`,
-    `\\usepackage{longtable}`,
-    `\\usepackage[normalem]{ulem}`,
-    `\\usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm,marginparwidth=15mm,headheight=14pt]{geometry}`,
-    `\\usepackage[font=small,labelfont=bf]{subcaption}`,
-    `\\renewcommand\\thesubfigure{(\\alph{subfigure})}`,
-    `\\usepackage{multirow}`,
-    `\\usepackage{booktabs}`,
-    `\\usepackage{xcolor}`,
-    `\\usepackage[font=small,labelfont=bf,position=above]{caption}`,
-    `\\setlength{\\parindent}{0pt}`,
-    `\\setlength{\\parskip}{0.5em}`,
-    ``,
-    `\\usepackage{microtype}`,
-    `\\usepackage{setspace}`,
-    `\\setstretch{1.15}`,
-    `\\hypersetup{`,
-    `  colorlinks=true,`,
-    `  linkcolor=blue!60!black,`, 
-    `  urlcolor=blue!60!black,`,
-    `  citecolor=blue!60!black`,
-    `}`,
-    `\\usepackage{hyperref}`, 
-    `\\title{${latexEsc(metaTitle)}}`,
-    `\\author{${latexEsc(metaAuthor)}}`,
-    `\\date{${metaDate}}`,
-    ``,
-    `\\begin{document}`,
-    hasMeta ? `\\maketitle\n` : ``,
-    body.trim(),
-    ``,
-    `\\end{document}`,
-    ``
-  ];
-  /* Collapse runs of 3+ newlines down to 2 (one blank line) */
-  const tex = docParts.join('\n').replace(/\n{3,}/g, '\n\n');
-
-  /* ── 11. Download (same pattern as exportFile / exportHtmlFile) ── */
-  let baseName = (docTitle.value.trim() || 'untitled')
-    .replace(/\s+/g, '-').replace(/[<>:"/\\|?*\x00-\x1F]/g, '').toLowerCase();
-  if (!baseName) baseName = 'untitled';
-  const filename = buildExportFilename(baseName, 'tex');
-  const blob     = new Blob([tex], { type: 'text/plain' });
-  const blobUrl  = URL.createObjectURL(blob);
-  const a = Object.assign(document.createElement('a'), { href: blobUrl, download: filename });
-  a.click();
-  let revoked = false;
-  const revoke = () => {
-    if (!revoked) { revoked = true; URL.revokeObjectURL(blobUrl); window.removeEventListener('focus', revoke); }
-  };
-  window.addEventListener('focus', revoke, { once: true });
-  setTimeout(revoke, 30000);
-  setTimeout(() => showSavedIndicator(), 500);
-}
-
-
+/* exportLatexFile moved to markdown_editor_export.js (LaTeX project export). */
 btnExport.addEventListener('click', () => exportFile('md'));
 
 /* ── File Menu Operations ── */
 let pendingFileAction = null;
 
 function newFile() {
+  /* Desktop mode: sidebar handles file creation with auto-save — no modal needed */
+  if (window.sidebarCreateNewFile) {
+    window.sidebarCreateNewFile();
+    return;
+  }
+  /* Web / scratchpad mode: show the export-first modal as before */
   if (editor.value.trim().length > 0) {
     pendingFileAction = 'new';
-    // Update modal text for "New"
     document.getElementById('modal-msg').innerText = window.t("Export your work using the \"Export .md\" button. Once the file is safely on your hard drive, click \"Clear Editor\".");
     document.getElementById('new-file-modal').classList.add('show');
   } else {
-    // If it's already empty, just clear it safely
     executeClear();
   }
 }
 
 // Helper to handle the actual clearing of the editor
 function executeClear() {
-  window.performTextChange('', 0, 0);
+  window.replaceEditorContent('');
   docTitle.value = '';
   try {
     localStorage.removeItem('revery_md_autosave');
@@ -1110,13 +849,15 @@ document.getElementById('modal-btn-cancel').addEventListener('click', () => {
 });
 
 
-
-
-
 function importFile() {
+  /* Desktop mode: sidebar handles import (auto-saves first, copies into folder) */
+  if (window.sidebarImportFile) {
+    window.sidebarImportFile();
+    return;
+  }
+  /* Web / scratchpad mode: show the export-first modal as before */
   if (editor.value.trim().length > 0) {
     pendingFileAction = 'import';
-    // Update modal text for "Import"
     document.getElementById('modal-msg').innerText = window.t("Export your work using the \"Export .md\" button. Once the file is safely on your hard drive, click \"Clear Editor\" to proceed with the import.");
     document.getElementById('new-file-modal').classList.add('show');
   } else {
@@ -1140,10 +881,9 @@ function executeImport() {
 
     const reader = new FileReader();
     reader.onload = event => {
-      window.performTextChange(event.target.result, 0, 0);
-      docTitle.value = file.name.replace(/\.[^/.]+$/, "");
+      window.replaceEditorContent(event.target.result);
+      docTitle.value = file.name.replace(/\.[^/.]+$/, '');
     };
-
 
     reader.onerror = () => alert("An error occurred while reading the file.");
     // Secure reading: only reads raw text data, no execution.
@@ -1152,14 +892,47 @@ function executeImport() {
   input.click();
 }
 
-/* Ctrl+S Save interception */
+/* Ctrl+S Save interception
+   In desktop mode (Electron/Tauri), project_sidebar.js owns Ctrl+S when a
+   file is open on disk. Only fall back to the browser download export when
+   no file is currently open (i.e. the user is in "scratchpad" mode).        */
 document.addEventListener('keydown', e => {
   if (e.ctrlKey && e.key.toLowerCase() === 's') {
     e.preventDefault();
+    /* Defer to sidebar save if a real file is open on disk */
+    if (window.sidebarGetActiveFilePath && window.sidebarGetActiveFilePath()) {
+      /* project_sidebar.js handles this via its own keydown listener */
+      return;
+    }
     exportFile('md');
   }
   if (e.ctrlKey && e.key.toLowerCase() === 'b') { e.preventDefault(); executeAction('bold'); }
   if (e.ctrlKey && e.key.toLowerCase() === 'i') { e.preventDefault(); executeAction('italic'); }
+
+  /* ── Ctrl+E → toggle Reader / Edit mode ── */
+  if (e.ctrlKey && e.key.toLowerCase() === 'e') {
+    e.preventDefault();
+    if (typeof toggleReaderMode === 'function') toggleReaderMode();
+  }
+
+  /* ── F11 → toggle native fullscreen (desktop only) ── */
+  if (e.key === 'F11') {
+    e.preventDefault();
+    if (window.NativeAPI && window.NativeAPI.isDesktop &&
+        typeof window.NativeAPI.toggleFullscreen === 'function') {
+      window.NativeAPI.toggleFullscreen();
+    }
+  }
+
+  /* ── Escape → exit fullscreen if active ──
+     Note: other Escape handlers (find bar, modals) also run because
+     they do not call e.stopPropagation(). This is intentional —
+     pressing Escape in fullscreen closes any open overlay AND exits
+     fullscreen in one gesture.                                       */
+  if (e.key === 'Escape' && window.NativeAPI && window.NativeAPI.isFullscreen &&
+      typeof window.NativeAPI.exitFullscreen === 'function') {
+    window.NativeAPI.exitFullscreen();
+  }
 });
 
 
@@ -1309,8 +1082,8 @@ function showQuitStep2() {
 }
 
 // Hook up Step 1 buttons
-document.getElementById('quit-btn-save')?.addEventListener('click', () => {
-  exportFile('md'); // Trigger the standard export
+document.getElementById('quit-btn-save')?.addEventListener('click', async () => {
+  await exportFile('md');
   showQuitStep2();
 });
 
@@ -1332,11 +1105,12 @@ document.getElementById('quit-btn-restart')?.addEventListener('click', () => {
   document.getElementById('quit-modal').classList.remove('show');
 });
 
-document.getElementById('quit-btn-total-reset')?.addEventListener('click', () => {
+document.getElementById('quit-btn-total-reset')?.addEventListener('click', async () => {
   // Prevent the beforeunload warning while we reset
   window.isQuitting = true;
 
-  // Remove both the autosaved document and all user settings
+  // Remove the in-memory editor settings stored under localStorage. These
+  // exist on every backend (web, Electron, Tauri) and are safe to clear.
   try {
     localStorage.removeItem('revery_md_autosave');
     localStorage.removeItem('revery_md_settings');
@@ -1344,15 +1118,55 @@ document.getElementById('quit-btn-total-reset')?.addEventListener('click', () =>
     console.warn('Local storage access denied. Could not fully reset before restart.', e);
   }
 
+  if (window.NativeAPI && typeof window.NativeAPI.clearAllSettings === 'function') {
+    try {
+      await window.NativeAPI.clearAllSettings();
+    } catch (e) {
+
+      console.error('Total Reset: clearAllSettings failed:', e);
+      window.isQuitting = false;
+      try {
+        await window.NativeAPI.showMessageBox({
+          type: 'error',
+          title: 'Reset Failed',
+          message: 'Could not clear all settings.',
+          detail: String(e) + '\n\nYour data is unchanged. Try again, or check the app data folder permissions.',
+          buttons: ['OK'],
+          defaultId: 0,
+        });
+      } catch { /* dialog itself failed — nothing more we can do */ }
+      return;
+    }
+  }
+
   // Reload the page – everything will be reinitialised to factory defaults
   window.location.reload();
 });
 
-
 // ── ADD THIS NEW BLOCK ──
 document.getElementById('quit-btn-leave')?.addEventListener('click', () => {
+
+  if (window.NativeAPI && window.NativeAPI.isDesktop
+      && typeof window.sidebarHandleClose === 'function'
+      && typeof window.sidebarGetActiveFilePath === 'function'
+      && window.sidebarGetActiveFilePath()) {
+    window.isQuitting = false;
+    document.getElementById('quit-modal').classList.remove('show');
+    Promise.resolve(window.sidebarHandleClose()).catch(err =>
+      console.error('[Quit] Unified close failed:', err));
+    return;
+  }
+
   window.isQuitting = true;
-  window.location.href = '/notebook.html';
+
+  // No file open (scratchpad) — the user already chose export / don't-export
+  // in Step 1, so a direct close is the intended behavior here.
+  if (window.NativeAPI && window.NativeAPI.isDesktop && typeof window.NativeAPI.confirmClose === 'function') {
+    window.NativeAPI.confirmClose();
+  } else {
+    // Fallback for web mode (#15: '/notebook.html' was a dead URL — 404)
+    window.location.href = './index.html';
+  }
 });
 
 /* ── Save As Modal Logic ─────────────────────────────────────────────────── */
@@ -1372,7 +1186,7 @@ function openSaveAsModal() {
   input.select();
 }
 
-function executeSaveAs() {
+async function executeSaveAs() {
   const input = document.getElementById('save-as-filename');
   let rawName = input.value.trim();
   
@@ -1383,19 +1197,39 @@ function executeSaveAs() {
   /* Bypass filenameFormat settings, just append .md */
   const filename = `${safeName}.md`;
   
-  /* Create blob and download (bypasses beforeunload natively) */
+
+/* ── Electron / Tauri: native Save dialog gives a guaranteed success/cancel result ── */
+if (window.NativeAPI && (window.NativeAPI.env === 'electron' || window.NativeAPI.env === 'tauri')) {
+    try {
+
+      const result = await window.NativeAPI.saveFile(filename, editor.value, { updateRoot: true });
+      if (result && result.saved) {
+        showSavedIndicator();
+        document.getElementById('save-as-modal').classList.remove('show');
+        editor.focus();
+        
+        // Pivot the app state if the backend returned the new file path
+        if (result.filePath && typeof window.sidebarPivotToNewFile === 'function') {
+          await window.sidebarPivotToNewFile(result.filePath, result.newRootPath);
+        }
+      }
+      /* If cancelled, leave the modal open so the user can try again */
+    } catch (err) {
+      console.error('[executeSaveAs] Save failed:', err);
+    }
+    return;
+  }
+  /* ── Web: blob download ── */
   const blob = new Blob([editor.value], { type: 'text/markdown' });
   const blobUrl = URL.createObjectURL(blob);
   const a = Object.assign(document.createElement('a'), { href: blobUrl, download: filename });
-  
   a.click();
   setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-  
+
   showSavedIndicator();
   document.getElementById('save-as-modal').classList.remove('show');
   editor.focus();
 }
-
 /* Event Listeners for the Modal */
 document.getElementById('save-as-btn-confirm').addEventListener('click', executeSaveAs);
 

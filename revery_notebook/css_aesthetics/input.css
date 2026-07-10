@@ -15,8 +15,6 @@ body::before {
   z-index: -50; 
   background-image: linear-gradient(to bottom right, #dedede, #ffffff, #dedede);
   background-size: 200% 200%;
-  animation: gradient-shift 15s ease infinite;
-  will-change: transform;
   pointer-events: none;
   background-color: #ffffff;
 }
@@ -611,11 +609,6 @@ nav {
         @keyframes logoFloat {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-20px); }
-        }
-
-        .logo-float {
-            animation: logoFloat 6s ease-in-out infinite 8s;
-            transform-style: preserve-3d;
         }
 
 
@@ -2304,18 +2297,17 @@ iframe.wait-autoplay {
   transition: background 1.5s ease-in-out;
 }
 
-/* Specific blob animations triggered by the .playing class */
-.playing .blob-1 { animation: meshMove 15s ease-in-out infinite; }
-.playing .blob-2 { animation: meshMove 20s ease-in-out infinite reverse; }
 
-/* Marquee track title */
+
 .animate-marquee {
-  animation: marquee 12s linear infinite;
+  /* animation: marquee 12s linear infinite; Removed */
   display: flex !important;
   white-space: nowrap !important;
   width: max-content !important;
-  transition: width 0.5s ease-in-out;
-  will-change: transform, width;
+  /* transition: width 0.5s ease-in-out; */
+  /* will-change: transform, width; Removed */
+  text-overflow: ellipsis; /* Graceful static fallback */
+  overflow: hidden;
 }
 
 /* The Fading Mask for scrolling text edges */
@@ -2362,7 +2354,6 @@ iframe.wait-autoplay {
 /* Texture slide show classes */
 .animate-crossfade {
   opacity: 0;
-  animation: crossfade 48s infinite linear;
 }
 
 

@@ -23,13 +23,45 @@
     return;
   }
 
-  const {
+const {
     EditorView, keymap, Decoration, drawSelection, placeholder,
     EditorState, StateField, StateEffect, Compartment, RangeSetBuilder, Prec,
     history, historyKeymap, defaultKeymap,
-    markdown, syntaxHighlighting, defaultHighlightStyle,
+    markdown, Strikethrough, TaskList, Table, codeLanguages, syntaxHighlighting, defaultHighlightStyle,
+    lineNumbers,
+    autocompletion, startCompletion, completionStatus
   } = CM;  // Note: language-data pack omitted (see codemirror-bundle.js)
 
+const lineNumbersCompartment = new Compartment();
+  let _currentLineNumbersVisible = false; // Track state for file-switching
+
+  window.setLineNumbersVisible = function (visible) {
+    _currentLineNumbersVisible = visible;
+    if (window.cmView) {
+      window.cmView.dispatch({
+        effects: lineNumbersCompartment.reconfigure(visible ? lineNumbers() : [])
+      });
+    }
+  };
+
+  /* ── Live preview slot ────────────────────────────────────────────────
+     The live-preview extension (markdown_editor_livepreview.js) installs
+     itself through this compartment. Same file-switch rule as the line
+     numbers above: replaceEditorContent() builds a FRESH state from
+     _editorExtensions, which snapshots the compartment's initial (empty)
+     value — the tracked current value MUST be re-applied after every
+     setState or live preview silently dies on file switch.             */
+  const livePreviewCompartment = new Compartment();
+  let _currentLivePreviewExt = []; // Track state for file-switching
+
+  window.setLivePreviewExtension = function (ext) {
+    _currentLivePreviewExt = ext || [];
+    if (window.cmView) {
+      window.cmView.dispatch({
+        effects: livePreviewCompartment.reconfigure(_currentLivePreviewExt)
+      });
+    }
+  };
   // ═════════════════════════════════════════════════════════════════════════
   // 1.  FIND HIGHLIGHT DECORATIONS
   //     Replacing the old textarea-backdrop approach with CM native marks.
@@ -139,13 +171,17 @@
     '&.highlight-flash .cm-selectionBackground': {
       backgroundColor: 'rgba(255,200,60,0.6) !important',
     },
-    // Fix unreadable syntax highlighting colors in dark mode.
-    '[data-theme="dark"] & .cm-content span:not(.cm-placeholder)': {
+    // Fix unreadable syntax highlighting colors in dark mode. Live-preview
+    // widget content (.lp-render/.lp-yaml) is EXCLUDED: it carries its own
+    // colors — hljs token classes in code fences, KaTeX, YAML pill tints —
+    // which this blanket !important used to silently flatten to --text.
+    '[data-theme="dark"] & .cm-content span:not(.cm-placeholder):not(.lp-render *):not(.lp-yaml *)': {
       color: 'var(--text) !important',
     },
     // Strip bold, font-size changes, and underlines that defaultHighlightStyle applies
     // to heading, strong, link, and url tokens — the editor renders as plain text.
-    '.cm-content span:not(.cm-placeholder)': {
+    // Same widget exclusion: prose/hljs spans keep their own weight and size.
+    '.cm-content span:not(.cm-placeholder):not(.lp-render *):not(.lp-yaml *)': {
       fontWeight: 'normal !important',
       textDecoration: 'none !important',
       fontSize: 'inherit !important',
@@ -227,42 +263,291 @@
     },
   }];
 
+  // ── 5d. YAML frontmatter autocomplete ──────────────────────────────────
+  // CLAUDE.md feature: suggest the project's existing frontmatter keys and
+  // values (tags etc.) while editing YAML, so standard metadata never has
+  // to be retyped. Built on the first-party @codemirror/autocomplete
+  // engine — no custom popup fighting the editor. The source gates itself
+  // to the frontmatter region, so nothing changes anywhere else in the
+  // document. Data comes from window.sidebarYamlIndex (project-wide scan,
+  // mtime-cached, provided by the sidebar bundle; in web mode it indexes
+  // the current document only). Always on — it can only ever appear
+  // inside frontmatter.
+
+  /* Start offset of the CLOSING '---'/'...' line of a leading YAML block,
+     or 0 when the document has no frontmatter. Same rules as the live
+     preview's protected region (markdown_editor_livepreview.js). */
+  function _fmCloseLineStart(state) {
+    const doc = state.doc;
+    if (doc.lines < 2 || doc.line(1).text.replace(/\r$/, '') !== '---') return 0;
+    const maxScan = Math.min(doc.lines, 60);
+    for (let n = 2; n <= maxScan; n++) {
+      const t = doc.line(n).text.replace(/\r$/, '');
+      if (t === '---' || t === '...') return doc.line(n).from;
+    }
+    return 0;
+  }
+
+  async function yamlCompletionSource(context) {
+    const state = context.state;
+    const pos = context.pos;
+    const closeAt = _fmCloseLineStart(state);
+    if (!closeAt) return null;
+    const line = state.doc.lineAt(pos);
+    if (line.number === 1 || line.from >= closeAt) return null; // outside the block
+
+    /* TOKEN-AWARE replacement: from..to always spans the WHOLE current
+       token (key, value segment, or list item), never just the text
+       before the cursor. Accepting a suggestion with the cursor in the
+       middle of "alpha" must produce "gamma", never "gammapha". CM
+       filters options by the from..cursor slice, so clicking at the
+       start of a token shows the full list.                           */
+    const lineText = line.text;
+    const col = pos - line.from;
+    let mode = null, key = null, from = pos, to = pos;
+    let m;
+
+    const kvLine = /^([A-Za-z0-9_][\w-]*)(\s*):(.*)$/.exec(lineText);
+    if (kvLine && col <= kvLine[1].length) {
+      /* Cursor inside the KEY of an existing "key: value" line —
+         replace the key only, keep the colon and value. */
+      mode = 'key-replace';
+      from = line.from;
+      to = line.from + kvLine[1].length;
+    } else if (kvLine && col > lineText.indexOf(':')) {
+      /* In the VALUE area — replace the whole segment between the
+         nearest , or [ before the cursor and the next , or ] after. */
+      mode = 'value';
+      key = kvLine[1];
+      const valStart = lineText.indexOf(':') + 1;
+      const val = lineText.slice(valStart);
+      const rel = col - valStart;
+      const segStart = Math.max(val.lastIndexOf(',', rel - 1), val.lastIndexOf('[', rel - 1)) + 1;
+      let segEnd = val.length;
+      for (const stop of [',', ']']) {
+        const i = val.indexOf(stop, rel);
+        if (i !== -1 && i < segEnd) segEnd = i;
+      }
+      const lead = /^\s*/.exec(val.slice(segStart))[0].length;
+      from = line.from + valStart + segStart + lead;
+      to = line.from + valStart + segEnd;
+      while (to > from && /\s/.test(lineText[(to - line.from) - 1])) to--;
+      if (from > pos) from = pos;
+      if (to < pos) to = pos;
+    } else if ((m = /^(\s*-\s+)(.*)$/.exec(lineText)) && col >= m[1].length) {
+      /* "- item" under a block-list key: replace the whole item text. */
+      mode = 'value';
+      from = line.from + m[1].length;
+      to = line.from + (m[1] + m[2].replace(/\s+$/, '')).length;
+      if (to < pos) to = pos;
+      for (let n = line.number - 1; n >= 2; n--) {
+        const t = state.doc.line(n).text;
+        const kv = /^([A-Za-z0-9_][\w-]*)\s*:/.exec(t);
+        if (kv) { key = kv[1]; break; }
+        if (!/^\s*-\s/.test(t)) break;
+      }
+      if (!key) return null;
+    } else if (!lineText.includes(':') && (m = /^([A-Za-z0-9_-]*)\s*$/.exec(lineText))) {
+      /* Bare (partial) key on its own line. */
+      mode = 'key';
+      from = line.from;
+      to = line.from + m[1].length;
+      if (to < pos) to = pos;
+    } else {
+      return null;
+    }
+
+    /* Only the frontmatter slice is passed for current-doc merging —
+       never the whole document (docs can be large; frontmatter is tiny). */
+    let index = null;
+    try {
+      if (typeof window.sidebarYamlIndex === 'function') {
+        const fmSlice = state.doc.sliceString(0, Math.min(closeAt + 4, state.doc.length));
+        index = await window.sidebarYamlIndex(fmSlice);
+      }
+    } catch (_) { /* index unavailable — no completions, never an error */ }
+    if (!index) return null;
+
+    const currentToken = state.doc.sliceString(from, to);
+
+    let options;
+    if (mode === 'key' || mode === 'key-replace') {
+      options = (index.keys || []).map((k) => ({
+        label: k.label,
+        /* On a bare line the colon is added; inside an existing
+           "key: value" line the colon is already there. */
+        apply: mode === 'key' ? k.label + ': ' : k.label,
+        boost: Math.min(k.count || 1, 99) / 100,
+      }));
+    } else {
+      const vals = (index.values && index.values[key]) || [];
+      /* Every value option replaces the WHOLE clicked segment via a
+         function apply (from..to spans the value). This decouples what
+         is SHOWN from what is REPLACED: on an explicit open the menu can
+         list all values with an empty filter while still cleanly
+         swapping the value the user landed on. */
+      const applyValue = (view, completion) => {
+        view.dispatch({
+          changes: { from, to, insert: completion.label },
+          selection: { anchor: from + completion.label.length },
+          userEvent: 'input.complete',
+        });
+      };
+      options = vals.map((v) => ({
+        label: v.label,
+        apply: applyValue,
+        boost: Math.min(v.count || 1, 99) / 100,
+      }));
+    }
+    if (!options.length) return null;
+
+    /* Explicit open (pill click / Ctrl+Space) vs. implicit (typing):
+       - EXPLICIT: show ALL options with an empty filter (from = the
+         cursor, so CM has no existing text to match against), the
+         current value DEMOTED to the bottom. Function applies still
+         replace the full from..to segment. This is what makes clicking a
+         "tags: [alpha, beta]" pill list both alpha and beta.
+       - IMPLICIT: filter by the typed prefix (from..to spans it) and
+         demote the exact current token so a half-typed value that leaked
+         into the current-doc index can't shadow the real suggestion.   */
+    options = options.map((o) =>
+      o.label === currentToken ? Object.assign({}, o, { boost: -99 }) : o);
+
+    /* The empty-filter reveal only applies to VALUES (whose function
+       apply replaces the whole segment). Keys keep span-replace so an
+       explicit key completion still overwrites the key text. */
+    if (context.explicit && mode === 'value') {
+      return { from: pos, options };
+    }
+    return {
+      from,
+      to,
+      options,
+      validFor: (mode === 'key' || mode === 'key-replace') ? /^[\w-]*$/ : /^[^,\[\]\n]*$/,
+    };
+  }
+
+  /* Clicking into the frontmatter opens the menu (the CLAUDE.md UX:
+     "when clicking on the rendered YAML part, a drop menu is shown").
+     Pointer selections only — arrow-key travel through the block should
+     not pop UI. With selectOnOpen:false below, Enter still inserts a
+     newline until the user actually arrows onto a suggestion.          */
+  const yamlClickToComplete = EditorView.updateListener.of((update) => {
+    if (!update.selectionSet) return;
+    if (!update.transactions.some((tr) => tr.isUserEvent('select.pointer'))) return;
+    const st = update.state;
+    const closeAt = _fmCloseLineStart(st);
+    if (!closeAt) return;
+    const head = st.selection.main.head;
+    const ln = st.doc.lineAt(head);
+    if (ln.number === 1 || ln.from >= closeAt) return;
+    if (completionStatus(st) !== null) return; // already open or pending
+    setTimeout(() => { try { startCompletion(update.view); } catch (_) {} }, 0);
+  });
+
+  // ── 5e. Link-path autocomplete ─────────────────────────────────────────
+  // VS-Code-style path IntelliSense inside markdown link destinations:
+  // typing in `![...](here)` / `[...](here)` suggests the folders, media
+  // files and notes reachable from the active file's directory; accepting
+  // a folder inserts "folder/" and immediately re-opens the menu for the
+  // next level. Listing/filtering/containment lives in the sidebar bundle
+  // (window.sidebarListLinkCompletions — resolves with the renderer's own
+  // path semantics, read-only, null in web mode so this source is inert).
+
+  /* Minimal CommonMark-safe encoding — same set mediaMarkdown uses, so
+     accepted paths render everywhere (% first!). */
+  function _encodeLinkSeg(s) {
+    return s.replace(/%/g, '%25').replace(/ /g, '%20')
+            .replace(/\(/g, '%28').replace(/\)/g, '%29');
+  }
+
+  async function linkPathCompletionSource(context) {
+    if (typeof window.sidebarListLinkCompletions !== 'function') return null;
+    const line = context.state.doc.lineAt(context.pos);
+    const before = line.text.slice(0, context.pos - line.from);
+    /* Cursor inside a link destination: `![alt](partial` or `[txt](partial`
+       with no closing paren / whitespace between the '(' and the cursor. */
+    const m = before.match(/!?\[[^\]]*\]\(([^()\s]*)$/);
+    if (!m) return null;
+
+    let res = null;
+    try { res = await window.sidebarListLinkCompletions(m[1]); } catch (_) { return null; }
+    if (!res || !res.entries.length) return null;
+
+    const from = context.pos - res.rawSegLength;
+    const options = res.entries.map((e) => ({
+      label: e.name + (e.isDir ? '/' : ''),
+      type: e.isDir ? 'folder' : 'file',
+      apply: (view, _completion, applyFrom, applyTo) => {
+        const insert = _encodeLinkSeg(e.name) + (e.isDir ? '/' : '');
+        view.dispatch({
+          changes: { from: applyFrom, to: applyTo, insert },
+          selection: { anchor: applyFrom + insert.length },
+          userEvent: 'input.complete',
+        });
+        /* Folder accepted → descend: reopen the menu for the next level. */
+        if (e.isDir) setTimeout(() => { try { startCompletion(view); } catch (_) {} }, 0);
+      },
+    }));
+    return {
+      from,
+      options,
+      /* Keep filtering while the user types within the current segment;
+         a '/' ends the segment and re-queries the source (descends). */
+      validFor: /^[^()\s/]*$/,
+    };
+  }
+
   // ═════════════════════════════════════════════════════════════════════════
   // 6.  BUILD INITIAL EDITOR STATE
   // ═════════════════════════════════════════════════════════════════════════
 
-  const state = EditorState.create({
-    doc: '',
-    extensions: [
-      // Undo / history — replaces the custom undoManager
+  // _editorExtensions is stored so replaceEditorContent() can create a fresh
+  // EditorState with clean history whenever a new file is opened, preventing
+  // undo from leaking content across file switches.
+  const _editorExtensions = [
       history(),
       drawSelection(),
       EditorView.lineWrapping,
-      // Markdown syntax highlighting (subtle — keeps editor readable)
       syntaxHighlighting(defaultHighlightStyle),
-      markdown(), // codeLanguages omitted – slim bundle; fenced blocks render without per-language tokens
-      // Spellcheck (matches the original textarea spellcheck="true")
+      /* CommonMark + GFM strikethrough. Without the extension the parser
+         never produces Strikethrough nodes, so ~~text~~ neither rendered
+         in live preview nor struck through in the classic editor (bold
+         and italic always did — this brings ~~ to parity).             */
+      /* GFM extensions + curated fence languages: nested language parses
+         inside \`\`\`fences are colored by syntaxHighlighting in BOTH the
+         classic editor and live preview (same precedent as strikethrough:
+         a consistent improvement to the classic editor too).           */
+      markdown({ extensions: [Strikethrough, TaskList, Table], codeLanguages }),
       EditorView.contentAttributes.of({ spellcheck: 'true' }),
-      // Placeholder
-      placeholderCompartment.of(placeholder('Start writing…')),
-      // Keymaps: priority order matters — earlier entries win
+      placeholderCompartment.of(placeholder('Start writing\u2026')),
+      lineNumbersCompartment.of([]), // Initialize empty, Settings will toggle this
+      livePreviewCompartment.of([]), // Initialize empty, Settings will toggle this
+      /* Completion sources (5d YAML frontmatter + 5e link paths). Each
+         source gates itself to its own region (frontmatter / inside link
+         parens) and returns null everywhere else, so they can never
+         conflict and the engine stays inert outside both. selectOnOpen:
+         false keeps Enter inserting newlines until the user arrows onto
+         an option (menus auto-open on click/typing — never steal Enter).
+         icons:false matches the app's clean menu aesthetic.           */
+      autocompletion({ override: [yamlCompletionSource, linkPathCompletionSource], selectOnOpen: false, icons: false }),
+      yamlClickToComplete,
       Prec.highest(keymap.of(tabKeymap)),
       Prec.high(keymap.of([...escapeKeymap, ...autoWrapKeymap])),
       keymap.of([...defaultKeymap, ...historyKeymap]),
-      // Theme
       notebookTheme,
-      // Find highlight decorations
       findHighlightField,
-      // Update listener — propagates CM docChanged events to input listeners
       EditorView.updateListener.of(update => {
         if (update.docChanged) {
           const evt = new Event('input', { bubbles: true });
           _inputListeners.forEach(fn => fn(evt));
-          // If find bar is open, stale highlights are cleared automatically
-          // by deco.map(tr.changes) in findHighlightField above.
         }
       }),
-    ],
+    ];
+
+  const state = EditorState.create({
+    doc: '',
+    extensions: _editorExtensions,
   });
 
 // ═════════════════════════════════════════════════════════════════════════
@@ -437,7 +722,9 @@
     });
     if (typeof render === 'function')     render();
     if (typeof countWords === 'function') countWords();
-    try { localStorage.setItem('revery_md_autosave', text); } catch (_) {}
+    if (!(window.NativeAPI && window.NativeAPI.isDesktop)) {
+      try { localStorage.setItem('revery_md_autosave', text); } catch (_) {}
+    }
   };
 
   // ═════════════════════════════════════════════════════════════════════════
@@ -450,4 +737,36 @@
     ignoreNext:    false,
   };
 
+  // ═════════════════════════════════════════════════════════════════════════
+  // 12. replaceEditorContent  (file-switch: fresh state = fresh history)
+  //
+  //     Uses cmView.setState() rather than dispatch() so that CodeMirror
+  //     creates a completely new history stack for every file.  This means:
+  //       • Ctrl+Z in file B can never undo back to file A's content.
+  //       • Undoing past the start of edits never empties the file.
+  //       • The sidebar's navigation undo (move/rename) stays separate.
+  //
+  //     IMPORTANT: setState does NOT fire updateListener, so _inputListeners
+  //     are NOT called — the sidebar's auto-save/dirty-track handler is
+  //     intentionally skipped, which is correct for programmatic file loads.
+  // ═════════════════════════════════════════════════════════════════════════
+
+window.replaceEditorContent = function (text) {
+    const freshState = EditorState.create({
+      doc: text,
+      extensions: _editorExtensions,
+    });
+    window.cmView.setState(freshState);
+    
+    // Re-apply the line numbers visibility state to the fresh editor
+    window.setLineNumbersVisible(_currentLineNumbersVisible);
+    // Re-apply live preview — the fresh state snapshotted an empty slot
+    window.setLivePreviewExtension(_currentLivePreviewExt);
+
+    if (typeof render === 'function')     render();
+    if (typeof countWords === 'function') countWords();
+    if (!(window.NativeAPI && window.NativeAPI.isDesktop)) {
+      try { localStorage.setItem('revery_md_autosave', text); } catch (_) {}
+    }
+  };
 })();
