@@ -57,6 +57,7 @@
       toc: false,
       newPageH1: false,          // \newpage before every # / H1
       newPageH2: false,          // \newpage before every ## / H2
+      splitSections: 'none',     // 'none' | 'h1' | 'h2' — own .tex file per section
     },
   };
 
@@ -563,6 +564,23 @@
       : ['\\section', '\\subsection', '\\subsubsection',
          '\\paragraph', '\\subparagraph', '\\subparagraph'];
 
+    /* Section splitting (template-style \include files): 'h1' starts a new
+       sections/<slug>.tex at every #, 'h2' at every # AND ## (a new H1
+       necessarily ends the previous H2 section too). Slugs are strict
+       ASCII — \include filenames with spaces or non-ASCII are fragile
+       across TeX engines and operating systems. */
+    const splitLevel = opts.splitSections === 'h1' ? 1 : opts.splitSections === 'h2' ? 2 : 0;
+    const usedSlugs = new Set();
+    const sectionSlug = (t) => {
+      const base = String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '').slice(0, 40) || 'section';
+      let cand = base;
+      let n = 2;
+      while (usedSlugs.has(cand)) cand = `${base}-${n++}`;
+      usedSlugs.add(cand);
+      return cand;
+    };
+
     const lines  = raw.split('\n');
     const output = [];
     let i = 0;
@@ -582,6 +600,15 @@
         const wantBreak = (level === 1 && opts.newPageH1) || (level === 2 && opts.newPageH2);
         if (wantBreak && output.some((l) => l && l.trim() !== '')) {
           output.push('\\newpage');
+        }
+        /* Section splitting: mark file boundaries HERE, at heading emission —
+           never by scanning the finished LaTeX, where a verbatim block could
+           legally contain a line that LOOKS like \section{...} and a textual
+           split would slice mid-environment. The sentinel uses the same
+           control characters as the protected-block system, which cannot
+           occur in document text. */
+        if (splitLevel && level <= splitLevel) {
+          output.push(`\x02SEC:${sectionSlug(title)}\x03`);
         }
         output.push(`${cmds[level - 1]}{${processInline(title)}}`);
         i++; continue;
@@ -649,7 +676,23 @@
     }
 
     /* ── 9. Restore protected blocks ── */
-    const body = restoreProtected(output.join('\n'));
+    let body = restoreProtected(output.join('\n'));
+
+    /* Cut the body at the sentinels into sections/<slug>.tex files; the
+       main document keeps anything before the first split heading inline
+       and references each file with \include (which \clearpage's around
+       it — the same chapters/problems-on-fresh-pages behavior as the
+       hand-written templates this mirrors). */
+    const sections = [];
+    if (splitLevel) {
+      const segs = body.split(/^\x02SEC:([a-z0-9-]+)\x03$/m);
+      const mainParts = [segs[0].trim()];
+      for (let k = 1; k < segs.length; k += 2) {
+        sections.push({ name: segs[k], content: segs[k + 1].trim() + '\n' });
+        mainParts.push(`\\include{sections/${segs[k]}}`);
+      }
+      body = mainParts.filter(Boolean).join('\n\n');
+    }
 
     /* ── 10. Assemble the .tex document from the template descriptor ──
        Honor the user's engine when the template supports it; otherwise fall
@@ -688,7 +731,7 @@
     ];
     const tex = docParts.join('\n').replace(/\n{3,}/g, '\n\n');
 
-    return { tex, images: collectedImages, baseName: exportBaseName(), fonts: desc.bundleFonts || [] };
+    return { tex, images: collectedImages, baseName: exportBaseName(), fonts: desc.bundleFonts || [], sections };
   }
 
   /* ══════════════════════════════════════════════════════════════════
@@ -735,6 +778,21 @@
   };
   /* A4/A5/A6 are CSS @page size keywords; Letter is 'letter'. */
   const PAGE_SIZE = { A4: 'A4', A5: 'A5', A6: 'A6', Letter: 'letter' };
+  /* Page HEIGHTS in mm — the cover is sized in absolute mm computed here,
+     never with viewport units: print-vh and CSS named pages are
+     Chromium-only, which is exactly what broke the front page (and the
+     TOC overlap it cascaded into) on WebKitGTK and in browsers. */
+  const PAGE_H_MM = { A4: 297, A5: 210, A6: 148, Letter: 279.4 };
+
+  /* Resolve the chosen PDF font — built-ins or a user-added custom font
+     ('custom:<id>', provided by markdown_editor_menus.js). */
+  function pdfFontStack(font) {
+    if (font && font.startsWith('custom:') && typeof window.getCustomFonts === 'function') {
+      const f = window.getCustomFonts().find((c) => 'custom:' + c.id === font);
+      if (f) return `"${f.family.replace(/"/g, '')}", sans-serif`;
+    }
+    return FONT_STACKS[font] || FONT_STACKS.serif;
+  }
 
   /* Build the shared parts (front page, TOC, body) — called once per
      export. Adds anchor ids for TOC links and returns the metadata the
@@ -782,18 +840,30 @@
     return { title, author, frontHtml, tocHtml, bodyHtml: clone.innerHTML };
   }
 
-  /* Print CSS from the options. `scoped` = true prefixes every content
-     rule with #export-print-root (the in-app print path injects into the
-     live document and must not leak styles into the app); `@page` rules
-     stay global either way. `scoped` also SKIPS @font-face — the in-app
-     path already has the brand fonts loaded (same origin), while the
-     Electron self-contained document needs them (resolved via <base>). */
-  function pdfCss(opts, scoped) {
+  /* Print CSS from the options, per DELIVERY TARGET:
+       'chromium' — Electron's printToPDF: full standalone document, may use
+                    Chromium-only print features (named pages → full-bleed
+                    zero-margin cover).
+       'webkit'   — Tauri's print window: same standalone document, but NO
+                    named pages and NO viewport units (WebKitGTK ignores the
+                    former and mis-computes the latter in print) — the cover
+                    is sized in absolute mm inside the normal page margins.
+       'scoped'   — the web in-app print path: every content rule prefixed
+                    with #export-print-root so nothing leaks into the app;
+                    engine-safe like 'webkit' (the browser may be anything);
+                    skips @font-face (fonts already live in the page). */
+  function pdfCss(opts, target) {
+    const scoped = target === 'scoped';
+    const fullBleed = target === 'chromium';
     const B = scoped ? '#export-print-root' : 'body';       // body-level selector
     const P = scoped ? '#export-print-root ' : '';          // descendant prefix
     const mm = MARGIN_MM[opts.marginPreset] || 20;
     const size = PAGE_SIZE[opts.pageSize] || 'A4';
-    const font = FONT_STACKS[opts.font] || FONT_STACKS.serif;
+    const font = pdfFontStack(opts.font);
+    /* Cover height in ABSOLUTE mm: the full page on Chromium (its named
+       cover page has margin 0), the printable area elsewhere. */
+    const pageH = PAGE_H_MM[opts.pageSize] || 297;
+    const coverH = fullBleed ? pageH : Math.max(60, Math.round((pageH - 2 * mm) * 10) / 10);
 
     /* The Harald Revery face has no true bold and its synthesized (faux) bold
        reads poorly, so — ONLY when a Harald font is selected — drop bold on the
@@ -820,9 +890,16 @@ ${P}.front-page .fp-title { font-weight: normal; }` : '';
 @page :left  { margin: ${mm}mm ${mm + 6}mm ${mm}mm ${Math.max(6, mm - 6)}mm; }`
       : '';
 
+    /* Standalone documents (Electron/Tauri) need the brand faces (relative
+       urls resolved via <base>) AND any imported custom fonts (embedded
+       data-URL faces from the live app). The scoped path skips both — the
+       faces are already registered in the page. */
+    const customFaces = (!scoped && typeof window.getCustomFontFaceCss === 'function')
+      ? window.getCustomFontFaceCss() : '';
     const fontFace = scoped ? '' : `
 @font-face { font-family: 'HaraldText'; src: url('fonts/HaraldReveryTextFont.woff2') format('woff2'); font-display: swap; }
-@font-face { font-family: 'HaraldMono'; src: url('fonts/HaraldReveryMonoFont.woff2') format('woff2'); font-display: swap; }`;
+@font-face { font-family: 'HaraldMono'; src: url('fonts/HaraldReveryMonoFont.woff2') format('woff2'); font-display: swap; }
+${customFaces}`;
 
     /* New page before H1 / H2 (independent toggles). The first content
        block never forces a leading blank page. */
@@ -833,7 +910,7 @@ ${P}.front-page .fp-title { font-weight: normal; }` : '';
 
     return `${fontFace}
 @page { size: ${size}; margin: ${mm}mm; }
-@page cover { margin: 0; }
+${fullBleed ? '@page cover { margin: 0; }' : ''}
 ${bookMargins}
 ${P}*, ${P}*::before, ${P}*::after { box-sizing: border-box; margin: 0; padding: 0; }
 ${B} {
@@ -862,7 +939,7 @@ ${P}th { background: #f3f4f6; }
 ${P}img { max-width: 100%; height: auto; display: block; margin: 1.3em auto; }
 ${P}hr { border: none; border-top: 1px solid #ccc; margin: 1.6em 0; }
 ${P}math { font-size: ${mathEm}em; }
-${P}.front-page { position: relative; height: 100vh; page: cover; page-break-after: always; break-after: page; overflow: hidden; }
+${P}.front-page { position: relative; height: ${coverH}mm; ${fullBleed ? 'page: cover; ' : ''}page-break-after: always; break-after: page; overflow: hidden; }
 ${P}.fp-bg { position: absolute; inset: 0; background-position: center; background-size: cover; background-repeat: no-repeat; }
 ${P}.front-page .fp-title { font-size: 2.6em; font-weight: 700; letter-spacing: 0.02em; }
 ${P}.front-page .fp-author { font-size: 1.25em; color: #444; margin-top: 0.8em; }
@@ -886,7 +963,7 @@ ${haraldBold}
      and the brand fonts) resolve from the temp file's location. KaTeX is
      already converted to native MathML by cleanProseClone (no katex.css
      needed). */
-  function buildPdfDocument(opts) {
+  function buildPdfDocument(opts, target = 'chromium') {
     opts = Object.assign({}, DEFAULTS.pdf, opts || {});
     const parts = pdfParts(opts);
     if (!parts) return null;
@@ -899,7 +976,7 @@ ${haraldBold}
 <base href="${baseHref}">
 <title>${escapeHtml(parts.title)}</title>
 <link rel="stylesheet" href="jvscrpt_and_css_extra/github-dark.min.css">
-<style>${pdfCss(opts, false)}</style>
+<style>${pdfCss(opts, target)}</style>
 </head>
 <body>
 ${parts.frontHtml}
@@ -929,7 +1006,7 @@ ${parts.bodyHtml}
 
     const styleEl = document.createElement('style');
     styleEl.id = 'export-print-css';
-    styleEl.textContent = pdfCss(opts, true);
+    styleEl.textContent = pdfCss(opts, 'scoped');
 
     const rootEl = document.createElement('div');
     rootEl.id = 'export-print-root';
@@ -964,10 +1041,12 @@ ${parts.bodyHtml}
   ══════════════════════════════════════════════════════════════════ */
 
   async function runPdfExport() {
-    const built = buildPdfDocument(exportSettings.pdf);
-    if (!built) return;
+    /* Build for the delivery target: Chromium print features for
+       Electron's printToPDF, engine-safe CSS for the Tauri print window. */
     const canDirect = window.NativeAPI && typeof window.NativeAPI.exportPdf === 'function'
       && window.NativeAPI.exportPdf;
+    const built = buildPdfDocument(exportSettings.pdf, canDirect ? 'chromium' : 'webkit');
+    if (!built) return;
     if (canDirect) {
       try {
         const res = await window.NativeAPI.exportPdf(built.html, {
@@ -1013,12 +1092,16 @@ ${parts.bodyHtml}
   }
 
   async function runLatexExport() {
-    const built = buildLatexDocument(exportSettings.latex);
     const canZip = window.NativeAPI && typeof window.NativeAPI.exportLatexZip === 'function'
       && window.NativeAPI.exportLatexZip;
+    /* The web fallback is a single-.tex download — a browser download cannot
+       carry a sections/ folder, so splitting only applies to the zip path. */
+    const built = buildLatexDocument(canZip
+      ? exportSettings.latex
+      : Object.assign({}, exportSettings.latex, { splitSections: 'none' }));
     if (canZip) {
       try {
-        const res = await window.NativeAPI.exportLatexZip(built.tex, built.images, built.baseName, built.fonts);
+        const res = await window.NativeAPI.exportLatexZip(built.tex, built.images, built.baseName, built.fonts, built.sections);
         if (res && res.ok && typeof showSavedIndicator === 'function') showSavedIndicator();
       } catch (err) {
         console.error('[export] LaTeX zip failed:', err);
@@ -1215,9 +1298,16 @@ ${parts.bodyHtml}
     wrap.appendChild(row('Margins', dropdown(
       [['narrow', 'Narrow'], ['normal', 'Normal'], ['wide', 'Wide']],
       () => p.marginPreset, (v) => { p.marginPreset = v; })));
+    /* Built-in stacks + the user's custom fonts (from the Settings font
+       menus). File-kind customs are embedded into the standalone print
+       documents as data-URL @font-face; system-kind resolve by name. A
+       font deleted later simply falls back to Serif at export time. */
+    const customFontChoices = (typeof window.getCustomFonts === 'function')
+      ? window.getCustomFonts().map((f) => ['custom:' + f.id, f.label]) : [];
     wrap.appendChild(row('Font', dropdown(
       [['serif', 'Serif'], ['sans', 'Sans-serif'], ['mono', 'Monospace'],
-       ['harald-text', 'Harald Text'], ['harald-mono', 'Harald Mono']],
+       ['harald-text', 'Harald Text'], ['harald-mono', 'Harald Mono'],
+       ...customFontChoices],
       () => p.font, (v) => { p.font = v; })));
     wrap.appendChild(row('Font size', dropdown(
       [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].map((n) => [n, n + ' pt']),
@@ -1279,6 +1369,11 @@ ${parts.bodyHtml}
     wrap.appendChild(toggleRow('Table of contents', () => l.toc, (v) => { l.toc = v; }));
     wrap.appendChild(toggleRow('New page before each H1', () => l.newPageH1, (v) => { l.newPageH1 = v; }));
     wrap.appendChild(toggleRow('New page before each H2', () => l.newPageH2, (v) => { l.newPageH2 = v; }));
+    /* Template-style file layout: each section in its own sections/<name>.tex,
+       referenced from main.tex with \include (desktop zip export only). */
+    wrap.appendChild(row('Split sections', dropdown(
+      [['none', 'None'], ['h1', 'One file per H1'], ['h2', 'One file per H1 and H2']],
+      () => l.splitSections, (v) => { l.splitSections = v; })));
 
     const note = document.createElement('div');
     note.className = 'export-note';
