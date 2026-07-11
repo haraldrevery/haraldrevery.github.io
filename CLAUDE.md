@@ -16,7 +16,10 @@ Now there are some issues:
 # Secondary issues
 
 - Outline support on markdown generated articles (preferably without js and can be toggled on/off in the lower right corner of the view port)
-- Eleventy has a npm dependacy, after it has been tweaked I want a linux and a windows binary of it so users don't have to use "npm install" every time they open the project on a new PC (good to be prepared in case of npm servers being down etc, being less dependent).
+- ~~Eleventy has a npm dependacy, after it has been tweaked I want a linux and a windows binary of it so users don't have to use "npm install" every time they open the project on a new PC (good to be prepared in case of npm servers being down etc, being less dependent).~~
+  DONE (2026-07-11): standalone build binaries `eleventy-linux-x64` / `eleventy-win-x64.exe`
+  (gitignored, in zip backups; recompile with `eleventy_binary/compile.sh`, see
+  `eleventy_binary/README.md`). node_modules/ is also committed as an npm-outage fallback.
 -
 
 # Future features

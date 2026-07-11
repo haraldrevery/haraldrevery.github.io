@@ -18,6 +18,11 @@ terminal commands. Once it's set up, updating the live site is three commands.
 - The two Tailwind binaries (`tailwindcss-linux-x64`, `tw.exe`) are **not** in git —
   they're 107 MB / 124 MB, over GitHub's 100 MB per-file limit. Keep them in your zip
   backups. Everyone who clones just needs them locally to rebuild CSS.
+- The two Eleventy binaries (`eleventy-linux-x64`, `eleventy-win-x64.exe`, ~95 MB each)
+  are likewise **not** in git — keep them in your zip backups, or recompile any time
+  with `eleventy_binary/compile.sh` (see `eleventy_binary/README.md`).
+- `node_modules/` **is committed on purpose** (27 MB, pure JS, cross-platform), so the
+  npm build path works on any PC without `npm install`, even if npm is down.
 
 ---
 
@@ -106,8 +111,10 @@ Whenever you change content or files:
 Always rebuild so the generated pages and `sitemap.xml` are fresh and drafts are
 excluded:
 ```bash
-npx @11ty/eleventy
+./eleventy-linux-x64        # Linux    (Windows: eleventy-win-x64.exe)
 ```
+> `npx @11ty/eleventy` still works and produces identical output — the binary is
+> just the no-Node-needed version (see `eleventy_binary/README.md`).
 
 **Only if you changed styling** (edited `input.css`/`input_prose.css` or added new
 Tailwind classes in HTML), also rebuild the CSS first. Run the watch suite and stop
@@ -131,7 +138,7 @@ hard-refresh with `Ctrl+Shift+R` if you don't see the change).
 
 ### Copy-paste version (content-only update)
 ```bash
-npx @11ty/eleventy && git add -A && git commit -m "Update site" && git push
+./eleventy-linux-x64 && git add -A && git commit -m "Update site" && git push
 ```
 
 ---
@@ -177,5 +184,6 @@ git restore <file>      # undo unstaged changes to a file
 - **Don't deploy files left over from `npm start`.** The dev server writes draft pages
   to disk for preview — always finish with a plain `npx @11ty/eleventy` build before
   committing.
-- **Binaries stay out of git.** Keep `tailwindcss-linux-x64` / `tw.exe` in your zip
-  backups; they're too big for GitHub.
+- **Binaries stay out of git.** Keep `tailwindcss-linux-x64` / `tw.exe` /
+  `eleventy-linux-x64` / `eleventy-win-x64.exe` in your zip backups; they're too big
+  for GitHub. The Eleventy ones can also be recompiled with `eleventy_binary/compile.sh`.

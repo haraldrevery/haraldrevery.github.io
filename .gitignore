@@ -1,5 +1,6 @@
-# Dependencies (reinstall with `npm install`)
-node_modules/
+# node_modules/ is intentionally COMMITTED (27 MB, pure JS, works on both
+# Linux and Windows) so the site builds without `npm install` even if the
+# npm registry is down. Only this secondary tool's copy stays ignored:
 revery_notebook/build_tools/node_modules/
 
 # Stale duplicate CSS backups
@@ -27,6 +28,13 @@ __pycache__/
 # keep them in your zip backups. See update_to_git_guide.md.
 tailwindcss-linux-x64
 tw.exe
+
+# Standalone Eleventy build binaries (~95 MB each, brush against GitHub's
+# 100 MB limit and would bloat git history on every recompile). Local-only
+# build tools; keep them in your zip backups. Recompile any time with
+# eleventy_binary/compile.sh — see eleventy_binary/README.md.
+eleventy-linux-x64
+eleventy-win-x64.exe
 
 # NOTE: intentionally NOT ignored (must stay committed):
 #   - Built output: main.css, main_max.css, prose.css, prose_max.css, notebook_pages/
