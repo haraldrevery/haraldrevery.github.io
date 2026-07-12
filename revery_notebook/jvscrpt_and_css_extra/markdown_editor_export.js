@@ -58,8 +58,22 @@
       newPageH1: false,          // \newpage before every # / H1
       newPageH2: false,          // \newpage before every ## / H2
       splitSections: 'none',     // 'none' | 'h1' | 'h2' — own .tex file per section
+      author: '',                // '' → frontmatter author at export time
+      paperSize: 'a4paper',      // geometry/class paper option (see LATEX_PAPER_SIZES)
+      language: 'none',          // babel option name; 'none' → no babel line
     },
   };
+
+  /* Whitelists for the two option values that are spliced verbatim into the
+     .tex source — a stale/hand-edited localStorage value must never be able
+     to inject arbitrary LaTeX. Unknown values fall back to the default.
+       Languages are babel option names (Latin-script only: Cyrillic needs
+       T2A fontenc plumbing and CJK needs xeCJK — out of scope). */
+  const LATEX_PAPER_SIZES = ['a4paper', 'a5paper', 'b5paper', 'letterpaper', 'legalpaper'];
+  const LATEX_LANGUAGES = [
+    'none', 'english', 'swedish', 'ngerman', 'french', 'spanish', 'italian',
+    'portuguese', 'dutch', 'norsk', 'danish', 'finnish', 'polish', 'czech',
+  ];
 
   function loadSettings() {
     try {
@@ -119,7 +133,9 @@
        engine: null → the user's pdflatex/xelatex choice is honored; a fixed
        value (the brand templates need fontspec) overrides it.
        preamble(meta, esc) / titlePage(meta, esc) receive
-       meta = { title, author, date } and esc = latexEsc (pure).
+       meta = { title, author, date, paper } and esc = latexEsc (pure).
+       classOptions may be a string or a (meta) => string function (the
+       paper-size option must reach the \documentclass line too).
      The classic article/report/book entries reproduce the original
      single-preamble output; the *-revery entries add the requested looks. */
   function classicPreamble(meta, esc) {
@@ -130,7 +146,7 @@
       `\\usepackage{hyperref}`,
       `\\usepackage{longtable}`,
       `\\usepackage[normalem]{ulem}`,
-      `\\usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm,marginparwidth=15mm,headheight=14pt]{geometry}`,
+      `\\usepackage[${meta.paper},top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm,marginparwidth=15mm,headheight=14pt]{geometry}`,
       `\\usepackage[font=small,labelfont=bf]{subcaption}`,
       `\\renewcommand\\thesubfigure{(\\alph{subfigure})}`,
       `\\usepackage{multirow}`,
@@ -180,7 +196,8 @@
        Requires XeLaTeX (fontspec). Multi-file/bibliography/index machinery
        from the original template is dropped — the body is injected here. */
     'book-revery': {
-      label: 'Book (Revery)', documentclass: 'extbook', classOptions: '14pt,a4paper,twoside,openright',
+      label: 'Book (Revery)', documentclass: 'extbook',
+      classOptions: (meta) => `14pt,${meta.paper},twoside,openright`,
       engines: ['xelatex'], headings: 'chapter',
       bundleFonts: ['HaraldReveryTextFont.ttf', 'HaraldReveryMonoFont.ttf'],
       /* The Revery text font has tall natural leading and large glyphs, so it
@@ -225,7 +242,7 @@
         `\\usepackage[font=small,labelfont=bf]{subcaption}`,
         `\\renewcommand\\thesubfigure{(\\alph{subfigure})}`,
         ``,
-        `\\usepackage[a4paper,top=25mm,bottom=30mm,inner=25mm,outer=20mm,headheight=14pt,headsep=8mm,footskip=12mm]{geometry}`,
+        `\\usepackage[${meta.paper},top=25mm,bottom=30mm,inner=25mm,outer=20mm,headheight=14pt,headsep=8mm,footskip=12mm]{geometry}`,
         ``,
         `\\usepackage[dvipsnames,svgnames,x11names]{xcolor}`,
         `\\definecolor{AccentColor}{HTML}{2C3E50}`,
@@ -281,7 +298,8 @@
        Requires XeLaTeX (fontspec). unicode-math/listings from the original
        are dropped — the body converter emits amsmath math and verbatim. */
     'homework-revery': {
-      label: 'Homework (Revery)', documentclass: 'article', classOptions: 'a4paper,11pt',
+      label: 'Homework (Revery)', documentclass: 'article',
+      classOptions: (meta) => `${meta.paper},11pt`,
       engines: ['xelatex'], headings: 'section', bundleFonts: [],
       preamble: (meta, esc) => [
         `\\usepackage{amsmath, amsthm}`,
@@ -305,7 +323,7 @@
         `\\renewcommand\\thesubfigure{(\\alph{subfigure})}`,
         `\\usepackage{xcolor}`,
         ``,
-        `\\usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm,marginparwidth=15mm,headheight=14pt]{geometry}`,
+        `\\usepackage[${meta.paper},top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm,marginparwidth=15mm,headheight=14pt]{geometry}`,
         `\\usepackage{microtype}`,
         `\\usepackage{setspace}`,
         `\\setstretch{1.15}`,
@@ -359,6 +377,11 @@
       if (ymlGet('author')) metaAuthor = ymlGet('author');
       raw = raw.slice(frontmatterMatch[0].length).replace(/^\r?\n/, '');
     }
+
+    /* Explicit fields from the export modal win over frontmatter; empty
+       fields keep the frontmatter/doc-title fallbacks above. */
+    if (opts.titleOverride && String(opts.titleOverride).trim()) metaTitle = String(opts.titleOverride).trim();
+    if (opts.author && String(opts.author).trim()) metaAuthor = String(opts.author).trim();
 
     /* ── 2. Collect footnote definitions  [^id]: text ── */
     const footnoteMap = {};
@@ -698,11 +721,25 @@
        Honor the user's engine when the template supports it; otherwise fall
        back to the template's first supported engine (a backstop so a stale
        combo never emits pdflatex for a fontspec-only template). */
-    const meta = { title: metaTitle, author: metaAuthor, date: metaDate };
+    const paper = LATEX_PAPER_SIZES.includes(opts.paperSize) ? opts.paperSize : 'a4paper';
+    const meta = { title: metaTitle, author: metaAuthor, date: metaDate, paper };
     const engine = desc.engines.includes(opts.engine) ? opts.engine : desc.engines[0];
     const engineLines = (engine === 'xelatex')
       ? [`% Compile with xelatex`, `\\usepackage{fontspec}`]
       : [`% Compile with pdflatex`, `\\usepackage[utf8]{inputenc}`, `\\usepackage[T1]{fontenc}`];
+    /* babel works under both engines; 'none' (the default) emits nothing so
+       default output stays identical to the pre-option exporter. Placed
+       before the template preamble so babel loads ahead of hyperref.
+       \babelprovide (ini-based locale loading) instead of the classic
+       \usepackage[<lang>]{babel}: the classic option needs the per-language
+       <lang>.ldf from a separate TeX package and dies with "Unknown option"
+       on minimal installs, while the locale ini files ship with babel core —
+       verified: all 14 dropdown languages compile on a TeX Live that fails
+       the classic syntax for swedish. */
+    const language = LATEX_LANGUAGES.includes(opts.language) ? opts.language : 'none';
+    const languageLines = language !== 'none'
+      ? [`\\usepackage{babel}`, `\\babelprovide[import, main]{${language}}`]
+      : [];
 
     /* Title page, then the TOC on its own fresh page (clearpage before it
        when both are on, and after it so body content starts clean). A
@@ -714,10 +751,12 @@
     if (opts.titlePage && opts.toc) front.push(`\\clearpage`);
     if (opts.toc) front.push(`\\tableofcontents\n\\clearpage`);
 
-    const clsOpt = desc.classOptions ? `[${desc.classOptions}]` : '';
+    const clsOptions = typeof desc.classOptions === 'function' ? desc.classOptions(meta) : desc.classOptions;
+    const clsOpt = clsOptions ? `[${clsOptions}]` : '';
     const docParts = [
       `\\documentclass${clsOpt}{${desc.documentclass}}`,
       ...engineLines,
+      ...languageLines,
       ...desc.preamble(meta, latexEsc),
       ``,
       `\\begin{document}`,
@@ -884,11 +923,26 @@ ${P}.front-page .fp-title { font-weight: normal; }` : '';
        factor under Harald; other fonts keep the 1.05em math size unchanged. */
     const mathEm = isHarald ? (1.05 * 0.7).toFixed(3) : '1.05';
 
+    /* WebKitGTK (the Tauri print window) implements only a SUBSET of print
+       CSS correctly. Everything it is known to mishandle is omitted for
+       that target: @page size/margins (the GTK dialog owns them; WebKit
+       composes the two inconsistently — clipped/shifted text),
+       @page :left/:right pseudo-pages, and the avoid-* fragmentation
+       hints (break-after: avoid-page on headings and break-inside:
+       avoid-page on pre/table often PAINT OVER adjacent content instead
+       of moving the block — the "broken headers and text" bug). What
+       remains for webkit is the reliable subset: typography, colors, the
+       mm-sized cover, and break-BEFORE forced breaks. */
+    const lean = target === 'webkit';
+
     /* Book format mirrors inner/outer margins on facing pages. */
-    const bookMargins = (opts.format === 'book')
+    const bookMargins = (opts.format === 'book' && !lean)
       ? `@page :right { margin: ${mm}mm ${Math.max(6, mm - 6)}mm ${mm}mm ${mm + 6}mm; }
 @page :left  { margin: ${mm}mm ${mm + 6}mm ${mm}mm ${Math.max(6, mm - 6)}mm; }`
       : '';
+    const pageRules = lean ? '' : `@page { size: ${size}; margin: ${mm}mm; }
+${fullBleed ? '@page cover { margin: 0; }' : ''}
+${bookMargins}`;
 
     /* Standalone documents (Electron/Tauri) need the brand faces (relative
        urls resolved via <base>) AND any imported custom fonts (embedded
@@ -908,10 +962,20 @@ ${customFaces}`;
       (opts.newPageH2 ? `${P}main h2 { break-before: page; }\n` : '') +
       ((opts.newPageH1 || opts.newPageH2) ? `${P}main > *:first-child { break-before: avoid !important; }\n` : '');
 
+    /* Front-matter page breaks are forced with break-BEFORE on the element
+       that follows each block — never break-after on the block itself:
+       WebKitGTK's print fragmentation mishandles forced break-after on
+       arbitrary blocks (the TOC-overlapping-content bug), while
+       break-before is the reliable primitive everywhere (Chromium honors
+       both, so Electron's page structure is unchanged). The .toc rule is
+       gated on the front page so a leading TOC never opens with a blank
+       page; main breaks whenever any front matter precedes it. */
+    const frontBreaks =
+      (opts.frontPage ? `${P}.toc { page-break-before: always; break-before: page; }\n` : '') +
+      ((opts.frontPage || opts.toc) ? `${P}main { page-break-before: always; break-before: page; }\n` : '');
+
     return `${fontFace}
-@page { size: ${size}; margin: ${mm}mm; }
-${fullBleed ? '@page cover { margin: 0; }' : ''}
-${bookMargins}
+${pageRules}
 ${P}*, ${P}*::before, ${P}*::after { box-sizing: border-box; margin: 0; padding: 0; }
 ${B} {
   font-family: ${font};
@@ -921,7 +985,7 @@ ${B} {
 ${P}h1, ${P}h2, ${P}h3, ${P}h4, ${P}h5, ${P}h6 {
   font-weight: 700; line-height: 1.25;
   margin-top: 1.6em; margin-bottom: 0.5em;
-  break-after: avoid-page;
+  ${lean ? '' : 'break-after: avoid-page;'}
 }
 ${P}h1 { font-size: 1.9em; } ${P}h2 { font-size: 1.45em; border-bottom: 1px solid #ddd; padding-bottom: 0.2em; }
 ${P}h3 { font-size: 1.2em; } ${P}h4, ${P}h5, ${P}h6 { font-size: 1em; }
@@ -931,15 +995,15 @@ ${P}ul, ${P}ol { margin: 0 0 1.1em 1.6em; }
 ${P}li { margin-bottom: 0.2em; }
 ${P}blockquote { border-left: 3px solid #999; margin: 1.3em 0; padding: 0.3em 1.1em; color: #555; font-style: italic; }
 ${P}code { font-family: 'HaraldMono', 'Courier New', monospace; font-size: 0.88em; background: #f3f4f6; padding: 0.1em 0.35em; border-radius: 3px; }
-${P}pre { background: #0d1117; color: #c9d1d9; padding: 1em 1.2em; border-radius: 5px; margin: 1.3em 0; line-height: 1.45; white-space: pre-wrap; word-wrap: break-word; break-inside: avoid-page; }
+${P}pre { background: #0d1117; color: #c9d1d9; padding: 1em 1.2em; border-radius: 5px; margin: 1.3em 0; line-height: 1.45; white-space: pre-wrap; word-wrap: break-word;${lean ? '' : ' break-inside: avoid-page;'} }
 ${P}pre code { background: none; padding: 0; color: inherit; font-size: 0.85em; }
-${P}table { width: 100%; border-collapse: collapse; margin: 1.3em 0; font-size: 0.92em; break-inside: avoid-page; }
+${P}table { width: 100%; border-collapse: collapse; margin: 1.3em 0; font-size: 0.92em;${lean ? '' : ' break-inside: avoid-page;'} }
 ${P}th, ${P}td { border: 1px solid #ccc; padding: 0.4em 0.6em; text-align: left; }
 ${P}th { background: #f3f4f6; }
 ${P}img { max-width: 100%; height: auto; display: block; margin: 1.3em auto; }
 ${P}hr { border: none; border-top: 1px solid #ccc; margin: 1.6em 0; }
 ${P}math { font-size: ${mathEm}em; }
-${P}.front-page { position: relative; height: ${coverH}mm; ${fullBleed ? 'page: cover; ' : ''}page-break-after: always; break-after: page; overflow: hidden; }
+${P}.front-page { position: relative; height: ${coverH}mm; ${fullBleed ? 'page: cover; ' : ''}overflow: hidden; }
 ${P}.fp-bg { position: absolute; inset: 0; background-position: center; background-size: cover; background-repeat: no-repeat; }
 ${P}.front-page .fp-title { font-size: 2.6em; font-weight: 700; letter-spacing: 0.02em; }
 ${P}.front-page .fp-author { font-size: 1.25em; color: #444; margin-top: 0.8em; }
@@ -947,7 +1011,7 @@ ${P}.fp-center { display: flex; flex-direction: column; align-items: center; jus
 ${P}.fp-corners .fp-title { position: absolute; top: 10%; left: 8%; max-width: 70%; z-index: 1; }
 ${P}.fp-corners .fp-author { position: absolute; bottom: 8%; right: 8%; text-align: right; z-index: 1; }
 ${P}.fp-center .fp-title, ${P}.fp-center .fp-author { position: relative; z-index: 1; }
-${P}.toc { page-break-after: always; break-after: page; }
+${frontBreaks}
 ${P}.toc h2 { margin-top: 0.5em; }
 ${P}.toc ol { list-style: none; margin: 1em 0 0 0; }
 ${P}.toc li { margin-bottom: 0.35em; }
@@ -1014,12 +1078,19 @@ ${parts.bodyHtml}
 
     document.head.appendChild(styleEl);
     document.body.appendChild(rootEl);
+    /* BOTH html and body get the marker: the app shell sets
+       `html, body { height: 100%; overflow: hidden }` (and body is flex),
+       and a clamped/hidden ROOT makes print pagination slice a one-viewport
+       layout — the overlapping-text bug. CSS cannot reach html from a body
+       class (parent), so the class is applied to both. */
+    document.documentElement.classList.add('exporting-pdf');
     document.body.classList.add('exporting-pdf');
 
     let done = false;
     const cleanup = () => {
       if (done) return;
       done = true;
+      document.documentElement.classList.remove('exporting-pdf');
       document.body.classList.remove('exporting-pdf');
       try { styleEl.remove(); } catch (_) {}
       try { rootEl.remove(); } catch (_) {}
@@ -1096,9 +1167,11 @@ ${parts.bodyHtml}
       && window.NativeAPI.exportLatexZip;
     /* The web fallback is a single-.tex download — a browser download cannot
        carry a sections/ folder, so splitting only applies to the zip path. */
-    const built = buildLatexDocument(canZip
-      ? exportSettings.latex
-      : Object.assign({}, exportSettings.latex, { splitSections: 'none' }));
+    const built = buildLatexDocument(Object.assign(
+      {},
+      exportSettings.latex,
+      { titleOverride: latexRuntime.title },
+      canZip ? null : { splitSections: 'none' }));
     if (canZip) {
       try {
         const res = await window.NativeAPI.exportLatexZip(built.tex, built.images, built.baseName, built.fonts, built.sections);
@@ -1134,6 +1207,12 @@ ${parts.bodyHtml}
 
   let modal = null;
   let currentMode = 'pdf';
+
+  /* Per-document runtime state — deliberately NOT persisted. The LaTeX
+     title is a property of the document, not the user; persisting it would
+     silently stamp one document's title onto the next export. It is
+     re-seeded from the doc title every time the LaTeX modal opens. */
+  const latexRuntime = { title: '' };
 
   /* ── App-styled controls ────────────────────────────────────────────
      The popup uses the software's own dropdown-menu aesthetic instead of
@@ -1365,6 +1444,24 @@ ${parts.bodyHtml}
     wrap.appendChild(row('Template', dropdown(
       templateOpts, () => l.template, (v) => { l.template = v; })));
 
+    /* Title is prefilled with the doc title (clearing it falls back to the
+       YAML frontmatter title); author persists across sessions. */
+    wrap.appendChild(row('Title', textInput(latexRuntime.title, 'Document title', (v) => { latexRuntime.title = v; })));
+    wrap.appendChild(row('Author', textInput(l.author, 'Author name', (v) => { l.author = v; })));
+
+    wrap.appendChild(row('Page size', dropdown(
+      [['a4paper', 'A4'], ['a5paper', 'A5'], ['b5paper', 'B5'],
+       ['letterpaper', 'Letter (US)'], ['legalpaper', 'Legal (US)']],
+      () => l.paperSize, (v) => { l.paperSize = v; })));
+
+    wrap.appendChild(row('Language', dropdown(
+      [['none', 'Default'], ['english', 'English'], ['swedish', 'Swedish'],
+       ['ngerman', 'German'], ['french', 'French'], ['spanish', 'Spanish'],
+       ['italian', 'Italian'], ['portuguese', 'Portuguese'], ['dutch', 'Dutch'],
+       ['norsk', 'Norwegian'], ['danish', 'Danish'], ['finnish', 'Finnish'],
+       ['polish', 'Polish'], ['czech', 'Czech']],
+      () => l.language, (v) => { l.language = v; })));
+
     wrap.appendChild(toggleRow('Title page', () => l.titlePage, (v) => { l.titlePage = v; }));
     wrap.appendChild(toggleRow('Table of contents', () => l.toc, (v) => { l.toc = v; }));
     wrap.appendChild(toggleRow('New page before each H1', () => l.newPageH1, (v) => { l.newPageH1 = v; }));
@@ -1384,6 +1481,7 @@ ${parts.bodyHtml}
 
   function openExportModal(mode) {
     currentMode = mode === 'latex' ? 'latex' : 'pdf';
+    if (currentMode === 'latex') latexRuntime.title = (docTitle.value || '').trim();
     if (modal) modal.remove();
 
     modal = document.createElement('div');

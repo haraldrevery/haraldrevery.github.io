@@ -36,6 +36,8 @@ window.uiTranslations = {
   "Show Line Numbers": { "Swedish": "Visa radnummer" },
   "Mobile View": { "Swedish": "Mobilvy" },
   "Reader padding ▸": { "Swedish": "Läsläge marginal ▸" },
+  "Drag to adjust": { "Swedish": "Justera med drag" },
+  "Custom": { "Swedish": "Anpassad" },
   "Editor padding ▸": { "Swedish": "Redig. marginal ▸" },
   "Default": { "Swedish": "Standard" },
   "Calendar format ▸": { "Swedish": "Kalenderformat ▸" },
