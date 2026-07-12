@@ -378,7 +378,7 @@
         font-size: 0.6rem;
         line-height: 1.3;
         color: var(--text-muted, var(--text));
-        opacity: 0.55;
+        opacity: 0.72;
         overflow: hidden;
         /* Clamp to 3 lines */
         display: -webkit-box;
@@ -1585,7 +1585,8 @@ To recover: open the file in Revery and verify it looks correct. If it is corrup
     }
     document.addEventListener("mousemove", (e) => {
       if (!sbDragging) return;
-      const newW = Math.min(MAX_SIDEBAR_W, Math.max(MIN_SIDEBAR_W, sbStartW + (e.clientX - sbStartX)));
+      const dir = window.flipLayout ? -1 : 1;
+      const newW = Math.min(MAX_SIDEBAR_W, Math.max(MIN_SIDEBAR_W, sbStartW + dir * (e.clientX - sbStartX)));
       sidebarPanel.style.width = newW + "px";
     });
     document.addEventListener("mouseup", () => {
@@ -3758,6 +3759,8 @@ In the upper right corner, settings can be personalized. You can adjust the vari
 More information, click the \xBD logo in the center top of the screen.
 
 ---
+
+
 ###### - Harald Revery
 `;
         if (typeof window.replaceEditorContent === "function") {
