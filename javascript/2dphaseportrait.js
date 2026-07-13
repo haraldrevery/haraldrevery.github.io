@@ -156,7 +156,7 @@
             if (det < 0) {
                 html += 'Saddle Point (unstable)';
             } else if (det > 0) {
-                if (discriminant > 0) {
+                if (discriminant >= 0) {
                     if (trace < 0) {
                         html += 'Stable Node';
                     } else if (trace > 0) {
@@ -174,7 +174,7 @@
                     }
                 }
             } else {
-                html += 'Non-isolated fixed points';
+                html += 'Non-hyperbolic: determinant = 0 (a zero eigenvalue), so linear stability analysis is inconclusive.';
             }
             
             resultDiv.innerHTML = html;
@@ -192,7 +192,7 @@
             }
             
             const vectorField = this.createVectorField(xDotExpr, yDotExpr);
-            const precision = parseInt(document.getElementById('jacobian-precision').value) || 3;
+            const precision = this.getPrecision();
             
             // Use finite differences to compute Jacobian
             const h = 1e-6; // Small step for numerical derivative
@@ -233,7 +233,11 @@
             const discriminant = trace * trace - 4 * det;
             
             // Display results
-            this.displayJacobianAnalysis(x, y, J, trace, det, discriminant, precision);
+            // Residual |(x-dot, y-dot)| at the clicked point: a genuine fixed point
+            // has this ~ 0. It lets the student see whether the point they clicked is
+            // actually a fixed point before trusting the classification below.
+            const residual = Math.sqrt(f_x * f_x + g_x * g_x);
+            this.displayJacobianAnalysis(x, y, J, trace, det, discriminant, precision, residual);
             
             
             // Calculate and display index
@@ -243,11 +247,16 @@
         },
         
         // NEW: Display Jacobian analysis results
-        displayJacobianAnalysis(x, y, J, trace, det, discriminant, precision) {
+        displayJacobianAnalysis(x, y, J, trace, det, discriminant, precision, residual) {
             const content = document.getElementById('jacobian-content');
             const display = document.getElementById('jacobian-display');
             
-            let html = `<strong>Point:</strong> (${x.toFixed(precision)}, ${y.toFixed(precision)})<br><br>`;
+            let html = `<strong>Point:</strong> (${x.toFixed(precision)}, ${y.toFixed(precision)})<br>`;
+            html += `<strong>|(\u1E8B, \u1E8F)| here:</strong> ${residual.toFixed(precision)}<br>`;
+            if (residual > 1e-3) {
+                html += `<em style="opacity:0.85;">\u26A0 Not close to zero &mdash; this is probably not a fixed point. The linearization below only describes stability at a genuine fixed point (where the two nullclines cross).</em><br>`;
+            }
+            html += `<br>`;
             
             html += `<strong>Jacobian Matrix:</strong><br>`;
             html += `J = [${J[0][0].toFixed(precision)}, ${J[0][1].toFixed(precision)}]<br>`;
@@ -279,7 +288,7 @@
             } else if (det < 0) {
                 html += 'Saddle Point (unstable)';
             } else if (det > 0) {
-                if (discriminant > 0) {
+                if (discriminant >= 0) {
                     if (trace < 0) {
                         html += 'Stable Node';
                     } else if (trace > 0) {
@@ -399,7 +408,7 @@
             }
             
             const vectorField = this.createVectorField(xDotExpr, yDotExpr);
-            const precision = parseInt(document.getElementById('jacobian-precision').value) || 3;
+            const precision = this.getPrecision();
             
             // Recalculate index at the stored point
             this.calculateIndex(this.jacobianPoint.x, this.jacobianPoint.y, vectorField, precision);
@@ -579,48 +588,58 @@
     }
 },
         
+        // Clamp the requested decimal precision to a range toFixed() accepts (0-100)
+        // and to the bounds shown in the UI, so a stray typed value cannot throw.
+        getPrecision() {
+            const raw = parseInt(document.getElementById('jacobian-precision').value, 10);
+            if (!Number.isFinite(raw)) return 3;
+            return Math.min(10, Math.max(1, raw));
+        },
+
         createVectorField(xDotExpr, yDotExpr) {
             const [a, b, c, d, q] = this.params;
-            
-            // SECURITY FIX: Replace eval() with Function constructor for safer execution
-            // This prevents XSS while maintaining full mathematical functionality
-            const safeXExpr = xDotExpr.replace(/\^/g, '**');
-            const safeYExpr = yDotExpr.replace(/\^/g, '**');
-            
+
+            // Expressions are evaluated with math.js (loaded on the page), which uses its
+            // own parser/evaluator -- no eval()/Function(), so arbitrary user input cannot
+            // reach the DOM, network, or any browser API. This is a genuine sandbox and is
+            // why the page's CSP no longer needs 'unsafe-eval'.
+            //
+            // math.js already provides sin, cos, tan, exp, log (natural log), sqrt, abs,
+            // pow, sinh, cosh, tanh and the constants e/pi. We add aliases so the names
+            // documented on the page (arcsin/arccos/arctan/arctan2) and the uppercase PI
+            // constant also resolve. Note: with math.js, '^' is exponentiation and '-x^2'
+            // parses as -(x^2), matching standard mathematical convention.
+            const aliases = {
+                arcsin: Math.asin, arccos: Math.acos, arctan: Math.atan,
+                arctan2: Math.atan2, PI: Math.PI
+            };
+
+            // Coerce anything that is not a finite real number (e.g. a complex result from
+            // sqrt(-1) or an out-of-domain log) to NaN, so the drawing/integration code
+            // treats it as "no data" instead of choking on a math.js object.
+            const toReal = (v) => (typeof v === 'number' && isFinite(v)) ? v : NaN;
+
             try {
-                // Create functions with explicit scope - only math operations, no browser APIs
-                const xFunc = new Function('x', 'y', 'a', 'b', 'c', 'd', 'q', 'sin', 'cos', 'tan', 'exp', 'log', 'sqrt', 'abs', 'arcsin', 'arccos', 'arctan', 'arctan2', 'sinh', 'cosh', 'tanh', 'pow', 'PI', 'e', `
-                    "use strict";
-                    return ${safeXExpr};
-                `);
-                
-                const yFunc = new Function('x', 'y', 'a', 'b', 'c', 'd', 'q', 'sin', 'cos', 'tan', 'exp', 'log', 'sqrt', 'abs', 'arcsin', 'arccos', 'arctan', 'arctan2', 'sinh', 'cosh', 'tanh', 'pow', 'PI', 'e', `
-                    "use strict";
-                    return ${safeYExpr};
-                `);
-                
+                const xNode = math.parse(xDotExpr).compile();
+                const yNode = math.parse(yDotExpr).compile();
+                const scope = { a, b, c, d, q, ...aliases };
+
                 return (x, y) => {
+                    scope.x = x;
+                    scope.y = y;
                     try {
-                        // Pass only specific values - no access to window, document, etc.
-                        const dx = xFunc(x, y, a, b, c, d, q, 
-                            Math.sin, Math.cos, Math.tan, Math.exp, Math.log, 
-                            Math.sqrt, Math.abs, Math.asin, Math.acos, Math.atan, Math.atan2,
-                            Math.sinh, Math.cosh, Math.tanh, Math.pow, Math.PI, Math.E);
-                        const dy = yFunc(x, y, a, b, c, d, q,
-                            Math.sin, Math.cos, Math.tan, Math.exp, Math.log,
-                            Math.sqrt, Math.abs, Math.asin, Math.acos, Math.atan, Math.atan2,
-                            Math.sinh, Math.cosh, Math.tanh, Math.pow, Math.PI, Math.E);
-                        return [dx, dy];
-                    } catch (e) {
-                        return [0, 0];
+                        return [toReal(xNode.evaluate(scope)), toReal(yNode.evaluate(scope))];
+                    } catch (err) {
+                        return [NaN, NaN];
                     }
                 };
-            } catch (e) {
-                console.error('Error creating vector field:', e);
-                return () => [0, 0];
+            } catch (err) {
+                // Malformed expression (syntax error) -- nothing can be plotted for it.
+                console.error('Invalid equation:', err.message);
+                return () => [NaN, NaN];
             }
         },
-        
+
         handleCanvasClick(event) {
             const rect = this.canvas.getBoundingClientRect();
             const scaleX = this.canvas.width / rect.width;
@@ -1035,32 +1054,45 @@
         },
         
         plot() {
-            // NEW: Set canvas background based on theme
             const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             this.ctx.fillStyle = isDark ? '#1a1a1a' : 'white';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            
-            this.drawGrid();
-            
-            const xDotExpr = document.getElementById('x-dot').value;
-            const yDotExpr = document.getElementById('y-dot').value;
-            
-            if (!xDotExpr || !yDotExpr) {
-                console.log('Please enter both equations');
-                return;
-            }
-            
-            const vectorField = this.createVectorField(xDotExpr, yDotExpr);
-            
+
             const xMin = parseFloat(document.getElementById('x-min').value);
             const xMax = parseFloat(document.getElementById('x-max').value);
             const yMin = parseFloat(document.getElementById('y-min').value);
             const yMax = parseFloat(document.getElementById('y-max').value);
-            const resolution = parseInt(document.getElementById('resolution').value);
-            
+
+            // Guard against a degenerate view window: worldToCanvas divides by the range,
+            // so xMin === xMax (or yMin === yMax) would give Infinity/NaN coordinates.
+            if (!(xMax > xMin) || !(yMax > yMin)) {
+                this.ctx.fillStyle = isDark ? '#e0e0e0' : '#333';
+                this.ctx.font = '20px monospace';
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText('Invalid view range: Min must be less than Max',
+                    this.canvas.width / 2, this.canvas.height / 2);
+                return;
+            }
+
+            this.drawGrid();
+
+            const xDotExpr = document.getElementById('x-dot').value;
+            const yDotExpr = document.getElementById('y-dot').value;
+
+            if (!xDotExpr || !yDotExpr) {
+                console.log('Please enter both equations');
+                return;
+            }
+
+            const vectorField = this.createVectorField(xDotExpr, yDotExpr);
+
+            let resolution = parseInt(document.getElementById('resolution').value, 10);
+            if (!Number.isFinite(resolution) || resolution < 1) resolution = 20;
+
             const xStep = (xMax - xMin) / resolution;
             const yStep = (yMax - yMin) / resolution;
-            
+
             let maxMag = 0;
             for (let i = 0; i <= resolution; i++) {
                 for (let j = 0; j <= resolution; j++) {
@@ -1071,53 +1103,64 @@
                     if (isFinite(mag) && mag > maxMag) maxMag = mag;
                 }
             }
-            
+
             for (let i = 0; i <= resolution; i++) {
                 for (let j = 0; j <= resolution; j++) {
                     const x = xMin + i * xStep;
                     const y = yMin + j * yStep;
                     const [dx, dy] = vectorField(x, y);
-                    
+
                     if (isFinite(dx) && isFinite(dy)) {
                         const mag = Math.sqrt(dx * dx + dy * dy);
-                        const normalizedScale = mag / maxMag;
-                        
+                        // Guard against maxMag === 0 (a field that is zero everywhere),
+                        // which would otherwise make normalizedScale NaN.
+                        const normalizedScale = maxMag > 0 ? mag / maxMag : 0;
+
                         const hue = 240 - normalizedScale * 120;
                         const color = `hsl(${hue}, 70%, 50%)`;
-                        
+
                         this.drawArrow(x, y, dx, dy, color, 0.8);
                     }
                 }
             }
-            
-            // NEW: Draw nullclines if enabled
+
+            // Draw nullclines if enabled
             if (document.getElementById('show-nullclines').checked) {
                 this.plotNullclines(vectorField);
-                this.drawLegend(); // Draw legend after nullclines
+                this.drawLegend();
             }
-            
-            // Draw trajectories with dynamic resolution
-            this.trajectories.forEach((traj, idx) => {
-                // NEW: Use dynamic resolution based on integration time
+
+            // Draw trajectories (with optional backward integration)
+            this.trajectories.forEach((traj) => {
                 const steps = this.calculateTrajectorySteps(traj.tMax);
-                
-                const trajectory = this.computeTrajectory(
-                    vectorField,
-                    traj.x0,
-                    traj.y0,
-                    traj.tMax,
-                    steps
+
+                const forwardTrajectory = this.computeTrajectory(
+                    vectorField, traj.x0, traj.y0, traj.tMax, steps
                 );
-                
-                // Store trajectory data for time series plots
-                traj.trajectoryData = trajectory;
+
+                let combinedTrajectory = forwardTrajectory;
+
+                if (traj.integrateBackward) {
+                    // Backward integration = integrating the negated field forward in time.
+                    const backwardVectorField = (x, y) => {
+                        const [dx, dy] = vectorField(x, y);
+                        return [-dx, -dy];
+                    };
+                    const backwardTrajectory = this.computeTrajectory(
+                        backwardVectorField, traj.x0, traj.y0, traj.tMax, steps
+                    );
+                    // Reverse the backward branch and stitch it before the forward branch.
+                    combinedTrajectory = [...backwardTrajectory.slice().reverse(), ...forwardTrajectory.slice(1)];
+                }
+
+                // Time series use the forward branch only (well-defined t >= 0 axis).
+                traj.trajectoryData = forwardTrajectory;
                 traj.steps = steps;
-                
+
                 this.ctx.strokeStyle = traj.color;
                 this.ctx.lineWidth = 2.5;
                 this.ctx.beginPath();
-                
-                trajectory.forEach(([x, y], i) => {
+                combinedTrajectory.forEach(([x, y], i) => {
                     const [cx, cy] = this.worldToCanvas(x, y);
                     if (i === 0) {
                         this.ctx.moveTo(cx, cy);
@@ -1125,9 +1168,9 @@
                         this.ctx.lineTo(cx, cy);
                     }
                 });
-                
                 this.ctx.stroke();
-                
+
+                // Starting point marker
                 const [cx0, cy0] = this.worldToCanvas(traj.x0, traj.y0);
                 this.ctx.fillStyle = traj.color;
                 this.ctx.beginPath();
@@ -1136,9 +1179,10 @@
                 this.ctx.strokeStyle = 'white';
                 this.ctx.lineWidth = 2;
                 this.ctx.stroke();
-                
-                if (trajectory.length > 0) {
-                    const [xEnd, yEnd] = trajectory[trajectory.length - 1];
+
+                // Arrowhead at the end of the forward branch (direction of increasing time)
+                if (forwardTrajectory.length > 0) {
+                    const [xEnd, yEnd] = forwardTrajectory[forwardTrajectory.length - 1];
                     const [cxEnd, cyEnd] = this.worldToCanvas(xEnd, yEnd);
                     this.ctx.fillStyle = traj.color;
                     this.ctx.beginPath();
@@ -1152,13 +1196,42 @@
                     this.ctx.stroke();
                 }
             });
-            
-            // NEW: Plot time series if trajectories exist
+
+            // Marker at the Jacobian analysis point
+            if (this.jacobianPoint) {
+                const [jx, jy] = this.worldToCanvas(this.jacobianPoint.x, this.jacobianPoint.y);
+                const markerColor = isDark ? '#FFD700' : '#FF6B00';
+
+                this.ctx.strokeStyle = markerColor;
+                this.ctx.lineWidth = 2.5;
+                const size = 12;
+
+                this.ctx.beginPath();
+                this.ctx.moveTo(jx - size, jy);
+                this.ctx.lineTo(jx + size, jy);
+                this.ctx.stroke();
+
+                this.ctx.beginPath();
+                this.ctx.moveTo(jx, jy - size);
+                this.ctx.lineTo(jx, jy + size);
+                this.ctx.stroke();
+
+                this.ctx.fillStyle = markerColor;
+                this.ctx.beginPath();
+                this.ctx.arc(jx, jy, 4, 0, 2 * Math.PI);
+                this.ctx.fill();
+
+                this.ctx.strokeStyle = isDark ? '#000' : '#FFF';
+                this.ctx.lineWidth = 1;
+                this.ctx.stroke();
+            }
+
+            // Plot time series if trajectories exist
             if (this.trajectories.length > 0) {
                 this.plotTimeSeries();
             }
         },
-        
+
         // NEW: Plot x(t) and y(t) time series subplots
         plotTimeSeries() {
             const subplotsWrapper = document.getElementById('subplots-wrapper');
@@ -1360,192 +1433,6 @@
                     <button class="plotter-button" onclick="app.removeTrajectory(${idx})">Remove</button>
                 </div>
             `).join('');
-        }
-    };
-    
-    // MODIFIED plot() to handle backward integration
-    const originalPlot = app.plot;
-    app.plot = function() {
-        // Call original plot
-        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        this.ctx.fillStyle = isDark ? '#1a1a1a' : 'white';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        this.drawGrid();
-        
-        const xDotExpr = document.getElementById('x-dot').value;
-        const yDotExpr = document.getElementById('y-dot').value;
-        
-        if (!xDotExpr || !yDotExpr) {
-            console.log('Please enter both equations');
-            return;
-        }
-        
-        const vectorField = this.createVectorField(xDotExpr, yDotExpr);
-        
-        const xMin = parseFloat(document.getElementById('x-min').value);
-        const xMax = parseFloat(document.getElementById('x-max').value);
-        const yMin = parseFloat(document.getElementById('y-min').value);
-        const yMax = parseFloat(document.getElementById('y-max').value);
-        const resolution = parseInt(document.getElementById('resolution').value);
-        
-        const xStep = (xMax - xMin) / resolution;
-        const yStep = (yMax - yMin) / resolution;
-        
-        let maxMag = 0;
-        for (let i = 0; i <= resolution; i++) {
-            for (let j = 0; j <= resolution; j++) {
-                const x = xMin + i * xStep;
-                const y = yMin + j * yStep;
-                const [dx, dy] = vectorField(x, y);
-                const mag = Math.sqrt(dx * dx + dy * dy);
-                if (isFinite(mag) && mag > maxMag) maxMag = mag;
-            }
-        }
-        
-        for (let i = 0; i <= resolution; i++) {
-            for (let j = 0; j <= resolution; j++) {
-                const x = xMin + i * xStep;
-                const y = yMin + j * yStep;
-                const [dx, dy] = vectorField(x, y);
-                
-                if (isFinite(dx) && isFinite(dy)) {
-                    const mag = Math.sqrt(dx * dx + dy * dy);
-                    const normalizedScale = mag / maxMag;
-                    
-                    const hue = 240 - normalizedScale * 120;
-                    const color = `hsl(${hue}, 70%, 50%)`;
-                    
-                    this.drawArrow(x, y, dx, dy, color, 0.8);
-                }
-            }
-        }
-        
-        // Draw nullclines if enabled
-        if (document.getElementById('show-nullclines').checked) {
-            this.plotNullclines(vectorField);
-            this.drawLegend();
-        }
-        
-        // Draw trajectories with support for backward integration
-        this.trajectories.forEach((traj, idx) => {
-            const steps = this.calculateTrajectorySteps(traj.tMax);
-            
-            // Forward trajectory
-            const forwardTrajectory = this.computeTrajectory(
-                vectorField,
-                traj.x0,
-                traj.y0,
-                traj.tMax,
-                steps
-            );
-            
-            let combinedTrajectory = forwardTrajectory;
-            
-            // If backward integration is enabled, compute backward trajectory
-            if (traj.integrateBackward) {
-                // Create reversed vector field for backward integration
-                const backwardVectorField = (x, y) => {
-                    const [dx, dy] = vectorField(x, y);
-                    return [-dx, -dy];
-                };
-                
-                const backwardTrajectory = this.computeTrajectory(
-                    backwardVectorField,
-                    traj.x0,
-                    traj.y0,
-                    traj.tMax,
-                    steps
-                );
-                
-                // Combine: reverse backward trajectory and concatenate with forward
-                combinedTrajectory = [...backwardTrajectory.slice().reverse(), ...forwardTrajectory.slice(1)];
-            }
-            
-            // Store trajectory data for time series plots (using forward only for now)
-            traj.trajectoryData = forwardTrajectory;
-            traj.steps = steps;
-            
-            this.ctx.strokeStyle = traj.color;
-            this.ctx.lineWidth = 2.5;
-            this.ctx.beginPath();
-            
-            combinedTrajectory.forEach(([x, y], i) => {
-                const [cx, cy] = this.worldToCanvas(x, y);
-                if (i === 0) {
-                    this.ctx.moveTo(cx, cy);
-                } else {
-                    this.ctx.lineTo(cx, cy);
-                }
-            });
-            
-            this.ctx.stroke();
-            
-            // Draw starting point
-            const [cx0, cy0] = this.worldToCanvas(traj.x0, traj.y0);
-            this.ctx.fillStyle = traj.color;
-            this.ctx.beginPath();
-            this.ctx.arc(cx0, cy0, 6, 0, 2 * Math.PI);
-            this.ctx.fill();
-            this.ctx.strokeStyle = 'white';
-            this.ctx.lineWidth = 2;
-            this.ctx.stroke();
-            
-            // Draw arrow at end of forward trajectory
-            if (forwardTrajectory.length > 0) {
-                const [xEnd, yEnd] = forwardTrajectory[forwardTrajectory.length - 1];
-                const [cxEnd, cyEnd] = this.worldToCanvas(xEnd, yEnd);
-                this.ctx.fillStyle = traj.color;
-                this.ctx.beginPath();
-                this.ctx.moveTo(cxEnd, cyEnd - 8);
-                this.ctx.lineTo(cxEnd - 6, cyEnd + 4);
-                this.ctx.lineTo(cxEnd + 6, cyEnd + 4);
-                this.ctx.closePath();
-                this.ctx.fill();
-                this.ctx.strokeStyle = 'white';
-                this.ctx.lineWidth = 2;
-                this.ctx.stroke();
-            }
-        });
-        
-        // NEW: Draw marker at Jacobian analysis point
-        if (this.jacobianPoint) {
-            const [jx, jy] = this.worldToCanvas(this.jacobianPoint.x, this.jacobianPoint.y);
-            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const markerColor = isDark ? '#FFD700' : '#FF6B00'; // Gold in dark mode, orange in light
-            
-            // Draw crosshair marker
-            this.ctx.strokeStyle = markerColor;
-            this.ctx.lineWidth = 2.5;
-            const size = 12;
-            
-            // Horizontal line
-            this.ctx.beginPath();
-            this.ctx.moveTo(jx - size, jy);
-            this.ctx.lineTo(jx + size, jy);
-            this.ctx.stroke();
-            
-            // Vertical line
-            this.ctx.beginPath();
-            this.ctx.moveTo(jx, jy - size);
-            this.ctx.lineTo(jx, jy + size);
-            this.ctx.stroke();
-            
-            // Center circle
-            this.ctx.fillStyle = markerColor;
-            this.ctx.beginPath();
-            this.ctx.arc(jx, jy, 4, 0, 2 * Math.PI);
-            this.ctx.fill();
-            
-            // White outline for visibility
-            this.ctx.strokeStyle = isDark ? '#000' : '#FFF';
-            this.ctx.lineWidth = 1;
-            this.ctx.stroke();
-        }
-        
-        // Plot time series if trajectories exist
-        if (this.trajectories.length > 0) {
-            this.plotTimeSeries();
         }
     };
     
