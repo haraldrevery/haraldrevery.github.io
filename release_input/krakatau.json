@@ -1,16 +1,15 @@
 {
   "type": "Single",
-  "name": "The North",
-  "slug": "the_north",
-  "date": "2022-11-25",
+  "name": "Krakatau",
+  "slug": "krakatau",
+  "date": "2022-8-7",
   "artist": "Harald Revery & Light Titum",
-  "isrc": "QZTAY2218472",
-  "genres": ["Bounce", "Big Room", "Rave"],
+  "isrc": "QZMEQ2210200",
+  "genres": ["Big Room", "Rave", "Heat"],
   "kicker": "New Single — Out Now",
-  "introduction": "Bass from the mountains up north",
-  "artcover": "/artcover/thenorth11.jpg",
-  "artcoverMin": "/artcover/thenorth11_min.jpg",
-  "about": "<p>After 7 years of collecting dust on our hard drives, we finally finished it. </p>",
+  "introduction": "Erupting track that makes any club shake.",
+  "artcover": "/artcover/krakatau11.jpg",
+  "artcoverMin": "/artcover/krakatau11_min.jpg",
   "streaming": {
     "spotify": "https://open.spotify.com/artist/3e27f6Y3wBFJ1YYLNkrjNu",
     "apple": "https://music.apple.com/se/artist/harald-revery/1275991562",
@@ -21,7 +20,10 @@
     "deezer": "https://www.deezer.com/en/artist/13080459",
     "amazon": "https://www.amazon.com/music/player/artists/B0756QY6D9/harald-revery"
   },
+  "audio": [
+    { "label": "Preview", "src": "/music/mp3/harald_revery_and_light_titum_-_krakatau.mp3" }
+  ],
   "tracklist": [
-    { "order": 1, "name": "The North", "version": "", "length": "3:24", "isrc": "QZTAY2218472" }
+    { "order": 1, "name": "Krakatau", "version": "", "length": "3:08", "isrc": "QZMEQ2210200" }
   ]
 }

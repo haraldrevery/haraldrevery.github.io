@@ -1,15 +1,15 @@
 {
   "type": "Single",
-  "name": "Isolated",
-  "slug": "isolated",
-  "date": "2018-12-25",
+  "name": "Clouds and Roads",
+  "slug": "clouds_and_roads",
+  "date": "2020-6-12",
   "artist": "Harald Revery",
-  "isrc": "QZ4JJ1822081",
-  "genres": ["Synthwave", "Retro", "Wave"],
+  "isrc": "QZHN32004027",
+  "genres": ["Melodic House", "Festival"],
   "kicker": "New Single — Out Now",
-  "introduction": "For those night drives.",
-  "artcover": "/artcover/isolated11.jpg",
-  "artcoverMin": "/artcover/isolated11_min.jpg",
+  "introduction": "A track for sunny days.",
+  "artcover": "/artcover/cloudsandroads11.jpg",
+  "artcoverMin": "/artcover/cloudsandroads11_min.jpg",
   "streaming": {
     "spotify": "https://open.spotify.com/artist/3e27f6Y3wBFJ1YYLNkrjNu",
     "apple": "https://music.apple.com/se/artist/harald-revery/1275991562",
@@ -20,12 +20,10 @@
     "deezer": "https://www.deezer.com/en/artist/13080459",
     "amazon": "https://www.amazon.com/music/player/artists/B0756QY6D9/harald-revery"
   },
-  "tracklist": [
-    { "order": 1, "name": "Isolated", "version": "", "length": "2:43", "isrc": "QZ4JJ1822081" }
+  "audio": [
+    { "label": "Preview", "src": "/music/mp3/harald_revery_-_clouds_and_roads.mp3" }
   ],
-  "video": {
-    "src": "/video/under_25_mb/harald_revery_-_isolated.mp4",
-    "thumbnail": "/video/thumbnail/isolated_thumbnail.jpg",
-    "description": "Visualizer video for Isolated."
-  }
+  "tracklist": [
+    { "order": 1, "name": "Clouds and Roads", "version": "", "length": "4:41", "isrc": "QZHN32004027" }
+  ]
 }

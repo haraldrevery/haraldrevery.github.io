@@ -1,15 +1,15 @@
 {
   "type": "Single",
-  "name": "Isolated",
-  "slug": "isolated",
-  "date": "2018-12-25",
+  "name": "Looking For Snow",
+  "slug": "looking_for_snow",
+  "date": "2024-9-27",
   "artist": "Harald Revery",
-  "isrc": "QZ4JJ1822081",
-  "genres": ["Synthwave", "Retro", "Wave"],
+  "isrc": "QZTBB2487093",
+  "genres": ["Trap", "808s", "Beats"],
   "kicker": "New Single — Out Now",
-  "introduction": "For those night drives.",
-  "artcover": "/artcover/isolated11.jpg",
-  "artcoverMin": "/artcover/isolated11_min.jpg",
+  "introduction": "Trap beats for those sweet carving lines.",
+  "artcover": "/artcover/lookingforsnow11.jpg",
+  "artcoverMin": "/artcover/lookingforsnow11_min.jpg",
   "streaming": {
     "spotify": "https://open.spotify.com/artist/3e27f6Y3wBFJ1YYLNkrjNu",
     "apple": "https://music.apple.com/se/artist/harald-revery/1275991562",
@@ -21,11 +21,6 @@
     "amazon": "https://www.amazon.com/music/player/artists/B0756QY6D9/harald-revery"
   },
   "tracklist": [
-    { "order": 1, "name": "Isolated", "version": "", "length": "2:43", "isrc": "QZ4JJ1822081" }
-  ],
-  "video": {
-    "src": "/video/under_25_mb/harald_revery_-_isolated.mp4",
-    "thumbnail": "/video/thumbnail/isolated_thumbnail.jpg",
-    "description": "Visualizer video for Isolated."
-  }
+    { "order": 1, "name": "Looking For Snow", "version": "", "length": "3:02", "isrc": "QZTBB2487093" }
+  ]
 }
