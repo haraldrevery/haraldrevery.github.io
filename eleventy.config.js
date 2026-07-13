@@ -54,6 +54,49 @@ const parseJsonc = (text) => {
   return JSON.parse(clean);
 };
 
+// Site origin used to build absolute URLs / @id values in JSON-LD.
+const SITE_ORIGIN = "https://haraldrevery.com";
+
+// Format any date as YYYY-MM-DD (shared by the isoDate filter and JSON-LD builders).
+const isoDate = (dateObj) => new Date(dateObj).toISOString().slice(0, 10);
+
+// Format a release date string (e.g. "2018-8-17") as a calendar YYYY-MM-DD without
+// a timezone round-trip, so datePublished can't shift by a day. Falls back to isoDate.
+const calendarDate = (d) => {
+  const m = String(d == null ? "" : d).trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  return m ? `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}` : isoDate(d);
+};
+
+// Convert a "m:ss" or "h:mm:ss" track length into an ISO-8601 duration
+// ("3:46" -> "PT3M46S", "1:02:03" -> "PT1H2M3S"). Returns null for blank/invalid
+// input (e.g. the " " placeholders some archival tracks carry).
+const isoDuration = (len) => {
+  const str = String(len == null ? "" : len).trim();
+  if (!str) return null;
+  const parts = str.split(":").map((p) => Number(p));
+  if (!parts.length || parts.some((n) => !Number.isFinite(n))) return null;
+  while (parts.length < 3) parts.unshift(0);
+  const [h, m, s] = parts;
+  let out = "PT";
+  if (h) out += h + "H";
+  if (m) out += m + "M";
+  if (s || (!h && !m)) out += s + "S";
+  return out;
+};
+
+// Serialize a JSON-LD object for inlining in a <script> tag. Escapes "<" so a
+// value can never break out of the script element (e.g. a stray "</script>").
+const jsonLdScript = (obj) => JSON.stringify(obj, null, 2).replace(/</g, "\\u003c");
+
+// Reference to the site's single canonical artist entity (defined in full, with
+// sameAs links, in index.html). Release/discography markup links to it by @id
+// rather than re-declaring the MusicGroup.
+const artistRef = (name) => ({
+  "@type": "MusicGroup",
+  "@id": SITE_ORIGIN + "/#artist",
+  "name": name || "Harald Revery",
+});
+
 module.exports = function(eleventyConfig) {
 
 
@@ -310,6 +353,85 @@ module.exports = function(eleventyConfig) {
 
   // Build timestamp (used as <lastmod> for generated tag pages)
   eleventyConfig.addGlobalData("buildDate", () => new Date());
+
+  // JSON-LD for a single release page (eleventy_njk/release.njk). Returns a
+  // script-safe MusicAlbum string built entirely from the release_input JSON,
+  // linked to the canonical artist entity via byArtist @id. Emit with `| safe`.
+  eleventyConfig.addFilter("musicAlbumLd", (release) => {
+    const url = SITE_ORIGIN + release.url;
+    const relTypeMap = { Single: "SingleRelease", EP: "EPRelease" };
+    const obj = {
+      "@context": "https://schema.org",
+      "@type": "MusicAlbum",
+      "@id": url + "#album",
+      "name": release.name,
+      "url": url,
+      "albumReleaseType": relTypeMap[release.type] || "AlbumRelease",
+      "byArtist": artistRef(release.artist),
+    };
+    if (release.artcover) obj.image = SITE_ORIGIN + release.artcover;
+    if (release.date) obj.datePublished = calendarDate(release.date);
+    if (Array.isArray(release.genres) && release.genres.length) obj.genre = release.genres;
+
+    const links = release.streaming ? Object.values(release.streaming).filter(Boolean) : [];
+    if (links.length) obj.sameAs = links;
+
+    const tracks = Array.isArray(release.tracklist) ? release.tracklist : [];
+    if (tracks.length) {
+      obj.numTracks = tracks.length;
+      obj.track = tracks.map((t, i) => {
+        const rec = {
+          "@type": "MusicRecording",
+          "name": t.version ? `${t.name} (${t.version})` : t.name,
+          "position": t.order != null ? t.order : i + 1,
+        };
+        const dur = isoDuration(t.length);
+        if (dur) rec.duration = dur;
+        const isrc = String(t.isrc || "").trim();
+        if (isrc) rec.isrcCode = isrc;
+        return rec;
+      });
+    }
+    return jsonLdScript(obj);
+  });
+
+  // JSON-LD for the discography index (eleventy_njk/discography.njk): a breadcrumb
+  // plus a CollectionPage whose ItemList mirrors the visible release grid. Driven
+  // by the same collections.releases the grid uses. Emit with `| safe`.
+  eleventyConfig.addFilter("discographyLd", (releases) => {
+    const items = (releases || []).map((r, i) => {
+      const rUrl = SITE_ORIGIN + r.url;
+      const item = {
+        "@type": "MusicAlbum",
+        "@id": rUrl + "#album",
+        "name": r.name,
+        "url": rUrl,
+        "byArtist": artistRef(r.artist),
+      };
+      if (r.artcover) item.image = SITE_ORIGIN + r.artcover;
+      return { "@type": "ListItem", "position": i + 1, "url": rUrl, "item": item };
+    });
+    const graph = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": SITE_ORIGIN + "/" },
+            { "@type": "ListItem", "position": 2, "name": "Discography", "item": SITE_ORIGIN + "/discography.html" },
+          ],
+        },
+        {
+          "@type": "CollectionPage",
+          "@id": SITE_ORIGIN + "/discography.html",
+          "url": SITE_ORIGIN + "/discography.html",
+          "name": "Harald Revery — Discography",
+          "mainEntity": { "@type": "ItemList", "numberOfItems": items.length, "itemListElement": items },
+        },
+      ],
+    };
+    return jsonLdScript(graph);
+  });
 
   // Article outline (no client JS): inject id="" into <h2>/<h3> so anchor links work.
   // Runs at build time on rendered markdown HTML. Respects an existing id (e.g. from

@@ -41,6 +41,9 @@ eleventyExcludeFromCollections: true
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://haraldrevery.com{{ release.url }}">
 
+    <!-- Structured data (MusicAlbum) generated from release_input/*.json -->
+    <script type="application/ld+json">{{ release | musicAlbumLd | safe }}</script>
+
     <!-- Internet icon -->
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
     <link rel="shortcut icon" href="/favicon.ico" sizes="any">

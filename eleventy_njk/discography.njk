@@ -24,6 +24,9 @@ eleventyExcludeFromCollections: true
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://haraldrevery.com/discography.html">
 
+    <!-- Structured data: breadcrumb + CollectionPage listing every release -->
+    <script type="application/ld+json">{{ collections.releases | discographyLd | safe }}</script>
+
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
     <link rel="shortcut icon" href="/favicon.ico" sizes="any">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
