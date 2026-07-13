@@ -7,6 +7,7 @@ const app = {
     ctxDerivative: null,
     params: { a: 1, b: 1, c: 1, d: 1, q: 1 },
     clickedPoints: { main: null, integral: null, derivative: null },
+    _compileCache: {},
     
     init() {
         // Initialize canvases
@@ -142,9 +143,11 @@ const app = {
             .replace(/PI/g, 'Math.PI')
             .replace(/\be\b/g, 'Math.E');
         
-        // Replace arcsin, arccos, arctan with asin, acos, atan FIRST (before adding Math. prefix)
+        // Replace arcsin, arccos, arctan(2) with asin, acos, atan(2) FIRST (before adding Math. prefix)
+        // arctan2 must run before arctan so the trailing "2" is preserved.
         processed = processed.replace(/\barcsin\(/g, 'asin(');
         processed = processed.replace(/\barccos\(/g, 'acos(');
+        processed = processed.replace(/\barctan2\(/g, 'atan2(');
         processed = processed.replace(/\barctan\(/g, 'atan(');
         
         // Replace function names
@@ -163,43 +166,32 @@ const app = {
         return processed;
     },
     
-    evaluateFunction(expr, x) {
+    // Compile an expression to a reusable function, cached by expression string.
+    // Params (a..q) are passed as arguments on each call, so a cached compile stays
+    // valid across parameter/slider changes — we only recompile when the expression
+    // text itself changes. This avoids recompiling a new Function on every point.
+    compile(expr) {
+        if (expr in this._compileCache) return this._compileCache[expr];
+        let func = null;
         try {
             const processed = this.parseFunction(expr);
+            // Function constructor (not eval): explicit params, limited scope.
+            func = new Function('x', 'a', 'b', 'c', 'd', 'q', 'Math', `'use strict'; return (${processed});`);
+        } catch (error) {
+            func = null; // syntax error in expression
+        }
+        this._compileCache[expr] = func;
+        return func;
+    },
+
+    evaluateFunction(expr, x) {
+        const func = this.compile(expr);
+        if (!func) return NaN;
+        try {
             const { a, b, c, d, q } = this.params;
-            // Use Function constructor instead of eval for safer evaluation
-            // This creates a function with explicit parameters and limited scope
-            const func = new Function('x', 'a', 'b', 'c', 'd', 'q', 'Math', `'use strict'; return (${processed});`);
             return func(x, a, b, c, d, q, Math);
         } catch (error) {
-            return NaN;
-        }
-    },
-    
-    // Analytical derivative calculation
-    analyticalDerivative(expr) {
-        // This function computes the symbolic derivative of an expression
-        // Returns a function string that can be evaluated
-        
-        try {
-            // Remove whitespace
-            expr = expr.trim();
-            
-            // Create derivative function
-            return (x) => {
-                // Adaptive step size: scales with x to avoid catastrophic cancellation
-                // For x near 0, use a small but safe value; for large x, scale appropriately
-                const h = Math.max(1e-7, Math.abs(x) * 1e-6);
-                const { a, b, c, d, q } = this.params;
-                
-                // Numerical derivative using central difference for accuracy
-                const f1 = this.evaluateFunction(expr, x + h);
-                const f2 = this.evaluateFunction(expr, x - h);
-                
-                return (f1 - f2) / (2 * h);
-            };
-        } catch (error) {
-            return () => NaN;
+            return NaN; // runtime error (e.g. undefined variable)
         }
     },
     
