@@ -268,8 +268,8 @@ module.exports = function(eleventyConfig) {
   eleventyConfig.addFilter("slugify", slugify);
 
   // Collection: music releases generated from JSON files in release_input/.
-  // Each JSON becomes one page at release/<slug>.html (via release.njk) and one
-  // tile on the discography index (release/index.html via discography.njk).
+  // Each JSON becomes one page at release/<slug>.html (via eleventy_njk/release.njk)
+  // and one tile on the discography index (discography.html via eleventy_njk/discography.njk).
   // Files prefixed with "_" are skipped (a simple draft mechanism).
   eleventyConfig.addCollection("releases", function() {
     const dir = "./release_input";
