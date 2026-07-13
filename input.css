@@ -421,7 +421,7 @@ nav {
     z-index: -8;
     pointer-events: none;
     
-    background-image: url('./svg/mountain_topology_v4.svg');
+    background-image: url('./svg/mountain_topology_summer_2026.svg');
     
     /* FIX: Force width to 100%, let height adjust automatically */
     background-size: 100% auto; 
