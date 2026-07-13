@@ -341,6 +341,13 @@ module.exports = function(eleventyConfig) {
     return new Date(dateObj).toISOString().slice(0, 10);
   });
 
+  // Strip a trailing ".html" so every emitted URL (canonical, og:url, sitemap
+  // <loc>) matches the clean URL Cloudflare Pages actually serves — it 308-
+  // redirects /foo.html -> /foo. Leaves "/" and already-clean URLs untouched.
+  eleventyConfig.addFilter("cleanUrl", (url) => {
+    return typeof url === "string" ? url.replace(/\.html$/, "") : url;
+  });
+
   // Return a file's last-modified time (for honest <lastmod> on static pages).
   // Falls back to "now" if the file can't be stat'd.
   eleventyConfig.addFilter("fileModDate", (filePath) => {

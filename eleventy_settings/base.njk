@@ -21,7 +21,7 @@
     <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#171717">
         
     {# Canonical URL #}
-    <link rel="canonical" href="https://haraldrevery.com{{ page.url }}">
+    <link rel="canonical" href="https://haraldrevery.com{{ page.url | cleanUrl }}">
     
     <link rel="preload" href="/fonts/HaraldReveryTextFont.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/HaraldReveryMonoFont.woff2" as="font" type="font/woff2" crossorigin>
@@ -31,7 +31,7 @@
     
     {# Open Graph Meta Tags #}
     <meta property="og:title" content="{{ title }} - Harald Revery" />
-    <meta property="og:url" content="https://haraldrevery.com{{ page.url }}" />
+    <meta property="og:url" content="https://haraldrevery.com{{ page.url | cleanUrl }}" />
     <meta property="og:type" content="{% if layout == "post.njk" or date %}article{% else %}website{% endif %}" />
     <meta property="og:site_name" content="Harald Revery" />
     {% if description %}

@@ -36,10 +36,10 @@ eleventyExcludeFromCollections: true
     <meta property="og:title" content="{{ release.name }} — Harald Revery" />
     <meta property="og:description" content="{{ release.introduction }}" />
     <meta property="og:image" content="https://haraldrevery.com{{ release.artcover }}" />
-    <meta property="og:url" content="https://haraldrevery.com{{ release.url }}" />
+    <meta property="og:url" content="https://haraldrevery.com{{ release.url | cleanUrl }}" />
     <meta property="og:type" content="{{ ogType }}" />
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://haraldrevery.com{{ release.url }}">
+    <link rel="canonical" href="https://haraldrevery.com{{ release.url | cleanUrl }}">
 
     <!-- Structured data (MusicAlbum) generated from release_input/*.json -->
     <script type="application/ld+json">{{ release | musicAlbumLd | safe }}</script>
