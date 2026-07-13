@@ -318,23 +318,23 @@ if __name__ == "__main__":
     create_topographic_svg(
         filename=out,
         field="mountain",     # "mountain" (terrain) or "faults" (old v3 style)
-        seed=710,             # change for a totally different mountain layout
+        seed=893,             # change for a totally different mountain layout
 
         # --- THE TWO YOU ASKED ABOUT --------------------------------------- #
-        rdp_epsilon=0.7,      # SIMPLIFICATION: higher = smaller file, looser.
+        rdp_epsilon=0.6,      # SIMPLIFICATION: higher = smaller file, looser.
                               #   0 = keep all points, 0.7-1.0 = safe, 2-4 = strong.
         smoothness=1.0,       # SMOOTHNESS: 0 = straight/jaggy, 1 = smooth,
                               #   1.5+ = extra-flowing (may overshoot tight bends).
         # ------------------------------------------------------------------- #
 
-        num_levels=22,        # how many contour lines (more = denser + bigger file)
-        resolution=400,       # sampling grid; raise for finer base detail (slower)
+        num_levels=24,        # how many contour lines (more = denser + bigger file)
+        resolution=810,       # sampling grid; raise for finer base detail (slower)
 
         # Shape of the terrain itself:
         field_kwargs=dict(
-            octaves=2,        # detail levels: more = finer ridges (bigger file)
-            feature_freq=0.32,# lower = bigger/fewer landforms; higher = busier
+            octaves=1,        # detail levels: more = finer ridges (bigger file)
+            feature_freq=0.4,# lower = bigger/fewer landforms; higher = busier
             ridged=0.2,      # 0..1: sharper ridgelines & valleys as it rises
-            warp=0.2,         # organic distortion; 0 = smoother/more regular blobs
+            warp=0.15,         # organic distortion; 0 = smoother/more regular blobs
         ),
     )
