@@ -447,3 +447,66 @@
   .article-outline-sublist a { color: #a3a3a3; }
   .article-outline-panel a:hover { color: #ffffff; border-left-color: #ffffff; }
 }
+
+
+/* ===================================
+   Reading-width toggle (JS only) — narrows the article column.
+   All markup is injected by javascript/reading_width.js, so nothing here
+   renders unless JS ran. The button is hidden until the pointer enters the
+   lower-right corner zone; the outline button stays always-visible.
+   =================================== */
+
+/* Transparent hover target in the very corner. Sits below the outline button
+   (z-index 120) so it never intercepts its clicks. */
+.reading-corner-zone {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  width: 6rem;
+  height: 8rem;
+  z-index: 110;
+}
+
+.reading-width-btn {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;                   /* corner slot when there's no outline button */
+  z-index: 121;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  font-family: var(--font-mono);
+  font-size: 1.5rem;                 /* match the outline button below it */
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: #171717;
+  background: none;
+  border: none;
+  cursor: pointer;
+  user-select: none;
+  opacity: 0;                        /* revealed on corner hover */
+  pointer-events: none;
+  transition: opacity 0.2s, color 0.2s;
+}
+.reading-width-btn:hover { color: #737373; }
+
+/* When an outline button exists, stack the width button just above it. */
+.reading-width-btn.reading-width-btn--above-outline { bottom: 3.9rem; }
+
+/* Reveal while the pointer is over the corner zone OR the button itself.
+   The button's own :hover is essential: once revealed it sits on top of the
+   zone (higher z-index) and, being a sibling rather than a child, steals the
+   hover from it — so without this the zone loses :hover the instant you touch
+   the button and it flickers/fades out under the pointer. */
+.reading-corner-zone:hover ~ .reading-width-btn,
+.reading-width-btn:hover {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  .reading-width-btn { color: #ffffff; }
+  .reading-width-btn:hover { color: #a3a3a3; }
+}

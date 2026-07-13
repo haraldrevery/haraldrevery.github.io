@@ -92,6 +92,22 @@ body {
     }
   }
 
+  /* Markdown blog-post column. Same widths as .page-container, but scalable via
+     --reading-scale (default 1 = no change) so the reading-width button in
+     javascript/reading_width.js can narrow it. Kept as its own class so the
+     scaling can never affect the nav bar or any other .page-container. */
+  .post-container {
+    margin-left: auto;
+    margin-right: auto;
+    width: calc(88% * var(--reading-scale, 1));
+  }
+
+  @media (min-width: 900px) {
+    .post-container {
+      width: calc(75% * var(--reading-scale, 1));
+    }
+  }
+
   /* Component: Glass Navbar */
   .glass-nav {
     @apply fixed top-0 inset-x-0 z-50 border-b border-white/5 bg-zinc-950/60 backdrop-blur-xl;
