@@ -7,7 +7,55 @@ const fs = require("fs");
 const path = require("path");
 const matter = require("gray-matter");
 
+// Shared slug helper (used by the "slugify" filter and the "releases" collection).
+const slugify = (str) => {
+  return String(str)
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+};
+
+// Parse JSON that may contain // and /* */ comments and trailing commas
+// (so release_input/*.jsonc templates can be self-documenting). String-aware,
+// so it never touches "https://…" URLs or text inside quotes.
+const parseJsonc = (text) => {
+  let out = "", inStr = false, esc = false, line = false, block = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], n = text[i + 1];
+    if (line) { if (c === "\n") { line = false; out += c; } continue; }
+    if (block) { if (c === "*" && n === "/") { block = false; i++; } continue; }
+    if (inStr) {
+      out += c;
+      if (esc) esc = false;
+      else if (c === "\\") esc = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') { inStr = true; out += c; continue; }
+    if (c === "/" && n === "/") { line = true; i++; continue; }
+    if (c === "/" && n === "*") { block = true; i++; continue; }
+    out += c;
+  }
+  // strip trailing commas ( , } / , ] ) outside strings
+  let clean = "", s2 = false, e2 = false;
+  for (let i = 0; i < out.length; i++) {
+    const c = out[i];
+    if (s2) { clean += c; if (e2) e2 = false; else if (c === "\\") e2 = true; else if (c === '"') s2 = false; continue; }
+    if (c === '"') { s2 = true; clean += c; continue; }
+    if (c === ",") {
+      let j = i + 1;
+      while (j < out.length && /\s/.test(out[j])) j++;
+      if (out[j] === "}" || out[j] === "]") continue;   // drop the trailing comma
+    }
+    clean += c;
+  }
+  return JSON.parse(clean);
+};
+
 module.exports = function(eleventyConfig) {
+
 
 // 1. Markdown Library Settings
   let markdownLibrary = markdownIt({
@@ -217,13 +265,25 @@ module.exports = function(eleventyConfig) {
   });
 
   // NEW: Filter to slugify tags for URLs
-  eleventyConfig.addFilter("slugify", (str) => {
-    return str
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim();
+  eleventyConfig.addFilter("slugify", slugify);
+
+  // Collection: music releases generated from JSON files in release_input/.
+  // Each JSON becomes one page at release/<slug>.html (via release.njk) and one
+  // tile on the discography index (release/index.html via discography.njk).
+  // Files prefixed with "_" are skipped (a simple draft mechanism).
+  eleventyConfig.addCollection("releases", function() {
+    const dir = "./release_input";
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir)
+      .filter(f => (f.endsWith(".json") || f.endsWith(".jsonc")) && !f.startsWith("_"))
+      .map(f => {
+        const d = parseJsonc(fs.readFileSync(path.join(dir, f), "utf8"));
+        d.slug = d.slug || slugify(d.name);
+        d.url = `/release/${d.slug}.html`;
+        d.year = d.date ? new Date(d.date).getFullYear() : "";
+        return d;
+      })
+      .sort((a, b) => new Date(b.date) - new Date(a.date));  // newest first
   });
 
   // NEW: Filter to truncate text to a specific length

@@ -61,4 +61,20 @@ staticPages:
     <priority>0.6</priority>
   </url>
 {%- endfor %}
+{%- if collections.releases.length %}
+  <url>
+    <loc>{{ site_url }}/discography.html</loc>
+    <lastmod>{{ buildDate | isoDate }}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+{%- endif %}
+{%- for r in collections.releases %}
+  <url>
+    <loc>{{ site_url }}{{ r.url }}</loc>
+    <lastmod>{{ r.date | isoDate }}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+{%- endfor %}
 </urlset>

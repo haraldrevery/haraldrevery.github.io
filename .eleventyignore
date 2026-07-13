@@ -2,6 +2,7 @@
 notebook_pages/
 information/
 notebook.html
+release/
 
 # Ignore your static files so Eleventy doesn't try to process them
 404.html
