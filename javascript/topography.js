@@ -68,6 +68,16 @@ const YAW_RANGE = 7 * Math.PI / 180;
 const TILT_RANGE = 5 * Math.PI / 180;
 const ORBIT_EASE = 0.05;           // how lazily the view follows the cursor
 
+// With no cursor on it — a TV, say — the view turns slowly by itself. Two
+// waves at unrelated periods, so it wanders instead of visibly repeating, and
+// neither lines up with the island's breathing. DRIFT_YAW is the swing either
+// side of YAW, in degrees; set it to 0 to park the camera. A cursor takes over
+// the moment it moves, and hands back once it has sat still for MOUSE_IDLE
+// seconds — otherwise a cursor abandoned on screen would freeze the drift.
+const DRIFT_YAW = 4 * Math.PI / 180;
+const DRIFT_PERIOD = 47;           // seconds for the main swing
+const MOUSE_IDLE = 4;              // seconds of a still cursor before drift resumes
+
 const FOCAL = 420;                 // world units; smaller = stronger perspective
 const ELEV_SCALE = 22;             // world units per unit of field height
 const ELEV_REF = 1.0;              // field height that sits on the horizon line
@@ -108,6 +118,16 @@ const RIM_ALPHA_MIN = 0.0;
 const RIM_ALPHA_MAX = 1.0;
 
 const LOGO_SPAN = 0.62;       // fraction of viewport height
+
+// >>> LOGO POSITION — NUDGE IT HERE <<<
+// Offsets from centre, as a fraction of the viewport: X positive moves it
+// right, Y positive moves it down. Y also walks it toward the camera across
+// the ground plane, so it grows a little as it comes down and shrinks as it
+// goes up — that is the perspective, not a bug. Keep them modest: the island
+// is carved out of the grid, and pushing it far enough to reach an edge will
+// clip its skirt.
+const LOGO_SHIFT_X = -0.035;
+const LOGO_SHIFT_Y = 0;
 const FALLOFF = 9;            // cells the skirt takes to drop one unit;
                               // smaller = steeper cliffs, plates stack tighter
 const INNER_SCALE = 50;      // how gently the top domes toward the middle
@@ -133,13 +153,24 @@ let islandTop = 0;
 let breath = 0, rise = 1;
 let cx, cy, zoom, fog;
 
-// Live camera, eased toward the mouse each frame.
+// Live camera: drifting on its own, or eased toward the mouse when there is one.
 let yaw = YAW, pitch = PITCH;
 let yawTarget = YAW, pitchTarget = PITCH;
+let mouseInside = false, mouseLast = -1e9;
 let sinP = Math.sin(PITCH), cosP = Math.cos(PITCH);
 let sinY = Math.sin(YAW), cosY = Math.cos(YAW);
 
-function updateCamera() {
+function updateCamera(t) {
+    // The cursor only holds the camera while it is actually being moved.
+    if (!(mouseInside && t - mouseLast < MOUSE_IDLE)) {
+        const swing = Math.sin(t * (2 * Math.PI / DRIFT_PERIOD)) * 0.75
+                    + Math.sin(t * (2 * Math.PI / (DRIFT_PERIOD * 0.41))) * 0.25;
+        yawTarget = YAW + swing * DRIFT_YAW;
+        pitchTarget = PITCH;
+    }
+
+    // Easing does the handover in both directions, so the drift picks up from
+    // wherever the cursor left the view rather than snapping back.
     yaw += (yawTarget - yaw) * ORBIT_EASE;
     pitch += (pitchTarget - pitch) * ORBIT_EASE;
     sinP = Math.sin(pitch); cosP = Math.cos(pitch);
@@ -291,12 +322,24 @@ function buildLogo() {
     off.height = H;
     const octx = off.getContext('2d', { willReadFrequently: true });
 
-    // Fit the 1000x1100 viewBox into the grid, centred. The span is measured
-    // against the visible rows, not the overscanned ones, so the island keeps
-    // its size on screen.
+    // Fit the 1000x1100 viewBox into the grid, centred, then nudged. The span
+    // is measured against the visible rows, not the overscanned ones, so the
+    // island keeps its size on screen.
     const sg = (LOGO_SPAN * (height / cell)) / 1100;   // grid units per SVG unit
     const s = sg * S;
-    octx.setTransform(s, 0, 0, s, W / 2 - 500 * s, H / 2 - 550 * s);
+
+    // Offsets are a fraction of the viewport, converted to grid cells. Divide
+    // by zoom rather than cell — that is what the camera actually scales by —
+    // and the vertical by sin(PITCH) as well, since moving across a tilted
+    // ground plane is foreshortened. Lands within a couple of percent; the
+    // last of it is the perspective, which no constant can fix because the
+    // near and far ends of the logo move by different amounts.
+    const ox = LOGO_SHIFT_X * width / zoom;
+    const oy = LOGO_SHIFT_Y * height / (zoom * Math.sin(PITCH));
+
+    octx.setTransform(s, 0, 0, s,
+                      W / 2 - 500 * s + ox * S,
+                      H / 2 - 550 * s + oy * S);
     octx.fillStyle = '#fff';
     svg.querySelectorAll('path').forEach(p => {
         octx.fill(new Path2D(p.getAttribute('d')));
@@ -336,7 +379,8 @@ function buildLogo() {
     }
 
     // Same placement as the raster above, minus the supersampling.
-    buildRim(sg, w / 2 - 500 * sg, h / 2 - 550 * sg);
+    // Same placement as the raster above, minus the supersampling.
+    buildRim(sg, w / 2 - 500 * sg + ox, h / 2 - 550 * sg + oy);
 }
 
 /*
@@ -784,7 +828,7 @@ function buildFog() {
 
 function animate() {
     const t = performance.now() * 0.001;
-    updateCamera();
+    updateCamera(t);
     sampleField(t);
     buildContours(t);
     draw(t);
@@ -833,13 +877,13 @@ function setup() {
     });
 
     window.addEventListener('mousemove', e => {
+        mouseInside = true;
+        mouseLast = performance.now() * 0.001;
         yawTarget = YAW + ((e.clientX / width) * 2 - 1) * YAW_RANGE;
         pitchTarget = PITCH + ((e.clientY / height) * 2 - 1) * TILT_RANGE;
     });
-    window.addEventListener('mouseout', () => {
-        yawTarget = YAW;
-        pitchTarget = PITCH;
-    });
+    // Leaving the window hands the camera straight back to the drift.
+    window.addEventListener('mouseout', () => { mouseInside = false; });
 
     animate();
 }
