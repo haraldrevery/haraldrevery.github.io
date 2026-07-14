@@ -126,7 +126,7 @@ const LOGO_SPAN = 0.62;       // fraction of viewport height
 // goes up — that is the perspective, not a bug. Keep them modest: the island
 // is carved out of the grid, and pushing it far enough to reach an edge will
 // clip its skirt.
-const LOGO_SHIFT_X = -0.035;
+const LOGO_SHIFT_X = -0.036;
 const LOGO_SHIFT_Y = 0;
 const FALLOFF = 9;            // cells the skirt takes to drop one unit;
                               // smaller = steeper cliffs, plates stack tighter
