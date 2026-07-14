@@ -74,7 +74,7 @@ const ORBIT_EASE = 0.05;           // how lazily the view follows the cursor
 // side of YAW, in degrees; set it to 0 to park the camera. A cursor takes over
 // the moment it moves, and hands back once it has sat still for MOUSE_IDLE
 // seconds — otherwise a cursor abandoned on screen would freeze the drift.
-const DRIFT_YAW = 4 * Math.PI / 180;
+const DRIFT_YAW = 8 * Math.PI / 180;
 const DRIFT_PERIOD = 47;           // seconds for the main swing
 const MOUSE_IDLE = 4;              // seconds of a still cursor before drift resumes
 
