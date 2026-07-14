@@ -13,7 +13,7 @@
 // Only run on pages that actually have the markdown post column.
 if (!document.querySelector('.post-container')) return;
 
-var SCALES  = [1, 0.80, 0.60, 0.45];  // default → 80% → 60% → 45% of default width
+var SCALES  = [1, 0.75, 0.50, 0.42];  // default → 80% → 60% → 45% of default width
 var NARROW  = '><';                   // shown while there's still room to narrow
 var WIDEN   = '<>';                   // shown at the narrowest step: next press widens back
 var index   = 0;                      // current step in SCALES
@@ -44,9 +44,16 @@ btn.addEventListener('click', function () {
     btn.textContent = glyphFor(index);
 });
 
+// Insert into the SAME stacking context as the outline button. That button
+// lives inside .bg-topology-map, which uses `isolation: isolate` (its own
+// stacking context) — so appending to document.body instead would paint the
+// zone above that whole subtree and block clicks on the outline button, no
+// matter the z-index. Inside .bg-topology-map, zone z-index (110) sits below
+// the outline button (120), so it no longer intercepts its clicks.
 // Order matters: the zone must precede the button so the CSS
 // `.reading-corner-zone:hover ~ .reading-width-btn` sibling selector works.
-document.body.appendChild(zone);
-document.body.appendChild(btn);
+var host = document.querySelector('.bg-topology-map') || document.body;
+host.appendChild(zone);
+host.appendChild(btn);
 
 }());
