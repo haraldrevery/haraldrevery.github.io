@@ -329,6 +329,15 @@ nav {
     position: relative;
     isolation: isolate;
     overflow: hidden; /* Important: keeps the moving dots inside the section */
+
+    /* Fade length at each edge of the dot grid. Must be declared here on the
+       section, not on ::before: a value set directly on ::before would beat the
+       inherited one and the hero override below could never take effect.
+       The `50% - 120px` term is half the section's height (the 50% resolves
+       against ::before, which is 240px taller). Without that ceiling the two
+       fades would overlap on a short section and the gradient stops would fall
+       out of order. */
+    --dot-fade: min(90px, calc(50% - 120px));
   }
 
   .bg-dot-grid::before {
@@ -341,7 +350,25 @@ nav {
     
     background-image: radial-gradient(circle, var(--dot-color) 1.1px, transparent 1.1px);
     background-size: 7px 7px;
-    mask-image: radial-gradient(circle at center, black 20%, transparent 95%);
+
+    /* The 120px stops are the section's real top/bottom edge, because this
+       pseudo-element overhangs the section by exactly 120px (see `inset` above).
+       Anchoring in px rather than % keeps the fade landing on the edge no matter
+       how tall the section is. */
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 120px,
+      black calc(120px + var(--dot-fade)),
+      black calc(100% - 120px - var(--dot-fade)),
+      transparent calc(100% - 120px)
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 120px,
+      black calc(120px + var(--dot-fade)),
+      black calc(100% - 120px - var(--dot-fade)),
+      transparent calc(100% - 120px)
+    );
 
 /* 2. Link the animation to the scroll progress */
     animation: parallax-dots linear both;
@@ -357,6 +384,12 @@ nav {
     transform: translateY(0) !important;
   }
 }
+  /* Full-height heroes get a long, gentle fade. Short sections would wash out.
+     Ceiling keeps landscape phones (~320px tall) from collapsing to a band. */
+  .bg-dot-grid.hero-safe-vh {
+    --dot-fade: min(260px, calc(50% - 120px));
+  }
+
   /* Dot colors */
   .bg-dot-grid {
     --dot-color: rgba(0, 0, 0, 0.12);

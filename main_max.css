@@ -2698,6 +2698,7 @@ nav {
     position: relative;
     isolation: isolate;
     overflow: hidden;
+    --dot-fade: min(90px, calc(50% - 120px));
   }
   .bg-dot-grid::before {
     content: "";
@@ -2707,7 +2708,8 @@ nav {
     pointer-events: none;
     background-image: radial-gradient(circle, var(--dot-color) 1.1px, transparent 1.1px);
     background-size: 7px 7px;
-    mask-image: radial-gradient(circle at center, black 20%, transparent 95%);
+    mask-image: linear-gradient( to bottom, transparent 120px, black calc(120px + var(--dot-fade)), black calc(100% - 120px - var(--dot-fade)), transparent calc(100% - 120px) );
+    -webkit-mask-image: linear-gradient( to bottom, transparent 120px, black calc(120px + var(--dot-fade)), black calc(100% - 120px - var(--dot-fade)), transparent calc(100% - 120px) );
     animation: parallax-dots linear both;
     animation-timeline: view();
     animation-range: entry 0% exit 100%;
@@ -2718,6 +2720,9 @@ nav {
       animation: none !important;
       transform: translateY(0) !important;
     }
+  }
+  .bg-dot-grid.hero-safe-vh {
+    --dot-fade: min(260px, calc(50% - 120px));
   }
   .bg-dot-grid {
     --dot-color: rgba(0, 0, 0, 0.12);
