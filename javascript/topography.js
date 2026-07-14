@@ -78,8 +78,8 @@ const HORIZON_EPS = 1.5;           // px of slack, so grazing lines survive
 const FOG_SPAN = 0.45;             // fraction of the screen the far haze covers
 
 // Terrain
-const NOISE_SCALE = 0.055;    // per grid cell
-const NOISE_AMP = 0.55;
+const NOISE_SCALE = 0.08;    // per grid cell
+const NOISE_AMP = 0.62;
 const DRIFT = 0.02;           // noise units per second
 const EVOLVE = 0.05;          // z travel per second
 
@@ -93,19 +93,43 @@ const EVOLVE = 0.05;          // z travel per second
 // crank it is diminishing returns.
 const LOGO_DETAIL = 3;
 
+// The rim is traced from the SVG itself, so it is not limited by the grid at
+// all. RIM_STEP is the spacing between samples along the outline, in SVG units
+// (the logo is 1100 tall); ~3 lands around 2px on screen. Lower it if the
+// curves ever look faceted.
+const RIM_STEP = 3;
+
+// >>> RIM OPACITY — SET THE FADE HERE <<<
+// The traced outline fades in as the island rises, so it arrives rather than
+// switching on. MIN is the instant it first breaks the surface, MAX is full
+// height at the top of the cycle. Set both the same for a flat opacity, or MIN
+// to 0 (as here) to have it wash in from nothing.
+const RIM_ALPHA_MIN = 0.0;
+const RIM_ALPHA_MAX = 1.0;
+
 const LOGO_SPAN = 0.62;       // fraction of viewport height
 const FALLOFF = 9;            // cells the skirt takes to drop one unit;
                               // smaller = steeper cliffs, plates stack tighter
-const INNER_SCALE = 120;      // how gently the top domes toward the middle
+const INNER_SCALE = 50;      // how gently the top domes toward the middle
 const LOGO_HEIGHT = 1.15;     // rim height at full rise, above the plain's floor
 const SINK = 0.5;             // how far below that floor it hides when sunk;
                               // must exceed BLEND or a ghost swell shows through
 const BLEND = 0.28;           // width of the union's blend band
 const BREATH_PERIOD = 24;     // seconds
 
+// The rise at which the island's rim reaches the plain's floor — the first
+// moment any of it can surface. Below this it is under the map no matter what
+// the terrain is doing, so the rim fade is measured from here rather than from
+// the bottom of the cycle; otherwise RIM_ALPHA_MIN would be a value that never
+// actually appears on screen. Derived, so it follows SINK and LOGO_HEIGHT.
+const RISE_SURFACED = SINK / (LOGO_HEIGHT + SINK);
+
 let width, height, dpr, cell;
 let cols, rows, halfCols, halfRows;
 let field, onIsland, mesa;
+let rimX, rimY, rimBreak, rimI, rimJ, rimH, rimSx, rimSy, rimOk;
+const rimBuckets = [];
+let islandTop = 0;
 let breath = 0, rise = 1;
 let cx, cy, zoom, fog;
 
@@ -270,7 +294,8 @@ function buildLogo() {
     // Fit the 1000x1100 viewBox into the grid, centred. The span is measured
     // against the visible rows, not the overscanned ones, so the island keeps
     // its size on screen.
-    const s = (LOGO_SPAN * (height / cell)) / 1100 * S;
+    const sg = (LOGO_SPAN * (height / cell)) / 1100;   // grid units per SVG unit
+    const s = sg * S;
     octx.setTransform(s, 0, 0, s, W / 2 - 500 * s, H / 2 - 550 * s);
     octx.fillStyle = '#fff';
     svg.querySelectorAll('path').forEach(p => {
@@ -308,6 +333,80 @@ function buildLogo() {
                 ? -s2 / INNER_SCALE                   // gentle dome toward the middle
                 : Math.max(-4, -s2 / FALLOFF);        // skirt, at a constant slope
         }
+    }
+
+    // Same placement as the raster above, minus the supersampling.
+    buildRim(sg, w / 2 - 500 * sg, h / 2 - 550 * sg);
+}
+
+/*
+ * The rim, traced from the SVG rather than pulled off the grid.
+ *
+ * Every other line comes out of marching squares on a ~10px grid, which rounds
+ * the monogram's finer detail off and merges anything thinner than a cell or
+ * two. The rim is the one line that has to read as the logo, and it happens to
+ * be exactly the SVG outline at the island's rim height — the island is built
+ * from the distance to that outline, so distance zero is the path itself.
+ *
+ * So it gets traced from the path data at full precision and projected point
+ * by point. Stroking a transformed Path2D would not work: perspective is not
+ * an affine transform, and every point sits at a different depth.
+ */
+function buildRim(sg, gox, goy) {
+    const xs = [], ys = [], breaks = [];
+
+    svg.querySelectorAll('path').forEach(p => {
+        const len = p.getTotalLength();
+        let first = true;
+        // The four outlines are disjoint, so each one is silhouette throughout.
+        for (let d = 0; d <= len; d += RIM_STEP) {
+            const pt = p.getPointAtLength(Math.min(d, len));
+            xs.push(pt.x * sg + gox);
+            ys.push(pt.y * sg + goy);
+            breaks.push(first ? 1 : 0);
+            first = false;
+        }
+    });
+
+    const n = xs.length;
+    rimX = Float32Array.from(xs);
+    rimY = Float32Array.from(ys);
+    rimBreak = Uint8Array.from(breaks);
+    rimI = new Float32Array(n);
+    rimJ = new Float32Array(n);
+    rimH = new Float32Array(n);
+    rimSx = new Float32Array(n);
+    rimSy = new Float32Array(n);
+    rimOk = new Uint8Array(n);
+}
+
+/*
+ * Place each rim point for this frame: drop the ones the plain still covers,
+ * ride the same blended surface the plates do, and undo the yaw to find which
+ * grid row the point falls in. The horizon is only a depth order while it is
+ * being built, so points are bucketed by row and tested inside that sweep.
+ */
+function prepRim(t, top) {
+    const drift = t * DRIFT;
+    const z = t * EVOLVE;
+    for (let b = 0; b < rimBuckets.length; b++) rimBuckets[b].length = 0;
+
+    for (let p = 0; p < rimX.length; p++) {
+        const mx = rimX[p], my = rimY[p];
+        const ground = fbm(mx * NOISE_SCALE + drift,
+                           my * NOISE_SCALE - drift * 0.6, z) * NOISE_AMP;
+        if (ground >= top) { rimOk[p] = 0; continue; } // still under the plain
+
+        rimOk[p] = 1;
+        rimH[p] = smax(ground, top, BLEND);
+
+        const rx = mx - halfCols, ry = my - halfRows;
+        rimI[p] = rx * cosY + ry * sinY + halfCols;
+        rimJ[p] = -rx * sinY + ry * cosY + halfRows;
+
+        let b = rimJ[p] | 0;
+        if (b < 0) b = 0; else if (b > rows - 1) b = rows - 1;
+        rimBuckets[b].push(p);
     }
 }
 
@@ -366,6 +465,7 @@ function sampleField(t) {
 
     // Rim height: below the plain's floor when sunk, full height when risen.
     const top = -SINK + (LOGO_HEIGHT + SINK) * rise;
+    islandTop = top;
 
     const drift = t * DRIFT;
     const z = t * EVOLVE;
@@ -471,8 +571,9 @@ function visible(x, y) {
 
 // --- marching squares -------------------------------------------------------
 
-function buildContours() {
+function buildContours(t) {
     for (let i = 0; i < LEVEL_COUNT; i++) { levelSegs[i].length = 0; levelSegsLit[i].length = 0; }
+    prepRim(t, islandTop);
     const w = cols + 1;
 
     horizon.fill(Infinity);
@@ -481,6 +582,16 @@ function buildContours() {
     // Near to far, so the horizon always holds everything closer than this row.
     for (let j = rows - 1; j >= 0; j--) {
         addHorizonRow(j + 1);
+
+        // Rim points landing in this row, now that everything nearer is in.
+        const bucket = rimBuckets[j];
+        for (let n = 0; n < bucket.length; n++) {
+            const p = bucket[n];
+            project(rimI[p], rimJ[p], rimH[p]);
+            rimSx[p] = pX;
+            rimSy[p] = pY;
+            if (!visible(pX, pY)) rimOk[p] = 0;
+        }
 
         for (let i = 0; i < cols; i++) {
             const k = j * w + i;
@@ -587,6 +698,38 @@ function strokeSegs(segs, alpha, lineWidth) {
     ctx.stroke();
 }
 
+// The rim rides the same hover as the plate it sits closest to, so the top of
+// the island moves as one piece. The phase is taken from its height rather
+// than a layer index, so it stays continuous as the island climbs.
+function drawRim(t) {
+    // Fades in across the part of the climb the rim is actually above ground
+    // for: MIN as it breaks the surface, MAX standing at full height.
+    let f = (rise - RISE_SURFACED) / (1 - RISE_SURFACED);
+    if (f < 0) f = 0; else if (f > 1) f = 1;
+    const alpha = RIM_ALPHA_MIN + (RIM_ALPHA_MAX - RIM_ALPHA_MIN) * f;
+
+    ctx.save();
+    ctx.translate(0, Math.sin(t * BOB_SPEED + (islandTop / LEVEL_STEP) * BOB_PHASE) * BOB_PX);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = isDark
+        ? `rgba(255,255,255,${alpha})`
+        : `rgba(26,26,26,${alpha})`;
+
+    ctx.beginPath();
+    let drawing = false;
+    for (let p = 0; p < rimOk.length; p++) {
+        if (rimOk[p] === 0) { drawing = false; continue; }
+        if (!drawing || rimBreak[p] === 1) {
+            ctx.moveTo(rimSx[p], rimSy[p]);
+            drawing = true;
+        } else {
+            ctx.lineTo(rimSx[p], rimSy[p]);
+        }
+    }
+    ctx.stroke();
+    ctx.restore();
+}
+
 function draw(t) {
     ctx.clearRect(0, 0, width, height);
 
@@ -620,6 +763,8 @@ function draw(t) {
         ctx.restore();
     }
 
+    drawRim(t);
+
     // Haze the far edge of the ground away rather than letting it end in a
     // hard line. Erasing is cheaper than a fog term per segment, and it lets
     // the page background show through untouched.
@@ -641,7 +786,7 @@ function animate() {
     const t = performance.now() * 0.001;
     updateCamera();
     sampleField(t);
-    buildContours();
+    buildContours(t);
     draw(t);
     requestAnimationFrame(animate);
 }
@@ -663,6 +808,8 @@ function resize() {
     const nodes = (cols + 1) * (rows + 1);
     field = new Float32Array(nodes);
     onIsland = new Uint8Array(nodes);
+    rimBuckets.length = 0;
+    for (let j = 0; j < rows; j++) rimBuckets.push([]);
     hw = Math.ceil(width);
     horizon = new Float32Array(hw);
 
