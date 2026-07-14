@@ -55,13 +55,25 @@ chmod +x tailwindcss-linux-x64
 ./dev.sh
 ```
 
-To build the notebook section, run
+To build the notebook section, run (if on linux):
+
+```
+./eleventy-linux-x64
+```
+
+or click the eleventy-win-x64.exe if on windows.
+
+If the pages don't update, delete everything inside the /notebook_pages folder and run the commands again.
+
+For more information, see the /information folder containing .md files. 
+
+If nothing works, install node.js and run
+
 ```
 npm start
 ```
-If the pages don't update, delete everything inside the /notebook_pages folder and run "npm start" again.
 
-For more information, see the /information folder containing .md files. 
+Note: I avoid npm since you depend on so many servers for it to work and you never know what the code is, hence why you should compile binaries that works and stick with them. Only use npm when changing logic for this website and compile in the end when everything works.
 
 ---
 
