@@ -13,7 +13,7 @@
 // Only run on pages that actually have the markdown post column.
 if (!document.querySelector('.post-container')) return;
 
-var SCALES  = [1, 0.75, 0.50, 0.42];  // default → 80% → 60% → 45% of default width
+var SCALES  = [1, 0.75, 0.55, 0.40, 0.28];  // default → 80% → 60% → 45% of default width
 var NARROW  = '><';                   // shown while there's still room to narrow
 var WIDEN   = '<>';                   // shown at the narrowest step: next press widens back
 var index   = 0;                      // current step in SCALES
