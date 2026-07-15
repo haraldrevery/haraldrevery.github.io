@@ -7,7 +7,7 @@
   "isrc": "none",
   "genres": ["Melodic House", "Festival", "Night Club"],
   "kicker": "Archive",
-  "introduction": "A list of popular remixes.",
+  "introduction": "Occurring remixes in sets.",
   "artcover": "/haraldrevery_website_animation.jpg",
   "artcoverMin": "/haraldrevery_website_animation.jpg",
   "streaming": {
@@ -29,4 +29,3 @@
     { "order": 6, "name": "Ke$ha - Take It Off", "version": "Harald Revery Remix", "length": "4:16", "isrc": " " }
   ]
 }
-
