@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node test-fixes.js)",
+      "Bash(node test-gif.js)",
+      "Bash(node test-ansi.js)"
+    ]
+  }
+}
