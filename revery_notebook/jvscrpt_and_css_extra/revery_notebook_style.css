@@ -146,6 +146,7 @@ html :is(#preview, .lp-render) .prose b {
   --outline-font-size: 0.76rem;
   /* ── Reader mode content max-width (set via Settings → Reader padding) ── */
   --reader-max-width: none;
+  --editor-max-width: none; /* classic editor column cap (Editor padding fixed/drag) */
 }
 /* ── Editor UI Themes ── */
 [data-theme="dark"] {
@@ -519,6 +520,11 @@ body:has(.menu-container.show) #outline-divider::after {
   background: var(--bg-panel);
   background: color-mix(in srgb, var(--bg-panel) 40%, transparent);
 }
+/* Settings → Theme → "Pane label bars" off: hide the editor/preview bars.
+   Direct-child only — the outline pane's label (hosts its font-size
+   buttons) is deliberately unaffected. */
+body.pane-labels-hidden #editor-pane > .pane-label,
+body.pane-labels-hidden #preview-pane > .pane-label { display: none; }
 #editor {
   flex: 1;
   resize: none;
@@ -954,6 +960,10 @@ body[data-view="editor"] #topbar-left #wordcount {
 /* ── Reader Mode Topbar Adjustments ── */
 body.reader-mode-active #topbar-left { visibility: hidden !important; }
 body.reader-mode-active #topbar-left #btn-sidebar { visibility: visible !important; }
+/* The logo lives inside #topbar-left when positioned Left (applyLogoPosition
+   moves the wrapper) — keep it and its dropdown usable in reader mode. */
+body.reader-mode-active #topbar-left #btn-logo { visibility: visible !important; }
+body.reader-mode-active #topbar-left #logo-dropdown { visibility: visible !important; }
 body.reader-mode-active #topbar-right > div:not(#win-controls) { display: none !important; }
 body.reader-mode-active #btn-export,
 body.reader-mode-active #btn-reader-mode,
@@ -1398,6 +1408,21 @@ body:not(.reader-mode-active) #btn-exit-reader-mode { display: none !important; 
   body.reader-edge-dragging #preview .prose {
     transition: none;
   }
+
+  /* Same affordance for the CLASSIC editor column (Editor padding →
+     "Drag to adjust"; layout.js sets body.editor-edge-hover/-dragging).
+     Scoped :not(.live-preview-active) — in LP the reader rules above
+     own the CM column. */
+  body.editor-edge-hover:not(.live-preview-active) #editor .cm-content,
+  body.editor-edge-dragging:not(.live-preview-active) #editor .cm-content {
+    box-shadow: 2px 0 0 0 var(--theme-divider), -2px 0 0 0 var(--theme-divider);
+    box-shadow: 2px 0 0 0 color-mix(in srgb, var(--text) 25%, transparent),
+                -2px 0 0 0 color-mix(in srgb, var(--text) 25%, transparent);
+  }
+  body.editor-edge-hover:not(.live-preview-active) #editor .cm-scroller,
+  body.editor-edge-hover:not(.live-preview-active) #editor .cm-content {
+    cursor: col-resize;
+  }
 }
 
 /* ── Find / Replace Bar ─────────────────────────────────────────────────── */
@@ -1774,6 +1799,23 @@ body:not(.reader-mode-active) #btn-exit-reader-mode { display: none !important; 
   color:          var(--text);
   tab-size:       2;
   min-height:     100%;
+}
+
+/* Classic-editor column width — Editor padding's Fixed width / dragged
+   custom values (--editor-max-width stays 'none' for the presets, which
+   keep their original padding emission). Same centered-column mechanism
+   the live preview uses with --reader-max-width; :not() keeps the two
+   modes disjoint. Desktop only: the mobile editor always stays
+   relative (matching --editor-padding-mobile). */
+@media (min-width: 821px) {
+  body:not(.live-preview-active) #editor .cm-content {
+    max-width: var(--editor-max-width, none);
+    margin-left: auto;
+    margin-right: auto;
+  }
+  body:not(.live-preview-active) #editor .cm-scroller {
+    justify-content: center;
+  }
 }
 
 /* 4. Mobile padding — mirrors the old mobile #editor rule */
@@ -2469,6 +2511,26 @@ body.live-preview-active #editor .cm-content {
   touch-action: manipulation;
 }
 #outline-size-controls button:hover { color: var(--text); }
+
+/* Editor/Preview pane-bar font-size buttons — same recipe as the outline's
+   (kept as a separate class so the outline block stays untouched). */
+.pane-size-controls {
+  float: right;
+  display: inline-flex;
+  gap: 2px;
+}
+.pane-size-controls button {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  line-height: 1;
+  padding: 0 5px;
+  touch-action: manipulation;
+}
+.pane-size-controls button:hover { color: var(--text); }
 
 /* ── Export options popup (markdown_editor_export.js) ──────────────────
    Reuses .modal-overlay/.modal-content; these style the option rows and
