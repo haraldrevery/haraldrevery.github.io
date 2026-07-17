@@ -37,12 +37,20 @@ export interface SvgFields {
   hoverGrow: boolean; // transition-transform hover:scale-105 (classes exist in main.css)
   link: string; // optional wrap in <a href>
   alt: string;
-  maxWidth: string; // px, empty = full width
+  widthPct: number; // % of the container width (100 = full)
 }
 
 export type ColumnContent =
   | { kind: "markdown"; md: string }
-  | { kind: "image"; full: string; thumb: string; alt: string; lightbox: boolean; thumbMissing?: boolean }
+  | {
+      kind: "image";
+      full: string;
+      thumb: string;
+      alt: string;
+      lightbox: boolean;
+      widthPct: number;
+      thumbMissing?: boolean;
+    }
   | {
       kind: "grid";
       layout: GridLayout;
@@ -72,7 +80,7 @@ export function newColumnContent(kind: ColumnKind): ColumnContent {
     case "markdown":
       return { kind, md: "" };
     case "image":
-      return { kind, full: "", thumb: "", alt: "", lightbox: false };
+      return { kind, full: "", thumb: "", alt: "", lightbox: false, widthPct: 100 };
     case "grid":
       return {
         kind,
@@ -86,7 +94,7 @@ export function newColumnContent(kind: ColumnKind): ColumnContent {
     case "video":
       return { kind, src: "", poster: "" };
     case "svg":
-      return { kind, src: "", themed: true, hoverGrow: false, link: "", alt: "", maxWidth: "" };
+      return { kind, src: "", themed: true, hoverGrow: false, link: "", alt: "", widthPct: 100 };
     case "raw":
       return { kind, html: "" };
   }
@@ -100,6 +108,36 @@ export interface HeadingBlock extends Base {
   type: "heading";
   level: number;
   text: string;
+  align: "left" | "center";
+}
+
+/// Full-viewport opener rendered into the shell's {{HERO}} slot — always
+/// before the page container, whatever its list position.
+export interface HeroBlock extends Base {
+  type: "hero";
+  variant: "text" | "photo" | "svg";
+  photoStyle: "backdrop" | "cover"; // blurred release-style backdrop vs sharp full-bleed
+  image: string; // full-size photo (cover)
+  imageThumb: string; // _min (backdrop bg)
+  svgSrc: string;
+  kicker: string;
+  title: string;
+  tagline: string;
+  align: "left" | "center";
+  navReveal: boolean; // nav slides in on scroll (navi_mechanic, like index/release pages)
+  backLink: boolean; // "← Back to Notebook" fades in bottom-left after a delay
+}
+
+export interface IconItem {
+  src: string; // svg path
+  label: string; // accessible name (sr-only)
+  href: string;
+}
+
+export interface IconsBlock extends Base {
+  type: "icons";
+  size: "small" | "medium" | "large";
+  items: IconItem[];
 }
 export interface ParagraphBlock extends Base {
   type: "paragraph";
@@ -124,6 +162,7 @@ export interface ImageBlock extends Base {
   alt: string;
   caption: string;
   lightbox: boolean;
+  widthPct: number;
   thumbMissing?: boolean;
 }
 export interface SvgBlock extends Base, SvgFields {
@@ -138,6 +177,7 @@ export interface VideoBlock extends Base {
 export interface ColumnsBlock extends Base {
   type: "columns";
   count: 1 | 2;
+  verticalAlign: "center" | "top";
   // always two slots; the second is kept (not rendered) when count is 1 so
   // switching 2 -> 1 -> 2 doesn't lose work
   columns: [ColumnContent, ColumnContent];
@@ -153,6 +193,7 @@ export interface RawBlock extends Base {
 }
 
 export type Block =
+  | HeroBlock
   | HeadingBlock
   | ParagraphBlock
   | HrBlock
@@ -161,6 +202,7 @@ export type Block =
   | SvgBlock
   | VideoBlock
   | ColumnsBlock
+  | IconsBlock
   | AudioBlock
   | RawBlock;
 
@@ -169,6 +211,7 @@ export type BlockType = Block["type"];
 export const PROSE_TYPES = new Set<BlockType>(["heading", "paragraph", "hr"]);
 
 export const BLOCK_LABELS: [BlockType, string][] = [
+  ["hero", "Hero (always on top)"],
   ["heading", "Heading"],
   ["paragraph", "Text (markdown + KaTeX)"],
   ["hr", "Divider"],
@@ -177,6 +220,7 @@ export const BLOCK_LABELS: [BlockType, string][] = [
   ["svg", "SVG"],
   ["video", "Video"],
   ["columns", "Columns (1–2, any content)"],
+  ["icons", "Social icons panel"],
   ["audio", "Audio"],
   ["raw", "Raw HTML"],
 ];
@@ -184,8 +228,24 @@ export const BLOCK_LABELS: [BlockType, string][] = [
 export function newBlock(type: BlockType): Block {
   const id = crypto.randomUUID();
   switch (type) {
+    case "hero":
+      return {
+        id,
+        type,
+        variant: "photo",
+        photoStyle: "backdrop",
+        image: "",
+        imageThumb: "",
+        svgSrc: "",
+        kicker: "",
+        title: "",
+        tagline: "",
+        align: "left",
+        navReveal: true,
+        backLink: true,
+      };
     case "heading":
-      return { id, type, level: 2, text: "" };
+      return { id, type, level: 2, text: "", align: "left" };
     case "paragraph":
       return { id, type, md: "" };
     case "hr":
@@ -202,9 +262,9 @@ export function newBlock(type: BlockType): Block {
         items: [],
       };
     case "image":
-      return { id, type, full: "", thumb: "", alt: "", caption: "", lightbox: true };
+      return { id, type, full: "", thumb: "", alt: "", caption: "", lightbox: true, widthPct: 100 };
     case "svg":
-      return { id, type, src: "", themed: true, hoverGrow: false, link: "", alt: "", maxWidth: "" };
+      return { id, type, src: "", themed: true, hoverGrow: false, link: "", alt: "", widthPct: 100 };
     case "video":
       return { id, type, src: "", poster: "", caption: "" };
     case "columns":
@@ -212,8 +272,11 @@ export function newBlock(type: BlockType): Block {
         id,
         type,
         count: 2,
+        verticalAlign: "center",
         columns: [newColumnContent("markdown"), newColumnContent("image")],
       };
+    case "icons":
+      return { id, type, size: "small", items: [] };
     case "audio":
       return { id, type, src: "", title: "" };
     case "raw":
@@ -224,6 +287,10 @@ export function newBlock(type: BlockType): Block {
 export function blockSummary(b: Block): string {
   const base = (p: string) => p.split("/").pop() || "";
   switch (b.type) {
+    case "hero":
+      return `📌 Hero (${b.variant}): ${b.title.slice(0, 20)}`;
+    case "icons":
+      return `Icons (${b.items.length})`;
     case "heading":
       return `H${b.level}: ${b.text.slice(0, 28)}`;
     case "paragraph":
@@ -248,4 +315,28 @@ export function blockSummary(b: Block): string {
     case "raw":
       return "Raw HTML";
   }
+}
+
+// ---------------------------------------------------- metadata completeness
+
+/// Green when alt + title + description are all filled, yellow otherwise.
+export function galleryItemStatus(it: GalleryItem): "ok" | "partial" {
+  return it.alt.trim() && it.title.trim() && it.description.trim() ? "ok" : "partial";
+}
+
+/// Aggregate status for a block's images (null = block has no images).
+export function blockMediaStatus(b: Block): "ok" | "partial" | null {
+  const statuses: ("ok" | "partial")[] = [];
+  if (b.type === "gallery") {
+    b.items.forEach((it) => statuses.push(galleryItemStatus(it)));
+  } else if (b.type === "image") {
+    if (b.full) statuses.push(b.alt.trim() && b.caption.trim() ? "ok" : "partial");
+  } else if (b.type === "columns") {
+    for (const c of b.columns.slice(0, b.count)) {
+      if (c.kind === "grid") c.items.forEach((it) => statuses.push(galleryItemStatus(it)));
+      else if (c.kind === "image" && c.full) statuses.push(c.alt.trim() ? "ok" : "partial");
+    }
+  }
+  if (!statuses.length) return null;
+  return statuses.every((s) => s === "ok") ? "ok" : "partial";
 }

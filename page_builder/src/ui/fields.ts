@@ -66,3 +66,14 @@ export function checkbox(
 export function warnBadge(text: string): HTMLElement {
   return el("span", { class: "badge-warn", title: text }, "⚠ no _min");
 }
+
+/// Green = alt/title/description complete, yellow = something missing.
+export function statusDot(status: "ok" | "partial"): HTMLElement {
+  return el("span", {
+    class: `dot ${status}`,
+    title:
+      status === "ok"
+        ? "Image metadata complete"
+        : "Missing alt, title or description",
+  });
+}

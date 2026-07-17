@@ -366,6 +366,24 @@ fn normalize_ws(s: &str) -> String {
     s.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
+/// Remove {{PLACEHOLDER}} tokens so shell regions containing them (e.g. the
+/// nav's {{NAV_EXTRA}}) still compare clean against the reference page.
+fn strip_placeholders(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut rest = s;
+    while let Some(i) = rest.find("{{") {
+        out.push_str(&rest[..i]);
+        match rest[i..].find("}}") {
+            Some(j) => rest = &rest[i + j + 2..],
+            None => {
+                rest = "";
+            }
+        }
+    }
+    out.push_str(rest);
+    out
+}
+
 /// Asset URLs referenced from <head> (link href / script src), skipping
 /// placeholder-bearing lines — used as a loose head-drift signal.
 fn head_assets(html: &str) -> Vec<String> {
@@ -434,7 +452,9 @@ pub fn check_shell_freshness(state: State<AppState>) -> Result<FreshnessReport, 
         let s = extract_element(&shell, tag).map(|(a, b)| shell[a..b].to_string());
         let r = extract_element(&reference, tag).map(|(a, b)| reference[a..b].to_string());
         let matches = match (&s, &r) {
-            (Some(s), Some(r)) => normalize_ws(s) == normalize_ws(r),
+            (Some(s), Some(r)) => {
+                normalize_ws(&strip_placeholders(s)) == normalize_ws(&strip_placeholders(r))
+            }
             _ => false,
         };
         regions.push(RegionReport {
@@ -473,7 +493,14 @@ pub fn adopt_shell_region(state: State<AppState>, region: String) -> Result<(), 
         extract_element(&shell, &region).ok_or(format!("<{}> not found in shell.html", region))?;
     let (ra, rb) = extract_element(&reference, &region)
         .ok_or(format!("<{}> not found in {}", region, REFERENCE_PAGE))?;
-    let updated = format!("{}{}{}", &shell[..sa], &reference[ra..rb], &shell[sb..]);
+    let mut adopted = reference[ra..rb].to_string();
+    if region == "nav" {
+        // re-insert the hero nav-reveal placeholder the reference page lacks
+        // (and drop a hard-coded navi_mechanic if the reference had one)
+        adopted = adopted.replacen("main-nav navi_mechanic", "main-nav", 1);
+        adopted = adopted.replacen("class=\"main-nav", "class=\"main-nav{{NAV_EXTRA}}", 1);
+    }
+    let updated = format!("{}{}{}", &shell[..sa], adopted, &shell[sb..]);
     let shell_path = root.join("page_builder").join("shell.html");
     fs::write(&shell_path, updated).map_err(|e| e.to_string())
 }

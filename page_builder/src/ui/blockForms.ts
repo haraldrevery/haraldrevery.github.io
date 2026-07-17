@@ -1,8 +1,14 @@
 /* Per-type editor form for the currently selected block. */
 import { el, clear } from "./dom";
-import { textInput, textArea, selectInput, checkbox, row, warnBadge } from "./fields";
+import { textInput, textArea, selectInput, checkbox, row, warnBadge, statusDot } from "./fields";
 import { store } from "../state";
-import { ASPECTS, GALLERY_COLUMNS, COLUMN_KIND_LABELS, newColumnContent } from "../blocks/model";
+import {
+  ASPECTS,
+  GALLERY_COLUMNS,
+  COLUMN_KIND_LABELS,
+  newColumnContent,
+  galleryItemStatus,
+} from "../blocks/model";
 import type {
   Aspect,
   AudioBlock,
@@ -14,6 +20,8 @@ import type {
   GalleryItem,
   GridLayout,
   HeadingBlock,
+  HeroBlock,
+  IconsBlock,
   ImageBlock,
   ParagraphBlock,
   RawBlock,
@@ -88,6 +96,7 @@ function galleryItemsEditor(items: GalleryItem[]): HTMLElement[] {
       el(
         "summary",
         {},
+        statusDot(galleryItemStatus(it)),
         el("span", { class: "gallery-item-name" }, it.full.split("/").pop() || "(unset)"),
         it.thumbMissing ? warnBadge("No _min thumbnail found on disk") : "",
         !it.w || !it.h
@@ -168,6 +177,15 @@ function gridSettings(
   return out;
 }
 
+function widthPctInput(get: () => number, set: (v: number) => void): HTMLElement {
+  return selectInput(
+    "Width",
+    String(get()),
+    [["25", "25%"], ["33", "33%"], ["50", "50%"], ["66", "66%"], ["75", "75%"], ["100", "100%"]],
+    (v) => edit(() => set(Number(v) || 100))
+  );
+}
+
 /// SVG fields, shared by the svg block and svg columns.
 function svgFieldsEditor(f: SvgFields): HTMLElement[] {
   const pick = async () => {
@@ -189,7 +207,10 @@ function svgFieldsEditor(f: SvgFields): HTMLElement[] {
     checkbox("Grow slightly on hover", f.hoverGrow, (v) => edit(() => (f.hoverGrow = v))),
     textInput("Link (optional)", f.link, (v) => edit(() => (f.link = v)), "/music.html or https://…"),
     textInput("Alt / label", f.alt, (v) => edit(() => (f.alt = v))),
-    textInput("Max width (px)", f.maxWidth, (v) => edit(() => (f.maxWidth = v)), "empty = full width"),
+    widthPctInput(
+      () => f.widthPct,
+      (v) => (f.widthPct = v)
+    ),
   ];
 }
 
@@ -198,6 +219,7 @@ function imageFieldsEditor(c: {
   thumb: string;
   alt: string;
   lightbox: boolean;
+  widthPct: number;
   thumbMissing?: boolean;
 }): HTMLElement[] {
   const pick = async () => {
@@ -214,6 +236,10 @@ function imageFieldsEditor(c: {
     mediaPickRow("Image", c.full, (v) => edit(() => (c.full = v)), pick, c.thumbMissing),
     textInput("Thumbnail", c.thumb, (v) => edit(() => (c.thumb = v))),
     textInput("Alt text", c.alt, (v) => edit(() => (c.alt = v))),
+    widthPctInput(
+      () => c.widthPct,
+      (v) => (c.widthPct = v)
+    ),
     checkbox("Click opens full-size (GLightbox)", c.lightbox, (v) => edit(() => (c.lightbox = v))),
   ];
 }
@@ -241,6 +267,116 @@ function headingForm(b: HeadingBlock): HTMLElement[] {
       edit(() => (b.level = Number(v)))
     ),
     textInput("Text", b.text, (v) => edit(() => (b.text = v))),
+    selectInput("Align", b.align, [["left", "Left"], ["center", "Center"]], (v) =>
+      edit(() => (b.align = v as "left" | "center"))
+    ),
+  ];
+}
+
+function heroForm(b: HeroBlock): HTMLElement[] {
+  const out: HTMLElement[] = [
+    selectInput(
+      "Type",
+      b.variant,
+      [["photo", "Photo"], ["svg", "SVG"], ["text", "Text only"]],
+      (v) => editStructural(() => (b.variant = v as HeroBlock["variant"]))
+    ),
+  ];
+  if (b.variant === "photo") {
+    const pick = async () => {
+      const files = await pickMedia("image", false, "photos");
+      if (!files.length) return;
+      editStructural(() => {
+        b.image = files[0].full;
+        b.imageThumb = files[0].thumb;
+      });
+    };
+    out.push(
+      mediaPickRow("Photo", b.image, (v) => edit(() => (b.image = v)), pick),
+      selectInput(
+        "Photo style",
+        b.photoStyle,
+        [["backdrop", "Blurred backdrop (release style)"], ["cover", "Full-bleed cover"]],
+        (v) => edit(() => (b.photoStyle = v as HeroBlock["photoStyle"]))
+      )
+    );
+  } else if (b.variant === "svg") {
+    const pickSvg = async () => {
+      const files = await pickMedia("svg", false, "svg");
+      if (!files.length) return;
+      await prefetchSvg(files[0].web);
+      editStructural(() => (b.svgSrc = files[0].web));
+    };
+    out.push(mediaPickRow("SVG file", b.svgSrc, (v) => edit(() => (b.svgSrc = v)), pickSvg));
+  }
+  out.push(
+    textInput("Kicker", b.kicker, (v) => edit(() => (b.kicker = v)), "small uppercase line above the title"),
+    textInput("Title (H1)", b.title, (v) => edit(() => (b.title = v))),
+    textInput("Tagline", b.tagline, (v) => edit(() => (b.tagline = v))),
+    selectInput("Align", b.align, [["left", "Left"], ["center", "Center"]], (v) =>
+      edit(() => (b.align = v as "left" | "center"))
+    ),
+    checkbox("Nav bar reveals on scroll (like index/release pages)", b.navReveal, (v) =>
+      edit(() => (b.navReveal = v))
+    ),
+    checkbox("“← Back to Notebook” fades in bottom-left", b.backLink, (v) =>
+      edit(() => (b.backLink = v))
+    )
+  );
+  return out;
+}
+
+function iconsForm(b: IconsBlock): HTMLElement[] {
+  const addIcon = async () => {
+    const files = await pickMedia("svg", true, "svg");
+    if (!files.length) return;
+    for (const f of files) await prefetchSvg(f.web);
+    editStructural(() => {
+      for (const f of files) {
+        const name = (f.web.split("/").pop() || "").replace(/\.svg$/i, "");
+        b.items.push({ src: f.web, label: name, href: "" });
+      }
+    });
+  };
+  const itemNodes = b.items.map((it, i) =>
+    el(
+      "details",
+      { class: "gallery-item" },
+      el(
+        "summary",
+        {},
+        el("span", { class: "gallery-item-name" }, it.label || it.src.split("/").pop() || "(icon)"),
+        el(
+          "button",
+          {
+            class: "danger small",
+            title: "Remove icon",
+            onclick: (e: Event) => {
+              e.preventDefault();
+              e.stopPropagation();
+              editStructural(() => b.items.splice(i, 1));
+            },
+          },
+          "✕"
+        )
+      ),
+      textInput("Label", it.label, (v) => edit(() => (it.label = v)), "screen-reader name"),
+      textInput("Link", it.href, (v) => edit(() => (it.href = v)), "https://… or /page.html"),
+      textInput("SVG", it.src, (v) => {
+        edit(() => (it.src = v));
+        if (v.endsWith(".svg")) void prefetchSvg(v).then(() => store.emit("content"));
+      })
+    )
+  );
+  return [
+    selectInput(
+      "Icon size",
+      b.size,
+      [["small", "Small (footer size)"], ["medium", "Medium"], ["large", "Large"]],
+      (v) => edit(() => (b.size = v as IconsBlock["size"]))
+    ),
+    el("div", { class: "gallery-items" }, ...itemNodes),
+    el("button", { class: "secondary", onclick: addIcon }, "Add icons… (multi-select svg)"),
   ];
 }
 
@@ -307,6 +443,12 @@ function columnsForm(b: ColumnsBlock): HTMLElement[] {
     selectInput("Columns", String(b.count), [["1", "1"], ["2", "2"]], (v) =>
       editStructural(() => (b.count = Number(v) as 1 | 2))
     ),
+    selectInput(
+      "Vertical align",
+      b.verticalAlign,
+      [["center", "Center"], ["top", "Top"]],
+      (v) => edit(() => (b.verticalAlign = v as "center" | "top"))
+    ),
   ];
   for (let i = 0; i < b.count; i++) {
     const c = b.columns[i];
@@ -341,6 +483,10 @@ function columnsForm(b: ColumnsBlock): HTMLElement[] {
 
 function formFor(b: Block): HTMLElement[] {
   switch (b.type) {
+    case "hero":
+      return heroForm(b);
+    case "icons":
+      return iconsForm(b);
     case "heading":
       return headingForm(b);
     case "paragraph":

@@ -11,7 +11,7 @@ import type { Project } from "../state";
 function isBlockType(t: unknown): t is BlockType {
   return (
     typeof t === "string" &&
-    ["heading", "paragraph", "hr", "gallery", "image", "svg", "video", "columns", "audio", "raw"].includes(t)
+    ["hero", "heading", "paragraph", "hr", "gallery", "image", "svg", "video", "columns", "icons", "audio", "raw"].includes(t)
   );
 }
 
@@ -45,6 +45,7 @@ function convertLegacyBlock(rb: Record<string, unknown>): Record<string, unknown
             thumb: String(rb.thumb ?? ""),
             alt: String(rb.alt ?? ""),
             lightbox: false,
+            widthPct: 100,
           };
     const heading = String(rb.heading ?? "").trim();
     const body = String(rb.md ?? rb.text ?? "");
@@ -91,7 +92,12 @@ export function normalizeProject(data: unknown): Project {
     }
     blocks.push(merged);
   }
-  const project: Project = { version: 1, meta, blocks };
+  // heroes are pinned first (store order must match preview DOM order)
+  const ordered = [
+    ...blocks.filter((b) => b.type === "hero"),
+    ...blocks.filter((b) => b.type !== "hero"),
+  ];
+  const project: Project = { version: 1, meta, blocks: ordered };
   if (typeof d.exportSlug === "string" && d.exportSlug) project.exportSlug = d.exportSlug;
   return project;
 }

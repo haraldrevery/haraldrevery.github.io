@@ -6,7 +6,7 @@ import { ask, message } from "@tauri-apps/plugin-dialog";
 import { el, clear, debounce, toast, promptModal, listModal, contentModal } from "./ui/dom";
 import { store } from "./state";
 import type { Project } from "./state";
-import { renderContent } from "./blocks/render";
+import { renderContent, renderHero, heroNavReveal } from "./blocks/render";
 import type { Block, GalleryItem } from "./blocks/model";
 import { collectSvgSrcs, hasSvgText } from "./blocks/svgStore";
 import { normalizeProject } from "./blocks/normalize";
@@ -136,7 +136,14 @@ function previewHtml(): string {
 }
 
 function pushRender(scrollToId?: string): void {
-  bridge.render(previewHtml(), humanDate(store.meta.date), scrollToId);
+  const edit = store.mode === "edit";
+  bridge.render(
+    previewHtml(),
+    renderHero(store.blocks, { editMode: edit }),
+    humanDate(store.meta.date),
+    heroNavReveal(store.blocks),
+    scrollToId
+  );
 }
 
 const debouncedRender = debounce((scrollToId?: string) => pushRender(scrollToId), 150);
@@ -238,6 +245,13 @@ async function afterInsert(b: Block): Promise<void> {
     if (!files.length) return;
     await prefetchSvg(files[0].web);
     store.mutateStructure(() => (b.src = files[0].web));
+  } else if (b.type === "hero") {
+    const files = await pickMedia("image", false, "photos");
+    if (!files.length) return;
+    store.mutateStructure(() => {
+      b.image = files[0].full;
+      b.imageThumb = files[0].thumb;
+    });
   }
 }
 

@@ -19,11 +19,15 @@ export function hasSvgText(src: string): boolean {
   return cache.has(src);
 }
 
-/// Every svg src referenced by the given blocks (top-level + inside columns).
+/// Every svg src referenced by the given blocks (top-level, columns, hero, icons).
 export function collectSvgSrcs(blocks: Block[]): string[] {
   const out = new Set<string>();
   for (const b of blocks) {
     if (b.type === "svg" && b.src) out.add(b.src);
+    if (b.type === "hero" && b.variant === "svg" && b.svgSrc) out.add(b.svgSrc);
+    if (b.type === "icons") {
+      for (const it of b.items) if (it.src) out.add(it.src);
+    }
     if (b.type === "columns") {
       for (const c of b.columns as ColumnContent[]) {
         if (c.kind === "svg" && c.src) out.add(c.src);

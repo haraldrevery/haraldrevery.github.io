@@ -4,7 +4,7 @@
  * runs on the rendered export HTML so markdown '#' headings, heading blocks,
  * column text and raw HTML are all covered the same way.
  */
-import { renderContent } from "./blocks/render";
+import { renderContent, renderHero } from "./blocks/render";
 import { splitTags } from "./export";
 import type { Meta } from "./export";
 import type { Block } from "./blocks/model";
@@ -96,9 +96,36 @@ function altIssues(blocks: Block[]): LintIssue[] {
 
 export function lintPage(meta: Meta, blocks: Block[]): LintIssue[] {
   const issues: LintIssue[] = [];
-  const html = renderContent(blocks, { editMode: false });
+  // hero renders before content — include it so its <h1> counts in the outline
+  const html = renderHero(blocks, { editMode: false }) + "\n" + renderContent(blocks, { editMode: false });
 
   issues.push(...headingIssues(html, blocks.length > 0));
+
+  const heroes = blocks.filter((b) => b.type === "hero");
+  if (heroes.length > 1) {
+    issues.push({ severity: "warn", message: `${heroes.length} hero blocks — a page should have one.` });
+  }
+  for (const h of heroes) {
+    if (h.variant === "photo" && !h.image && !h.imageThumb) {
+      issues.push({ severity: "warn", message: "Hero is set to photo but no photo is picked." });
+    }
+    if (h.variant === "svg" && !h.svgSrc) {
+      issues.push({ severity: "warn", message: "Hero is set to SVG but no file is picked." });
+    }
+  }
+
+  let unlabeledIcons = 0;
+  for (const b of blocks) {
+    if (b.type === "icons") {
+      for (const it of b.items) if (!it.label.trim()) unlabeledIcons++;
+    }
+  }
+  if (unlabeledIcons) {
+    issues.push({
+      severity: "info",
+      message: `${unlabeledIcons} icon${unlabeledIcons > 1 ? "s" : ""} without a label (screen readers announce it).`,
+    });
+  }
 
   if (!meta.title.trim()) {
     issues.push({ severity: "warn", message: "No title — required for the file name, <title> tag and social cards." });

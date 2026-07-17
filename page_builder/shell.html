@@ -53,7 +53,7 @@
 <body class="min-h-screen text-black dark:text-white">
 
 <div class="scroll-sentinel absolute top-0 h-[50vh] w-full pointer-events-none"></div>
-<nav class="main-nav fixed top-0 inset-x-0 z-[200] backdrop-blur-xl
+<nav class="main-nav{{NAV_EXTRA}} fixed top-0 inset-x-0 z-[200] backdrop-blur-xl
             border-zinc-200 bg-white/80 
             dark:border-white/10 dark:bg-neutral-950/90">
     
@@ -108,9 +108,11 @@
 
 
 <!-- svg background start -->
-<div class="bg-topology-map"> 
+<div class="bg-topology-map">
 
-<!-- start margins -->  
+{{HERO}}
+
+<!-- start margins -->
 <div  class="page-container pt-24 pb-12 extra_fade_effect">
 
 
@@ -275,6 +277,9 @@
 
 <!-- Alpine.js load -->
 <script src="/javascript/alpine.min.js" defer></script>
+
+<!-- Nav reveal on scroll (hero pages only; scroll-timeline fallback) -->
+{{NAV_SCRIPT}}
 
 
 

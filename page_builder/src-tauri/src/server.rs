@@ -75,6 +75,9 @@ fn preview_document(root: &std::path::Path) -> Result<String, String> {
         .map_err(|e| format!("Cannot read {}: {}", shell_path.display(), e))?;
     let mut doc = shell;
     for (from, to) in [
+        ("{{HERO}}", r#"<div id="pb-hero"></div>"#),
+        ("{{NAV_EXTRA}}", ""),
+        ("{{NAV_SCRIPT}}", ""),
         ("{{TITLE}}", "Preview — Notebook Page Builder"),
         ("{{DESCRIPTION}}", ""),
         ("{{KEYWORDS}}", ""),

@@ -5,7 +5,7 @@
  * Eleventy's before-hook then strips the front matter and copies the body
  * verbatim to notebook_pages/; the front matter drives the Notebook index.
  */
-import { renderContent } from "./blocks/render";
+import { renderContent, renderHero, heroNavReveal } from "./blocks/render";
 import type { Block } from "./blocks/model";
 
 export interface Meta {
@@ -101,6 +101,11 @@ export function assembleDocument(
     "{{DATE_ISO}}": meta.date || "",
     "{{DATE_HUMAN}}": humanDate(meta.date),
     "{{JSONLD}}": jsonld(meta, canonical, siteUrl),
+    "{{HERO}}": renderHero(blocks, { editMode: false }),
+    "{{NAV_EXTRA}}": heroNavReveal(blocks) ? " navi_mechanic" : "",
+    "{{NAV_SCRIPT}}": heroNavReveal(blocks)
+      ? '<script src="/javascript/navbar_scroll_min.js" defer></script>'
+      : "",
     "{{CONTENT}}": renderContent(blocks, { editMode: false }),
   };
   let doc = shell;

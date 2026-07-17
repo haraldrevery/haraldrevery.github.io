@@ -27,9 +27,22 @@ asks you to locate the folder once, then remembers.
   Clicks never trigger links/lightbox in edit mode.
 - **Preview mode** (toolbar toggle): GLightbox works for real (groups, captions,
   zoom); navigation away is still blocked.
-- Blocks: heading, text (markdown + KaTeX), divider, photo gallery, single
-  image, SVG, video, columns, audio, raw HTML. Consecutive prose blocks are
-  grouped into one `<article class="prose ...">` exactly like the old builder.
+- Blocks: hero, heading, text (markdown + KaTeX), divider, photo gallery,
+  single image, SVG, video, columns, social icons, audio, raw HTML.
+  Consecutive prose blocks are grouped into one `<article class="prose ...">`
+  exactly like the old builder.
+- **Hero** (always renders first, whatever its list position — it's pinned to
+  the top of the block list and injected before the page container). Three
+  types: **Photo** (blurred release-style backdrop, or full-bleed cover with a
+  scrim), **SVG** (themed, centered), or **Text only**. Kicker + H1 title +
+  tagline, left or centered. Two options: the nav bar reveals on scroll like
+  the index/release pages (the site's own `navi_mechanic` CSS scroll-timeline +
+  `navbar_scroll` fallback — the **one** JS exception, and it's existing site
+  code), and a "← Back to Notebook" link that fades into the lower-left after
+  a delay (pure CSS `extra_fade_effect_long`). Everything else is JS-free.
+- **Social icons panel**: a row of themed SVG icons with hover-mute
+  (`hover:opacity-50`), sr-only labels, and per-icon links — mirrors the footer
+  / release-page social rows. External links open in a new tab automatically.
 - **Galleries have two layouts.** *Justified* (default): Behance/Flickr-style
   rows where every image keeps its native aspect ratio — pure CSS in the
   export (flex-grow proportional to each image's ratio + `aspect-ratio`, zero
@@ -40,7 +53,9 @@ asks you to locate the folder once, then remembers.
   no separate block type; old projects containing them convert automatically.)
 - **Columns**: 1 or 2 columns, each holding any content — text, image,
   image grid, video, SVG, or raw HTML. Replaces the old fixed two-column block
-  (old projects convert on open).
+  (old projects convert on open). Vertical alignment is center or top.
+- **Alignment & size**: headings align left or centered; images and SVGs have a
+  width setting (25–100% of the container, auto-centered when below 100%).
 - **SVG**: linked like other media, with options. "Follow light/dark theme"
   inlines the file with all colors replaced by `currentColor`, so it recolors
   with the site theme; off = plain `<img>` link. Optional smooth grow-on-hover
@@ -97,11 +112,14 @@ for confirmation if warnings remain:
   and it covers heading blocks, markdown `#` headings, columns and raw HTML
   alike (it checks the rendered output).
 - **SEO fields** — missing/overlong title and description, missing card image,
-  missing tags, images without alt text. No separate SEO menu: the front-matter
-  fields (title/description/tags/card image) are the SEO data, and the export
-  fills everything else automatically — `<title>`, meta description/keywords,
+  missing tags, images without alt text, unlabeled icons, multiple/incomplete
+  heroes. No separate SEO menu: the front-matter fields
+  (title/description/tags/card image) are the SEO data, and the export fills
+  everything else automatically — `<title>`, meta description/keywords,
   canonical, Open Graph (`og:type article`, `og:site_name`), Twitter Card, and
   JSON-LD BlogPosting, matching the site's own `base.njk` head.
+- The block list shows a **green/yellow dot** per image-bearing block: green
+  when alt/title/description are all filled, yellow when something's missing.
 
 ## Editing safety
 

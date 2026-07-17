@@ -117,12 +117,24 @@ class Store {
     this.emit("structure");
   }
 
+  /// Leading hero blocks are pinned: heroes insert at the top, other blocks
+  /// never move above them (keeps store order == preview DOM order).
+  private heroCount(): number {
+    let n = 0;
+    for (const b of this.blocks) {
+      if (b.type === "hero") n++;
+      else break;
+    }
+    return n;
+  }
+
   addBlock(type: BlockType, index?: number): Block {
     const b = newBlock(type);
     this.mutateStructure(() => {
-      const at =
+      let at =
         index ??
         (this.selectedId ? this.indexOf(this.selectedId) + 1 : this.blocks.length);
+      at = type === "hero" ? 0 : Math.max(this.heroCount(), at);
       this.blocks.splice(Math.max(0, Math.min(at, this.blocks.length)), 0, b);
       this.selectedId = b.id;
     });
@@ -153,6 +165,7 @@ class Store {
     const i = this.indexOf(id);
     const j = i + delta;
     if (i < 0 || j < 0 || j >= this.blocks.length) return;
+    if (this.blocks[i].type === "hero" || j < this.heroCount()) return;
     this.mutateStructure(() => {
       [this.blocks[i], this.blocks[j]] = [this.blocks[j], this.blocks[i]];
     });
@@ -161,9 +174,10 @@ class Store {
   /// dropIndex counts gaps in the current list (dragged block still present).
   reorderBlock(id: string, dropIndex: number): void {
     const from = this.indexOf(id);
-    if (from < 0) return;
+    if (from < 0 || this.blocks[from].type === "hero") return;
     let to = Math.max(0, Math.min(dropIndex, this.blocks.length));
     if (from < to) to--;
+    to = Math.max(to, this.heroCount());
     if (to === from) return;
     this.mutateStructure(() => {
       const [b] = this.blocks.splice(from, 1);

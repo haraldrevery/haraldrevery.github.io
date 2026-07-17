@@ -55,8 +55,14 @@ export class PreviewBridge {
     this.iframe.contentWindow?.postMessage(msg, "*");
   }
 
-  render(html: string, dateHuman: string, scrollToId?: string): void {
-    this.post({ type: "render", html, dateHuman, scrollToId });
+  render(
+    html: string,
+    heroHtml: string,
+    dateHuman: string,
+    navMechanic: boolean,
+    scrollToId?: string
+  ): void {
+    this.post({ type: "render", html, heroHtml, dateHuman, navMechanic, scrollToId });
   }
 
   select(id: string | null, scroll = false): void {

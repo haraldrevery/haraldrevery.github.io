@@ -244,6 +244,21 @@ textarea {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+.dot.ok {
+  background: #22c55e;
+}
+.dot.partial {
+  background: #eab308;
+}
+
 .badge-warn {
   color: var(--warn);
   font-size: 11px;

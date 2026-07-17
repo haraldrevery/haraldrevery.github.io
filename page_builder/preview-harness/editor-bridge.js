@@ -18,9 +18,11 @@
 (() => {
   const content = document.getElementById("pb-content");
   if (!content) return;
+  const heroBox = document.getElementById("pb-hero");
 
   let mode = "edit";
   let selectedId = null;
+  let navMechanic = false;
 
   const style = document.createElement("style");
   style.textContent = `
@@ -62,7 +64,32 @@
   document.body.appendChild(drop);
 
   const post = (msg) => parent.postMessage(msg, "*");
-  const blockEls = () => Array.from(content.querySelectorAll("[data-pb-id]"));
+  // hero blocks live in #pb-hero and are pinned first in the store, so
+  // hero-then-content DOM order matches store indices
+  const roots = heroBox ? [heroBox, content] : [content];
+  const blockEls = () =>
+    roots.flatMap((r) => Array.from(r.querySelectorAll("[data-pb-id]")));
+  const findBlock = (id) =>
+    document.querySelector('[data-pb-id="' + id + '"]');
+
+  // Preview emulation of the navi_mechanic scroll reveal (the export uses the
+  // real CSS scroll-timeline + navbar_scroll fallback; here we just mimic the
+  // behaviour so it works regardless of webkit support and toggles cleanly).
+  function applyNavReveal() {
+    const nav = document.querySelector("nav.main-nav");
+    if (!nav) return;
+    if (!navMechanic) {
+      nav.style.transition = "";
+      nav.style.transform = "";
+      nav.style.opacity = "";
+      return;
+    }
+    nav.style.transition = "transform .35s ease, opacity .35s ease";
+    const shown = window.scrollY > 50;
+    nav.style.transform = shown ? "translateY(0)" : "translateY(-110%)";
+    nav.style.opacity = shown ? "1" : "0";
+  }
+  window.addEventListener("scroll", applyNavReveal, { passive: true });
 
   function applySelection() {
     blockEls().forEach((el) =>
@@ -86,21 +113,24 @@
   window.addEventListener("message", (e) => {
     const m = e.data || {};
     if (m.type === "render") {
+      if (heroBox) heroBox.innerHTML = m.heroHtml || "";
       content.innerHTML = m.html;
+      navMechanic = !!m.navMechanic;
+      applyNavReveal();
       const dateEl = document.querySelector("[data-pb-date]");
       if (dateEl) dateEl.textContent = m.dateHuman || "";
       applySelection();
       hideHandle();
       if (mode === "preview") reinitLightbox();
       if (m.scrollToId) {
-        const el = content.querySelector('[data-pb-id="' + m.scrollToId + '"]');
+        const el = findBlock(m.scrollToId);
         if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     } else if (m.type === "select") {
       selectedId = m.id;
       applySelection();
       if (m.scroll) {
-        const el = content.querySelector('[data-pb-id="' + m.id + '"]');
+        const el = findBlock(m.id);
         if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     } else if (m.type === "mode") {
