@@ -8,12 +8,13 @@ import { store } from "./state";
 import type { Project } from "./state";
 import { renderContent } from "./blocks/render";
 import type { Block, GalleryItem } from "./blocks/model";
-import { collectSvgSrcs } from "./blocks/svgStore";
+import { collectSvgSrcs, hasSvgText } from "./blocks/svgStore";
 import { normalizeProject } from "./blocks/normalize";
 import { slugify, humanDate, exportText } from "./export";
 import { PreviewBridge } from "./preview/bridge";
 import { renderMetaForm } from "./ui/metaForm";
-import { renderBlockList, refreshBlockList } from "./ui/blockList";
+import { renderBlockList, refreshBlockList, confirmDelete } from "./ui/blockList";
+import { blockSummary } from "./blocks/model";
 import { renderBlockForm } from "./ui/blockForms";
 import { showBlockPicker } from "./ui/palette";
 import { checkFiles, deriveMinPath, imageDims, pickMedia, prefetchSvg, prefetchSvgs } from "./media";
@@ -51,6 +52,7 @@ const blockEditor = el("div", { id: "block-editor" });
 const shellWarning = el("div", { id: "shell-warning" });
 const pageCheck = el("div", { id: "page-check" });
 const modeBtn = el("button", { id: "mode-toggle", onclick: () => toggleMode() }, "👁 Preview mode");
+const themeBtn = el("button", { id: "theme-toggle", title: "Preview color scheme", onclick: () => cycleTheme() }, "🌗 Auto");
 const iframe = el("iframe", { id: "preview" }) as HTMLIFrameElement;
 
 const toolbar = el(
@@ -61,8 +63,26 @@ const toolbar = el(
   el("button", { onclick: () => doSave(false) }, "Save"),
   el("button", { class: "secondary", onclick: () => doSave(true) }, "Save as"),
   el("button", { class: "primary", onclick: () => doExport() }, "Export"),
+  themeBtn,
   modeBtn
 );
+
+// Site dark mode is prefers-color-scheme; flipping the window theme lets the
+// user check themed svgs / dark styling without changing the OS setting.
+type PreviewTheme = "auto" | "light" | "dark";
+let previewTheme: PreviewTheme = "auto";
+
+async function cycleTheme(): Promise<void> {
+  const next: PreviewTheme =
+    previewTheme === "auto" ? "light" : previewTheme === "light" ? "dark" : "auto";
+  try {
+    await getCurrentWindow().setTheme(next === "auto" ? null : next);
+    previewTheme = next;
+    themeBtn.textContent = next === "auto" ? "🌗 Auto" : next === "light" ? "☀ Light" : "🌙 Dark";
+  } catch (e) {
+    toast(`Theme switching not supported here: ${e}`, true);
+  }
+}
 
 app.append(
   el(
@@ -352,7 +372,17 @@ async function doExport(): Promise<void> {
     });
     return;
   }
+  // themed svgs are inlined at render time — load them before linting/export
+  await prefetchSvgs(collectSvgSrcs(store.blocks));
   const warns = lintPage(store.meta, store.blocks).filter((i) => i.severity === "warn");
+  for (const src of collectSvgSrcs(store.blocks)) {
+    if (!hasSvgText(src)) {
+      warns.push({
+        severity: "warn",
+        message: `SVG ${src} could not be read — a placeholder would be exported.`,
+      });
+    }
+  }
   if (warns.length) {
     const ok = await ask(
       `The page check found:\n\n${warns.map((w) => `• ${w.message}`).join("\n")}\n\nExport anyway?`,
@@ -360,22 +390,22 @@ async function doExport(): Promise<void> {
     );
     if (!ok) return;
   }
+  const remembered = store.project.exportSlug;
   const input = await promptModal(
     "Export as html_extras/<name>.html",
-    slugify(store.meta.title),
+    remembered ?? slugify(store.meta.title),
     "The name is also the page slug (canonical URL)."
   );
   if (!input) return;
   const slug = slugify(input);
   try {
-    // themed svgs are inlined at render time — make sure they're all loaded
-    await prefetchSvgs(collectSvgSrcs(store.blocks));
     const shell = await invoke<string>("read_shell");
     const contents = exportText(shell, store.meta, store.blocks, store.siteUrl, slug);
+    // re-exporting to the slug this project already owns skips the confirm
     let res = await invoke<ExportResult>("export_page", {
       fileName: `${slug}.html`,
       contents,
-      overwrite: false,
+      overwrite: slug === remembered,
     });
     if (res.exists) {
       const ok = await ask(`${res.path} already exists.\nOverwrite it?`, { title: "Export" });
@@ -385,6 +415,11 @@ async function doExport(): Promise<void> {
         contents,
         overwrite: true,
       });
+    }
+    if (store.project.exportSlug !== slug) {
+      store.project.exportSlug = slug;
+      store.dirty = true;
+      updateTitle();
     }
     toast(`Exported ${res.path} — run the Eleventy build to publish it`);
   } catch (e) {
@@ -477,6 +512,12 @@ document.addEventListener("keydown", (e) => {
   } else if (mod && !typing && (key === "y" || (key === "z" && e.shiftKey))) {
     e.preventDefault();
     store.redo();
+  } else if (!typing && e.key === "Delete" && store.selectedBlock) {
+    e.preventDefault();
+    void confirmDelete(store.selectedBlock.id, blockSummary(store.selectedBlock));
+  } else if (mod && !typing && key === "d" && store.selectedId) {
+    e.preventDefault();
+    store.duplicateBlock(store.selectedId);
   }
 });
 

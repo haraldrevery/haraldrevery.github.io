@@ -4,7 +4,7 @@ import { el, clear } from "./dom";
 import { store } from "../state";
 import { blockSummary } from "../blocks/model";
 
-async function confirmDelete(id: string, summary: string): Promise<void> {
+export async function confirmDelete(id: string, summary: string): Promise<void> {
   const ok = await ask(`Delete "${summary}"?\n(Ctrl+Z brings it back.)`, {
     title: "Delete block",
   });

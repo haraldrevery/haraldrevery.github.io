@@ -13,6 +13,8 @@ export interface Project {
   version: 1;
   meta: Meta;
   blocks: Block[];
+  // last html_extras/<slug>.html this project was exported as
+  exportSlug?: string;
 }
 
 export function defaultMeta(): Meta {

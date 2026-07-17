@@ -45,7 +45,13 @@ asks you to locate the folder once, then remembers.
   inlines the file with all colors replaced by `currentColor`, so it recolors
   with the site theme; off = plain `<img>` link. Optional smooth grow-on-hover
   (uses `hover:scale-105` utilities already in main.css) and an optional link
-  wrap. `fill="none"` and gradient `url(#…)` references are preserved.
+  wrap. `fill="none"` and gradient `url(#…)` references are preserved, and
+  files with no fill attributes at all (typical Illustrator exports) get
+  `currentColor` on the root — SVG's default would otherwise stay black in
+  dark mode.
+- **Preview theme toggle** (🌗 Auto / ☀ Light / 🌙 Dark in the toolbar): the
+  site's dark mode is `prefers-color-scheme`, so this flips the window theme
+  to check both modes — e.g. themed SVGs — without changing the OS setting.
 
 ## Markdown + KaTeX
 
@@ -101,8 +107,12 @@ for confirmation if warnings remain:
 
 - **Undo/redo**: Ctrl+Z / Ctrl+Y (or Ctrl+Shift+Z). Rapid keystrokes coalesce
   into one step; a new edit after undo clears the redo history.
-- Deleting a block asks for confirmation (and is undoable anyway).
+- Deleting a block asks for confirmation (and is undoable anyway). The Delete
+  key removes the selected block; Ctrl+D duplicates it.
 - Closing with unsaved changes asks first; Ctrl+S saves.
+- Export remembers the slug per project: re-exporting to the same file skips
+  the overwrite question, and a missing themed-SVG file blocks with a warning
+  instead of silently exporting a placeholder.
 
 ## shell.html staleness
 

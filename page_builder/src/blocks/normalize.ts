@@ -91,5 +91,7 @@ export function normalizeProject(data: unknown): Project {
     }
     blocks.push(merged);
   }
-  return { version: 1, meta, blocks };
+  const project: Project = { version: 1, meta, blocks };
+  if (typeof d.exportSlug === "string" && d.exportSlug) project.exportSlug = d.exportSlug;
+  return project;
 }

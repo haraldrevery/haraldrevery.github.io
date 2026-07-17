@@ -35,12 +35,20 @@ export function collectSvgSrcs(blocks: Block[]): string[] {
 
 /// Recolor an svg to currentColor so it follows the page's light/dark theme
 /// (the site's <body> carries text-black dark:text-white). fill/stroke that
-/// are "none" or url(#...) references are left alone.
+/// are "none" or url(#...) references are left alone. The lookbehind keeps
+/// attributes like viewport-fill from being mangled.
 export function themeSvgText(svg: string): string {
   let s = svg;
-  s = s.replace(/(fill|stroke)="(?!none|url\()[^"]*"/gi, '$1="currentColor"');
-  s = s.replace(/(fill|stroke)='(?!none|url\()[^']*'/gi, "$1='currentColor'");
-  s = s.replace(/(fill|stroke)\s*:\s*(?!none|url\()[^;"'}]+/gi, "$1:currentColor");
+  s = s.replace(/(?<![-\w])(fill|stroke)="(?!none|url\()[^"]*"/gi, '$1="currentColor"');
+  s = s.replace(/(?<![-\w])(fill|stroke)='(?!none|url\()[^']*'/gi, "$1='currentColor'");
+  s = s.replace(/(?<![-\w])(fill|stroke)\s*:\s*(?!none|url\()[^;"'}]+/gi, "$1:currentColor");
+  // Illustrator-style exports often carry no fill at all — SVG's default fill
+  // is black, which ignores the theme. fill is inherited, so putting
+  // currentColor on the root covers every shape without an explicit fill.
+  const root = s.match(/<svg[^>]*>/i);
+  if (root && !/(?<![-\w])fill\s*=/i.test(root[0])) {
+    s = s.replace(/<svg/i, '<svg fill="currentColor"');
+  }
   return s;
 }
 
