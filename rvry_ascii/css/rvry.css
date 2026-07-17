@@ -284,7 +284,7 @@ body > .bg-topology-map { min-height: 100vh; }
 .tab-btn[data-tab="image"]     .tab-ico { --tab-ico: url('../svg_icons_to_use/camera.svg'); }
 .tab-btn[data-tab="text"]      .tab-ico { --tab-ico: url('../svg_icons_to_use/text_size.svg'); }
 .tab-btn[data-tab="obfuscate"] .tab-ico { --tab-ico: url('../svg_icons_to_use/u1F504.svg'); }
-.tab-btn[data-tab="player"]    .tab-ico { --tab-ico: url('../svg_icons_to_use/uni25B6.svg'); }
+.tab-btn[data-tab="player"]    .tab-ico { --tab-ico: url('../svg_icons_to_use/play.svg'); }
 
 /* ---- Layout ---- */
 main { padding: 1.2rem clamp(1rem, 4vw, 2.5rem) 4rem; }
