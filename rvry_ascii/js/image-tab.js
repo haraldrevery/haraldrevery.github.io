@@ -8,25 +8,44 @@
   const $ = (id) => document.getElementById(id);
 
   /* ---- Image loading (raster + SVG) ---- */
+  // A width/height we can trust as an intrinsic pixel aspect ratio: a bare
+  // number or an explicit px value. Percentages / em / vw etc. give an <img>
+  // no resolvable intrinsic size, so the browser falls back to ~300x150 and
+  // the artwork gets squashed — those must NOT be trusted.
+  const isConcretePx = (v) => v != null && /^\s*[\d.]+(px)?\s*$/i.test(v);
+
   function ensureSvgSize(svgText) {
-    // Give sizeless SVGs a concrete raster size so canvas draws them crisply.
+    // Give SVGs a concrete raster size so canvas draws them crisply AND at the
+    // correct aspect ratio. The viewBox is the source of truth for the ratio
+    // whenever present — it overrides percentage/relative width/height that
+    // would otherwise squash the output. (An SVG that deliberately sets a
+    // width:height ratio different from its viewBox via preserveAspectRatio is
+    // rasterized at the viewBox ratio; that's the right call for ASCII.)
     try {
       const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
       const svg = doc.documentElement;
       if (svg.nodeName.toLowerCase() !== "svg") return svgText;
-      const hasW = svg.hasAttribute("width"), hasH = svg.hasAttribute("height");
-      if (!hasW || !hasH) {
-        let vb = svg.getAttribute("viewBox");
-        let w = 1024, h = 1024;
-        if (vb) {
-          const p = vb.trim().split(/[\s,]+/).map(Number);
-          if (p.length === 4 && p[2] > 0 && p[3] > 0) {
-            const scale = 1024 / Math.max(p[2], p[3]);
-            w = Math.round(p[2] * scale); h = Math.round(p[3] * scale);
-          }
-        }
-        svg.setAttribute("width", w);
-        svg.setAttribute("height", h);
+
+      const vb = svg.getAttribute("viewBox");
+      let vbW = 0, vbH = 0;
+      if (vb) {
+        const p = vb.trim().split(/[\s,]+/).map(Number);
+        if (p.length === 4 && p[2] > 0 && p[3] > 0) { vbW = p[2]; vbH = p[3]; }
+      }
+
+      const w0 = svg.getAttribute("width"), h0 = svg.getAttribute("height");
+      const concreteDims = isConcretePx(w0) && isConcretePx(h0);
+
+      // Trust author-supplied px dimensions only when there's no viewBox to
+      // defer to. Otherwise derive both dims from the viewBox aspect ratio.
+      if (vbW && vbH) {
+        const scale = 1024 / Math.max(vbW, vbH);
+        svg.setAttribute("width", Math.round(vbW * scale));
+        svg.setAttribute("height", Math.round(vbH * scale));
+      } else if (!concreteDims) {
+        // No viewBox and no usable dimensions: fall back to a square.
+        svg.setAttribute("width", 1024);
+        svg.setAttribute("height", 1024);
       }
       return new XMLSerializer().serializeToString(svg);
     } catch (e) { return svgText; }
