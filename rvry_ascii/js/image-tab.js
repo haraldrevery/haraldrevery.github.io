@@ -35,23 +35,27 @@
   function loadImageFile(file) {
     return new Promise((resolve, reject) => {
       const isSvg = /svg/i.test(file.type) || /\.svg$/i.test(file.name);
-      const done = (url, revoke) => {
+      // Use data: URLs (not blob:) so images load under strict CSPs whose
+      // img-src allows `data:` but not `blob:`.
+      const done = (url) => {
         const img = new Image();
-        img.onload = () => { if (revoke) URL.revokeObjectURL(url); resolve(img); };
-        img.onerror = () => { if (revoke) URL.revokeObjectURL(url); reject(new Error("Could not decode image.")); };
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error("Could not decode image."));
         img.src = url;
       };
       if (isSvg) {
         const fr = new FileReader();
         fr.onload = () => {
           const fixed = ensureSvgSize(fr.result);
-          const blob = new Blob([fixed], { type: "image/svg+xml" });
-          done(URL.createObjectURL(blob), true);
+          done("data:image/svg+xml;charset=utf-8," + encodeURIComponent(fixed));
         };
         fr.onerror = () => reject(new Error("Could not read SVG file."));
         fr.readAsText(file);
       } else {
-        done(URL.createObjectURL(file), true);
+        const fr = new FileReader();
+        fr.onload = () => done(fr.result);
+        fr.onerror = () => reject(new Error("Could not read image file."));
+        fr.readAsDataURL(file);
       }
     });
   }

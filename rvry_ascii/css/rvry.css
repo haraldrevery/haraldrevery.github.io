@@ -271,6 +271,19 @@ body > .bg-topology-map { min-height: 100vh; }
   color: var(--ink);
   border-bottom-color: var(--ink);
 }
+/* Tab icons: SVG masks so they inherit the button's themed color + states. */
+.tab-ico {
+  display: inline-block;
+  width: 1.1em; height: 1.1em;
+  vertical-align: -0.2em;
+  margin-right: 0.45em;
+  background-color: currentColor;
+  -webkit-mask: var(--tab-ico) no-repeat center / contain;
+  mask: var(--tab-ico) no-repeat center / contain;
+}
+.tab-btn[data-tab="image"]     .tab-ico { --tab-ico: url('../svg_icons_to_use/camera.svg'); }
+.tab-btn[data-tab="text"]      .tab-ico { --tab-ico: url('../svg_icons_to_use/text_size.svg'); }
+.tab-btn[data-tab="obfuscate"] .tab-ico { --tab-ico: url('../svg_icons_to_use/code_art.svg'); }
 
 /* ---- Layout ---- */
 main { padding: 1.2rem clamp(1rem, 4vw, 2.5rem) 4rem; }
