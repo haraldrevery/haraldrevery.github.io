@@ -161,12 +161,12 @@
         <div class="panel preview-wrap">
           <div class="preview-toolbar">
             <select id="img-font" style="max-width:15rem"></select>
-            <label class="muted tb-size">Size
-              <input type="range" id="img-fontsize" min="2" max="40" step="1" value="8" />
-            </label>
             <span class="tb-field" title="Output width in characters"><span class="tb-lbl">W</span><input type="range" id="img-width" min="20" max="400" step="1" value="120" /><span class="val" id="img-width-v">120</span></span>
             <span class="tb-field" title="Cell ratio (w:h) — lower = squashed vertically"><span class="tb-lbl">Ratio</span><input type="range" id="img-ratio" min="0.20" max="1.2" step="0.01" value="0.50" /><span class="val" id="img-ratio-v">0.50</span></span>
             <span class="tb-field" title="Stretch the preview vertically"><span class="tb-lbl">Stretch</span><input type="range" id="img-stretch" min="0.5" max="2" step="0.01" value="1" /><span class="val" id="img-stretch-v">1.00</span></span>
+            <label class="muted tb-size">Size
+              <input type="range" id="img-fontsize" min="2" max="40" step="1" value="8" />
+            </label>
             <span class="zoom"><button class="btn" id="img-zoom-out" title="Zoom out">−</button><button class="btn" id="img-zoom-fit" title="Fit width">Fit</button><button class="btn" id="img-zoom-in" title="Zoom in">+</button></span>
             <label class="check"><input type="checkbox" id="img-lightcanvas" /> Light canvas</label>
             <span class="spacer"></span>
@@ -225,11 +225,11 @@
         <div class="panel preview-wrap">
           <div class="preview-toolbar">
             <select id="txt-font" style="max-width:15rem"></select>
+            <span class="tb-field" title="Output width in characters"><span class="tb-lbl">W</span><input type="range" id="txt-width" min="20" max="400" step="1" value="120" /><span class="val" id="txt-width-v">120</span></span>
+            <span class="tb-field" title="Cell ratio (w:h) — lower = squashed vertically"><span class="tb-lbl">Ratio</span><input type="range" id="txt-ratio" min="0.20" max="1.2" step="0.01" value="0.50" /><span class="val" id="txt-ratio-v">0.50</span></span>
             <label class="muted tb-size">Size
               <input type="range" id="txt-fontsize" min="2" max="40" step="1" value="8" />
             </label>
-            <span class="tb-field" title="Output width in characters"><span class="tb-lbl">W</span><input type="range" id="txt-width" min="20" max="400" step="1" value="120" /><span class="val" id="txt-width-v">120</span></span>
-            <span class="tb-field" title="Cell ratio (w:h) — lower = squashed vertically"><span class="tb-lbl">Ratio</span><input type="range" id="txt-ratio" min="0.20" max="1.2" step="0.01" value="0.50" /><span class="val" id="txt-ratio-v">0.50</span></span>
             <span class="zoom"><button class="btn" id="txt-zoom-out" title="Zoom out">−</button><button class="btn" id="txt-zoom-fit" title="Fit width">Fit</button><button class="btn" id="txt-zoom-in" title="Zoom in">+</button></span>
             <label class="check"><input type="checkbox" id="txt-lightcanvas" /> Light canvas</label>
             <span class="spacer"></span>
@@ -315,11 +315,11 @@ console.log(seq.join(", "));</textarea>
         <div class="panel preview-wrap">
           <div class="preview-toolbar">
             <select id="obf-font" style="max-width:15rem"></select>
+            <span class="tb-field" title="Output width in characters"><span class="tb-lbl">W</span><input type="range" id="obf-width" min="20" max="300" step="1" value="120" /><span class="val" id="obf-width-v">120</span></span>
+            <span class="tb-field" title="Cell ratio (w:h) — lower = squashed vertically"><span class="tb-lbl">Ratio</span><input type="range" id="obf-ratio" min="0.2" max="1.2" step="0.01" value="0.5" /><span class="val" id="obf-ratio-v">0.50</span></span>
             <label class="muted tb-size">Size
               <input type="range" id="obf-fontsize" min="2" max="40" step="1" value="9" />
             </label>
-            <span class="tb-field" title="Output width in characters"><span class="tb-lbl">W</span><input type="range" id="obf-width" min="20" max="300" step="1" value="120" /><span class="val" id="obf-width-v">120</span></span>
-            <span class="tb-field" title="Cell ratio (w:h) — lower = squashed vertically"><span class="tb-lbl">Ratio</span><input type="range" id="obf-ratio" min="0.2" max="1.2" step="0.01" value="0.5" /><span class="val" id="obf-ratio-v">0.50</span></span>
             <span class="zoom"><button class="btn" id="obf-zoom-out" title="Zoom out">−</button><button class="btn" id="obf-zoom-fit" title="Fit width">Fit</button><button class="btn" id="obf-zoom-in" title="Zoom in">+</button></span>
             <label class="check"><input type="checkbox" id="obf-lightcanvas" /> Light canvas</label>
             <span class="spacer"></span>
@@ -386,11 +386,11 @@ console.log(seq.join(", "));</textarea>
         <div class="panel preview-wrap">
           <div class="preview-toolbar">
             <select id="ply-font" style="max-width:14rem"></select>
+            <span class="tb-field" title="Output width in characters (applies on Generate)"><span class="tb-lbl">W</span><input type="range" id="ply-width" min="20" max="220" step="1" value="100" /><span class="val" id="ply-width-v">100</span></span>
+            <span class="tb-field" title="Cell ratio (w:h) — applies on Generate"><span class="tb-lbl">Ratio</span><input type="range" id="ply-ratio" min="0.2" max="1.2" step="0.01" value="0.5" /><span class="val" id="ply-ratio-v">0.50</span></span>
             <label class="muted tb-size">Size
               <input type="range" id="ply-fontsize" min="2" max="40" step="1" value="7" />
             </label>
-            <span class="tb-field" title="Output width in characters (applies on Generate)"><span class="tb-lbl">W</span><input type="range" id="ply-width" min="20" max="220" step="1" value="100" /><span class="val" id="ply-width-v">100</span></span>
-            <span class="tb-field" title="Cell ratio (w:h) — applies on Generate"><span class="tb-lbl">Ratio</span><input type="range" id="ply-ratio" min="0.2" max="1.2" step="0.01" value="0.5" /><span class="val" id="ply-ratio-v">0.50</span></span>
             <span class="zoom"><button class="btn" id="ply-zoom-out" title="Zoom out">−</button><button class="btn" id="ply-zoom-fit" title="Fit width">Fit</button><button class="btn" id="ply-zoom-in" title="Zoom in">+</button></span>
             <span class="spacer"></span>
             <span class="preview-meta" id="ply-meta">—</span>
