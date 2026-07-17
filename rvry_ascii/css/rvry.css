@@ -561,6 +561,19 @@ select:hover, input[type="text"]:hover, textarea:hover { border-color: var(--ink
   font-size: calc(12px * var(--ui-scale));
   width: 2.4rem; height: 2.2rem; padding: 0;
 }
+/* Transport icons: SVG masks so they inherit the button's themed color. */
+.ctl-ico {
+  display: inline-block;
+  width: 1.05em; height: 1.05em;
+  vertical-align: -0.15em;
+  background-color: currentColor;
+  -webkit-mask: var(--ctl-ico) no-repeat center / contain;
+  mask: var(--ctl-ico) no-repeat center / contain;
+}
+#ply-first .ctl-ico       { --ctl-ico: url('../svg_icons_to_use/first_Step.svg'); }
+#ply-last  .ctl-ico       { --ctl-ico: url('../svg_icons_to_use/last_step.svg'); }
+#ply-play  .ctl-ico       { --ctl-ico: url('../svg_icons_to_use/play.svg'); }
+#ply-play.playing .ctl-ico { --ctl-ico: url('../svg_icons_to_use/pause.svg'); }
 .frame-counter {
   font-family: var(--font-mono);
   font-size: calc(10px * var(--ui-scale));

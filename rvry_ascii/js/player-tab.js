@@ -268,11 +268,11 @@ show(0);
     }
     function play() {
       if (state.frames.length < 2) return;
-      state.playing = true; els.play.textContent = "⏸";
+      state.playing = true; els.play.classList.add("playing");
       state.timer = setTimeout(tick, frameDelay());
     }
     function stop() {
-      state.playing = false; els.play.textContent = "▶";
+      state.playing = false; els.play.classList.remove("playing");
       if (state.timer) { clearTimeout(state.timer); state.timer = null; }
     }
     function toggle() { state.playing ? stop() : play(); }
