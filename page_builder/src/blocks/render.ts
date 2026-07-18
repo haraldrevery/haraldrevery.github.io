@@ -441,10 +441,10 @@ function hero(b: HeroBlock): string {
     if (cover) {
       // sharp full-bleed cover with a long fade-out into the page
       const mask =
-        "-webkit-mask-image:linear-gradient(#000 55%,transparent 100%);mask-image:linear-gradient(#000 55%,transparent 100%)";
+        "-webkit-mask-image:linear-gradient(#000 72%,transparent 100%);mask-image:linear-gradient(#000 72%,transparent 100%)";
       const scrim = lightCover
-        ? "linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,.3) 45%,rgba(255,255,255,0) 90%)"
-        : "linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.32) 45%,rgba(0,0,0,0) 90%)";
+        ? "linear-gradient(rgba(255,255,255,.74),rgba(255,255,255,.47) 45%,rgba(255,255,255,0) 90%)"
+        : "linear-gradient(rgba(0,0,0,.74),rgba(0,0,0,.47) 45%,rgba(0,0,0,0) 90%)";
       media =
         `  <img src="${escAttr(b.image || b.imageThumb)}" alt="" class="absolute inset-0 w-full h-full object-cover" style="z-index:-2;${mask}" fetchpriority="high">\n` +
         `  <div class="absolute inset-0" style="z-index:-1;background:${scrim}"></div>\n`;
