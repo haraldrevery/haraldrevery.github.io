@@ -28,21 +28,59 @@ asks you to locate the folder once, then remembers.
 - **Preview mode** (toolbar toggle): GLightbox works for real (groups, captions,
   zoom); navigation away is still blocked.
 - Blocks: hero, heading, text (markdown + KaTeX), divider, photo gallery,
-  single image, SVG, video, columns, social icons, audio, raw HTML.
-  Consecutive prose blocks are grouped into one `<article class="prose ...">`
-  exactly like the old builder.
+  single image, SVG, video, columns, social icons, FAQ accordion, audio,
+  raw HTML. Consecutive prose blocks are grouped into one
+  `<article class="prose ...">` exactly like the old builder.
+- **Block registry**: every type is defined once in
+  `src/blocks/defs.ts` (label, defaults, embeddability, summary), with
+  compile-checked Records for its renderer (`src/blocks/render.ts`) and form
+  (`src/ui/blockForms.ts`). Adding a block type = add it to the model union
+  and the compiler lists every missing piece; embeddable types automatically
+  appear as column content and get the preview "split" affordance.
+- **Columns hold real blocks** — any embeddable type (text, image, gallery
+  with all its layouts, video, SVG, icons, FAQ, raw) works as a column, with
+  its full form reused. In edit mode each column shows a type chip (click to
+  swap content type) and empty slots show a "＋ pick content" target; the
+  floating handle's ⿲ button splits any embeddable block into 2 columns.
 - **Hero** (always renders first, whatever its list position — it's pinned to
-  the top of the block list and injected before the page container). Three
-  types: **Photo** (blurred release-style backdrop, or full-bleed cover with a
-  scrim), **SVG** (themed, centered), or **Text only**. Kicker + H1 title +
-  tagline, left or centered. Two options: the nav bar reveals on scroll like
-  the index/release pages (the site's own `navi_mechanic` CSS scroll-timeline +
-  `navbar_scroll` fallback — the **one** JS exception, and it's existing site
-  code), and a "← Back to Notebook" link that fades into the lower-left after
-  a delay (pure CSS `extra_fade_effect_long`). Everything else is JS-free.
+  the top of the block list and injected before the page container).
+  **Background** (none / dot grid like index.html / blurred photo backdrop /
+  full-bleed photo cover that fades out at the bottom) combines freely with
+  the **foreground**: optional themed SVG (width %, x/y offset in % of its own
+  box, spacing to the text) plus kicker + H1 title + tagline, left or
+  centered. Left-aligned text + SVG renders side by side (text left, svg
+  right, `release-hero__grid`); centered stacks them. The cover has a long
+  bottom fade-out and a **tint choice** (dark scrim + white text, or light
+  scrim + dark text for bright photos). **In-animation**: fade
+  (`extra_fade_effect`), per-word random-delay fade-up (`word_animation`,
+  like about.html), or **wave echo** (the index.html imploding-outline effect
+  applied to the hero SVG). Optional custom
+  **scroll prompt** that fades in late exactly like index.html's
+  `#scroll-prompt`. Hero pages have exactly ONE "← Back to Notebook": the
+  hero's late-fading link aligned to the page container's left edge — the
+  shell's normal static link is suppressed via the `{{BACKLINK}}` placeholder.
+  Nav reveal on scroll uses the site's own `navi_mechanic` CSS scroll-timeline
+  + `navbar_scroll` fallback (the **one** JS exception, existing site code).
+  Everything else is JS-free.
+- **Word animation** toggles on heading and text blocks wrap every word in
+  the site's `word_animation` spans with deterministic pseudo-random delays
+  (stable across re-exports); math, code and inline svg are left untouched.
+- **FAQ accordion**: about.html's CSS-only checkbox accordion, markdown
+  answers, ids prefixed with the block id so multiple FAQ blocks coexist.
+- **Downloads block**: download.html's verification table with **SHA-256 +
+  SHA-512** columns (MD5 deliberately dropped — it's broken). Pick files from
+  the repo and the backend streams both hashes (1 MiB chunks, big zips never
+  load into RAM). Hashes are **recomputed at every export and on project
+  open**, so the published values always match the actual bytes; replaced
+  files are reported, missing ones block the export with a warning.
 - **Social icons panel**: a row of themed SVG icons with hover-mute
   (`hover:opacity-50`), sr-only labels, and per-icon links — mirrors the footer
   / release-page social rows. External links open in a new tab automatically.
+  An optional **panel label** switches it to the release-page "Listen
+  everywhere" look (mono uppercase label + left-aligned row).
+- **Gallery drag-drop**: with a gallery selected in edit mode, drag its images
+  directly in the preview to reorder them (a small movement threshold keeps
+  plain clicks working; the sidebar ↑↓ buttons remain for column galleries).
 - **Galleries have two layouts.** *Justified* (default): Behance/Flickr-style
   rows where every image keeps its native aspect ratio — pure CSS in the
   export (flex-grow proportional to each image's ratio + `aspect-ratio`, zero
@@ -113,11 +151,19 @@ for confirmation if warnings remain:
   alike (it checks the rendered output).
 - **SEO fields** — missing/overlong title and description, missing card image,
   missing tags, images without alt text, unlabeled icons, multiple/incomplete
-  heroes. No separate SEO menu: the front-matter fields
-  (title/description/tags/card image) are the SEO data, and the export fills
-  everything else automatically — `<title>`, meta description/keywords,
+  heroes, missing download files. No separate SEO menu: the front-matter
+  fields (title/description/tags/card image) are the SEO data, and the export
+  fills everything else automatically — `<title>`, meta description/keywords,
   canonical, Open Graph (`og:type article`, `og:site_name`), Twitter Card, and
-  JSON-LD BlogPosting, matching the site's own `base.njk` head.
+  JSON-LD, matching the site's own `base.njk` head.
+- **Schema (JSON-LD) is content-accurate.** The "Schema" select in page
+  details defaults to **Auto**: photo-dominated pages emit `ImageGallery`,
+  FAQ-dominated pages `FAQPage`, everything else `BlogPosting` (overrides:
+  Blog post / Article / Photo gallery / FAQ page). Whatever the type, the
+  entity is enriched from the real page: an image array with actual pixel
+  dimensions, FAQ blocks as a machine-readable `FAQPage` entity (`@graph`),
+  `wordCount`, keywords, `dateModified`. The page check shows what Auto
+  resolved to.
 - The block list shows a **green/yellow dot** per image-bearing block: green
   when alt/title/description are all filled, yellow when something's missing.
 
@@ -146,6 +192,7 @@ in `src-tauri/src/commands.rs`.)
 ```bash
 cd page_builder
 bun install
+bun test                      # unit suite (renderer/export/lint/store/svg/modals)
 bunx tauri dev                # dev app (vite + cargo, hot reload)
 bunx tauri build --no-bundle  # release binary
 cp src-tauri/target/release/page_builder ../page_builder_app

@@ -1,5 +1,5 @@
-import { newBlock } from "./blocks/model";
-import type { Block, BlockType } from "./blocks/model";
+import { newBlock, isEmbeddable, walkBlocks } from "./blocks/defs";
+import type { Block, BlockType, ColumnsBlock, GalleryBlock } from "./blocks/model";
 import type { Meta } from "./export";
 
 export type EmitKind =
@@ -25,6 +25,7 @@ export function defaultMeta(): Meta {
     description: "",
     image: "",
     draft: false,
+    schemaType: "auto",
   };
 }
 
@@ -183,6 +184,41 @@ class Store {
       const [b] = this.blocks.splice(from, 1);
       this.blocks.splice(to, 0, b);
       this.selectedId = id;
+    });
+  }
+
+  /// Wrap an embeddable block into a new 2-column block (block -> left child,
+  /// right child = empty paragraph). Used by the preview "split" affordance.
+  splitIntoColumns(id: string): void {
+    const i = this.indexOf(id);
+    if (i < 0) return;
+    const b = this.blocks[i];
+    if (!isEmbeddable(b.type)) return;
+    this.mutateStructure(() => {
+      const col = newBlock("columns") as ColumnsBlock;
+      col.columns = [b, newBlock("paragraph")];
+      col.verticalAlign = "top";
+      this.blocks[i] = col;
+      this.selectedId = col.id;
+    });
+  }
+
+  /// Reorder an image inside a gallery block (preview drag-drop). dropIndex
+  /// counts gaps with the dragged item still present, like reorderBlock.
+  reorderGalleryItem(blockId: string, from: number, dropIndex: number): void {
+    let gallery: GalleryBlock | null = null;
+    walkBlocks(this.blocks, (b) => {
+      if (b.id === blockId && b.type === "gallery") gallery = b;
+    });
+    if (!gallery) return;
+    const items = (gallery as GalleryBlock).items;
+    if (from < 0 || from >= items.length) return;
+    let to = Math.max(0, Math.min(dropIndex, items.length));
+    if (from < to) to--;
+    if (to === from) return;
+    this.mutateStructure(() => {
+      const [it] = items.splice(from, 1);
+      items.splice(to, 0, it);
     });
   }
 

@@ -4,6 +4,10 @@
   box-sizing: border-box;
 }
 :root {
+  /* The preview theme toggle flips the WINDOW theme; native widgets (select
+     dropdowns etc.) follow it. The editor chrome is always dark, so pin the
+     UA color-scheme or light mode renders white-on-white selects. */
+  color-scheme: dark;
   --bg: #161618;
   --bg2: #1f1f23;
   --bg3: #29292e;
@@ -165,6 +169,10 @@ textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--accent);
+}
+select option {
+  background: var(--bg2);
+  color: var(--fg);
 }
 textarea {
   width: 100%;

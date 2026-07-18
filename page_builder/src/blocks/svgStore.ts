@@ -3,7 +3,8 @@
  * renderer stays synchronous and unit-testable; src/media.ts fills the cache
  * via the read_svg command before renders/exports that need it.
  */
-import type { Block, ColumnContent } from "./model";
+import type { Block } from "./model";
+import { walkBlocks } from "./defs";
 
 const cache = new Map<string, string>();
 
@@ -19,21 +20,18 @@ export function hasSvgText(src: string): boolean {
   return cache.has(src);
 }
 
-/// Every svg src referenced by the given blocks (top-level, columns, hero, icons).
+/// Every svg src referenced by the given blocks (top-level, column children,
+/// hero, icons) — including hidden column slots so nothing is missing when
+/// they become visible again.
 export function collectSvgSrcs(blocks: Block[]): string[] {
   const out = new Set<string>();
-  for (const b of blocks) {
+  walkBlocks(blocks, (b) => {
     if (b.type === "svg" && b.src) out.add(b.src);
-    if (b.type === "hero" && b.variant === "svg" && b.svgSrc) out.add(b.svgSrc);
+    if (b.type === "hero" && b.showSvg && b.svgSrc) out.add(b.svgSrc);
     if (b.type === "icons") {
       for (const it of b.items) if (it.src) out.add(it.src);
     }
-    if (b.type === "columns") {
-      for (const c of b.columns as ColumnContent[]) {
-        if (c.kind === "svg" && c.src) out.add(c.src);
-      }
-    }
-  }
+  });
   return [...out];
 }
 

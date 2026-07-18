@@ -204,6 +204,52 @@ pub fn image_dims(
     Ok(paths.iter().map(|p| dims_of(&root, p)).collect())
 }
 
+// ---------------------------------------------------------------- file hashes
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FileHashInfo {
+    pub size: u64,
+    pub sha256: String,
+    pub sha512: String,
+}
+
+/// Streamed SHA-256 + SHA-512 in one pass (1 MiB chunks — large zips/videos
+/// never load into memory). MD5 is deliberately not offered.
+fn hash_one(root: &Path, web: &str) -> Option<FileHashInfo> {
+    use sha2::{Digest, Sha256, Sha512};
+    use std::io::Read;
+    let file = root.join(web.trim_start_matches('/'));
+    let mut f = fs::File::open(&file).ok()?;
+    let size = f.metadata().ok()?.len();
+    let mut h256 = Sha256::new();
+    let mut h512 = Sha512::new();
+    let mut buf = vec![0u8; 1024 * 1024];
+    loop {
+        let n = f.read(&mut buf).ok()?;
+        if n == 0 {
+            break;
+        }
+        h256.update(&buf[..n]);
+        h512.update(&buf[..n]);
+    }
+    Some(FileHashInfo {
+        size,
+        sha256: format!("{:x}", h256.finalize()),
+        sha512: format!("{:x}", h512.finalize()),
+    })
+}
+
+/// Batch hashing for the downloads block; None per missing/unreadable file.
+#[tauri::command]
+pub fn hash_files(
+    state: State<AppState>,
+    paths: Vec<String>,
+) -> Result<Vec<Option<FileHashInfo>>, String> {
+    let root = repo_root(&state)?;
+    Ok(paths.iter().map(|p| hash_one(&root, p)).collect())
+}
+
 /// Read an .svg file from inside the repo (for themed inlining in the
 /// renderer). Path is a root-absolute web path like /svg/foo.svg.
 #[tauri::command]
@@ -480,6 +526,31 @@ pub fn check_shell_freshness(state: State<AppState>) -> Result<FreshnessReport, 
         reference: REFERENCE_PAGE.to_string(),
         regions,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::hash_one;
+
+    #[test]
+    fn hashes_match_known_sha2_test_vectors() {
+        // NIST test vector: message "abc"
+        let dir = std::env::temp_dir().join("pb_hash_test");
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("abc.txt"), b"abc").unwrap();
+        let info = hash_one(&dir, "abc.txt").unwrap();
+        assert_eq!(info.size, 3);
+        assert_eq!(
+            info.sha256,
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        );
+        assert_eq!(
+            info.sha512,
+            "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a\
+             2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f"
+        );
+        assert!(hash_one(&dir, "missing.bin").is_none());
+    }
 }
 
 #[tauri::command]

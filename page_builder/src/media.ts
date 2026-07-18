@@ -54,6 +54,18 @@ export async function imageDims(paths: string[]): Promise<([number, number] | nu
   return invoke<([number, number] | null)[]>("image_dims", { paths });
 }
 
+export interface FileHashInfo {
+  size: number;
+  sha256: string;
+  sha512: string;
+}
+
+/// Streamed SHA-256/SHA-512 + size per file; null for missing files.
+export async function hashFiles(paths: string[]): Promise<(FileHashInfo | null)[]> {
+  if (!paths.length) return [];
+  return invoke<(FileHashInfo | null)[]>("hash_files", { paths });
+}
+
 /// Load an svg's text into the sync cache the renderer reads from.
 /// Errors are reported (toast) but don't throw — the preview shows a
 /// placeholder until the file exists.

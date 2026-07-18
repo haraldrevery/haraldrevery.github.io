@@ -6,18 +6,20 @@ import { ask, message } from "@tauri-apps/plugin-dialog";
 import { el, clear, debounce, toast, promptModal, listModal, contentModal } from "./ui/dom";
 import { store } from "./state";
 import type { Project } from "./state";
-import { renderContent, renderHero, heroNavReveal } from "./blocks/render";
+import { renderContent, renderHero, heroNavReveal, STATIC_BACKLINK } from "./blocks/render";
 import type { Block, GalleryItem } from "./blocks/model";
+import { walkBlocks, newBlock } from "./blocks/defs";
 import { collectSvgSrcs, hasSvgText } from "./blocks/svgStore";
 import { normalizeProject } from "./blocks/normalize";
-import { slugify, humanDate, exportText } from "./export";
+import { slugify, humanDate, exportText, resolveSchemaType } from "./export";
 import { PreviewBridge } from "./preview/bridge";
 import { renderMetaForm } from "./ui/metaForm";
 import { renderBlockList, refreshBlockList, confirmDelete } from "./ui/blockList";
-import { blockSummary } from "./blocks/model";
+import { blockSummary } from "./blocks/defs";
 import { renderBlockForm } from "./ui/blockForms";
-import { showBlockPicker } from "./ui/palette";
-import { checkFiles, deriveMinPath, imageDims, pickMedia, prefetchSvg, prefetchSvgs } from "./media";
+import { showBlockPicker, showColumnTypePicker } from "./ui/palette";
+import { checkFiles, deriveMinPath, imageDims, pickMedia, prefetchSvg, prefetchSvgs, hashFiles } from "./media";
+import type { DownloadItem } from "./blocks/model";
 import { lintPage } from "./lint";
 
 interface Config {
@@ -126,6 +128,22 @@ const bridge = new PreviewBridge(iframe, {
     const type = await showBlockPicker();
     if (type) void afterInsert(store.addBlock(type, index));
   },
+  onSplit(id) {
+    store.splitIntoColumns(id);
+  },
+  onItemReorder(id, from, dropIndex) {
+    store.reorderGalleryItem(id, from, dropIndex);
+  },
+  async onColumnPick(id, col) {
+    const b = store.blocks.find((x) => x.id === id);
+    if (!b || b.type !== "columns" || col < 0 || col > 1) return;
+    const type = await showColumnTypePicker();
+    if (!type) return;
+    store.mutateStructure(() => {
+      b.columns[col] = newBlock(type);
+      store.selectedId = b.id;
+    });
+  },
 });
 
 function previewHtml(): string {
@@ -137,9 +155,11 @@ function previewHtml(): string {
 
 function pushRender(scrollToId?: string): void {
   const edit = store.mode === "edit";
+  const hasHero = store.blocks.some((b) => b.type === "hero");
   bridge.render(
     previewHtml(),
     renderHero(store.blocks, { editMode: edit }),
+    hasHero ? "" : STATIC_BACKLINK,
     humanDate(store.meta.date),
     heroNavReveal(store.blocks),
     scrollToId
@@ -151,6 +171,14 @@ const debouncedRender = debounce((scrollToId?: string) => pushRender(scrollToId)
 function renderPageCheck(): void {
   clear(pageCheck);
   if (!store.blocks.length && !store.meta.title) return;
+  const schema = resolveSchemaType(store.meta, store.blocks);
+  pageCheck.appendChild(
+    el(
+      "div",
+      { class: "page-check-ok" },
+      `Schema: ${schema.type}${schema.auto ? " (auto)" : ""}`
+    )
+  );
   const issues = lintPage(store.meta, store.blocks);
   if (!issues.length) {
     pageCheck.appendChild(el("div", { class: "page-check-ok" }, "✓ Page check: no issues"));
@@ -245,7 +273,7 @@ async function afterInsert(b: Block): Promise<void> {
     if (!files.length) return;
     await prefetchSvg(files[0].web);
     store.mutateStructure(() => (b.src = files[0].web));
-  } else if (b.type === "hero") {
+  } else if (b.type === "hero" && (b.background === "backdrop" || b.background === "cover")) {
     const files = await pickMedia("image", false, "photos");
     if (!files.length) return;
     store.mutateStructure(() => {
@@ -273,16 +301,10 @@ async function revalidateThumbs(project: Project): Promise<void> {
   }
   const items: Imageish[] = [];
   const gridItems: GalleryItem[] = [];
-  for (const b of project.blocks) {
-    if (b.type === "gallery") gridItems.push(...(b.items as GalleryItem[]));
+  walkBlocks(project.blocks, (b) => {
+    if (b.type === "gallery") gridItems.push(...b.items);
     else if (b.type === "image") items.push(b);
-    else if (b.type === "columns") {
-      for (const c of b.columns) {
-        if (c.kind === "image") items.push(c);
-        else if (c.kind === "grid") gridItems.push(...c.items);
-      }
-    }
-  }
+  });
   items.push(...gridItems);
 
   // justified layout needs pixel dimensions; fill in any that are missing
@@ -326,6 +348,46 @@ async function revalidateThumbs(project: Project): Promise<void> {
   }
 }
 
+/// Recompute download-block hashes from the actual file bytes (the published
+/// hashes must never go stale). Mutates items in place; the caller decides
+/// what to do with the result. Not undoable by design — it's verification,
+/// not an edit.
+async function refreshDownloadHashes(
+  blocks: Block[]
+): Promise<{ changed: string[]; missing: string[]; dirtied: boolean }> {
+  const items: DownloadItem[] = [];
+  walkBlocks(blocks, (b) => {
+    if (b.type === "downloads") items.push(...b.items.filter((it) => it.src));
+  });
+  if (!items.length) return { changed: [], missing: [], dirtied: false };
+  const hashes = await hashFiles(items.map((it) => it.src)).catch(() =>
+    items.map(() => null)
+  );
+  const changed: string[] = [];
+  const missing: string[] = [];
+  let dirtied = false;
+  items.forEach((it, i) => {
+    const h = hashes[i];
+    const name = it.src.split("/").pop() || it.src;
+    if (!h) {
+      if (!it.missing) dirtied = true;
+      it.missing = true;
+      missing.push(name);
+      return;
+    }
+    if (it.missing) dirtied = true;
+    it.missing = false;
+    if (it.sha256 !== h.sha256 || it.sha512 !== h.sha512 || it.size !== h.size) {
+      if (it.sha256) changed.push(name); // only report real changes, not first fills
+      it.sha256 = h.sha256;
+      it.sha512 = h.sha512;
+      it.size = h.size;
+      dirtied = true;
+    }
+  });
+  return { changed, missing, dirtied };
+}
+
 async function doNew(): Promise<void> {
   if (store.dirty && !(await ask("Discard unsaved changes?", { title: "New page" }))) return;
   store.newProject();
@@ -348,8 +410,13 @@ async function doOpen(): Promise<void> {
     const project = normalizeProject(JSON.parse(raw));
     await revalidateThumbs(project);
     await prefetchSvgs(collectSvgSrcs(project.blocks));
+    const hashState = await refreshDownloadHashes(project.blocks);
     store.loadProject(name, project);
-    toast(`Opened ${name}`);
+    if (hashState.changed.length) {
+      toast(`Opened ${name} — download hashes updated: ${hashState.changed.join(", ")}`);
+    } else {
+      toast(`Opened ${name}`);
+    }
   } catch (e) {
     toast(String(e), true);
   }
@@ -386,9 +453,21 @@ async function doExport(): Promise<void> {
     });
     return;
   }
-  // themed svgs are inlined at render time — load them before linting/export
+  // themed svgs are inlined at render time — load them before linting/export;
+  // download hashes are recomputed so the published values match the bytes
   await prefetchSvgs(collectSvgSrcs(store.blocks));
+  const hashState = await refreshDownloadHashes(store.blocks);
+  if (hashState.dirtied) {
+    store.dirty = true;
+    store.emit("content");
+  }
   const warns = lintPage(store.meta, store.blocks).filter((i) => i.severity === "warn");
+  for (const name of hashState.missing) {
+    warns.push({
+      severity: "warn",
+      message: `Download file ${name} is missing on disk — its link and hashes would be broken.`,
+    });
+  }
   for (const src of collectSvgSrcs(store.blocks)) {
     if (!hasSvgText(src)) {
       warns.push({
@@ -435,7 +514,10 @@ async function doExport(): Promise<void> {
       store.dirty = true;
       updateTitle();
     }
-    toast(`Exported ${res.path} — run the Eleventy build to publish it`);
+    const hashNote = hashState.changed.length
+      ? ` (download hashes refreshed: ${hashState.changed.join(", ")})`
+      : "";
+    toast(`Exported ${res.path} — run the Eleventy build to publish it${hashNote}`);
   } catch (e) {
     toast(String(e), true);
   }

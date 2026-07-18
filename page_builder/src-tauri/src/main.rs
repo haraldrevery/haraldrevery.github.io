@@ -24,6 +24,7 @@ fn main() {
             commands::pick_media,
             commands::check_files,
             commands::image_dims,
+            commands::hash_files,
             commands::read_svg,
             commands::list_projects,
             commands::save_project,

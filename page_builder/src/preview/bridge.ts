@@ -7,6 +7,9 @@ export interface BridgeHandlers {
   onBlockClick(id: string): void;
   onReorder(id: string, dropIndex: number): void;
   onInsertAt(index: number): void;
+  onSplit(id: string): void;
+  onColumnPick(id: string, col: number): void;
+  onItemReorder(id: string, from: number, dropIndex: number): void;
 }
 
 export class PreviewBridge {
@@ -18,7 +21,14 @@ export class PreviewBridge {
     this.iframe = iframe;
     window.addEventListener("message", (e) => {
       if (e.source !== iframe.contentWindow) return;
-      const m = (e.data ?? {}) as { type?: string; id?: string; dropIndex?: number; index?: number };
+      const m = (e.data ?? {}) as {
+        type?: string;
+        id?: string;
+        dropIndex?: number;
+        index?: number;
+        col?: number;
+        from?: number;
+      };
       switch (m.type) {
         case "ready": {
           this.ready = true;
@@ -36,6 +46,17 @@ export class PreviewBridge {
           break;
         case "insertAt":
           if (m.index != null) handlers.onInsertAt(m.index);
+          break;
+        case "split":
+          if (m.id) handlers.onSplit(m.id);
+          break;
+        case "columnPick":
+          if (m.id != null && m.col != null) handlers.onColumnPick(m.id, m.col);
+          break;
+        case "itemReorder":
+          if (m.id != null && m.from != null && m.dropIndex != null) {
+            handlers.onItemReorder(m.id, m.from, m.dropIndex);
+          }
           break;
       }
     });
@@ -58,11 +79,12 @@ export class PreviewBridge {
   render(
     html: string,
     heroHtml: string,
+    backLinkHtml: string,
     dateHuman: string,
     navMechanic: boolean,
     scrollToId?: string
   ): void {
-    this.post({ type: "render", html, heroHtml, dateHuman, navMechanic, scrollToId });
+    this.post({ type: "render", html, heroHtml, backLinkHtml, dateHuman, navMechanic, scrollToId });
   }
 
   select(id: string | null, scroll = false): void {

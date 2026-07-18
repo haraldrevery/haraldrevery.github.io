@@ -2,7 +2,7 @@
 import { ask } from "@tauri-apps/plugin-dialog";
 import { el, clear } from "./dom";
 import { store } from "../state";
-import { blockSummary, blockMediaStatus } from "../blocks/model";
+import { blockSummary, blockMediaStatus } from "../blocks/defs";
 
 export async function confirmDelete(id: string, summary: string): Promise<void> {
   const ok = await ask(`Delete "${summary}"?\n(Ctrl+Z brings it back.)`, {

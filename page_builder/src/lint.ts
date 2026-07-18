@@ -5,6 +5,7 @@
  * column text and raw HTML are all covered the same way.
  */
 import { renderContent, renderHero } from "./blocks/render";
+import { walkBlocks } from "./blocks/defs";
 import { splitTags } from "./export";
 import type { Meta } from "./export";
 import type { Block } from "./blocks/model";
@@ -16,7 +17,10 @@ export interface LintIssue {
 
 function headingIssues(html: string, hasBlocks: boolean): LintIssue[] {
   const issues: LintIssue[] = [];
-  const headings = [...html.matchAll(/<h([1-6])[\s>]/gi)].map((m) => Number(m[1]));
+  // FAQ question <h3>s are widget labels (about.html pattern), not part of the
+  // document outline — drop them before scanning.
+  const scanned = html.replace(/<label[^>]*class="faq-question[\s\S]*?<\/label>/g, "");
+  const headings = [...scanned.matchAll(/<h([1-6])[\s>]/gi)].map((m) => Number(m[1]));
 
   if (!headings.length) {
     if (hasBlocks) {
@@ -72,18 +76,12 @@ function altIssues(blocks: Block[]): LintIssue[] {
   const countItem = (alt: string) => {
     if (!alt.trim()) missing++;
   };
-  for (const b of blocks) {
+  walkBlocks(blocks, (b, ctx) => {
+    if (!ctx.visible) return; // hidden second column doesn't export
     if (b.type === "gallery") b.items.forEach((it) => countItem(it.alt));
     else if (b.type === "image") countItem(b.alt);
     else if (b.type === "svg") countItem(b.alt);
-    else if (b.type === "columns") {
-      for (const c of b.columns.slice(0, b.count)) {
-        if (c.kind === "image") countItem(c.alt);
-        else if (c.kind === "grid") c.items.forEach((it) => countItem(it.alt));
-        else if (c.kind === "svg") countItem(c.alt);
-      }
-    }
-  }
+  });
   return missing
     ? [
         {
@@ -106,19 +104,30 @@ export function lintPage(meta: Meta, blocks: Block[]): LintIssue[] {
     issues.push({ severity: "warn", message: `${heroes.length} hero blocks — a page should have one.` });
   }
   for (const h of heroes) {
-    if (h.variant === "photo" && !h.image && !h.imageThumb) {
-      issues.push({ severity: "warn", message: "Hero is set to photo but no photo is picked." });
+    if ((h.background === "backdrop" || h.background === "cover") && !h.image && !h.imageThumb) {
+      issues.push({ severity: "warn", message: "Hero has a photo background but no photo is picked." });
     }
-    if (h.variant === "svg" && !h.svgSrc) {
-      issues.push({ severity: "warn", message: "Hero is set to SVG but no file is picked." });
+    if (h.showSvg && !h.svgSrc) {
+      issues.push({ severity: "warn", message: "Hero has 'show SVG' on but no file is picked." });
     }
   }
 
   let unlabeledIcons = 0;
-  for (const b of blocks) {
+  let missingDownloads = 0;
+  walkBlocks(blocks, (b, ctx) => {
+    if (!ctx.visible) return;
     if (b.type === "icons") {
       for (const it of b.items) if (!it.label.trim()) unlabeledIcons++;
     }
+    if (b.type === "downloads") {
+      for (const it of b.items) if (it.missing) missingDownloads++;
+    }
+  });
+  if (missingDownloads) {
+    issues.push({
+      severity: "warn",
+      message: `${missingDownloads} download file${missingDownloads > 1 ? "s" : ""} missing on disk (broken link + stale hashes).`,
+    });
   }
   if (unlabeledIcons) {
     issues.push({

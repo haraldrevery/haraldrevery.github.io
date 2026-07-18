@@ -1,11 +1,16 @@
 /*
- * Block data model. A project is {version, meta, blocks}; each block carries a
- * stable uuid so the preview iframe and the sidebar can talk about the same
- * block. Field semantics ported from old_page_builder/blocks.py, with text
- * fields as markdown (rendered through the site's exact pipeline).
+ * Block data model — TYPES ONLY. A project is {version, meta, blocks}; each
+ * block carries a stable uuid so the preview iframe and the sidebar can talk
+ * about the same block.
  *
- * Legacy types (list, blockquote, two_column) are converted to markdown /
- * columns blocks when a project is loaded — see normalizeProject in main.ts.
+ * Behaviour (labels, defaults, summaries, embeddability) lives in defs.ts —
+ * one registry entry per type. Renderers live in render.ts, forms in
+ * ui/blockForms.ts; both dispatch through compile-checked Records, so adding
+ * a block type here produces compile errors until every piece exists.
+ *
+ * Columns hold REAL child blocks (the "embeddable" subset in defs.ts), so any
+ * new embeddable block type automatically becomes a column option with its
+ * full form and renderer.
  */
 
 export type Aspect = "5/7" | "4/5" | "square" | "video" | "16/10" | "3/2" | "21/9";
@@ -30,7 +35,7 @@ export interface GalleryItem {
 
 export type GridLayout = "justified" | "uniform";
 
-/// Shared by the top-level SVG block and svg column content.
+/// Shared by the SVG block and the hero's svg foreground.
 export interface SvgFields {
   src: string;
   themed: boolean; // recolor to currentColor -> follows the site light/dark theme
@@ -38,66 +43,6 @@ export interface SvgFields {
   link: string; // optional wrap in <a href>
   alt: string;
   widthPct: number; // % of the container width (100 = full)
-}
-
-export type ColumnContent =
-  | { kind: "markdown"; md: string }
-  | {
-      kind: "image";
-      full: string;
-      thumb: string;
-      alt: string;
-      lightbox: boolean;
-      widthPct: number;
-      thumbMissing?: boolean;
-    }
-  | {
-      kind: "grid";
-      layout: GridLayout;
-      rowHeight: number;
-      columns: number;
-      aspect: Aspect;
-      group: string;
-      items: GalleryItem[];
-    }
-  | { kind: "video"; src: string; poster: string }
-  | ({ kind: "svg" } & SvgFields)
-  | { kind: "raw"; html: string };
-
-export type ColumnKind = ColumnContent["kind"];
-
-export const COLUMN_KIND_LABELS: [ColumnKind, string][] = [
-  ["markdown", "Text (markdown + KaTeX)"],
-  ["image", "Image"],
-  ["grid", "Image grid"],
-  ["video", "Video"],
-  ["svg", "SVG"],
-  ["raw", "Raw HTML"],
-];
-
-export function newColumnContent(kind: ColumnKind): ColumnContent {
-  switch (kind) {
-    case "markdown":
-      return { kind, md: "" };
-    case "image":
-      return { kind, full: "", thumb: "", alt: "", lightbox: false, widthPct: 100 };
-    case "grid":
-      return {
-        kind,
-        layout: "justified",
-        rowHeight: 240,
-        columns: 2,
-        aspect: "square",
-        group: "grid1",
-        items: [],
-      };
-    case "video":
-      return { kind, src: "", poster: "" };
-    case "svg":
-      return { kind, src: "", themed: true, hoverGrow: false, link: "", alt: "", widthPct: 100 };
-    case "raw":
-      return { kind, html: "" };
-  }
 }
 
 interface Base {
@@ -109,23 +54,31 @@ export interface HeadingBlock extends Base {
   level: number;
   text: string;
   align: "left" | "center";
+  animate: boolean; // per-word fade-up (word_animation)
 }
 
 /// Full-viewport opener rendered into the shell's {{HERO}} slot — always
-/// before the page container, whatever its list position.
+/// before the page container, whatever its list position. Background and
+/// foreground combine freely (e.g. photo + svg + text).
 export interface HeroBlock extends Base {
   type: "hero";
-  variant: "text" | "photo" | "svg";
-  photoStyle: "backdrop" | "cover"; // blurred release-style backdrop vs sharp full-bleed
+  background: "none" | "dots" | "backdrop" | "cover";
+  coverStyle: "dark" | "light"; // cover scrim tint: dark scrim + white text, or light scrim + dark text
   image: string; // full-size photo (cover)
   imageThumb: string; // _min (backdrop bg)
+  showSvg: boolean;
   svgSrc: string;
+  svgWidthPct: number; // % of the container width
+  svgX: number; // translate offset in % of the svg's own box
+  svgY: number;
   kicker: string;
   title: string;
   tagline: string;
   align: "left" | "center";
+  anim: "none" | "fade" | "words"; // foreground in-animation
   navReveal: boolean; // nav slides in on scroll (navi_mechanic, like index/release pages)
-  backLink: boolean; // "← Back to Notebook" fades in bottom-left after a delay
+  backLink: boolean; // single "← Back to Notebook", fades in at the container's left edge
+  scrollPrompt: string; // custom "scroll down" text ("" = off), fades in like index.html
 }
 
 export interface IconItem {
@@ -137,15 +90,50 @@ export interface IconItem {
 export interface IconsBlock extends Base {
   type: "icons";
   size: "small" | "medium" | "large";
+  /// optional panel label (release-page "Listen everywhere" style); when set,
+  /// the row is left-aligned under the label instead of centered
+  label: string;
   items: IconItem[];
 }
+
 export interface ParagraphBlock extends Base {
   type: "paragraph";
   md: string;
+  animate: boolean; // per-word fade-up (word_animation), math/code left alone
 }
+
+export interface FaqItem {
+  q: string;
+  a: string; // markdown
+}
+
+/// about.html-style CSS-only accordion (checkbox + label, no JS).
+export interface FaqBlock extends Base {
+  type: "faq";
+  items: FaqItem[];
+}
+
+export interface DownloadItem {
+  src: string; // root-absolute web path
+  label: string; // display name ("" = file name)
+  size: number; // bytes
+  sha256: string;
+  sha512: string;
+  missing?: boolean; // file not found on disk at last check
+}
+
+/// download.html-style verification table; hashes are computed by the backend
+/// (streamed SHA-256 + SHA-512 — MD5 is deliberately not offered) and
+/// recomputed automatically at every export so they always match the bytes.
+export interface DownloadsBlock extends Base {
+  type: "downloads";
+  items: DownloadItem[];
+}
+
 export interface HrBlock extends Base {
   type: "hr";
 }
+
 export interface GalleryBlock extends Base {
   type: "gallery";
   layout: GridLayout;
@@ -155,6 +143,7 @@ export interface GalleryBlock extends Base {
   group: string;
   items: GalleryItem[];
 }
+
 export interface ImageBlock extends Base {
   type: "image";
   full: string;
@@ -165,28 +154,36 @@ export interface ImageBlock extends Base {
   widthPct: number;
   thumbMissing?: boolean;
 }
+
 export interface SvgBlock extends Base, SvgFields {
   type: "svg";
 }
+
 export interface VideoBlock extends Base {
   type: "video";
   src: string;
   poster: string;
   caption: string;
 }
+
 export interface ColumnsBlock extends Base {
   type: "columns";
   count: 1 | 2;
   verticalAlign: "center" | "top";
-  // always two slots; the second is kept (not rendered) when count is 1 so
-  // switching 2 -> 1 -> 2 doesn't lose work
-  columns: [ColumnContent, ColumnContent];
+  // real child blocks (embeddable types only). Always two slots; the second is
+  // kept (not rendered) when count is 1 so switching 2 -> 1 -> 2 keeps work.
+  columns: [Block, Block];
 }
+
 export interface AudioBlock extends Base {
   type: "audio";
   src: string;
   title: string;
+  /// release-page "preview card": frosted-glass panel with the release-style
+  /// caption (beautiful_places.html "Listen everywhere" look)
+  panel: boolean;
 }
+
 export interface RawBlock extends Base {
   type: "raw";
   html: string;
@@ -203,140 +200,9 @@ export type Block =
   | VideoBlock
   | ColumnsBlock
   | IconsBlock
+  | FaqBlock
+  | DownloadsBlock
   | AudioBlock
   | RawBlock;
 
 export type BlockType = Block["type"];
-
-export const PROSE_TYPES = new Set<BlockType>(["heading", "paragraph", "hr"]);
-
-export const BLOCK_LABELS: [BlockType, string][] = [
-  ["hero", "Hero (always on top)"],
-  ["heading", "Heading"],
-  ["paragraph", "Text (markdown + KaTeX)"],
-  ["hr", "Divider"],
-  ["gallery", "Photo gallery"],
-  ["image", "Single image"],
-  ["svg", "SVG"],
-  ["video", "Video"],
-  ["columns", "Columns (1–2, any content)"],
-  ["icons", "Social icons panel"],
-  ["audio", "Audio"],
-  ["raw", "Raw HTML"],
-];
-
-export function newBlock(type: BlockType): Block {
-  const id = crypto.randomUUID();
-  switch (type) {
-    case "hero":
-      return {
-        id,
-        type,
-        variant: "photo",
-        photoStyle: "backdrop",
-        image: "",
-        imageThumb: "",
-        svgSrc: "",
-        kicker: "",
-        title: "",
-        tagline: "",
-        align: "left",
-        navReveal: true,
-        backLink: true,
-      };
-    case "heading":
-      return { id, type, level: 2, text: "", align: "left" };
-    case "paragraph":
-      return { id, type, md: "" };
-    case "hr":
-      return { id, type };
-    case "gallery":
-      return {
-        id,
-        type,
-        layout: "justified",
-        rowHeight: 320,
-        columns: 3,
-        aspect: "5/7",
-        group: "gallery1",
-        items: [],
-      };
-    case "image":
-      return { id, type, full: "", thumb: "", alt: "", caption: "", lightbox: true, widthPct: 100 };
-    case "svg":
-      return { id, type, src: "", themed: true, hoverGrow: false, link: "", alt: "", widthPct: 100 };
-    case "video":
-      return { id, type, src: "", poster: "", caption: "" };
-    case "columns":
-      return {
-        id,
-        type,
-        count: 2,
-        verticalAlign: "center",
-        columns: [newColumnContent("markdown"), newColumnContent("image")],
-      };
-    case "icons":
-      return { id, type, size: "small", items: [] };
-    case "audio":
-      return { id, type, src: "", title: "" };
-    case "raw":
-      return { id, type, html: "" };
-  }
-}
-
-export function blockSummary(b: Block): string {
-  const base = (p: string) => p.split("/").pop() || "";
-  switch (b.type) {
-    case "hero":
-      return `📌 Hero (${b.variant}): ${b.title.slice(0, 20)}`;
-    case "icons":
-      return `Icons (${b.items.length})`;
-    case "heading":
-      return `H${b.level}: ${b.text.slice(0, 28)}`;
-    case "paragraph":
-      return `¶ ${b.md.replace(/\s+/g, " ").slice(0, 30)}`;
-    case "gallery":
-      return `Gallery (${b.items.length} imgs, ${b.columns} col)`;
-    case "image":
-      return `Image: ${base(b.full)}`;
-    case "svg":
-      return `SVG: ${base(b.src)}`;
-    case "video":
-      return `Video: ${base(b.src)}`;
-    case "columns":
-      return `Columns (${b.count}): ${b.columns
-        .slice(0, b.count)
-        .map((c) => c.kind)
-        .join(" | ")}`;
-    case "audio":
-      return `Audio: ${base(b.src)}`;
-    case "hr":
-      return "── divider ──";
-    case "raw":
-      return "Raw HTML";
-  }
-}
-
-// ---------------------------------------------------- metadata completeness
-
-/// Green when alt + title + description are all filled, yellow otherwise.
-export function galleryItemStatus(it: GalleryItem): "ok" | "partial" {
-  return it.alt.trim() && it.title.trim() && it.description.trim() ? "ok" : "partial";
-}
-
-/// Aggregate status for a block's images (null = block has no images).
-export function blockMediaStatus(b: Block): "ok" | "partial" | null {
-  const statuses: ("ok" | "partial")[] = [];
-  if (b.type === "gallery") {
-    b.items.forEach((it) => statuses.push(galleryItemStatus(it)));
-  } else if (b.type === "image") {
-    if (b.full) statuses.push(b.alt.trim() && b.caption.trim() ? "ok" : "partial");
-  } else if (b.type === "columns") {
-    for (const c of b.columns.slice(0, b.count)) {
-      if (c.kind === "grid") c.items.forEach((it) => statuses.push(galleryItemStatus(it)));
-      else if (c.kind === "image" && c.full) statuses.push(c.alt.trim() ? "ok" : "partial");
-    }
-  }
-  if (!statuses.length) return null;
-  return statuses.every((s) => s === "ok") ? "ok" : "partial";
-}
