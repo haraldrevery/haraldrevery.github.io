@@ -406,18 +406,84 @@
 
     const def = view.moveVertically(sel, forward);
     const defLine = doc.lineAt(def.head);
+    /* Motion within the same doc line = stepping visual rows of a
+       soft-wrapped line; the default is always right there, even when
+       a rendered widget sits on the adjacent doc line. Must be checked
+       before the widget-coverage trigger below.                      */
+    if (def.head !== sel.head && defLine.number === curLine.number) return false;
     const skips = forward ? defLine.number > curLine.number + 1
                           : defLine.number < curLine.number - 1;
     const stuck = def.head === sel.head;
-    if (!skips && !stuck) return false;                      // default handles it
-
     const target = doc.line(targetNo);
-    const head = target.from + Math.min(sel.head - curLine.from, target.length);
-    view.dispatch({
-      selection: extend ? { anchor: sel.anchor, head } : { anchor: head },
-      scrollIntoView: true,
-      userEvent: 'select',
+    /* Deterministic trigger: moveVertically measures against the
+       rendered-widget geometry that this very transaction is about to
+       swap for raw text, so skips/stuck can flip between identical
+       keypresses. If the adjacent doc line is covered by a replace
+       widget, always take the override; the heuristic stays as a
+       fallback for geometry cases the coverage test can't see.
+       to > from excludes the zero-length lp-frontmatter line decos.  */
+    let covered = false;
+    const fv = state.field(blockField, false);
+    if (fv) fv.deco.between(target.from, target.to, (from, to) => {
+      if (to > from) { covered = true; return false; }
     });
+    if (!covered && !skips && !stuck) return false;          // default handles it
+
+    const head = target.from + Math.min(sel.head - curLine.from, target.length);
+    /* Carry the goal column forward. moveVertically resolves it as
+       sel.goalColumn ?? pixel-x of the head, so `def` already holds the
+       column the user is aiming at; a plain {anchor, head} dispatch
+       would erase it and make the column wander across presses that
+       alternate between this override and the default motion. The
+       bundle doesn't export EditorSelection — reach the class through
+       the live selection instance instead. */
+    const EditorSelection = state.selection.constructor;
+    const goal = def.goalColumn !== undefined ? def.goalColumn : sel.goalColumn;
+    if (goal !== undefined && typeof EditorSelection.cursor === 'function') {
+      const range = extend
+        ? EditorSelection.range(sel.anchor, head, goal)
+        : EditorSelection.cursor(head, undefined, undefined, goal);
+      view.dispatch({
+        selection: EditorSelection.create([range]),
+        scrollIntoView: true,
+        userEvent: 'select',
+      });
+      /* The landing above is a char-offset guess — the target line was
+         hidden inside the widget, so its pixels couldn't be measured
+         pre-dispatch (from a blank line it parks at column 0, from a
+         long one it clamps to the line end). Now that the dispatch has
+         revealed the line, re-land at the goal: goalColumn is a pixel x
+         relative to contentDOM's left edge, and posAtCoords flushes
+         measurement synchronously. Both dispatches share one paint, so
+         there is no visible double-move. The line guard means a stray
+         measurement can never move the cursor off the intended line.
+         The y must come from the DEPARTURE side of the target line, not
+         from the guess: a wrapped paragraph is one doc line spanning
+         several visual rows, and entering it from below must land on
+         its BOTTOM row (the guess sits near column 0 = the top row). */
+      const refPos = forward ? target.from : target.to;
+      const lineCoords = view.coordsAtPos(refPos, forward ? 1 : -1);
+      if (lineCoords) {
+        const x = view.contentDOM.getBoundingClientRect().left + goal;
+        const p = view.posAtCoords({ x, y: (lineCoords.top + lineCoords.bottom) / 2 });
+        if (p != null && p !== head && doc.lineAt(p).number === targetNo) {
+          const fixed = extend
+            ? EditorSelection.range(sel.anchor, p, goal)
+            : EditorSelection.cursor(p, undefined, undefined, goal);
+          view.dispatch({
+            selection: EditorSelection.create([fixed]),
+            scrollIntoView: true,
+            userEvent: 'select',
+          });
+        }
+      }
+    } else {
+      view.dispatch({
+        selection: extend ? { anchor: sel.anchor, head } : { anchor: head },
+        scrollIntoView: true,
+        userEvent: 'select',
+      });
+    }
     return true;
   }
 
