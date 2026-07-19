@@ -142,9 +142,24 @@
     </div>
 </section>
 
-<section>
+
+<section class="relative z-20">
     <div class="page-container extra_fade_effect">
         <div class="max-w-6xl mx-auto">
+
+            <div class="-mt-16">
+                <div data-search hidden class="relative max-w-md mx-auto mb-8">
+    <input type="search" autocomplete="off" spellcheck="false"
+           placeholder="Search notes + releases"
+           aria-label="Search notes and releases"
+           role="combobox" aria-expanded="false" aria-autocomplete="list"
+           class="w-full appearance-none px-4 pt-2 pb-1 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-sm tracking-widest rounded-lg placeholder:uppercase placeholder:text-neutral-500 focus:outline-none focus:bg-neutral-300 dark:focus:bg-neutral-700 transition-colors">
+    <ul role="listbox" hidden
+        class="absolute left-0 right-0 mt-2 z-10 bg-neutral-200 dark:bg-neutral-800 rounded-lg shadow-lg max-h-96 overflow-y-auto text-left"></ul>
+</div>
+<script src="/javascript/search_min.js" defer></script>
+
+            </div>
 
             <div class="flex flex-wrap justify-center gap-3">
                 

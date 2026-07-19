@@ -5,15 +5,15 @@ echo "Starting Tailwind Build Suite..."
 # to keep stdin open and prevent Tailwind CLI from auto-exiting.
 
 # 1. Main Minified
-tail -f /dev/null | ./tailwindcss-linux-x64 -i input.css -o main.css --watch --content "./*.html,./html_extras/**/*.{html,md},./notebook_templates/**/*.{html,md}" --minify &
+tail -f /dev/null | ./tailwindcss-linux-x64 -i input.css -o main.css --watch --content "./*.html,./html_extras/**/*.{html,md},./notebook_templates/**/*.{html,md},./eleventy_njk/**/*.njk,./eleventy_settings/**/*.njk" --minify &
 
 # 2. Main Unminified (Full)
-tail -f /dev/null | ./tailwindcss-linux-x64 -i input.css -o main_max.css --watch --content "./*.html,./html_extras/**/*.{html,md},./notebook_templates/**/*.{html,md}" &
+tail -f /dev/null | ./tailwindcss-linux-x64 -i input.css -o main_max.css --watch --content "./*.html,./html_extras/**/*.{html,md},./notebook_templates/**/*.{html,md},./eleventy_njk/**/*.njk,./eleventy_settings/**/*.njk" &
 
 # 3. Prose Minified
-tail -f /dev/null | ./tailwindcss-linux-x64 -i input_prose.css -o prose.css --watch --content "./*.html,./html_extras/**/*.{html,md},./notebook_templates/**/*.{html,md}" --minify &
+tail -f /dev/null | ./tailwindcss-linux-x64 -i input_prose.css -o prose.css --watch --content "./*.html,./html_extras/**/*.{html,md},./notebook_templates/**/*.{html,md},./eleventy_njk/**/*.njk,./eleventy_settings/**/*.njk" --minify &
 
 # 4. Prose Unminified (Full)
 # (This stays in the foreground, so it already has an open stdin and doesn't need the pipe)
 echo "Watching Prose Max (Unminified)..."
-./tailwindcss-linux-x64 -i input_prose.css -o prose_max.css --watch --content "./*.html,./html_extras/**/*.{html,md},./notebook_templates/**/*.{html,md}"
+./tailwindcss-linux-x64 -i input_prose.css -o prose_max.css --watch --content "./*.html,./html_extras/**/*.{html,md},./notebook_templates/**/*.{html,md},./eleventy_njk/**/*.njk,./eleventy_settings/**/*.njk"
