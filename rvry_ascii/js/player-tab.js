@@ -203,6 +203,7 @@ show(0);
       speed: $("ply-speed"), speedV: $("ply-speed-v"), loop: $("ply-loop"),
       copy: $("ply-copy"), png: $("ply-png"), txt: $("ply-txt"),
       ans: $("ply-ans"), animTxt: $("ply-anim-txt"), animHtml: $("ply-anim-html"),
+      gif: $("ply-gif"),
       zoomOut: $("ply-zoom-out"), zoomFit: $("ply-zoom-fit"), zoomIn: $("ply-zoom-in"),
       font: $("ply-font"), fontsize: $("ply-fontsize"), stage: $("ply-stage"),
       out: $("ply-out"), meta: $("ply-meta"),
@@ -518,6 +519,123 @@ show(0);
       }), "text/html;charset=utf-8");
       RVRY.ui.toast(`Saved a standalone HTML player (${state.frames.length} frames)`);
     });
+
+    /* ---- animated GIF export (options modal) ----
+       GIF's LZW packing is lossless, so the "compression level" works by
+       shrinking the palette — which also lowers the LZW minimum code size. */
+    const GIF_LEVEL_COLORS = [256, 128, 64, 32, 16, 8];
+    function openGifModal() {
+      if (!state.frames.length) { RVRY.ui.toast("Generate or load frames first"); return; }
+      const mk = (tag, cls, html) => {
+        const n = document.createElement(tag);
+        if (cls) n.className = cls;
+        if (html != null) n.innerHTML = html;
+        return n;
+      };
+      const overlay = mk("div", "crop-overlay");
+      const modal = mk("div", "crop-modal gif-modal");
+      const head = mk("div", "crop-head",
+        '<span class="crop-title">Export animated GIF</span>' +
+        '<span class="crop-dims mono" id="gif-dims"></span>');
+      const body = mk("div", null, `
+        <div class="field">
+          <label for="gif-level">LZW compression <span class="val" id="gif-level-v"></span></label>
+          <input type="range" id="gif-level" min="1" max="6" step="1" value="1" />
+          <div class="hint">GIF's LZW packing is lossless, so higher levels shrink the
+            color palette (256 → 8) instead — smaller LZW codes, smaller file.</div>
+        </div>
+        <label class="check"><input type="checkbox" id="gif-dither" />
+          Ordered dithering (smoother ramps at high compression, larger file)</label>
+        <div class="field" style="margin-top:.6rem">
+          <label for="gif-px">Pixel size <span class="val" id="gif-px-v"></span></label>
+          <input type="range" id="gif-px" min="2" max="20" step="1" value="8" />
+          <div class="hint">Rendered pixels per character cell.</div>
+        </div>
+        <label class="check"><input type="checkbox" id="gif-loop" /> Loop forever</label>
+        <div class="hint" id="gif-info" style="margin-top:.4rem"></div>
+        <div class="gif-progress hidden" id="gif-progress">
+          <div class="gif-progress-fill" id="gif-progress-fill"></div>
+        </div>`);
+      const actions = mk("div", "crop-actions");
+      const btnCancel = mk("button", "btn ghost", "Cancel");
+      const btnGo = mk("button", "btn primary", "Export GIF");
+      actions.append(btnCancel, btnGo);
+      modal.append(head, body, actions);
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+
+      const q = (id) => modal.querySelector("#" + id);
+      const level = q("gif-level"), levelV = q("gif-level-v");
+      const px = q("gif-px"), pxV = q("gif-px-v");
+      const dither = q("gif-dither"), loop = q("gif-loop");
+      const dims = q("gif-dims"), info = q("gif-info");
+      const bar = q("gif-progress"), fill = q("gif-progress-fill");
+      px.value = Math.min(20, Math.max(2, +els.fontsize.value || 8));
+      loop.checked = els.loop.checked;
+      const fps = Math.max(1, +els.fps.value);
+
+      function refresh() {
+        const colors = GIF_LEVEL_COLORS[+level.value - 1];
+        levelV.textContent = `${level.value} — ${colors} colors`;
+        const m = RVRY.gifFrameMetrics(state.frames, els.font.value, +px.value);
+        pxV.textContent = m.px < +px.value ? `${m.px}px (capped)` : `${m.px}px`;
+        dims.textContent = `${m.W} × ${m.H} px`;
+        info.textContent =
+          `${state.frames.length} frame${state.frames.length === 1 ? "" : "s"} @ ${fps} fps` +
+          ` ≈ ${(state.frames.length / fps).toFixed(1)}s`;
+      }
+      level.addEventListener("input", refresh);
+      px.addEventListener("input", refresh);
+      refresh();
+
+      let busy = false, abort = false;
+      function close() {
+        abort = true;
+        document.removeEventListener("keydown", onKey);
+        overlay.remove();
+      }
+      function onKey(e) { if (e.key === "Escape") close(); }
+      document.addEventListener("keydown", onKey);
+      btnCancel.addEventListener("click", close);
+      overlay.addEventListener("pointerdown", (e) => {
+        if (e.target === overlay && !busy) close();
+      });
+
+      btnGo.addEventListener("click", async () => {
+        if (busy) return;
+        busy = true;
+        btnGo.disabled = true;
+        level.disabled = px.disabled = dither.disabled = loop.disabled = true;
+        bar.classList.remove("hidden");
+        try {
+          const blob = await RVRY.encodeGifAnimation(state.frames, {
+            font: els.font.value, fontSize: +px.value,
+            bg: "#08090b", fg: "#e9eaec",
+            maxColors: GIF_LEVEL_COLORS[+level.value - 1],
+            dither: dither.checked, fps, loop: loop.checked
+          }, {
+            aborted: () => abort,
+            onProgress: (i, n) => {
+              fill.style.width = ((i / n) * 100).toFixed(1) + "%";
+              btnGo.textContent = `Encoding… ${i} / ${n}`;
+            }
+          });
+          if (blob) {
+            RVRY.ui.download(`rvry-anim-${animTs()}.gif`, blob);
+            RVRY.ui.toast(`Saved animated GIF (${state.frames.length} frames, ${(blob.size / 1024).toFixed(0)} KB)`);
+            close();
+          }
+        } catch (e) {
+          RVRY.ui.toast("GIF export failed: " + e.message);
+          busy = false;
+          btnGo.disabled = false;
+          level.disabled = px.disabled = dither.disabled = loop.disabled = false;
+          btnGo.textContent = "Export GIF";
+          bar.classList.add("hidden");
+        }
+      });
+    }
+    els.gif.addEventListener("click", openGifModal);
 
     RVRY.wirePreview(els.font, els.fontsize, null, els.out, els.stage);
     RVRY.wireZoom(els.out, els.stage, els.fontsize, { fit: els.zoomFit, inc: els.zoomIn, dec: els.zoomOut });

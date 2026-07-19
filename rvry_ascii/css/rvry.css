@@ -670,6 +670,18 @@ select:hover, input[type="text"]:hover, textarea:hover { border-color: var(--ink
 .h-w  { top: 50%; left: 0; cursor: ew-resize; }
 .crop-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
 
+/* ---- GIF export modal (shares the cropper's overlay/frame styles) ---- */
+.gif-modal { width: min(92vw, 24rem); }
+.gif-progress {
+  height: 6px; margin-top: 0.7rem;
+  border: 1px solid var(--line); border-radius: 3px;
+  background: var(--hover-soft); overflow: hidden;
+}
+.gif-progress-fill {
+  height: 100%; width: 0; background: var(--accent);
+  transition: width 0.15s linear;
+}
+
 /* ---- Site footer on the app's theme ----
    The footer markup uses Tailwind dark: utilities from main.css, which only
    follow the OS setting. Route its text colors through the app tokens so the
