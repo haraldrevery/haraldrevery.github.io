@@ -94,6 +94,7 @@
   function init() {
     const els = {
       drop: $("img-drop"), file: $("img-file"), sample: $("img-sample"), crop: $("img-crop"), error: $("img-error"),
+      alpha: $("img-alpha"),
       width: $("img-width"), widthV: $("img-width-v"),
       ratio: $("img-ratio"), ratioV: $("img-ratio-v"), ratioFit: $("img-ratio-fit"),
       preset: $("img-preset"), customWrap: $("img-custom-wrap"), custom: $("img-custom"),
@@ -126,6 +127,7 @@
       return {
         width: +els.width.value,
         ratio: +els.ratio.value,
+        alphaMode: els.alpha.value,
         braille,
         ramp,
         color: els.color.checked && !braille, // braille has no color path
@@ -146,7 +148,8 @@
       try {
         if (state.dirty || !state.sample) {
           state.sample = RVRY.sampleImage(state.source, {
-            width: opts.width, ratio: opts.ratio, braille: opts.braille, color: opts.color
+            width: opts.width, ratio: opts.ratio, braille: opts.braille, color: opts.color,
+            alphaMode: opts.alphaMode
           });
           state.dirty = false;
         }
@@ -254,6 +257,7 @@
     els.custom.addEventListener("input", rerender);
     els.invert.addEventListener("change", rerender);
     els.color.addEventListener("change", () => { state.dirty = true; rerender(); }); // needs rgb resample
+    els.alpha.addEventListener("change", () => { state.dirty = true; rerender(); }); // transparency handling is baked into the sample
 
     /* tone (real-time, no resample) */
     RVRY.slider(els.exposure, els.exposureV, 2, rerender);

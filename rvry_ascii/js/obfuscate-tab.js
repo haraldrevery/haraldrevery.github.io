@@ -53,6 +53,7 @@ for i in range(1, 5):
       lang: $("obf-lang"), langHint: $("obf-lang-hint"),
       repeatWrap: $("obf-repeat-wrap"), repeatHint: $("obf-repeat-hint"),
       threshold: $("obf-threshold"), thV: $("obf-threshold-v"), invert: $("obf-invert"),
+      alpha: $("obf-alpha"),
       exposure: $("obf-exposure"), exposureV: $("obf-exposure-v"),
       contrast: $("obf-contrast"), contrastV: $("obf-contrast-v"),
       gamma: $("obf-gamma"), gammaV: $("obf-gamma-v"),
@@ -78,7 +79,7 @@ for i in range(1, 5):
       }
       const width = +els.width.value, ratio = +els.ratio.value;
       if (state.dirty || !state.sample) {
-        state.sample = RVRY.sampleImage(state.source, { width, ratio, braille: false });
+        state.sample = RVRY.sampleImage(state.source, { width, ratio, braille: false, alphaMode: els.alpha.value });
         state.dirty = false;
       }
       const tone = { exposure: +els.exposure.value, contrast: +els.contrast.value, gamma: +els.gamma.value };
@@ -178,6 +179,7 @@ for i in range(1, 5):
     /* ink map + tone (no resample) */
     RVRY.slider(els.threshold, els.thV, 2, rerender);
     els.invert.addEventListener("change", rerender);
+    els.alpha.addEventListener("change", () => { state.dirty = true; rerender(); }); // transparency handling is baked into the sample
     RVRY.slider(els.exposure, els.exposureV, 2, rerender);
     RVRY.slider(els.contrast, els.contrastV, 2, rerender);
     RVRY.slider(els.gamma, els.gammaV, 2, rerender);

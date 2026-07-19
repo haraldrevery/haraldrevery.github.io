@@ -128,16 +128,44 @@
     }
   };
 
-  // font / size / light-canvas wiring for a preview <pre>
+  // font / size / light-canvas wiring for a preview <pre>.
+  // The <pre> stays hidden as the text source of truth (exports, fit zoom and
+  // Copy read it); what's shown is a canvas repainted with the exact glyph
+  // grid the PNG export uses, so preview and export can never disagree.
   RVRY.wirePreview = function (fontSelect, sizeRange, lightCheck, preEl, stageEl) {
-    const applyFont = () => { preEl.style.fontFamily = fontSelect.value; };
-    const applySize = () => { preEl.style.fontSize = sizeRange.value + "px"; };
+    const canvas = document.createElement("canvas");
+    canvas.className = "ascii-canvas";
+    preEl.classList.add("has-canvas");
+    preEl.after(canvas);
+
+    const repaint = RVRY.ui.rafThrottle(() => {
+      RVRY.ui.paintPreview(preEl, canvas, {
+        font: fontSelect.value,
+        fontSize: +sizeRange.value,
+        // tracks --preview-ink, light-canvas and the site theme toggle
+        fg: getComputedStyle(preEl).color
+      });
+    });
+
+    const applyFont = () => { preEl.style.fontFamily = fontSelect.value; repaint(); };
+    const applySize = () => { preEl.style.fontSize = sizeRange.value + "px"; repaint(); };
     const applyLight = () => {
       if (lightCheck) stageEl.classList.toggle("light-canvas", lightCheck.checked);
+      repaint();
     };
     fontSelect.addEventListener("change", applyFont);
     sizeRange.addEventListener("input", applySize);
     if (lightCheck) lightCheck.addEventListener("change", applyLight);
+
+    // repaint on: any output write (textContent / per-frame innerHTML),
+    // site theme flips (ink color changes), and late webfont arrival
+    // (metrics measured before HaraldMono loads would stay stale).
+    new MutationObserver(repaint).observe(preEl, { childList: true, characterData: true, subtree: true });
+    new MutationObserver(repaint).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    if (document.fonts) {
+      document.fonts.addEventListener("loadingdone", repaint);
+      document.fonts.ready.then(repaint).catch(() => {});
+    }
     applyFont(); applySize(); applyLight();
   };
 

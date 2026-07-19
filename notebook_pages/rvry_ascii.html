@@ -109,6 +109,15 @@
               <button class="btn ghost" id="img-sample">Load sample SVG</button>
               <button class="btn" id="img-crop" disabled>✂ Crop</button>
             </div>
+            <div class="field" style="margin-top:.6rem">
+              <label for="img-alpha">Transparent areas</label>
+              <select id="img-alpha">
+                <option value="black">Count as black</option>
+                <option value="white">Count as white</option>
+                <option value="shape">Shape — alpha is the ink</option>
+              </select>
+              <div class="hint">For SVG / PNG transparency. “Shape” draws the silhouette and ignores colors.</div>
+            </div>
             <canvas id="img-thumb" class="thumb hidden"></canvas>
             <div class="alert err" id="img-error"></div>
           </div>
@@ -258,6 +267,15 @@
             <div class="row" style="margin-top:.6rem">
               <button class="btn ghost" id="obf-sample">Load sample SVG</button>
               <button class="btn" id="obf-crop" disabled>✂ Crop</button>
+            </div>
+            <div class="field" style="margin-top:.6rem">
+              <label for="obf-alpha">Transparent areas</label>
+              <select id="obf-alpha">
+                <option value="black">Count as black</option>
+                <option value="white">Count as white</option>
+                <option value="shape">Shape — alpha is the ink</option>
+              </select>
+              <div class="hint">For SVG / PNG transparency. “Shape” fills the silhouette and ignores colors.</div>
             </div>
             <canvas id="obf-thumb" class="thumb hidden"></canvas>
             <div class="alert err" id="obf-error"></div>

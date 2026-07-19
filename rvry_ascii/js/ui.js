@@ -89,62 +89,95 @@
     download(`${(opts.name || "rvry-ascii")}-${ts()}.html`, html, "text/html;charset=utf-8");
   }
 
-  /* ---- Export as PNG ----
-     Renders the on-screen <pre> to a canvas by walking its child nodes, so it
-     reproduces exactly what's shown — plain text (image / code-art tabs) and
-     colored <span>s (player) alike. ---- */
+  /* ---- Fixed glyph grid ----
+     Lays the <pre>'s content on a strict grid (every glyph advances by the
+     measured "M" width). Single source of truth for BOTH the PNG export and
+     the on-screen canvas preview, so the two can never disagree — the DOM's
+     natural font advances drift when a glyph falls back to another face. ---- */
   const _pngCanvas = document.createElement("canvas");
-  function exportPng(preEl, opts) {
-    opts = opts || {};
-    const font = opts.font || "monospace";
-    const bg = opts.bg || "#0a0b0d";
-    const fg = opts.fg || "#e9eaec";
-    const text = preEl.textContent || "";
-    if (!text.trim()) { toast("Nothing to export yet"); return; }
+  const _measureCtx = _pngCanvas.getContext("2d");
 
-    const lines = text.split("\n");
+  function gridMetrics(font, px, cols, rows, pad) {
+    _measureCtx.font = `${px}px ${font}`;
+    const charW = _measureCtx.measureText("M").width || px * 0.6;
+    return {
+      px, charW, lineH: px, pad, // line-height:1, like the old DOM preview
+      W: Math.ceil(charW * cols) + pad * 2,
+      H: Math.ceil(px * rows + pad * 2)
+    };
+  }
+
+  function textDims(preEl) {
+    const lines = (preEl.textContent || "").split("\n");
     let cols = 1;
     for (const l of lines) if (l.length > cols) cols = l.length;
-    const rows = lines.length;
+    return { cols, rows: lines.length };
+  }
 
-    // pick a scale that keeps the canvas within browser limits (~8000px)
-    const base = Math.max(6, opts.fontSize || 8);
-    const ctx = _pngCanvas.getContext("2d");
-    let scale = 3;
-    const measure = (px) => { ctx.font = `${px}px ${font}`; return ctx.measureText("M").width; };
-    let px, charW, lineH, W, H, pad;
-    while (true) {
-      px = base * scale;
-      charW = measure(px) || px * 0.6;
-      lineH = px;                 // preview uses line-height:1
-      pad = Math.round(px * 0.6);
-      W = Math.ceil(charW * cols) + pad * 2;
-      H = Math.ceil(lineH * rows + pad * 2);
-      if ((W <= 8000 && H <= 8000) || scale <= 1) break;
-      scale -= 1;
-    }
-    _pngCanvas.width = W; _pngCanvas.height = H;
-    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-    ctx.font = `${px}px ${font}`;
+  // draws preEl's child nodes (text + colored spans) onto ctx with metrics m
+  function drawGrid(ctx, preEl, m, font, fg, bg) {
+    if (bg) { ctx.fillStyle = bg; ctx.fillRect(0, 0, m.W, m.H); }
+    else ctx.clearRect(0, 0, m.W, m.H);
+    ctx.font = `${m.px}px ${font}`;
     ctx.textBaseline = "top";
-
-    let x = pad, y = pad;
+    let x = m.pad, y = m.pad;
     const draw = (str, color) => {
       ctx.fillStyle = color;
       for (const ch of str) {
-        if (ch === "\n") { x = pad; y += lineH; }
-        else { ctx.fillText(ch, x, y); x += charW; }
+        if (ch === "\n") { x = m.pad; y += m.lineH; }
+        else { ctx.fillText(ch, x, y); x += m.charW; }
       }
     };
     preEl.childNodes.forEach((node) => {
       if (node.nodeType === 3) draw(node.nodeValue, fg);                 // text
       else if (node.nodeType === 1) draw(node.textContent, node.style.color || fg); // span
     });
+  }
+
+  /* ---- Export as PNG ---- */
+  function exportPng(preEl, opts) {
+    opts = opts || {};
+    const font = opts.font || "monospace";
+    const bg = opts.bg || "#0a0b0d";
+    const fg = opts.fg || "#e9eaec";
+    if (!(preEl.textContent || "").trim()) { toast("Nothing to export yet"); return; }
+
+    const { cols, rows } = textDims(preEl);
+    // pick a scale that keeps the canvas within browser limits (~8000px)
+    const base = Math.max(6, opts.fontSize || 8);
+    let scale = 3, m;
+    while (true) {
+      const px = base * scale;
+      m = gridMetrics(font, px, cols, rows, Math.round(px * 0.6));
+      if ((m.W <= 8000 && m.H <= 8000) || scale <= 1) break;
+      scale -= 1;
+    }
+    _pngCanvas.width = m.W; _pngCanvas.height = m.H;
+    drawGrid(_pngCanvas.getContext("2d"), preEl, m, font, fg, bg);
 
     _pngCanvas.toBlob((blob) => {
       if (blob) download(`${opts.name || "rvry-ascii"}-${ts()}.png`, blob);
       else toast("PNG export failed — image too large. Reduce width or font size.");
     }, "image/png");
+  }
+
+  /* ---- Canvas preview ----
+     Repaints a preview canvas from its hidden <pre> using the same grid as
+     exportPng. Transparent background (no bg fill) — the stage supplies it,
+     exactly like the DOM preview did. Backing store is devicePixelRatio-
+     scaled for crisp glyphs, stepped down if the canvas would get huge. ---- */
+  function paintPreview(preEl, canvas, o) {
+    const { cols, rows } = textDims(preEl);
+    let dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+    let m = gridMetrics(o.font, o.fontSize * dpr, cols, rows, 0);
+    while ((m.W > 10000 || m.H > 10000) && dpr > 1) {
+      dpr = Math.max(1, dpr - 0.5);
+      m = gridMetrics(o.font, o.fontSize * dpr, cols, rows, 0);
+    }
+    canvas.width = m.W; canvas.height = m.H;
+    canvas.style.width = (m.W / dpr) + "px";
+    canvas.style.height = (m.H / dpr) + "px";
+    drawGrid(canvas.getContext("2d"), preEl, m, o.font, o.fg, o.bg || null);
   }
 
   /* ---- Font picker ----
@@ -237,7 +270,7 @@
 
   RVRY.ui = {
     toast, copyText, download,
-    exportTxt, exportMd, exportHtml, exportPng,
+    exportTxt, exportMd, exportHtml, exportPng, paintPreview,
     BASE_FONTS, populateFontSelect, loadSystemFonts,
     fontCellRatio, wireRatioFit,
     debounce, rafThrottle

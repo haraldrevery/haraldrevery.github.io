@@ -550,6 +550,10 @@ select:hover, input[type="text"]:hover, textarea:hover { border-color: var(--ink
   tab-size: 4;
 }
 .preview-stage.light-canvas .ascii-out { color: #0a0a0a; }
+/* canvas preview: the <pre> keeps holding the text (exports / fit / copy read
+   it, and its computed color feeds the canvas ink) but the canvas is shown */
+.ascii-out.has-canvas { display: none; }
+.ascii-canvas { display: block; }
 
 /* ---- Player ---- */
 .player-controls {

@@ -79,12 +79,24 @@
 
     const gray = new Float32Array(w * h);
     const rgb = opts.color ? new Float32Array(w * h * 3) : null;
+    // alphaMode: what transparent pixels count as — "black" (composite over
+    // black, the default), "white" (over white; dark-on-transparent art stays
+    // visible), or "shape" (the alpha channel IS the ink; color is ignored).
+    const alphaMode = opts.alphaMode || "black";
     for (let i = 0, p = 0; i < gray.length; i++, p += 4) {
       const r = data[p], g = data[p + 1], b = data[p + 2], a = data[p + 3] / 255;
-      // composite alpha over black; luminance (Rec. 601)
-      const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255 * a;
-      gray[i] = lum;
-      if (rgb) { rgb[i * 3] = r * a; rgb[i * 3 + 1] = g * a; rgb[i * 3 + 2] = b * a; }
+      let cr, cg, cb;
+      if (alphaMode === "shape") {
+        cr = cg = cb = 255 * a;
+      } else if (alphaMode === "white") {
+        const mat = 255 * (1 - a);
+        cr = r * a + mat; cg = g * a + mat; cb = b * a + mat;
+      } else {
+        cr = r * a; cg = g * a; cb = b * a;
+      }
+      // luminance (Rec. 601)
+      gray[i] = (0.299 * cr + 0.587 * cg + 0.114 * cb) / 255;
+      if (rgb) { rgb[i * 3] = cr; rgb[i * 3 + 1] = cg; rgb[i * 3 + 2] = cb; }
     }
     return { gray, rgb, w, h, cols, rows };
   }
