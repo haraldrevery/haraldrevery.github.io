@@ -4,7 +4,7 @@ Desktop app (Tauri v2) for building Notebook pages visually — a live, click-to
 preview that renders with the **real site CSS/JS**, exporting finished pages into
 `html_extras/` where Eleventy picks them up.
 
-Successor to the tkinter builder in `old_page_builder/` (kept for reference).
+Successor to the earlier tkinter builder.
 
 ## Run it
 

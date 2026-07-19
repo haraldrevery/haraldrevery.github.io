@@ -1,6 +1,6 @@
 /*
- * Export pipeline — port of the pure helpers in
- * old_page_builder/notebook_builder.py. An exported page is:
+ * Export pipeline — port of the pure helpers in the earlier tkinter
+ * builder. An exported page is:
  * YAML front matter + shell.html with every {{PLACEHOLDER}} filled.
  * Eleventy's before-hook then strips the front matter and copies the body
  * verbatim to notebook_pages/; the front matter drives the Notebook index.

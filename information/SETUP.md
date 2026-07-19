@@ -87,7 +87,10 @@ you are changing dependencies in `package.json`, and recompile the binaries
 afterwards.
 
 Optional, only for the side apps:
-- **Python 3 + tkinter** — the page builder (`page_builder/`).
+- **Python 3 + matplotlib + numpy** — the background SVG generators
+  (`svg/svg_generator/`). These do need pip, unlike everything else here.
+- **Rust + Bun** — only to rebuild the page builder (`page_builder/`). Running
+  the prebuilt `page_builder_app` at the repo root needs neither.
 - **Bun** — only to recompile the Eleventy binaries.
 
 ---
@@ -139,7 +142,7 @@ website_v2_123/
 │   audio/, video/, svg/, graphics/,
 │   artcover/, notebook_thumbnails/
 │
-├── page_builder/                            # Python app: build html_extras pages
+├── page_builder/                            # Tauri app: build html_extras pages
 ├── revery_notebook/                         # standalone markdown editor
 ├── color_theme_app/                         # standalone color theme tool
 ├── eleventy_binary/                         # compile scripts for the binaries
@@ -237,9 +240,10 @@ a full HTML body with YAML frontmatter on top; on build, Eleventy's
 `eleventy.before` hook strips the frontmatter and copies the file to
 `notebook_pages/`, while the frontmatter feeds the notebook card.
 
-Easiest route: use the **page builder** (`page_builder/`) — a tkinter app that
-assembles a page from blocks (text, galleries, image, video, audio), picks
-media from the repo, and exports straight into `html_extras/`.
+Easiest route: use the **page builder** (`page_builder/`) — a desktop app with
+a live click-to-edit preview that renders in the real site CSS. It assembles a
+page from blocks (text, galleries, image, video, audio), picks media from the
+repo, and exports straight into `html_extras/`.
 
 ---
 
@@ -388,7 +392,7 @@ The Tailwind and Eleventy binaries are gitignored (GitHub's 100 MB file limit)
 
 | Folder | What it is |
 |---|---|
-| `page_builder/` | Python/tkinter app that assembles notebook pages from content blocks and exports to `html_extras/`. Stdlib only, no pip. See its README. |
+| `page_builder/` | Tauri v2 + TypeScript desktop app that assembles notebook pages from content blocks and exports to `html_extras/`. Prebuilt as `page_builder_app` at the repo root. See its README. |
 | `revery_notebook/` | Standalone markdown editor (CodeMirror, markdown-it, KaTeX, highlight.js, DOMPurify) for drafting posts. |
 | `color_theme_app/` | Standalone React tool for picking and generating theme colors. |
 | `eleventy_binary/` | `compile.sh` + `build.mjs` — cross-compiles both Eleventy binaries with Bun. |

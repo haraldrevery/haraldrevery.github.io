@@ -1,9 +1,9 @@
 /*
  * Block -> HTML renderers. Gallery/image/video/audio/prose markup is a 1:1
- * port of old_page_builder/blocks.py; the rest is new. The same functions
- * produce the preview and the exported page; editMode only adds data-pb-id
- * attributes (selection targets) and editor chips, so what you see is what
- * exports.
+ * port of the earlier tkinter builder's block renderers; the rest is new.
+ * The same functions produce the preview and the exported page; editMode
+ * only adds data-pb-id attributes (selection targets) and editor chips, so
+ * what you see is what exports.
  *
  * Every type has two render paths in the RENDERERS Record (compile-checked
  * against the Block union): `top` (standalone, with its own <section>
