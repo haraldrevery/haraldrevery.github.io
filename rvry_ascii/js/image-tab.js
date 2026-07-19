@@ -173,7 +173,8 @@
       els.out.style.transformOrigin = "0 0";
       els.out.style.transform = s === 1 ? "" : `scaleY(${s})`;
       const h = els.out.offsetHeight; // layout height (ignores the transform)
-      els.out.style.marginBottom = s > 1 ? Math.round(h * (s - 1)) + "px" : "";
+      // reserve extra space when stretched, reclaim it when squashed (s < 1)
+      els.out.style.marginBottom = s === 1 ? "" : Math.round(h * (s - 1)) + "px";
     }
 
     function showError(msg) {
@@ -224,7 +225,8 @@
     RVRY.registerPaste("image", setFile);
     els.sample.addEventListener("click", async () => {
       showError("");
-      try { setImage(await loadImageUrl("svg_icons_to_use/hrldrvryicon.svg"), "hrldrvryicon.svg"); }
+      // absolute: the published page lives in /notebook_pages/, assets don't
+      try { setImage(await loadImageUrl("/rvry_ascii/svg_icons_to_use/hrldrvryicon.svg"), "hrldrvryicon.svg"); }
       catch (e) { showError("Sample not found — run from the project folder. " + e.message); }
     });
 
@@ -250,10 +252,14 @@
     RVRY.slider(els.ratio, els.ratioV, 2, () => { state.dirty = true; rerender(); });
 
     /* glyphs */
-    els.preset.addEventListener("change", () => {
+    // threshold only applies to braille without dithering (dither replaces it)
+    const syncThreshold = () => {
       const p = RVRY.GLYPH_PRESETS[els.preset.value];
+      els.thWrap.classList.toggle("hidden", !(p && p.braille) || els.dither.value !== "none");
+    };
+    els.preset.addEventListener("change", () => {
       els.customWrap.classList.toggle("hidden", els.preset.value !== "custom");
-      els.thWrap.classList.toggle("hidden", !(p && p.braille));
+      syncThreshold();
       state.dirty = true; // braille toggles sample resolution
       render();
     });
@@ -275,7 +281,7 @@
     });
 
     /* dither */
-    els.dither.addEventListener("change", rerender);
+    els.dither.addEventListener("change", () => { syncThreshold(); rerender(); });
     RVRY.slider(els.threshold, els.thV, 2, rerender);
 
     /* export */

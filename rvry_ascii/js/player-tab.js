@@ -287,6 +287,17 @@ show(0);
     RVRY.slider(els.fps, els.fpsV, 0, () => {});
     RVRY.slider(els.speed, els.speedV, 2, () => {});
 
+    // free the previous clip's blob URL when the video stops being the source
+    function dropVideo() {
+      state.videoReady = false;
+      if (state.videoUrl) {
+        URL.revokeObjectURL(state.videoUrl);
+        state.videoUrl = null;
+        els.video.removeAttribute("src");
+        els.video.load();
+      }
+    }
+
     /* ---- file loading ---- */
     async function handleFile(file) {
       setAlert(els.error, ""); setAlert(els.warn, ""); setAlert(els.info, "");
@@ -295,7 +306,7 @@ show(0);
       const isGif = /image\/gif/i.test(file.type) || /\.gif$/i.test(file.name);
       if (isGif) return loadGif(file);
       // otherwise text / ansi — drop any previous video/GIF source state
-      state.mode = null; state.gif = null; state.videoReady = false;
+      state.mode = null; state.gif = null; dropVideo();
       const txt = await file.text();
       const frames = parseAnsiFile(txt);
       setFrames(frames);
@@ -306,7 +317,7 @@ show(0);
     async function loadGif(file) {
       els.videoPanel.classList.remove("hidden");
       els.capfpsWrap.classList.add("hidden"); // GIF frames keep their own timing
-      state.mode = "gif"; state.gif = null; state.videoReady = false;
+      state.mode = "gif"; state.gif = null; dropVideo();
       try {
         const buf = await file.arrayBuffer();
         // bound decoded frames by memory (each is a full W×H RGBA buffer)
@@ -432,7 +443,9 @@ show(0);
       }
       els.generate.disabled = false;
       els.progress.textContent = `Done — ${frames.length} frames @ ${capfps} fps capture.`;
-      els.fps.value = Math.min(30, capfps); els.fpsV.textContent = String(els.fps.value);
+      // real input event so the readout repaints and the value persists
+      els.fps.value = Math.min(30, capfps);
+      els.fps.dispatchEvent(new Event("input", { bubbles: true }));
       setFrames(frames);
       setAlert(els.info, `Generated ${frames.length} frames. Press play ▶`);
     }
@@ -463,7 +476,8 @@ show(0);
       // playback rate from the GIF's own frame delays (player uses a fixed fps)
       const avg = frames.length ? totalMs / frames.length : 100;
       const fps = Math.max(1, Math.min(30, Math.round(1000 / avg)));
-      els.fps.value = fps; els.fpsV.textContent = String(fps);
+      els.fps.value = fps;
+      els.fps.dispatchEvent(new Event("input", { bubbles: true }));
       els.progress.textContent = `Done — ${frames.length} frames from GIF (≈${fps} fps).`;
       setFrames(frames);
       setAlert(els.info, `Converted ${frames.length} frames. Press play ▶`);

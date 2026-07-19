@@ -234,14 +234,17 @@
           : `<span style="color:${cur}">${escapeHtml(buf)}</span>`;
         buf = "";
       };
-      for (let x = 0; x < line.length; x++) {
-        const ch = line[x];
+      // walk by code point (not UTF-16 unit) so astral glyphs in a custom
+      // ramp advance one cell, keeping the rgb index aligned with render()
+      let x = 0;
+      for (const ch of line) {
         if (ch !== " ") {
           const p = (y * w + x) * 3;
           const col = `rgb(${sample.rgb[p] | 0},${sample.rgb[p + 1] | 0},${sample.rgb[p + 2] | 0})`;
           if (col !== cur) { flush(); cur = col; }
         }
         buf += ch;
+        x++;
       }
       flush();
       html += "\n"; // runs never span rows

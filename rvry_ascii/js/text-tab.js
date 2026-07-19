@@ -42,8 +42,11 @@
       setFont(px);
       let w = 1;
       for (const l of lines) w = Math.max(w, ctx.measureText(l).width);
-      // keep very long banners within canvas limits
-      if (w > 8000) { px = Math.max(20, Math.floor((px * 8000) / w)); }
+      // keep very long banners within canvas limits — width AND height
+      // (many lines would otherwise blow past the browser's canvas cap)
+      if (w > 8000) { px = Math.max(4, Math.floor((px * 8000) / w)); }
+      const projH = px * 1.25 * lines.length + px * 0.5;
+      if (projH > 8000) { px = Math.max(4, Math.floor((px * 8000) / projH)); }
       const pad = Math.round(px * 0.25);
       const lineH = Math.round(px * 1.25);
       setFont(px);
@@ -80,23 +83,29 @@
 
     function render() {
       const opts = currentOpts();
-      if (state.dirty || !state.sample) {
-        const src = drawBanner();
-        if (!src) {
-          state.sample = null; state.lastText = "";
-          els.out.textContent = "Type some text to render.";
-          els.meta.textContent = "—";
-          return;
+      try {
+        if (state.dirty || !state.sample) {
+          const src = drawBanner();
+          if (!src) {
+            state.sample = null; state.lastText = "";
+            els.out.textContent = "Type some text to render.";
+            els.meta.textContent = "—";
+            return;
+          }
+          state.sample = RVRY.sampleImage(src, {
+            width: opts.width, ratio: opts.ratio, braille: opts.braille
+          });
+          state.dirty = false;
         }
-        state.sample = RVRY.sampleImage(src, {
-          width: opts.width, ratio: opts.ratio, braille: opts.braille
-        });
-        state.dirty = false;
+        const res = RVRY.render(state.sample, opts);
+        state.lastText = res.text;
+        els.out.textContent = res.text;
+        els.meta.textContent = `${res.cols} × ${res.rows} chars`;
+      } catch (e) {
+        state.sample = null; state.lastText = "";
+        els.out.textContent = "Banner too large to render — use fewer lines or shorter text.";
+        els.meta.textContent = "—";
       }
-      const res = RVRY.render(state.sample, opts);
-      state.lastText = res.text;
-      els.out.textContent = res.text;
-      els.meta.textContent = `${res.cols} × ${res.rows} chars`;
     }
     const rerender = RVRY.ui.rafThrottle(render);
     const dirtyRender = () => { state.dirty = true; rerender(); };
@@ -115,10 +124,14 @@
     RVRY.slider(els.ratio, els.ratioV, 2, dirtyRender);
 
     /* glyphs */
-    els.preset.addEventListener("change", () => {
+    // threshold only applies to braille without dithering (dither replaces it)
+    const syncThreshold = () => {
       const p = RVRY.GLYPH_PRESETS[els.preset.value];
+      els.thWrap.classList.toggle("hidden", !(p && p.braille) || els.dither.value !== "none");
+    };
+    els.preset.addEventListener("change", () => {
       els.customWrap.classList.toggle("hidden", els.preset.value !== "custom");
-      els.thWrap.classList.toggle("hidden", !(p && p.braille));
+      syncThreshold();
       state.dirty = true; // braille toggles sample resolution
       render();
     });
@@ -126,7 +139,7 @@
     els.invert.addEventListener("change", rerender);
 
     /* dither */
-    els.dither.addEventListener("change", rerender);
+    els.dither.addEventListener("change", () => { syncThreshold(); rerender(); });
     RVRY.slider(els.threshold, els.thV, 2, rerender);
 
     /* export */

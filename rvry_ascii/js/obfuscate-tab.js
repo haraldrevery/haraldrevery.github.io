@@ -133,7 +133,8 @@ for i in range(1, 5):
     RVRY.registerPaste("obfuscate", setFile);
     els.sample.addEventListener("click", async () => {
       showError("");
-      try { setImage(await loadImageUrl("svg_icons_to_use/hrldrvryicon.svg"), "hrldrvryicon.svg"); }
+      // absolute: the published page lives in /notebook_pages/, assets don't
+      try { setImage(await loadImageUrl("/rvry_ascii/svg_icons_to_use/hrldrvryicon.svg"), "hrldrvryicon.svg"); }
       catch (e) { showError("Sample not found — run from the project folder. " + e.message); }
     });
 
