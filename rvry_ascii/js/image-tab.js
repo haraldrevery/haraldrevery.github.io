@@ -101,7 +101,6 @@
       exposure: $("img-exposure"), exposureV: $("img-exposure-v"),
       contrast: $("img-contrast"), contrastV: $("img-contrast-v"),
       gamma: $("img-gamma"), gammaV: $("img-gamma-v"),
-      stretch: $("img-stretch"), stretchV: $("img-stretch-v"),
       toneReset: $("img-tone-reset"),
       dither: $("img-dither"), thWrap: $("img-threshold-wrap"), threshold: $("img-threshold"), thV: $("img-threshold-v"),
       copy: $("img-copy"), png: $("img-png"), txt: $("img-txt"), md: $("img-md"), html: $("img-html"),
@@ -159,23 +158,11 @@
           els.out.textContent = res.text;
         }
         els.meta.textContent = `${res.cols} × ${res.rows} chars`;
-        applyStretch();
       } catch (e) {
         showError(e.message);
       }
     }
     const rerender = RVRY.ui.rafThrottle(render);
-
-    // Vertical preview stretch — display only (real-time, no resample). A matching
-    // bottom margin reserves layout space so the stretched output stays scrollable.
-    function applyStretch() {
-      const s = +els.stretch.value;
-      els.out.style.transformOrigin = "0 0";
-      els.out.style.transform = s === 1 ? "" : `scaleY(${s})`;
-      const h = els.out.offsetHeight; // layout height (ignores the transform)
-      // reserve extra space when stretched, reclaim it when squashed (s < 1)
-      els.out.style.marginBottom = s === 1 ? "" : Math.round(h * (s - 1)) + "px";
-    }
 
     function showError(msg) {
       if (!msg) { els.error.classList.remove("show"); return; }
@@ -271,7 +258,6 @@
     RVRY.slider(els.exposure, els.exposureV, 2, rerender);
     RVRY.slider(els.contrast, els.contrastV, 2, rerender);
     RVRY.slider(els.gamma, els.gammaV, 2, rerender);
-    RVRY.slider(els.stretch, els.stretchV, 2, applyStretch); // no resample needed
     els.toneReset.addEventListener("click", () => {
       // real input events so the slider readouts repaint and the change persists
       [[els.exposure, 1], [els.contrast, 0], [els.gamma, 1]].forEach(([el, v]) => {
@@ -288,8 +274,7 @@
     const paint = () => ({
       font: els.font.value, name: "rvry-image", fontSize: +els.fontsize.value,
       bg: els.lightcanvas.checked ? "#ffffff" : "#0a0b0d",
-      fg: els.lightcanvas.checked ? "#0a0b0d" : "#e9eaec",
-      stretch: +els.stretch.value
+      fg: els.lightcanvas.checked ? "#0a0b0d" : "#e9eaec"
     });
     els.copy.addEventListener("click", () => RVRY.ui.copyText(state.lastText));
     els.txt.addEventListener("click", () => RVRY.ui.exportTxt(state.lastText, "rvry-image"));

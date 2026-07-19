@@ -508,7 +508,7 @@ select:hover, input[type="text"]:hover, textarea:hover { border-color: var(--ink
 }
 .preview-toolbar select { width: auto; }
 
-/* compact slider controls in the preview toolbar (Size / W / Ratio / Stretch) */
+/* compact slider controls in the preview toolbar (Size / W / Ratio) */
 .tb-size {
   font-family: var(--font-mono);
   font-size: calc(10px * var(--ui-scale));

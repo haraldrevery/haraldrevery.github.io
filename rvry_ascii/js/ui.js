@@ -71,10 +71,6 @@
     const title = opts.title || "RVRY_ASCII";
     const size = opts.fontSize || 10;
     const esc = (RVRY.escapeHtml || ((s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))));
-    // opts.stretch: vertical scale matching the preview's Stretch slider
-    const stretch = +opts.stretch || 1;
-    const stretchCss = stretch === 1 ? "" :
-      `\n      transform:scaleY(${stretch});transform-origin:0 0;`;
     // opts.html: pre-escaped markup (colored spans) used instead of plain text
     const body = opts.html != null ? opts.html : esc(text);
     const html =
@@ -87,7 +83,7 @@
   html,body{margin:0;background:${bg};}
   pre{margin:0;padding:2rem;color:${fg};font-family:${font};
       font-size:${size}px;line-height:1;white-space:pre;letter-spacing:0;
-      display:inline-block;${stretchCss}}
+      display:inline-block;}
 </style></head>
 <body><pre>${body}</pre></body></html>`;
     download(`${(opts.name || "rvry-ascii")}-${ts()}.html`, html, "text/html;charset=utf-8");
@@ -111,9 +107,6 @@
     for (const l of lines) if (l.length > cols) cols = l.length;
     const rows = lines.length;
 
-    // vertical stretch matching the preview's Stretch slider (scaleY)
-    const stretch = +opts.stretch || 1;
-
     // pick a scale that keeps the canvas within browser limits (~8000px)
     const base = Math.max(6, opts.fontSize || 8);
     const ctx = _pngCanvas.getContext("2d");
@@ -126,13 +119,12 @@
       lineH = px;                 // preview uses line-height:1
       pad = Math.round(px * 0.6);
       W = Math.ceil(charW * cols) + pad * 2;
-      H = Math.ceil((lineH * rows + pad * 2) * stretch);
+      H = Math.ceil(lineH * rows + pad * 2);
       if ((W <= 8000 && H <= 8000) || scale <= 1) break;
       scale -= 1;
     }
     _pngCanvas.width = W; _pngCanvas.height = H;
     ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-    if (stretch !== 1) ctx.scale(1, stretch); // stretches glyphs like the preview
     ctx.font = `${px}px ${font}`;
     ctx.textBaseline = "top";
 
