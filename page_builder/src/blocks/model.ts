@@ -13,11 +13,12 @@
  * full form and renderer.
  */
 
-export type Aspect = "5/7" | "4/5" | "square" | "video" | "16/10" | "3/2" | "21/9";
+export type Aspect = "5/7" | "4/5" | "square" | "video" | "16/10" | "3/2" | "21/9" | "29/9" | "21/7";
 
 // "1/1" from the old builder is intentionally absent: the compiled main.css has
-// no aspect-[1/1] utility ("square" covers it). Only emit classes that exist.
-export const ASPECTS: Aspect[] = ["5/7", "4/5", "square", "video", "16/10", "3/2", "21/9"];
+// no aspect-[1/1] utility ("square" covers it). Only emit classes that exist
+// (29/9 and 21/7 are verified present).
+export const ASPECTS: Aspect[] = ["5/7", "4/5", "square", "video", "16/10", "3/2", "21/9", "29/9", "21/7"];
 
 export const GALLERY_COLUMNS = [2, 3, 4, 5, 6];
 
@@ -33,7 +34,7 @@ export interface GalleryItem {
   h?: number;
 }
 
-export type GridLayout = "justified" | "uniform";
+export type GridLayout = "justified" | "uniform" | "feature";
 
 /// Shared by the SVG block and the hero's svg foreground.
 export interface SvgFields {

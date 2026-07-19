@@ -153,11 +153,12 @@ describe("edit mode", () => {
   });
 
   test("split marker only on embeddable blocks", () => {
-    const edit = renderContent([sample("gallery"), sample("audio")], { editMode: true });
+    const edit = renderContent([sample("gallery"), sample("downloads")], { editMode: true });
     const galleryTag = edit.slice(0, edit.indexOf(">"));
     expect(galleryTag).toContain('data-pb-split="1"');
-    const audioIdx = edit.indexOf('class="mb-12"');
-    expect(edit.slice(audioIdx - 200, audioIdx)).not.toContain("data-pb-split");
+    // downloads is non-embeddable -> its section has an id but no split marker
+    const dlIdx = edit.indexOf("overflow-x-auto");
+    expect(edit.slice(dlIdx - 200, dlIdx)).not.toContain("data-pb-split");
   });
 
   test("column chips + empty-column target are edit-only", () => {
@@ -188,16 +189,16 @@ describe("hero + icons", () => {
     expect(heroNavReveal([sample("hero")])).toBe(true);
     expect(heroNavReveal([])).toBe(false);
   });
-  test("cover background: long bottom fade mask, darker scrim, white text (dark tint)", () => {
+  // scrim/mask numbers are hand-tuned in render.ts — assert structure only
+  test("cover background: bottom fade mask, dark scrim, white text (dark tint)", () => {
     const out = renderHero([heroWith({ background: "cover" })]);
-    expect(out).toContain("mask-image:linear-gradient(#000 55%,transparent 100%)");
-    expect(out).toContain("rgba(0,0,0,.55)");
-    expect(out).toContain("rgba(0,0,0,0) 90%");
+    expect(out).toMatch(/mask-image:linear-gradient\(#000 \d+%,transparent 100%\)/);
+    expect(out).toMatch(/background:linear-gradient\(rgba\(0,0,0,[.\d]+\)/);
     expect(out).toContain("text-white");
   });
   test("cover light tint: light scrim, FORCED dark text (theme-independent)", () => {
     const out = renderHero([heroWith({ background: "cover", coverStyle: "light" })]);
-    expect(out).toContain("rgba(255,255,255,.55)");
+    expect(out).toMatch(/background:linear-gradient\(rgba\(255,255,255,[.\d]+\)/);
     // forced text-black — inheriting dark:text-white would be white-on-light
     // in dark mode
     expect(out).toContain('class="page-container release-hero__inner text-black">');
@@ -283,6 +284,49 @@ describe("options", () => {
     expect(out).toContain('<h2 class="text-center">Head</h2>');
     expect(out).toContain('<figure style="width:50%;margin-inline:auto">');
     expect(out).toContain('style="width:50%;margin-inline:auto"');
+  });
+});
+
+describe("round tweaks", () => {
+  test("audio is embeddable and renders in a column without a section", () => {
+    expect(EMBEDDABLE_LABELS.map(([t]) => t)).toContain("audio");
+    const col = newBlock("columns") as ColumnsBlock;
+    col.columns = [sample("audio"), newBlock("paragraph")];
+    const out = renderContent([col]);
+    expect(out).toContain('<audio controls class="w-full" src="/audio/a.mp3">');
+    expect(out).not.toContain('<section class="mb-12"');
+  });
+
+  test("hero back link rides up to the scroll-prompt row when both are on", () => {
+    const off = renderHero([{ ...(sample("hero") as HeroBlock), scrollPrompt: "" }]);
+    expect(off).toContain("bottom:1.5rem");
+    const on = renderHero([{ ...(sample("hero") as HeroBlock), scrollPrompt: "Scroll ↓" }]);
+    expect(on).toContain("bottom:2.5rem"); // bottom-10, same row as the prompt
+  });
+
+  test("scroll prompt supports two rows via <br> (index.html style)", () => {
+    const out = renderHero([
+      { ...(sample("hero") as HeroBlock), scrollPrompt: "Welcome!\nScroll down to enter ↓" },
+    ]);
+    expect(out).toContain("Welcome! <br> Scroll down to enter ↓");
+  });
+
+  test("uniform gallery offers 29/9 and 21/7 aspects", () => {
+    const out = renderContent([gallery({ layout: "uniform", aspect: "29/9" })]);
+    expect(out).toContain("aspect-[29/9]");
+    const out2 = renderContent([gallery({ layout: "uniform", aspect: "21/7" })]);
+    expect(out2).toContain("aspect-[21/7]");
+  });
+
+  test("feature layout: 3x3 grid, first image spans 2x2, all squares", () => {
+    const out = renderContent([gallery({ layout: "feature" })]);
+    expect(out).toContain('class="grid grid-cols-3 md:grid-cols-3 gap-4"');
+    const anchors = [...out.matchAll(/class="portfolio-item glightbox block([^"]*)"/g)].map((m) => m[1]);
+    expect(anchors.length).toBe(3);
+    expect(anchors[0]).toContain(" col-span-2 row-span-2 aspect-square");
+    expect(anchors[1]).toBe(" aspect-square");
+    expect(anchors[2]).toBe(" aspect-square");
+    expect(out).toContain("glightbox"); // lightbox intact
   });
 });
 

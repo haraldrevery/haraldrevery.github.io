@@ -162,14 +162,41 @@ function justifiedItems(items: GalleryItem[], group: string, rowHeight: number):
   return rendered.join("\n");
 }
 
+/// about.html / galdhopiggen.html "feature" grid: 3x3 squares where the first
+/// image spans 2x2 (4 slots); extra images keep flowing in rows of three.
+function featureItems(items: GalleryItem[], group: string): string {
+  return items
+    .map((it, i) => {
+      const full = escAttr(it.full);
+      const thumb = escAttr(it.thumb || it.full);
+      const alt = escAttr(it.alt);
+      const cap = glightboxCaption(it.title, it.description);
+      const span = i === 0 ? " col-span-2 row-span-2" : "";
+      return (
+        `      <a href="${full}"\n` +
+        `         class="portfolio-item glightbox block${span} aspect-square"\n` +
+        `         data-gallery="${group}"\n` +
+        `         data-glightbox="${cap}"\n` +
+        `         style="--delay: 0.1s">\n` +
+        `        <div class="overlay"></div>\n` +
+        `        <img src="${thumb}" alt="${alt}" class="w-full h-full object-cover" loading="lazy">\n` +
+        `      </a>`
+      );
+    })
+    .join("\n");
+}
+
 function galleryInner(b: GalleryBlock): string {
   const group = escAttr(b.group || "gallery");
-  if (b.layout !== "uniform") {
-    return `<div class="flex flex-wrap gap-2">\n${justifiedItems(b.items, group, b.rowHeight)}\n  </div>`;
+  if (b.layout === "feature") {
+    return `<div class="grid grid-cols-3 md:grid-cols-3 gap-4">\n${featureItems(b.items, group)}\n  </div>`;
   }
-  const acl = aspectClass(b.aspect || "5/7");
-  const grid = `grid grid-cols-2 md:grid-cols-${b.columns || 3} gap-6`;
-  return `<div class="${grid}">\n${galleryItems(b.items, acl, group)}\n  </div>`;
+  if (b.layout === "uniform") {
+    const acl = aspectClass(b.aspect || "5/7");
+    const grid = `grid grid-cols-2 md:grid-cols-${b.columns || 3} gap-6`;
+    return `<div class="${grid}">\n${galleryItems(b.items, acl, group)}\n  </div>`;
+  }
+  return `<div class="flex flex-wrap gap-2">\n${justifiedItems(b.items, group, b.rowHeight)}\n  </div>`;
 }
 
 // ---------------------------------------------------------------------- image
@@ -212,27 +239,26 @@ function videoInner(b: VideoBlock): string {
 
 // ---------------------------------------------------------------------- audio
 
-function audioTop(b: AudioBlock): string {
+function audioInner(b: AudioBlock): string {
   const src = escAttr(b.src);
   const title = escText(b.title);
   if (b.panel) {
     // release-page preview card: frosted glass + release caption styling
     // (letter-spacing inline — tracking-[0.3em] isn't in the compiled css)
     return (
-      `<section class="mb-12">\n` +
-      `  <div class="preview-card">\n` +
+      `<div class="preview-card">\n` +
       `    <p class="font-mono text-xs uppercase opacity-50 mb-3" style="letter-spacing:0.3em">${title || "Preview"}</p>\n` +
       `    <audio controls preload="none" class="w-full">\n` +
       `      <source src="${src}" type="audio/mpeg">\n` +
       `      Your browser does not support the audio element.\n` +
       `    </audio>\n` +
-      `  </div>\n</section>`
+      `  </div>`
     );
   }
   const label = b.title
-    ? `\n  <p class="font-mono text-sm uppercase tracking-widest mb-2 text-neutral-600 dark:text-neutral-400">${title}</p>`
+    ? `<p class="font-mono text-sm uppercase tracking-widest mb-2 text-neutral-600 dark:text-neutral-400">${title}</p>\n  `
     : "";
-  return `<section class="mb-12">${label}\n  <audio controls class="w-full" src="${src}"></audio>\n</section>`;
+  return `${label}<audio controls class="w-full" src="${src}"></audio>`;
 }
 
 // ------------------------------------------------------------------------ svg
@@ -505,19 +531,24 @@ function hero(b: HeroBlock): string {
     (center ? " text-center" : "") +
     (cover ? (lightCover ? " text-black" : " text-white") : "");
 
-  // single back link, aligned to the page container's left content edge
+  const hasPrompt = !!b.scrollPrompt.trim();
+
+  // single back link, aligned to the page container's left content edge; when
+  // the scroll prompt is on too, both sit on the same bottom row (bottom-10)
   const backLink = b.backLink
-    ? `  <div class="page-container" style="position:absolute;left:0;right:0;bottom:1.5rem;z-index:20">\n` +
+    ? `  <div class="page-container" style="position:absolute;left:0;right:0;bottom:${hasPrompt ? "2.5rem" : "1.5rem"};z-index:20">\n` +
       `    <a href="/notebook.html" class="extra_fade_effect_long inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider">← Back to Notebook</a>\n` +
       `  </div>\n`
     : "";
 
-  // index.html-style delayed scroll prompt (#scroll-prompt CSS does the fade)
-  const prompt = b.scrollPrompt.trim()
-    ? `  <a href="#enter_site" id="scroll-prompt" class="absolute text-center bottom-10 text-black dark:text-white hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors opacity-0 cursor-pointer z-50" style="left:50%;transform:translateX(-50%)">${escText(b.scrollPrompt)}</a>\n`
+  // index.html-style delayed scroll prompt (#scroll-prompt CSS does the
+  // fade); line breaks become <br> like "Welcome! <br> Scroll down …"
+  const promptText = escText(b.scrollPrompt.trim()).replace(/\n/g, " <br> ");
+  const prompt = hasPrompt
+    ? `  <a href="#enter_site" id="scroll-prompt" class="absolute text-center bottom-10 text-black dark:text-white hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors opacity-0 cursor-pointer z-50" style="left:50%;transform:translateX(-50%)">${promptText}</a>\n`
     : "";
 
-  const anchor = b.scrollPrompt.trim() ? `\n<div id="enter_site"></div>` : "";
+  const anchor = hasPrompt ? `\n<div id="enter_site"></div>` : "";
 
   const foreground = sideBySide
     ? `    <div class="release-hero__grid">\n` +
@@ -618,7 +649,10 @@ const RENDERERS: Record<BlockType, Renderer> = {
     top: (b) => `<section class="mb-16">\n  ${downloadsInner(b)}\n</section>`,
     inner: (b) => downloadsInner(b),
   }),
-  audio: renderer<AudioBlock>({ top: (b) => audioTop(b), inner: (b) => audioTop(b) }),
+  audio: renderer<AudioBlock>({
+    top: (b) => `<section class="mb-12">\n  ${audioInner(b)}\n</section>`,
+    inner: (b) => audioInner(b),
+  }),
   raw: renderer<Block & { html: string }>({ top: (b) => b.html, inner: (b) => b.html }),
 };
 

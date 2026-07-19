@@ -182,7 +182,7 @@ export const BLOCK_META: Record<BlockType, BlockMeta> = {
   }),
   audio: def<AudioBlock>({
     label: "Audio",
-    embeddable: false,
+    embeddable: true,
     make: (id) => ({ id, type: "audio", src: "", title: "", panel: false }),
     summary: (b) => `Audio: ${base(b.src)}`,
   }),

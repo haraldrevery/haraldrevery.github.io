@@ -181,11 +181,16 @@ function gridSettings(
       [
         ["justified", "Justified (native ratios)"],
         ["uniform", "Uniform (cropped grid)"],
+        ["feature", "Feature (first image 2×2 in a 3×3 grid)"],
       ],
       (v) => editStructural(() => (g.layout = v as GridLayout))
     ),
   ];
-  if (g.layout === "uniform") {
+  if (g.layout === "feature") {
+    out.push(
+      el("p", { class: "hint" }, "First image spans 4 squares; the rest fill rows of three (about.html style). 6 images make a full 3×3 pattern.")
+    );
+  } else if (g.layout === "uniform") {
     out.push(
       selectInput(
         colLabel,
@@ -468,7 +473,13 @@ function heroForm(b: HeroBlock): HTMLElement[] {
       ],
       (v) => edit(() => (b.anim = v as HeroBlock["anim"]))
     ),
-    textInput("Scroll prompt", b.scrollPrompt, (v) => edit(() => (b.scrollPrompt = v)), "e.g. Scroll down ↓ (empty = off, fades in late)"),
+    textArea(
+      "Scroll prompt (empty = off; up to two rows, fades in late)",
+      b.scrollPrompt,
+      (v) => edit(() => (b.scrollPrompt = v)),
+      2,
+      "Welcome!\nScroll down to enter ↓"
+    ),
     checkbox("Nav bar reveals on scroll (like index/release pages)", b.navReveal, (v) =>
       edit(() => (b.navReveal = v))
     ),
