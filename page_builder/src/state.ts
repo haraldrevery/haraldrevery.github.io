@@ -38,7 +38,7 @@ class Store {
 
   repoRoot: string | null = null;
   previewPort = 0;
-  siteUrl = "https://haraldrevery.com";
+  siteUrl = ""; // filled from get_config at boot — the Rust SITE_URL is the single source
 
   private listeners: ((kind: EmitKind) => void)[] = [];
   private undoStack: string[] = [];

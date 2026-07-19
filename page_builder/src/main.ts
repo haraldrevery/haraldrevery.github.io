@@ -311,9 +311,10 @@ async function revalidateThumbs(project: Project): Promise<void> {
   // (e.g. files that appeared on disk since the project was saved)
   const needDims = gridItems.filter((it) => it.full && (!it.w || !it.h));
   if (needDims.length) {
-    const dims = await imageDims(needDims.map((it) => it.full)).catch(() =>
-      needDims.map(() => null)
-    );
+    const dims = await imageDims(needDims.map((it) => it.full)).catch((e) => {
+      toast(`Image dimension lookup failed: ${e}`, true);
+      return needDims.map(() => null);
+    });
     needDims.forEach((it, i) => {
       const d = dims[i];
       if (d) {
@@ -329,7 +330,12 @@ async function revalidateThumbs(project: Project): Promise<void> {
     if (it.thumb) paths.add(it.thumb);
   }
   const list = [...paths];
-  const results = await checkFiles(list).catch(() => list.map(() => true));
+  // permissive fallback (assume present) so a backend failure never blocks
+  // opening — but say so instead of silently dropping the ⚠ thumb badges
+  const results = await checkFiles(list).catch((e) => {
+    toast(`Thumbnail check failed: ${e}`, true);
+    return list.map(() => true);
+  });
   const exists = new Map(list.map((p, i) => [p, results[i]]));
   for (const it of items) {
     if (!it.full) continue;
@@ -360,9 +366,13 @@ async function refreshDownloadHashes(
     if (b.type === "downloads") items.push(...b.items.filter((it) => it.src));
   });
   if (!items.length) return { changed: [], missing: [], dirtied: false };
-  const hashes = await hashFiles(items.map((it) => it.src)).catch(() =>
-    items.map(() => null)
-  );
+  // a backend failure is not "every file is missing" — report it and leave
+  // the stored hashes untouched
+  const hashes = await hashFiles(items.map((it) => it.src)).catch((e) => {
+    toast(`Download hash check failed: ${e}`, true);
+    return null;
+  });
+  if (!hashes) return { changed: [], missing: [], dirtied: false };
   const changed: string[] = [];
   const missing: string[] = [];
   let dirtied = false;
@@ -588,7 +598,9 @@ async function checkShell(): Promise<void> {
     const report = await invoke<FreshnessReport>("check_shell_freshness");
     renderShellBadge(report);
   } catch (e) {
-    console.warn("shell freshness check failed:", e);
+    // e.g. the reference page was renamed/retired — staleness detection is
+    // dead until REFERENCE_PAGE in commands.rs is updated, so make it visible
+    toast(`Shell freshness check failed: ${e}`, true);
   }
 }
 

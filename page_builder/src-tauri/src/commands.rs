@@ -18,6 +18,15 @@ fn repo_root(state: &State<AppState>) -> Result<PathBuf, String> {
         .ok_or_else(|| "Site repo not located".to_string())
 }
 
+/// Resolve a root-absolute web path (/photos/foo.jpg) to a canonical
+/// filesystem path, verifying it stays inside the repo — symlinks (and any
+/// `..` in the path) cannot escape. None = missing or outside the repo.
+fn resolve_in_repo(root: &Path, web: &str) -> Option<PathBuf> {
+    let file = fs::canonicalize(root.join(web.trim_start_matches('/'))).ok()?;
+    let canon_root = fs::canonicalize(root).ok()?;
+    file.starts_with(&canon_root).then_some(file)
+}
+
 // ---------------------------------------------------------------- config
 
 #[derive(Serialize)]
@@ -79,7 +88,7 @@ pub struct PickedFile {
 
 /// Pixel dimensions of an image inside the repo (header-only read).
 fn dims_of(root: &Path, web: &str) -> Option<(u32, u32)> {
-    let file = root.join(web.trim_start_matches('/'));
+    let file = resolve_in_repo(root, web)?;
     imagesize::size(&file)
         .ok()
         .map(|s| (s.width as u32, s.height as u32))
@@ -190,7 +199,7 @@ pub fn check_files(state: State<AppState>, paths: Vec<String>) -> Result<Vec<boo
     let root = repo_root(&state)?;
     Ok(paths
         .iter()
-        .map(|p| root.join(p.trim_start_matches('/')).is_file())
+        .map(|p| resolve_in_repo(&root, p).is_some_and(|f| f.is_file()))
         .collect())
 }
 
@@ -219,7 +228,7 @@ pub struct FileHashInfo {
 fn hash_one(root: &Path, web: &str) -> Option<FileHashInfo> {
     use sha2::{Digest, Sha256, Sha512};
     use std::io::Read;
-    let file = root.join(web.trim_start_matches('/'));
+    let file = resolve_in_repo(root, web)?;
     let mut f = fs::File::open(&file).ok()?;
     let size = f.metadata().ok()?.len();
     let mut h256 = Sha256::new();
@@ -258,13 +267,9 @@ pub fn read_svg(state: State<AppState>, path: String) -> Result<String, String> 
         return Err("Only .svg files can be inlined".to_string());
     }
     let root = repo_root(&state)?;
-    let file = root.join(path.trim_start_matches('/'));
-    let canon = fs::canonicalize(&file).map_err(|e| format!("Cannot read {}: {}", path, e))?;
-    let canon_root = fs::canonicalize(&root).map_err(|e| e.to_string())?;
-    if !canon.starts_with(&canon_root) {
-        return Err("Path escapes the repo".to_string());
-    }
-    fs::read_to_string(&canon).map_err(|e| format!("Cannot read {}: {}", path, e))
+    let file = resolve_in_repo(&root, &path)
+        .ok_or_else(|| format!("Cannot read {}: missing or outside the repo", path))?;
+    fs::read_to_string(&file).map_err(|e| format!("Cannot read {}: {}", path, e))
 }
 
 // ---------------------------------------------------------------- projects
