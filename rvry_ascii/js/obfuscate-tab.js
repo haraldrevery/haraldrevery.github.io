@@ -57,7 +57,7 @@ for i in range(1, 5):
       contrast: $("obf-contrast"), contrastV: $("obf-contrast-v"),
       gamma: $("obf-gamma"), gammaV: $("obf-gamma-v"),
       width: $("obf-width"), widthV: $("obf-width-v"),
-      ratio: $("obf-ratio"), ratioV: $("obf-ratio-v"),
+      ratio: $("obf-ratio"), ratioV: $("obf-ratio-v"), ratioFit: $("obf-ratio-fit"),
       copy: $("obf-copy"), png: $("obf-png"), txt: $("obf-txt"), md: $("obf-md"), html: $("obf-html"),
       font: $("obf-font"), fontsize: $("obf-fontsize"), lightcanvas: $("obf-lightcanvas"),
       stage: $("obf-stage"), out: $("obf-out"), meta: $("obf-meta"), thumb: $("obf-thumb"),
@@ -185,6 +185,7 @@ for i in range(1, 5):
     /* geometry (resample) */
     RVRY.slider(els.width, els.widthV, 0, () => { state.dirty = true; rerender(); });
     RVRY.slider(els.ratio, els.ratioV, 2, () => { state.dirty = true; rerender(); });
+    RVRY.ui.wireRatioFit(els.ratioFit, els.ratio, els.font);
 
     /* export */
     const paint = () => ({

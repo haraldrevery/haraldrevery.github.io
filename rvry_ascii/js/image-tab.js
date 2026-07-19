@@ -95,7 +95,7 @@
     const els = {
       drop: $("img-drop"), file: $("img-file"), sample: $("img-sample"), crop: $("img-crop"), error: $("img-error"),
       width: $("img-width"), widthV: $("img-width-v"),
-      ratio: $("img-ratio"), ratioV: $("img-ratio-v"),
+      ratio: $("img-ratio"), ratioV: $("img-ratio-v"), ratioFit: $("img-ratio-fit"),
       preset: $("img-preset"), customWrap: $("img-custom-wrap"), custom: $("img-custom"),
       invert: $("img-invert"), color: $("img-color"),
       exposure: $("img-exposure"), exposureV: $("img-exposure-v"),
@@ -237,6 +237,7 @@
     /* geometry (mark sample dirty) */
     RVRY.slider(els.width, els.widthV, 0, () => { state.dirty = true; rerender(); });
     RVRY.slider(els.ratio, els.ratioV, 2, () => { state.dirty = true; rerender(); });
+    RVRY.ui.wireRatioFit(els.ratioFit, els.ratio, els.font);
 
     /* glyphs */
     // threshold only applies to braille without dithering (dither replaces it)

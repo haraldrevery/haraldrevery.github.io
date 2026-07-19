@@ -195,7 +195,7 @@ show(0);
       warn: $("ply-warn"), error: $("ply-error"), info: $("ply-info"),
       videoPanel: $("ply-video-panel"),
       width: $("ply-width"), widthV: $("ply-width-v"),
-      ratio: $("ply-ratio"), ratioV: $("ply-ratio-v"),
+      ratio: $("ply-ratio"), ratioV: $("ply-ratio-v"), ratioFit: $("ply-ratio-fit"),
       capfps: $("ply-capfps"), capfpsV: $("ply-capfps-v"), capfpsWrap: $("ply-capfps-wrap"),
       preset: $("ply-preset"), color: $("ply-color"), invert: $("ply-invert"),
       generate: $("ply-generate"), progress: $("ply-progress"),
@@ -497,6 +497,7 @@ show(0);
 
     RVRY.slider(els.width, els.widthV, 0, () => {});
     RVRY.slider(els.ratio, els.ratioV, 2, () => {});
+    RVRY.ui.wireRatioFit(els.ratioFit, els.ratio, els.font);
     RVRY.slider(els.capfps, els.capfpsV, 0, () => {});
 
     els.copy.addEventListener("click", () => {

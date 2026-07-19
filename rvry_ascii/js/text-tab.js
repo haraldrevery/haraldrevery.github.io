@@ -12,7 +12,7 @@
     const els = {
       text: $("txt-text"), srcfont: $("txt-srcfont"), bold: $("txt-bold"),
       width: $("txt-width"), widthV: $("txt-width-v"),
-      ratio: $("txt-ratio"), ratioV: $("txt-ratio-v"),
+      ratio: $("txt-ratio"), ratioV: $("txt-ratio-v"), ratioFit: $("txt-ratio-fit"),
       preset: $("txt-preset"), customWrap: $("txt-custom-wrap"), custom: $("txt-custom"),
       invert: $("txt-invert"),
       dither: $("txt-dither"), thWrap: $("txt-threshold-wrap"), threshold: $("txt-threshold"), thV: $("txt-threshold-v"),
@@ -122,6 +122,7 @@
     /* geometry */
     RVRY.slider(els.width, els.widthV, 0, dirtyRender);
     RVRY.slider(els.ratio, els.ratioV, 2, dirtyRender);
+    RVRY.ui.wireRatioFit(els.ratioFit, els.ratio, els.font);
 
     /* glyphs */
     // threshold only applies to braille without dithering (dither replaces it)

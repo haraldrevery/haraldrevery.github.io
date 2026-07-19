@@ -200,6 +200,25 @@
     }
   }
 
+  /* ---- Ratio "Auto" button ----
+     The preview renders at line-height 1, so a font's true cell ratio (w:h)
+     is its glyph advance width over the font size. ---- */
+  function fontCellRatio(font) {
+    const ctx = _pngCanvas.getContext("2d");
+    ctx.font = "100px " + (font || "monospace");
+    const w = ctx.measureText("M").width;
+    return w > 0 ? w / 100 : 0.5;
+  }
+  function wireRatioFit(btn, ratioEl, fontEl) {
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      const min = +ratioEl.min || 0.2, max = +ratioEl.max || 1.2;
+      const r = Math.min(max, Math.max(min, fontCellRatio(fontEl.value)));
+      ratioEl.value = r.toFixed(2);
+      ratioEl.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  }
+
   function debounce(fn, ms) {
     let t;
     return function (...a) { clearTimeout(t); t = setTimeout(() => fn.apply(this, a), ms || 60); };
@@ -220,6 +239,7 @@
     toast, copyText, download,
     exportTxt, exportMd, exportHtml, exportPng,
     BASE_FONTS, populateFontSelect, loadSystemFonts,
+    fontCellRatio, wireRatioFit,
     debounce, rafThrottle
   };
 })(window);

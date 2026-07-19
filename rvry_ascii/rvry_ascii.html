@@ -163,7 +163,7 @@
           <div class="preview-toolbar">
             <select id="img-font" style="max-width:15rem"></select>
             <span class="tb-field" title="Output width in characters"><span class="tb-lbl">W</span><input type="range" id="img-width" min="20" max="400" step="1" value="120" /><span class="val" id="img-width-v">120</span></span>
-            <span class="tb-field" title="Cell ratio (w:h) — lower = squashed vertically"><span class="tb-lbl">Ratio</span><input type="range" id="img-ratio" min="0.20" max="1.2" step="0.01" value="0.50" /><span class="val" id="img-ratio-v">0.50</span></span>
+            <span class="tb-field" title="Cell ratio (w:h) — lower = squashed vertically"><span class="tb-lbl">Ratio</span><input type="range" id="img-ratio" min="0.20" max="1.2" step="0.01" value="0.50" /><span class="val" id="img-ratio-v">0.50</span><button class="btn" id="img-ratio-fit" title="Set to the selected font's real cell ratio">Auto</button></span>
             <label class="muted tb-size">Size
               <input type="range" id="img-fontsize" min="2" max="40" step="1" value="8" />
             </label>
@@ -226,7 +226,7 @@
           <div class="preview-toolbar">
             <select id="txt-font" style="max-width:15rem"></select>
             <span class="tb-field" title="Output width in characters"><span class="tb-lbl">W</span><input type="range" id="txt-width" min="20" max="400" step="1" value="120" /><span class="val" id="txt-width-v">120</span></span>
-            <span class="tb-field" title="Cell ratio (w:h) — lower = squashed vertically"><span class="tb-lbl">Ratio</span><input type="range" id="txt-ratio" min="0.20" max="1.2" step="0.01" value="0.50" /><span class="val" id="txt-ratio-v">0.50</span></span>
+            <span class="tb-field" title="Cell ratio (w:h) — lower = squashed vertically"><span class="tb-lbl">Ratio</span><input type="range" id="txt-ratio" min="0.20" max="1.2" step="0.01" value="0.50" /><span class="val" id="txt-ratio-v">0.50</span><button class="btn" id="txt-ratio-fit" title="Set to the selected font's real cell ratio">Auto</button></span>
             <label class="muted tb-size">Size
               <input type="range" id="txt-fontsize" min="2" max="40" step="1" value="8" />
             </label>
@@ -316,7 +316,7 @@ console.log(seq.join(", "));</textarea>
           <div class="preview-toolbar">
             <select id="obf-font" style="max-width:15rem"></select>
             <span class="tb-field" title="Output width in characters"><span class="tb-lbl">W</span><input type="range" id="obf-width" min="20" max="300" step="1" value="120" /><span class="val" id="obf-width-v">120</span></span>
-            <span class="tb-field" title="Cell ratio (w:h) — lower = squashed vertically"><span class="tb-lbl">Ratio</span><input type="range" id="obf-ratio" min="0.2" max="1.2" step="0.01" value="0.5" /><span class="val" id="obf-ratio-v">0.50</span></span>
+            <span class="tb-field" title="Cell ratio (w:h) — lower = squashed vertically"><span class="tb-lbl">Ratio</span><input type="range" id="obf-ratio" min="0.2" max="1.2" step="0.01" value="0.5" /><span class="val" id="obf-ratio-v">0.50</span><button class="btn" id="obf-ratio-fit" title="Set to the selected font's real cell ratio">Auto</button></span>
             <label class="muted tb-size">Size
               <input type="range" id="obf-fontsize" min="2" max="40" step="1" value="9" />
             </label>
@@ -387,7 +387,7 @@ console.log(seq.join(", "));</textarea>
           <div class="preview-toolbar">
             <select id="ply-font" style="max-width:14rem"></select>
             <span class="tb-field" title="Output width in characters (applies on Generate)"><span class="tb-lbl">W</span><input type="range" id="ply-width" min="20" max="220" step="1" value="100" /><span class="val" id="ply-width-v">100</span></span>
-            <span class="tb-field" title="Cell ratio (w:h) — applies on Generate"><span class="tb-lbl">Ratio</span><input type="range" id="ply-ratio" min="0.2" max="1.2" step="0.01" value="0.5" /><span class="val" id="ply-ratio-v">0.50</span></span>
+            <span class="tb-field" title="Cell ratio (w:h) — applies on Generate"><span class="tb-lbl">Ratio</span><input type="range" id="ply-ratio" min="0.2" max="1.2" step="0.01" value="0.5" /><span class="val" id="ply-ratio-v">0.50</span><button class="btn" id="ply-ratio-fit" title="Set to the selected font's real cell ratio — applies on Generate">Auto</button></span>
             <label class="muted tb-size">Size
               <input type="range" id="ply-fontsize" min="2" max="40" step="1" value="7" />
             </label>
