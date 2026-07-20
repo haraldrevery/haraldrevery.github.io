@@ -100,7 +100,12 @@
     --katex-font-size: 0.7em;
     --text-line-row-space: 1.24;
     --leading-body: 1.5;
-    --tracking-body: 0.029em;
+    --tracking-body: 0.0em;
+    --tracking-brand: 0.2em;
+    --tracking-brand-wide: 0.275em;
+    --tracking-nav: 0.15em;
+    --tracking-nav-menu: 0.27em;
+    --tracking-eyebrow: 0.3em;
     --color-brand: #0f3d81;
     --color-backdrop-light-edge: #dedede;
     --color-backdrop-light-center: #ffffff;
@@ -1446,17 +1451,21 @@
     --tw-font-weight: var(--font-weight-normal);
     font-weight: var(--font-weight-normal);
   }
-  .tracking-\[0\.2em\] {
-    --tw-tracking: 0.2em;
-    letter-spacing: 0.2em;
+  .tracking-brand {
+    --tw-tracking: var(--tracking-brand);
+    letter-spacing: var(--tracking-brand);
   }
-  .tracking-\[0\.3em\] {
-    --tw-tracking: 0.3em;
-    letter-spacing: 0.3em;
+  .tracking-eyebrow {
+    --tw-tracking: var(--tracking-eyebrow);
+    letter-spacing: var(--tracking-eyebrow);
   }
-  .tracking-\[0\.18em\] {
-    --tw-tracking: 0.18em;
-    letter-spacing: 0.18em;
+  .tracking-nav {
+    --tw-tracking: var(--tracking-nav);
+    letter-spacing: var(--tracking-nav);
+  }
+  .tracking-nav-menu {
+    --tw-tracking: var(--tracking-nav-menu);
+    letter-spacing: var(--tracking-nav-menu);
   }
   .tracking-wide {
     --tw-tracking: var(--tracking-wide);
@@ -2113,10 +2122,10 @@
       line-height: var(--tw-leading, var(--text-lg--line-height));
     }
   }
-  .md\:tracking-\[0\.3em\] {
+  .md\:tracking-brand-wide {
     @media (width >= 768px) {
-      --tw-tracking: 0.3em;
-      letter-spacing: 0.3em;
+      --tw-tracking: var(--tracking-brand-wide);
+      letter-spacing: var(--tracking-brand-wide);
     }
   }
   .lg\:table-cell {

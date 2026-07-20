@@ -13,7 +13,17 @@
   --katex-font-size: 0.7em;      /* scaling the MathML for the blog (hope the revery notebook editor doesn't jank) */
   --text-line-row-space: 1.24;   /* tight line-height — headings & display text */
   --leading-body: 1.5;           /* body-copy line-height (paragraphs, list items) */
-  --tracking-body: 0.029em;     /* global letter-spacing (space between characters/letters)*/
+  --tracking-body: 0.0em;     /* global letter-spacing (space between characters/letters)*/
+
+  /* Nav + label letter-spacing. Tailwind turns each of these into a utility
+     (--tracking-nav -> class "tracking-nav"), same as --text-nav -> "text-nav"
+     above, so the nav's character spacing is tunable from right here instead of
+     being hardcoded into every page's markup. */
+  --tracking-brand: 0.2em;       /* nav wordmark "Harald Revery", below md */
+  --tracking-brand-wide: 0.275em;  /* nav wordmark, md and up */
+  --tracking-nav: 0.15em;        /* desktop nav links */
+  --tracking-nav-menu: 0.27em;    /* mobile fullscreen menu links */
+  --tracking-eyebrow: 0.3em;     /* small uppercase kicker labels (not the nav) */
 
   /* Colors */
   --color-brand: #0f3d81;       /* accent / focus-outline blue */

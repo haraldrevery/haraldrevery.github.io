@@ -244,7 +244,8 @@ function audioInner(b: AudioBlock): string {
   const title = escText(b.title);
   if (b.panel) {
     // release-page preview card: frosted glass + release caption styling
-    // (letter-spacing inline — tracking-[0.3em] isn't in the compiled css)
+    // (letter-spacing inline — the tracking-eyebrow class may not be in the
+    // compiled css, since utilities only ship if a scanned file uses them)
     return (
       `<div class="preview-card">\n` +
       `    <p class="font-mono text-xs uppercase opacity-50 mb-3" style="letter-spacing:0.3em">${title || "Preview"}</p>\n` +
@@ -324,8 +325,9 @@ function iconsInner(b: IconsBlock): string {
   });
   // labeled panels mirror the release pages ("Listen everywhere"): mono
   // uppercase label + left-aligned row; unlabeled = centered footer style.
-  // letter-spacing is inline — the release pages' tracking-[0.3em] class isn't
-  // in the compiled css.
+  // letter-spacing is inline — the release pages' tracking-eyebrow class may
+  // not be in the compiled css, since utilities only ship if a scanned file
+  // uses them.
   if (b.label.trim()) {
     return (
       `<p class="font-mono text-xs uppercase opacity-50 mb-4" style="letter-spacing:0.3em">${escText(b.label)}</p>\n` +
