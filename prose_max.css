@@ -3563,6 +3563,11 @@
     color: #a3a3a3;
   }
 }
+@media (hover: none), (pointer: coarse) {
+  .reading-corner-zone, .reading-width-btn {
+    display: none;
+  }
+}
 @property --tw-translate-x {
   syntax: "*";
   inherits: false;

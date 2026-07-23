@@ -510,3 +510,10 @@
   .reading-width-btn { color: #ffffff; }
   .reading-width-btn:hover { color: #a3a3a3; }
 }
+
+/* Desktop-only feature: fully remove it where there's no real hover (touch/mobile),
+   so a tap can't emulate :hover and reveal/activate the button. */
+@media (hover: none), (pointer: coarse) {
+  .reading-corner-zone,
+  .reading-width-btn { display: none; }
+}
