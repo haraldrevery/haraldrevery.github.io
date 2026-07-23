@@ -13,6 +13,12 @@
 // Only run on pages that actually have the markdown post column.
 if (!document.querySelector('.post-container')) return;
 
+// Desktop-only: skip entirely on touch devices. maxTouchPoints/ontouchstart is a
+// more reliable "is this a touch device" signal than the (hover)/(pointer) media
+// queries, which some mobile browsers misreport — letting a long-press reveal the
+// button. Never creating the elements means nothing can reveal them.
+if (navigator.maxTouchPoints > 0 || 'ontouchstart' in window) return;
+
 var SCALES  = [1, 0.75, 0.55, 0.40, 0.28];  // default → 80% → 60% → 45% of default width
 var NARROW  = '><';                   // shown while there's still room to narrow
 var WIDEN   = '<>';                   // shown at the narrowest step: next press widens back
