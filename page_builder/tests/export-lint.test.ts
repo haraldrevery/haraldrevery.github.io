@@ -52,7 +52,9 @@ describe("export helpers", () => {
   test("front matter quotes colon values, draft flag optional", () => {
     const fm = frontmatterYaml(meta());
     expect(fm).toContain('title: "Golden Test: Export Pipeline"');
-    expect(fm).toContain("tags: [photography, test]");
+    // every scalar is quoted now — bare values broke on ':', on YAML indicator
+    // characters, and on implicit typing ("2024" -> number, "No" -> false)
+    expect(fm).toContain('tags: ["photography", "test"]');
     expect(fm).toContain("draft: true");
     expect(frontmatterYaml(meta({ draft: false }))).not.toContain("draft:");
   });
@@ -206,5 +208,79 @@ describe("lint", () => {
     const issues = lintPage(meta(), [H(1), col]);
     const alt = issues.find((i) => i.message.includes("without alt"));
     expect(alt?.message).toStartWith("1 image");
+  });
+});
+
+// gray-matter is the parser Eleventy itself uses — round-tripping through it is
+// the only assertion that actually proves the front matter survives the build.
+// It lives in the site's node_modules, like main.css/prose.css above.
+const matter = require("../../node_modules/gray-matter") as (s: string) => {
+  data: Record<string, unknown>;
+};
+
+describe("export escaping (hostile meta)", () => {
+  test("</script> in meta cannot break out of the JSON-LD block", () => {
+    const evil = `Notes on </script><script>alert(1)</script>`;
+    // assembleDocument, not exportText: the front matter legitimately carries
+    // the raw string as a YAML scalar, and Eleventy strips it before serving.
+    const out = assembleDocument(shell, meta({ description: evil }), [newBlock("paragraph")], SITE, "t");
+    expect(out).not.toContain("</script><script>alert(1)</script>");
+    // and the block must still be valid, parseable JSON-LD
+    const m = /<script type="application\/ld\+json">\n([\s\S]*?)\n<\/script>/.exec(out);
+    expect(m).toBeTruthy();
+    expect(() => JSON.parse(m![1])).not.toThrow();
+  });
+
+  test("quotes in meta cannot break out of an HTML attribute", () => {
+    const evil = `x" onload="alert(1)`;
+    const out = exportText(shell, meta({ description: evil, title: evil }), [], SITE, "t");
+    expect(out).not.toContain('onload="alert(1)');
+    expect(out).toContain("&quot;");
+  });
+
+  test("a meta field containing a placeholder token is not expanded", () => {
+    // sequential split/join meant DESCRIPTION was substituted first, then the
+    // later CONTENT pass spliced the whole page body into the meta tag.
+    const out = exportText(
+      shell,
+      meta({ description: "the shell has a {{CONTENT}} slot" }),
+      [Object.assign(newBlock("paragraph"), { md: "BODY-MARKER" })],
+      SITE,
+      "t"
+    );
+    const line = out.split("\n").find((l) => l.includes('name="description"')) ?? "";
+    expect(line).not.toContain("BODY-MARKER");
+    expect(line).not.toContain("<article");
+    expect(line.length).toBeLessThan(300);
+    expect(out).toContain("BODY-MARKER"); // the body itself still rendered once
+  });
+});
+
+describe("front matter survives gray-matter", () => {
+  const roundTrip = (over: Partial<Meta>) => matter(frontmatterYaml(meta(over)) + "\n").data;
+
+  test("titles that would otherwise inject keys or change type", () => {
+    expect(roundTrip({ title: "Evil\ndraft: true\nx: y" }).title).toBe("Evil\ndraft: true\nx: y");
+    expect(roundTrip({ title: "Evil\ndraft: true" }).draft).toBe(true); // meta.draft, not injected
+    expect(roundTrip({ title: "*Asterisks*" }).title).toBe("*Asterisks*");
+    expect(roundTrip({ title: "2024" }).title).toBe("2024"); // string, not number
+    expect(roundTrip({ title: "No" }).title).toBe("No"); // string, not false
+    expect(roundTrip({ title: 'He said "hi": really' }).title).toBe('He said "hi": really');
+    expect(roundTrip({ title: "back\\slash" }).title).toBe("back\\slash");
+  });
+
+  test("tags containing YAML structure characters stay strings", () => {
+    expect(roundTrip({ tags: "a:b c]d" }).tags).toEqual(["a:b", "c]d"]);
+  });
+
+  test("image is quoted like every other string value", () => {
+    expect(roundTrip({ image: "/photos/a:b.jpg" }).image).toBe("/photos/a:b.jpg");
+  });
+
+  test("a normal page is unaffected", () => {
+    const d = roundTrip({});
+    expect(d.title).toBe("Golden Test: Export Pipeline");
+    expect(d.tags).toEqual(["photography", "test"]);
+    expect(d.draft).toBe(true);
   });
 });

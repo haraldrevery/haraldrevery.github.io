@@ -205,3 +205,54 @@ describe("store", () => {
     expect(g.items.map((i) => i.full)).toEqual(["y", "x"]);
   });
 });
+
+describe("undo/redo safety", () => {
+  test("redo after opening another project does not resurrect the old one", () => {
+    // Regression: loadProject cleared undoStack but not redoStack, so a redo
+    // pasted project A's content under project B's name — and the next Ctrl+S
+    // wrote A over B's file.
+    store.newProject();
+    store.meta.title = "PROJECT-A";
+    store.mutateStructure(() => store.blocks.push(newBlock("paragraph")));
+    store.undo(); // redoStack now holds A
+
+    store.loadProject("B", {
+      version: 1,
+      meta: { ...store.meta, title: "PROJECT-B" },
+      blocks: [],
+    } as never);
+
+    store.redo();
+    expect(store.projectName).toBe("B");
+    expect(store.meta.title).toBe("PROJECT-B"); // must NOT be PROJECT-A
+    expect(store.dirty).toBe(false); // a no-op redo must not mark the file dirty
+  });
+
+  test("undo back to the saved state reports clean, not dirty", () => {
+    // restore() forced dirty=true unconditionally, so undoing to exactly the
+    // last-saved state still armed the quit/open confirmations.
+    store.newProject();
+    expect(store.dirty).toBe(false);
+    store.mutateStructure(() => store.blocks.push(newBlock("paragraph")));
+    expect(store.dirty).toBe(true);
+    store.undo();
+    expect(store.blocks.length).toBe(0);
+    expect(store.dirty).toBe(false);
+  });
+
+  test("redo back to an edited state reports dirty again", () => {
+    store.newProject();
+    store.mutateStructure(() => store.blocks.push(newBlock("paragraph")));
+    store.undo();
+    store.redo();
+    expect(store.blocks.length).toBe(1);
+    expect(store.dirty).toBe(true);
+  });
+
+  test("rev advances on every mutation so a save can detect edits during the write", () => {
+    store.newProject();
+    const before = store.rev;
+    store.mutateContent(() => (store.meta.title = "x"));
+    expect(store.rev).toBeGreaterThan(before);
+  });
+});

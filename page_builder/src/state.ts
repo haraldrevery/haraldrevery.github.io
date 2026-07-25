@@ -40,6 +40,10 @@ class Store {
   previewPort = 0;
   siteUrl = ""; // filled from get_config at boot — the Rust SITE_URL is the single source
 
+  /// Bumped on every change to the project. Lets an async caller (doSave)
+  /// detect that the user edited something while it was awaiting.
+  rev = 0;
+
   private listeners: ((kind: EmitKind) => void)[] = [];
   private undoStack: string[] = [];
   private redoStack: string[] = [];
@@ -66,15 +70,23 @@ class Store {
     return this.blocks.findIndex((b) => b.id === id);
   }
 
+  /// `dirty` rides along so undoing back to the last-saved state reports clean
+  /// again — otherwise every undo arms the quit/open confirmations, which is
+  /// what made a stale redo look like legitimate unsaved work.
   private currentSnapshot(): string {
-    return JSON.stringify({ project: this.project, selectedId: this.selectedId });
+    return JSON.stringify({
+      project: this.project,
+      selectedId: this.selectedId,
+      dirty: this.dirty,
+    });
   }
 
   private restore(snap: string): void {
     const s = JSON.parse(snap);
     this.project = s.project;
     this.selectedId = s.selectedId;
-    this.dirty = true;
+    this.dirty = !!s.dirty;
+    this.rev++;
     this.lastSnapshotAt = 0; // next edit snapshots immediately
     this.emit("structure");
   }
@@ -108,6 +120,7 @@ class Store {
     this.snapshot();
     fn();
     this.dirty = true;
+    this.rev++;
     this.emit("content");
   }
 
@@ -115,6 +128,7 @@ class Store {
     this.snapshot(true);
     fn();
     this.dirty = true;
+    this.rev++;
     this.emit("structure");
   }
 
@@ -238,7 +252,11 @@ class Store {
     this.projectName = name;
     this.dirty = false;
     this.selectedId = null;
+    // BOTH stacks: a surviving redo entry belongs to the previous project, and
+    // redoing it would paste that project's content under this project's name.
     this.undoStack = [];
+    this.redoStack = [];
+    this.rev++;
     this.emit("project");
   }
 

@@ -47,7 +47,7 @@ export interface RenderOptions {
   editMode?: boolean;
 }
 
-function escAttr(s: unknown): string {
+export function escAttr(s: unknown): string {
   return String(s ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -153,17 +153,29 @@ function galleryItems(items: GalleryItem[], acl: string, group: string): string 
 
 /// Justified (Behance/Flickr) layout, zero JS: flex-grow proportional to each
 /// image's aspect ratio + a native aspect-ratio makes the browser itself fill
-/// every row at (approximately) the target row height with no cropping. The
-/// trailing spacer stops the last row from stretching.
+/// every row at the target row height with no cropping. Because each item's
+/// grow factor equals its ratio, a row resolves to the *same* height for every
+/// item in it, so rows are exactly justified rather than approximately.
+///
+/// The last row justifies on the same terms as the rest. It used to carry a
+/// flex-grow:1000000 spacer that swallowed all the slack, pinning it at 0.75x
+/// the target and leaving it visibly short; that spacer is gone.
 function justifiedItems(items: GalleryItem[], group: string, rowHeight: number): string {
-  const rh = Math.max(60, Math.round(rowHeight || 320));
+  const asked = Number(rowHeight);
+  const rh = Math.max(60, Math.round(Number.isFinite(asked) && asked ? asked : 320));
   // Greedy flex packing: items pack at flex-basis size, then grow to fill the
-  // row. Basing at 75% of the target height packs more images per row (rows
-  // land between ~0.75x and 1.5x the target — the Flickr look), and the
-  // max-height cap (transferred to width via aspect-ratio) stops an item that
-  // ends up alone on a row from ballooning to full row width.
+  // row. Basing at 75% of the target packs more images per row (the Flickr
+  // look).
+  //
+  // The cap must be on WIDTH, not height. A max-height caps the height while
+  // flex-grow keeps widening the box, and CSS max-constraints override
+  // aspect-ratio — so the box goes wider than the photo and object-cover crops
+  // it (a lone portrait lost 59% this way). Capping width at ratio * maxH
+  // triggers on exactly the same condition (row height > maxH) but lets
+  // aspect-ratio set the height, so nothing is ever cropped; an under-full last
+  // row leaves trailing space instead. Full rows never reach the cap.
   const basisH = Math.round(rh * 0.75);
-  const maxH = Math.round(rh * 1.5);
+  const maxH = Math.round(rh * 2);
   const rendered = items.map((it) => {
     const full = escAttr(it.full);
     const thumb = escAttr(it.thumb || it.full);
@@ -173,18 +185,22 @@ function justifiedItems(items: GalleryItem[], group: string, rowHeight: number):
     const w = it.w && it.h ? it.w : 3;
     const h = it.w && it.h ? it.h : 2;
     const ratio = Math.round((w / h) * 10000) / 10000;
+    // Grow factors are ratio * 100, not ratio. Flexbox only hands out Sum(grow)
+    // of the free space when that sum is < 1, so a row whose ratios total under
+    // 1 (a lone portrait) could never fill its width. Scaling every factor by
+    // the same constant leaves each item's share (g_i / Sum(g)) untouched.
+    const grow = Math.round(ratio * 10000) / 100;
     return (
       `      <a href="${full}"\n` +
       `         class="portfolio-item glightbox block"\n` +
       `         data-gallery="${group}"\n` +
       `         data-glightbox="${cap}"\n` +
-      `         style="--delay: 0.1s; aspect-ratio: ${w}/${h}; flex-grow: ${ratio}; flex-basis: calc(${ratio} * ${basisH}px); max-height: ${maxH}px">\n` +
+      `         style="--delay: 0.1s; aspect-ratio: ${w}/${h}; flex-grow: ${grow}; flex-basis: calc(${ratio} * ${basisH}px); max-width: calc(${ratio} * ${maxH}px)">\n` +
       `        <div class="overlay"></div>\n` +
       `        <img src="${thumb}" alt="${alt}" class="w-full h-full object-cover" loading="lazy">\n` +
       `      </a>`
     );
   });
-  rendered.push(`      <div style="flex-grow: 1000000" aria-hidden="true"></div>`);
   return rendered.join("\n");
 }
 

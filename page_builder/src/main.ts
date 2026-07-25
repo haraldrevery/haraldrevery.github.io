@@ -27,10 +27,17 @@ interface Config {
   previewPort: number;
   siteUrl: string;
 }
+/// `exists` reports whether a file was already there; `written` whether we
+/// wrote. Gate the overwrite prompt on `!written`, not on `exists` alone — a
+/// successful overwrite reports exists:true and must not re-prompt.
 interface ExportResult {
   written: boolean;
   exists: boolean;
   path: string;
+}
+interface SaveResult extends ExportResult {
+  /// sanitized stem that actually names the file; adopt it as projectName
+  name: string;
 }
 interface RegionReport {
   name: string;
@@ -216,6 +223,9 @@ store.subscribe((kind) => {
     case "structure":
       renderBlockList(blockList);
       renderBlockForm(blockEditor);
+      // undo/redo emits "structure" and swaps the whole project object, so the
+      // meta form must rebind or it keeps displaying pre-undo values
+      renderMetaForm(metaForm);
       debouncedRender(store.selectedId ?? undefined);
       bridge.select(store.selectedId, false);
       updateTitle();
@@ -403,8 +413,14 @@ async function doNew(): Promise<void> {
   store.newProject();
 }
 
+/// Bumped by every open. The load path has four awaits, and without this a slow
+/// open finishing after a later one would clobber it — or wipe edits the user
+/// made after answering the discard prompt.
+let openEpoch = 0;
+
 async function doOpen(): Promise<void> {
   if (store.dirty && !(await ask("Discard unsaved changes?", { title: "Open project" }))) return;
+  const epoch = ++openEpoch;
   const projects = await invoke<{ name: string; modified: number }[]>("list_projects");
   const name = await listModal<string>(
     "Open project",
@@ -414,13 +430,17 @@ async function doOpen(): Promise<void> {
       value: p.name,
     }))
   );
-  if (!name) return;
+  if (!name || epoch !== openEpoch) return;
   try {
     const raw = await invoke<string>("load_project", { name });
+    if (epoch !== openEpoch) return;
     const project = normalizeProject(JSON.parse(raw));
     await revalidateThumbs(project);
+    if (epoch !== openEpoch) return;
     await prefetchSvgs(collectSvgSrcs(project.blocks));
+    if (epoch !== openEpoch) return;
     const hashState = await refreshDownloadHashes(project.blocks);
+    if (epoch !== openEpoch) return;
     store.loadProject(name, project);
     if (hashState.changed.length) {
       toast(`Opened ${name} — download hashes updated: ${hashState.changed.join(", ")}`);
@@ -443,14 +463,25 @@ async function doSave(saveAs: boolean): Promise<void> {
     if (!name) return;
   }
   try {
-    const path = await invoke<string>("save_project", {
-      name,
-      data: JSON.stringify(store.project, null, 2),
-    });
-    store.projectName = name;
-    store.dirty = false;
+    // What is on disk is this revision. Edits made while the write is in flight
+    // bump it, and those are NOT saved — clearing dirty for them would let the
+    // close handler skip its prompt and drop the work.
+    const savedRev = store.rev;
+    const data = JSON.stringify(store.project, null, 2);
+    let res = await invoke<SaveResult>("save_project", { name, data, overwrite: false });
+    if (!res.written && res.exists) {
+      const ok = await ask(`Project "${res.name}" already exists. Overwrite it?`, {
+        title: "Overwrite project",
+      });
+      if (!ok) return;
+      res = await invoke<SaveResult>("save_project", { name, data, overwrite: true });
+    }
+    // the sanitized name is what actually names the file — keep them in step so
+    // the title bar and the Open list agree
+    store.projectName = res.name;
+    if (store.rev === savedRev) store.dirty = false;
     updateTitle();
-    toast(`Saved ${path}`);
+    toast(`Saved ${res.path}`);
   } catch (e) {
     toast(String(e), true);
   }
@@ -510,7 +541,7 @@ async function doExport(): Promise<void> {
       contents,
       overwrite: slug === remembered,
     });
-    if (res.exists) {
+    if (!res.written && res.exists) {
       const ok = await ask(`${res.path} already exists.\nOverwrite it?`, { title: "Export" });
       if (!ok) return;
       res = await invoke<ExportResult>("export_page", {

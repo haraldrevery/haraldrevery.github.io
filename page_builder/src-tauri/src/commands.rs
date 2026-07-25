@@ -27,6 +27,39 @@ fn resolve_in_repo(root: &Path, web: &str) -> Option<PathBuf> {
     file.starts_with(&canon_root).then_some(file)
 }
 
+/// Write via a sibling temp file + fsync + rename, so the destination is either
+/// the old contents or the new ones — never a truncated or half-written file.
+/// Plain `fs::write` truncates first, so a crash, a full disk or a power loss
+/// mid-write destroys the previous contents with nothing to recover from. Used
+/// for every write the app makes: projects, exported pages and shell.html.
+fn write_atomic(path: &Path, contents: &str) -> Result<(), String> {
+    use std::io::Write;
+    let dir = path
+        .parent()
+        .ok_or_else(|| format!("{} has no parent directory", path.display()))?;
+    let tmp = path.with_extension(format!(
+        "{}.tmp",
+        path.extension().and_then(|e| e.to_str()).unwrap_or("")
+    ));
+    let write = || -> std::io::Result<()> {
+        let mut f = fs::File::create(&tmp)?;
+        f.write_all(contents.as_bytes())?;
+        f.sync_all()?; // durable before the rename, or the rename can win a race
+        Ok(())
+    };
+    if let Err(e) = write() {
+        let _ = fs::remove_file(&tmp);
+        return Err(format!("Cannot write {}: {e}", tmp.display()));
+    }
+    // rename is atomic within a filesystem; tmp is a sibling so that holds
+    fs::rename(&tmp, path).map_err(|e| {
+        let _ = fs::remove_file(&tmp);
+        format!("Cannot replace {}: {e}", path.display())
+    })?;
+    let _ = dir; // dir handle only needed on platforms that fsync directories
+    Ok(())
+}
+
 // ---------------------------------------------------------------- config
 
 #[derive(Serialize)]
@@ -323,13 +356,47 @@ pub fn list_projects(state: State<AppState>) -> Result<Vec<ProjectInfo>, String>
     Ok(out)
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SaveResult {
+    pub written: bool,
+    pub exists: bool,
+    /// The sanitized stem that actually names the file. The caller must adopt
+    /// this: "My Photos" becomes "MyPhotos", and keeping the raw string made the
+    /// title bar disagree with the Open list.
+    pub name: String,
+    pub path: String,
+}
+
 #[tauri::command]
-pub fn save_project(state: State<AppState>, name: String, data: String) -> Result<String, String> {
+pub fn save_project(
+    state: State<AppState>,
+    name: String,
+    data: String,
+    overwrite: bool,
+) -> Result<SaveResult, String> {
     let dir = projects_dir(&repo_root(&state)?);
-    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let file = dir.join(format!("{}.json", sanitize_project_name(&name)?));
-    fs::write(&file, data).map_err(|e| e.to_string())?;
-    Ok(file.display().to_string())
+    fs::create_dir_all(&dir).map_err(|e| format!("Cannot create {}: {e}", dir.display()))?;
+    let clean = sanitize_project_name(&name)?;
+    let file = dir.join(format!("{clean}.json"));
+    // Sanitizing is lossy, so distinct titles can collide onto one file. Without
+    // this check the second save silently destroyed the first.
+    let existed = file.exists();
+    if existed && !overwrite {
+        return Ok(SaveResult {
+            written: false,
+            exists: true,
+            name: clean,
+            path: file.display().to_string(),
+        });
+    }
+    write_atomic(&file, &data)?;
+    Ok(SaveResult {
+        written: true,
+        exists: existed, // whether it was already there, not whether it is now
+        name: clean,
+        path: file.display().to_string(),
+    })
 }
 
 #[tauri::command]
@@ -359,18 +426,20 @@ pub fn export_page(
         return Err("Export file name must be a plain *.html name".to_string());
     }
     let dir = repo_root(&state)?.join("html_extras");
+    fs::create_dir_all(&dir).map_err(|e| format!("Cannot create {}: {e}", dir.display()))?;
     let file = dir.join(&file_name);
-    if file.exists() && !overwrite {
+    let existed = file.exists();
+    if existed && !overwrite {
         return Ok(ExportResult {
             written: false,
             exists: true,
             path: file.display().to_string(),
         });
     }
-    fs::write(&file, contents).map_err(|e| e.to_string())?;
+    write_atomic(&file, &contents)?;
     Ok(ExportResult {
         written: true,
-        exists: false,
+        exists: existed, // report what actually happened, not a fixed false
         path: file.display().to_string(),
     })
 }
@@ -556,6 +625,46 @@ mod tests {
         );
         assert!(hash_one(&dir, "missing.bin").is_none());
     }
+
+    #[test]
+    fn write_atomic_replaces_contents_and_leaves_no_temp_file() {
+        let dir = std::env::temp_dir().join("pb_write_atomic_ok");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("project.json");
+
+        super::write_atomic(&file, "first").unwrap();
+        assert_eq!(std::fs::read_to_string(&file).unwrap(), "first");
+
+        super::write_atomic(&file, "second").unwrap();
+        assert_eq!(std::fs::read_to_string(&file).unwrap(), "second");
+
+        // no .tmp sibling survives a successful write
+        let leftovers: Vec<_> = std::fs::read_dir(&dir)
+            .unwrap()
+            .filter_map(|e| e.ok())
+            .map(|e| e.file_name().to_string_lossy().into_owned())
+            .filter(|n| n.contains("tmp"))
+            .collect();
+        assert!(leftovers.is_empty(), "temp files left behind: {leftovers:?}");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn write_atomic_leaves_the_original_intact_when_it_cannot_write() {
+        // the destination directory does not exist, so File::create fails
+        let dir = std::env::temp_dir().join("pb_write_atomic_fail");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("keep.json");
+        std::fs::write(&file, "original").unwrap();
+
+        let missing = dir.join("nope").join("keep.json");
+        assert!(super::write_atomic(&missing, "new").is_err());
+        // the pre-existing file is untouched — the whole point of temp+rename
+        assert_eq!(std::fs::read_to_string(&file).unwrap(), "original");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }
 
 #[tauri::command]
@@ -575,8 +684,17 @@ pub fn adopt_shell_region(state: State<AppState>, region: String) -> Result<(), 
         // (and drop a hard-coded navi_mechanic if the reference had one)
         adopted = adopted.replacen("main-nav navi_mechanic", "main-nav", 1);
         adopted = adopted.replacen("class=\"main-nav", "class=\"main-nav{{NAV_EXTRA}}", 1);
+        // replacen silently matches nothing if the reference nav was restructured.
+        // Writing anyway drops {{NAV_EXTRA}} from the shell, and every page
+        // exported afterwards loses the hero nav-reveal with no error at all.
+        if !adopted.contains("{{NAV_EXTRA}}") {
+            return Err(format!(
+                "Refusing to adopt: no `class=\"main-nav` found in {REFERENCE_PAGE}'s <nav>, so the \
+                 {{{{NAV_EXTRA}}}} placeholder could not be preserved. Update shell.html by hand."
+            ));
+        }
     }
     let updated = format!("{}{}{}", &shell[..sa], adopted, &shell[sb..]);
     let shell_path = root.join("page_builder").join("shell.html");
-    fs::write(&shell_path, updated).map_err(|e| e.to_string())
+    write_atomic(&shell_path, &updated)
 }

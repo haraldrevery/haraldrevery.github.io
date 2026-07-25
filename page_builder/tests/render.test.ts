@@ -102,14 +102,35 @@ describe("registry", () => {
 
 describe("justified gallery", () => {
   const out = renderContent([gallery({ rowHeight: 320 })]);
-  test("flex-wrap container + spacer", () => {
+  test("flex-wrap container, and no growth-hogging spacer", () => {
     expect(out).toContain('class="flex flex-wrap gap-2"');
-    expect(out).toContain('<div style="flex-grow: 1000000" aria-hidden="true"></div>');
+    // the old flex-grow:1000000 spacer swallowed the last row's slack, pinning
+    // it at 0.75x the target height; the last flex child must be a real image
+    expect(out).not.toContain("flex-grow: 1000000");
+    expect(out).not.toContain("aria-hidden");
+    expect(out).toContain("</a>\n  </div>"); // last flex child is a real image
   });
   test("ratio-driven styles + 3/2 fallback", () => {
-    expect(out).toContain("aspect-ratio: 4032/3024; flex-grow: 1.3333; flex-basis: calc(1.3333 * 240px); max-height: 480px");
-    expect(out).toContain("aspect-ratio: 3024/4032; flex-grow: 0.75");
-    expect(out).toContain("aspect-ratio: 3/2; flex-grow: 1.5");
+    expect(out).toContain("aspect-ratio: 4032/3024; flex-grow: 133.33; flex-basis: calc(1.3333 * 240px); max-width: calc(1.3333 * 640px)");
+    expect(out).toContain("aspect-ratio: 3024/4032; flex-grow: 75");
+    expect(out).toContain("aspect-ratio: 3/2; flex-grow: 150");
+  });
+  test("the cap is on width, so nothing is ever cropped", () => {
+    // max-height caps height while flex-grow keeps widening the box, and CSS
+    // max-constraints beat aspect-ratio -> object-cover crops. Capping width
+    // fires on the same condition but lets aspect-ratio set the height.
+    expect(out).not.toContain("max-height");
+    expect(out).toContain("max-width: calc(");
+  });
+  test("basis is 0.75x and cap 2x the row height, at any row height", () => {
+    const o = renderContent([gallery({ rowHeight: 200 })]);
+    expect(o).toContain("flex-basis: calc(1.3333 * 150px)"); // 0.75 * 200
+    expect(o).toContain("max-width: calc(1.3333 * 400px)"); // 2 * 200
+  });
+  test("a junk row height falls back instead of emitting NaN", () => {
+    const o = renderContent([gallery({ rowHeight: "abc" as unknown as number })]);
+    expect(o).not.toContain("NaN");
+    expect(o).toContain("flex-basis: calc(1.3333 * 240px)"); // the 320 default
   });
   test("lightbox anchors kept, no script", () => {
     expect(out.match(/class="portfolio-item glightbox block"/g)?.length).toBe(3);

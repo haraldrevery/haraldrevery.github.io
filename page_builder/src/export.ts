@@ -5,7 +5,7 @@
  * Eleventy's before-hook then strips the front matter and copies the body
  * verbatim to notebook_pages/; the front matter drives the Notebook index.
  */
-import { renderContent, renderHero, heroNavReveal, STATIC_BACKLINK } from "./blocks/render";
+import { renderContent, renderHero, heroNavReveal, STATIC_BACKLINK, escAttr } from "./blocks/render";
 import { renderMarkdown } from "./markdown";
 import { walkBlocks } from "./blocks/defs";
 import type { Block, FaqItem } from "./blocks/model";
@@ -47,20 +47,29 @@ export function splitTags(tags: string): string[] {
   return tags.split(/[,\s]+/).map((t) => t.trim()).filter(Boolean);
 }
 
-// gray-matter needs values containing ':' quoted (the old builder broke here)
+/// Always double-quote. Deciding *when* to quote is what kept going wrong: a
+/// bare value breaks on ':' and '#', on indicator characters (* & ! % @ ` | >),
+/// and on implicit typing — "2024" becomes a number, "No"/"Yes"/"On" become
+/// booleans, date-shaped titles become timestamps. A newline was worse than
+/// wrong output: it injected a second front-matter key.
 function yamlValue(v: string): string {
-  if (/[:#\[\]{}"']/g.test(v)) {
-    return `"${v.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
-  }
-  return v;
+  const body = String(v ?? "")
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/\r/g, "\\r")
+    .replace(/\n/g, "\\n")
+    .replace(/\t/g, "\\t");
+  return `"${body}"`;
 }
 
 export function frontmatterYaml(meta: Meta): string {
   const lines = ["---"];
   lines.push(`title: ${yamlValue(meta.title || "")}`);
   lines.push(`date: ${meta.date || ""}`);
-  lines.push(`tags: [${splitTags(meta.tags).join(", ")}]`);
-  if (meta.image) lines.push(`image: ${meta.image}`);
+  // quoted per entry: a tag containing ':' would otherwise parse as a map and
+  // one containing ']' would end the flow sequence early
+  lines.push(`tags: [${splitTags(meta.tags).map(yamlValue).join(", ")}]`);
+  if (meta.image) lines.push(`image: ${yamlValue(meta.image)}`);
   if (meta.description) lines.push(`description: ${yamlValue(meta.description)}`);
   if (meta.draft) lines.push("draft: true");
   lines.push("---");
@@ -193,9 +202,11 @@ export function jsonld(meta: Meta, blocks: Block[], canonical: string, siteUrl: 
   } else {
     obj = { "@context": "https://schema.org", ...primary };
   }
-  return (
-    '<script type="application/ld+json">\n' + JSON.stringify(obj, null, 2) + "\n</script>"
-  );
+  // Escaping "<" as < keeps the JSON identical for any parser while making
+  // it impossible for a "</script>" in a title/description/FAQ answer to
+  // terminate the element and inject live markup into every exported page.
+  const json = JSON.stringify(obj, null, 2).replace(/</g, "\\u003c");
+  return '<script type="application/ld+json">\n' + json + "\n</script>";
 }
 
 export function assembleDocument(
@@ -208,33 +219,38 @@ export function assembleDocument(
   const s = slug || slugify(meta.title);
   const canonical = `${siteUrl}/notebook_pages/${s}`;
   const title = (meta.title || "").trim();
+  // Text-derived values land in attributes and <title>, so they must be escaped.
+  // escAttr covers both contexts (it escapes & < > " '). The markup-valued
+  // placeholders below are deliberately NOT escaped — they are HTML by design.
+  const e = escAttr;
   const repl: Record<string, string> = {
-    "{{TITLE}}": title ? `Harald Revery - ${title}` : "Harald Revery",
-    "{{DESCRIPTION}}": meta.description || "",
-    "{{KEYWORDS}}": meta.tags || "",
+    TITLE: e(title ? `Harald Revery - ${title}` : "Harald Revery"),
+    DESCRIPTION: e(meta.description || ""),
+    KEYWORDS: e(meta.tags || ""),
     // og/twitter title order matches base.njk ("title - Harald Revery")
-    "{{OG_TITLE}}": title ? `${title} - Harald Revery` : "Harald Revery",
-    "{{OG_DESC}}": meta.description || "",
-    "{{OG_IMAGE}}": meta.image ? siteUrl + meta.image : `${siteUrl}/opengraphimg.jpg`,
-    "{{OG_URL}}": canonical,
-    "{{CANONICAL}}": canonical,
-    "{{DATE_ISO}}": meta.date || "",
-    "{{DATE_HUMAN}}": humanDate(meta.date),
-    "{{JSONLD}}": jsonld(meta, blocks, canonical, siteUrl),
-    "{{HERO}}": renderHero(blocks, { editMode: false }),
+    OG_TITLE: e(title ? `${title} - Harald Revery` : "Harald Revery"),
+    OG_DESC: e(meta.description || ""),
+    OG_IMAGE: e(meta.image ? siteUrl + meta.image : `${siteUrl}/opengraphimg.jpg`),
+    OG_URL: e(canonical),
+    CANONICAL: e(canonical),
+    DATE_ISO: e(meta.date || ""),
+    DATE_HUMAN: e(humanDate(meta.date)),
+    JSONLD: jsonld(meta, blocks, canonical, siteUrl),
+    HERO: renderHero(blocks, { editMode: false }),
     // hero pages carry their own fade-in back link — never show both
-    "{{BACKLINK}}": blocks.some((b) => b.type === "hero") ? "" : STATIC_BACKLINK,
-    "{{NAV_EXTRA}}": heroNavReveal(blocks) ? " navi_mechanic" : "",
-    "{{NAV_SCRIPT}}": heroNavReveal(blocks)
+    BACKLINK: blocks.some((b) => b.type === "hero") ? "" : STATIC_BACKLINK,
+    NAV_EXTRA: heroNavReveal(blocks) ? " navi_mechanic" : "",
+    NAV_SCRIPT: heroNavReveal(blocks)
       ? '<script src="/javascript/navbar_scroll_min.js" defer></script>'
       : "",
-    "{{CONTENT}}": renderContent(blocks, { editMode: false }),
+    CONTENT: renderContent(blocks, { editMode: false }),
   };
-  let doc = shell;
-  for (const [k, v] of Object.entries(repl)) {
-    doc = doc.split(k).join(v);
-  }
-  return doc;
+  // Single pass. A sequential split/join re-scanned each substituted value with
+  // every later key, so a description containing "{{CONTENT}}" got the whole
+  // page body spliced into the meta tag. Unknown tokens pass through untouched.
+  return shell.replace(/\{\{(\w+)\}\}/g, (m, k: string) =>
+    Object.prototype.hasOwnProperty.call(repl, k) ? repl[k] : m
+  );
 }
 
 export function exportText(
