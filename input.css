@@ -897,7 +897,81 @@ nav {
     animation-delay: 2.8s; /* 2800ms delay */
   }
 
-  
+
+
+
+/* ===================================
+   Compass rose — slow sway, straightens on hover (no JS)
+   ===================================
+
+   The wrapper animates --compass-sway from -1 to 1 and back, forever. The image
+   multiplies that by --compass-amp to get its angle, and hover is what moves the
+   amplitude: 1 -> 0 shrinks the swing until the compass rests upright, 0 -> 1
+   lets it grow back into the swing.
+
+   Transitioning the amplitude rather than the angle is what keeps it smooth.
+   The angle is driven by the wrapper's animation, and animation-driven updates
+   don't reliably restart a transition on a descendant, so a transition on the
+   angle snaps back to wherever the sway had drifted the moment hover ends. The
+   amplitude only ever changes on hover/unhover, which is an ordinary style
+   change, so it transitions properly in both directions — and because the sway
+   keeps running underneath, the product is continuous at every moment.
+
+   Both are registered with @property so they interpolate as numbers instead of
+   snapping between keyframes. */
+
+@property --compass-sway {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --compass-amp {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
+@keyframes compassSway {
+  0%, 100% { --compass-sway: -1; }
+  50%      { --compass-sway:  1; }
+}
+
+.compass-sway {
+  animation: compassSway 28s ease-in-out infinite; /* sway speed: bigger = slower */
+}
+
+.compass-rose {
+  display: block;
+  width: 100%;
+  max-width: 24rem;   /* compass size */
+  height: auto;
+  margin-inline: auto;
+  --compass-amp: 1;
+  transform: rotate(calc(var(--compass-sway) * var(--compass-amp) * 30deg)); /* 30deg = half the sweep */
+  transition: --compass-amp 0.9s ease-out; /* straighten speed */
+}
+
+/* Must target the image, not .compass-sway itself: the wrapper's own animation
+   would outrank a declaration made on it. */
+.compass-sway:hover .compass-rose {
+  --compass-amp: 0;
+}
+
+/* The drawing is black line art, invisible on the dark backdrop. */
+@media (prefers-color-scheme: dark) {
+  .compass-rose { filter: invert(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .compass-sway { animation: none; }
+  .compass-rose {
+    transition: none;
+    --compass-amp: 0;
+  }
+}
+
+
 
 
 

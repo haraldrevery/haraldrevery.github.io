@@ -502,6 +502,9 @@
   .mr-4 {
     margin-right: calc(var(--spacing) * 4);
   }
+  .mb-0 {
+    margin-bottom: 0;
+  }
   .mb-2 {
     margin-bottom: calc(var(--spacing) * 2);
   }
@@ -531,6 +534,9 @@
   }
   .mb-20 {
     margin-bottom: calc(var(--spacing) * 20);
+  }
+  .mb-24 {
+    margin-bottom: calc(var(--spacing) * 24);
   }
   .mb-\[6px\] {
     margin-bottom: 6px;
@@ -1301,6 +1307,9 @@
   }
   .pt-6 {
     padding-top: calc(var(--spacing) * 6);
+  }
+  .pt-12 {
+    padding-top: calc(var(--spacing) * 12);
   }
   .pt-22 {
     padding-top: calc(var(--spacing) * 22);
@@ -3088,6 +3097,54 @@ nav {
   animation: extra_fade_effect 1.2s ease-in forwards;
   opacity: 0;
   animation-delay: 2.8s;
+}
+@property --compass-sway {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+@property --compass-amp {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+@keyframes compassSway {
+  0%, 100% {
+    --compass-sway: -1;
+  }
+  50% {
+    --compass-sway: 1;
+  }
+}
+.compass-sway {
+  animation: compassSway 28s ease-in-out infinite;
+}
+.compass-rose {
+  display: block;
+  width: 100%;
+  max-width: 24rem;
+  height: auto;
+  margin-inline: auto;
+  --compass-amp: 1;
+  transform: rotate(calc(var(--compass-sway) * var(--compass-amp) * 30deg));
+  transition: --compass-amp 0.9s ease-out;
+}
+.compass-sway:hover .compass-rose {
+  --compass-amp: 0;
+}
+@media (prefers-color-scheme: dark) {
+  .compass-rose {
+    filter: invert(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .compass-sway {
+    animation: none;
+  }
+  .compass-rose {
+    transition: none;
+    --compass-amp: 0;
+  }
 }
 .image-carousel {
   position: relative;
@@ -5143,6 +5200,9 @@ iframe.wait-autoplay {
 }
 @layer properties {
   @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
+    :root, :host {
+      --compass-sway: 0;
+    }
     *, ::before, ::after, ::backdrop {
       --tw-translate-x: 0;
       --tw-translate-y: 0;
@@ -5215,6 +5275,7 @@ iframe.wait-autoplay {
       --tw-backdrop-sepia: initial;
       --tw-duration: initial;
       --tw-ease: initial;
+      --compass-amp: 1;
     }
   }
 }
