@@ -11,6 +11,7 @@ import {
   EMBEDDABLE_LABELS,
   newBlock,
   galleryItemStatus,
+  PROSE_TYPES,
 } from "../blocks/defs";
 import type {
   Aspect,
@@ -29,6 +30,7 @@ import type {
   ImageBlock,
   ParagraphBlock,
   RawBlock,
+  Spacing,
   SvgFields,
   VideoBlock,
 } from "../blocks/model";
@@ -679,7 +681,7 @@ const FORMS: Record<BlockType, FormFn> = {
   hero: form<HeroBlock>(heroForm),
   heading: form<HeadingBlock>(headingForm),
   paragraph: form<ParagraphBlock>(paragraphForm),
-  hr: form<Block>(() => [el("p", { class: "hint" }, "A horizontal divider. No options.")]),
+  hr: form<Block>(() => [el("p", { class: "hint" }, "A horizontal divider.")]),
   gallery: form<GalleryBlock>(galleryForm),
   image: form<ImageBlock>(imageForm),
   svg: form<Block & SvgFields>((b) => svgFieldsEditor(b)),
@@ -689,6 +691,36 @@ const FORMS: Record<BlockType, FormFn> = {
   audio: form<AudioBlock>(audioForm),
   raw: form<RawBlock>(rawForm),
 };
+
+/// The one gap a block owns — see the spacing rule in blocks/render.ts. Only
+/// top-level blocks get this control; column children own no spacing, and
+/// renderBlockForm is never reached for them (columnsForm splices in their
+/// per-type form directly).
+function spacingFields(b: Block): HTMLElement[] {
+  const out = [
+    // No px in the labels: the scale is rem-based and the site sets
+    // html{font-size:1.22rem}, so the real gaps are ~39/78/98px, not the
+    // 32/64/80 a 16px root would give. Any number here would go stale the
+    // moment --text-body changes.
+    selectInput(
+      "Space below",
+      b.spacing ?? "normal",
+      [["none", "None"], ["tight", "Tight"], ["normal", "Normal"], ["loose", "Loose"]],
+      (v) => edit(() => (b.spacing = v as Spacing))
+    ),
+  ];
+  if (PROSE_TYPES.has(b.type)) {
+    out.push(
+      el(
+        "p",
+        { class: "hint" },
+        "Text blocks run together into one typeset block, so this only applies " +
+          "when this is the last text block before a non-text one."
+      )
+    );
+  }
+  return out;
+}
 
 export function renderBlockForm(container: HTMLElement): void {
   clear(container);
@@ -701,4 +733,6 @@ export function renderBlockForm(container: HTMLElement): void {
   }
   container.appendChild(el("h4", {}, b.type.replace("_", " ")));
   for (const f of FORMS[b.type](b as never)) container.appendChild(f);
+  // heroes render into the shell's {{HERO}} slot, outside the content flow
+  if (b.type !== "hero") for (const f of spacingFields(b)) container.appendChild(f);
 }

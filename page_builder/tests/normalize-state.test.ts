@@ -80,6 +80,43 @@ describe("normalizeProject", () => {
     });
     expect(p.blocks[0].type).toBe("hero");
   });
+
+  test("a valid spacing survives, a bad one is dropped back to the default", () => {
+    const p = normalizeProject({
+      blocks: [
+        { type: "image", full: "a", spacing: "tight" },
+        { type: "image", full: "b", spacing: "enormous" },
+        { type: "image", full: "c", spacing: 42 },
+        { type: "image", full: "d", spacing: null },
+        { type: "image", full: "e" },
+      ],
+    });
+    expect(p.blocks.map((b) => b.spacing)).toEqual([
+      "tight",
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]);
+  });
+
+  test("column children get the spacing clamp too", () => {
+    const p = normalizeProject({
+      blocks: [
+        {
+          type: "columns",
+          count: 2,
+          columns: [
+            { type: "image", full: "a", spacing: "loose" },
+            { type: "image", full: "b", spacing: "wat" },
+          ],
+        },
+      ],
+    });
+    const cols = (p.blocks[0] as ColumnsBlock).columns;
+    expect(cols[0].spacing).toBe("loose"); // valid: kept (renderer ignores it)
+    expect(cols[1].spacing).toBeUndefined();
+  });
 });
 
 describe("store", () => {

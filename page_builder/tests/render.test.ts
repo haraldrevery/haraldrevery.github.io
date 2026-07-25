@@ -9,7 +9,7 @@ import { readFileSync } from "fs";
 import { renderContent, renderHero, heroNavReveal, STATIC_BACKLINK } from "../src/blocks/render";
 import { BLOCK_TYPES, BLOCK_META, EMBEDDABLE_LABELS, newBlock } from "../src/blocks/defs";
 import { setSvgText } from "../src/blocks/svgStore";
-import type { Block, ColumnsBlock, GalleryBlock, GalleryItem, HeroBlock } from "../src/blocks/model";
+import type { Block, ColumnsBlock, GalleryBlock, GalleryItem, HeroBlock, Spacing } from "../src/blocks/model";
 
 const REPO = new URL("../..", import.meta.url).pathname;
 const css = readFileSync(`${REPO}/main.css`, "utf8") + readFileSync(`${REPO}/prose.css`, "utf8");
@@ -427,7 +427,22 @@ describe("vertical spacing", () => {
     ];
   };
 
-  test("every top-level block carries exactly one mb-16 and no top spacing", () => {
+  // Iterating BLOCK_TYPES (not a fixed list) is the point: a future block type
+  // that wrappers itself with padding or an off-scale margin fails here rather
+  // than passing every test and quietly reintroducing order-dependent gaps.
+  test("every block type defaults to exactly one mb-16 and no top spacing", () => {
+    for (const t of BLOCK_TYPES) {
+      if (t === "hero") continue; // renders into the {{HERO}} slot, no block gap
+      const out = renderContent([sample(t)]);
+      const open = out.slice(0, out.indexOf(">") + 1);
+      expect(open).toContain("mb-16");
+      for (const c of ["py-", "pt-", "pb-", "mt-", "mb-8", "mb-12", "mb-20"]) {
+        expect(open).not.toContain(c);
+      }
+    }
+  });
+
+  test("a mixed page has one uniform gap at every boundary", () => {
     const out = renderContent(mixed());
     // one wrapper per emitted top-level element (blank-line separated)
     const tops = out.split("\n\n");
@@ -440,6 +455,55 @@ describe("vertical spacing", () => {
     for (const c of ["py-12", "mb-12", "mb-20", "mt-16", "pt-12", "pb-12"]) {
       expect(out).not.toContain(c);
     }
+  });
+
+  test("each spacing value maps to its class; none emits no class at all", () => {
+    const open = (spacing: Spacing | undefined) => {
+      const b = sample("image");
+      if (spacing) b.spacing = spacing;
+      const out = renderContent([b]);
+      return out.slice(0, out.indexOf(">") + 1);
+    };
+    expect(open(undefined)).toBe('<section class="mb-16">'); // absent = normal
+    expect(open("normal")).toBe('<section class="mb-16">');
+    expect(open("tight")).toBe('<section class="mb-8">');
+    expect(open("loose")).toBe('<section class="mb-20">');
+    expect(open("none")).toBe("<section>"); // no mb-0 in main.css, so no class
+  });
+
+  test("spacing rides alongside a block's own fixed classes", () => {
+    const col = newBlock("columns") as ColumnsBlock;
+    col.columns = [sample("image"), sample("paragraph")];
+    col.spacing = "tight";
+    const out = renderContent([col]);
+    expect(out).toContain('<section class="extra_fade_effect mb-8">');
+  });
+
+  test("a column child's spacing is ignored — the columns section owns the gap", () => {
+    const col = newBlock("columns") as ColumnsBlock;
+    const child = sample("image");
+    child.spacing = "loose";
+    col.columns = [child, sample("paragraph")];
+    const out = renderContent([col]);
+    expect(out).not.toContain("mb-20"); // the child's value never reaches the DOM
+    expect(out).toContain('<section class="extra_fade_effect mb-16">');
+  });
+
+  test("a prose run takes its last member's spacing, not its first", () => {
+    const head = sample("heading");
+    head.spacing = "none";
+    const tail = sample("paragraph");
+    tail.spacing = "loose";
+    const out = renderContent([head, tail]);
+    expect(out.split("\n\n").length).toBe(1); // one merged article
+    expect(out).toContain('class="prose dark:prose-invert max-w-none mb-20"');
+  });
+
+  test("hero takes no block gap — it renders outside the content flow", () => {
+    const h = sample("hero") as HeroBlock;
+    h.spacing = "loose";
+    expect(renderContent([h])).toBe(""); // skipped entirely by renderContent
+    expect(renderHero([h])).not.toContain("mb-");
   });
 
   test("columns spacing matches a standalone block, so splitting is neutral", () => {

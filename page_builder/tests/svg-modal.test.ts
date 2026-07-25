@@ -7,7 +7,8 @@ import { readFileSync } from "fs";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import { themeSvgText, prepareSvgForInline } from "../src/blocks/svgStore";
 
-GlobalRegistrator.register();
+// guarded: bun shares one process across test files, and registering twice throws
+if (!globalThis.document) GlobalRegistrator.register();
 const { listModal, promptModal } = await import("../src/ui/dom");
 
 const REPO = new URL("../..", import.meta.url).pathname;

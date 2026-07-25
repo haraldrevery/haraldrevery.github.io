@@ -14,10 +14,11 @@
  * there is no CSS build on export.
  *
  * Vertical spacing rule: every top-level block owns exactly one gap, the
- * mb-16 (64px) below it. Never a top margin and never padding — padding
- * cannot margin-collapse, so a block with both sides set double-counts
- * against its neighbours and makes gaps depend on block order. Column
- * children carry no spacing at all; the columns section owns their gap.
+ * margin below it, emitted by gapAttr() from the block's own `spacing`.
+ * Never a top margin and never padding — padding cannot margin-collapse, so
+ * a block with both sides set double-counts against its neighbours and makes
+ * gaps depend on block order. Column children carry no spacing at all; the
+ * columns section owns their gap.
  */
 import { renderMarkdown } from "../markdown";
 import { PROSE_TYPES, isEmbeddable } from "./defs";
@@ -37,6 +38,7 @@ import type {
   IconsBlock,
   ImageBlock,
   ParagraphBlock,
+  Spacing,
   SvgFields,
   VideoBlock,
 } from "./model";
@@ -75,6 +77,24 @@ function glightboxCaption(title: string, desc: string): string {
 function pctStyle(widthPct: number): string {
   const w = Math.max(5, Math.min(100, Math.round(widthPct || 100)));
   return w < 100 ? ` style="width:${w}%;margin-inline:auto"` : "";
+}
+
+// ------------------------------------------------------------------- spacing
+
+/// "none" omits the class rather than emitting mb-0, and "loose" is 80px
+/// rather than a rounder 96px, because mb-0 and mb-24 are not in main.css.
+const SPACING_CLASS: Record<Spacing, string> = {
+  none: "",
+  tight: "mb-8",
+  normal: "mb-16",
+  loose: "mb-20",
+};
+
+/// class="..." for a top-level wrapper: the block's own gap plus any fixed
+/// classes. Extras come first so class order reads the way it always has.
+function gapAttr(b: Block, ...extra: string[]): string {
+  const all = [...extra, SPACING_CLASS[b.spacing ?? "normal"]].filter(Boolean);
+  return all.length ? ` class="${all.join(" ")}"` : "";
 }
 
 // ---------------------------------------------------------------- prose blocks
@@ -454,7 +474,7 @@ function columns(b: ColumnsBlock, opts: RenderOptions): string {
     b.count === 2
       ? `  <div class="grid md:grid-cols-2 gap-16 ${align}" style="row-gap:2rem">\n${cols.join("\n")}\n  </div>`
       : `  <div>${renderChild(b.columns[0], 0)}</div>`;
-  return `<section class="mb-16 extra_fade_effect">\n${inner}\n</section>`;
+  return `<section${gapAttr(b, "extra_fade_effect")}>\n${inner}\n</section>`;
 }
 
 // ----------------------------------------------------------------------- hero
@@ -631,19 +651,19 @@ const RENDERERS: Record<BlockType, Renderer> = {
     // data-pb-items marks top-level galleries as item-drag targets in the
     // preview (editor-only attribute)
     top: (b, opts) =>
-      `<section class="mb-16"${opts.editMode ? ' data-pb-items="1"' : ""}>\n  ${galleryInner(b)}\n</section>`,
+      `<section${gapAttr(b)}${opts.editMode ? ' data-pb-items="1"' : ""}>\n  ${galleryInner(b)}\n</section>`,
     inner: (b) => galleryInner(b),
   }),
   image: renderer<ImageBlock>({
-    top: (b) => `<section class="mb-16">\n  ${imageInner(b)}\n</section>`,
+    top: (b) => `<section${gapAttr(b)}>\n  ${imageInner(b)}\n</section>`,
     inner: (b) => imageInner(b),
   }),
   svg: renderer<Block & SvgFields>({
-    top: (b) => `<section class="mb-16">\n  ${svgInner(b)}\n</section>`,
+    top: (b) => `<section${gapAttr(b)}>\n  ${svgInner(b)}\n</section>`,
     inner: (b) => svgInner(b),
   }),
   video: renderer<VideoBlock>({
-    top: (b) => `<section class="mb-16">\n  ${videoInner(b)}\n</section>`,
+    top: (b) => `<section${gapAttr(b)}>\n  ${videoInner(b)}\n</section>`,
     inner: (b) => videoInner(b),
   }),
   columns: renderer<ColumnsBlock>({
@@ -651,25 +671,25 @@ const RENDERERS: Record<BlockType, Renderer> = {
     inner: () => "",
   }),
   icons: renderer<IconsBlock>({
-    top: (b) => `<section class="mb-16">\n  ${iconsInner(b)}\n</section>`,
+    top: (b) => `<section${gapAttr(b)}>\n  ${iconsInner(b)}\n</section>`,
     inner: (b) => iconsInner(b),
   }),
   faq: renderer<FaqBlock>({
     // about.html constrains its FAQ to max-w-4xl centered — match it
-    top: (b) => `<section class="mb-16">\n  <div class="max-w-4xl mx-auto">\n  ${faqInner(b)}\n  </div>\n</section>`,
+    top: (b) => `<section${gapAttr(b)}>\n  <div class="max-w-4xl mx-auto">\n  ${faqInner(b)}\n  </div>\n</section>`,
     inner: (b) => faqInner(b),
   }),
   downloads: renderer<DownloadsBlock>({
-    top: (b) => `<section class="mb-16">\n  ${downloadsInner(b)}\n</section>`,
+    top: (b) => `<section${gapAttr(b)}>\n  ${downloadsInner(b)}\n</section>`,
     inner: (b) => downloadsInner(b),
   }),
   audio: renderer<AudioBlock>({
-    top: (b) => `<section class="mb-16">\n  ${audioInner(b)}\n</section>`,
+    top: (b) => `<section${gapAttr(b)}>\n  ${audioInner(b)}\n</section>`,
     inner: (b) => audioInner(b),
   }),
   // wrapped so raw shares the uniform block gap; authors still control the inside
   raw: renderer<Block & { html: string }>({
-    top: (b) => `<section class="mb-16">\n  ${b.html}\n</section>`,
+    top: (b) => `<section${gapAttr(b)}>\n  ${b.html}\n</section>`,
     inner: (b) => b.html,
   }),
 };
@@ -689,16 +709,19 @@ export function renderContent(blocks: Block[], opts: RenderOptions = {}): string
   const edit = !!opts.editMode;
   const out: string[] = [];
   let proseBuf: string[] = [];
+  // Gaps *inside* a prose run are typographic (prose.css owns them), so only the
+  // run's last block has a block-level gap below it — it sets the group's.
+  let lastProse: Block | null = null;
 
   const flush = () => {
-    if (proseBuf.length) {
+    if (proseBuf.length && lastProse) {
       const inner = proseBuf.join("\n  ");
-      // mb-16 matches every other block's gap. prose zeroes its own last child's
-      // margin-bottom, so this margin is the whole gap — nothing doubles up.
-      out.push(
-        `<article class="prose dark:prose-invert max-w-none mb-16">\n  ${inner}\n</article>`
-      );
+      // prose zeroes its own last child's margin-bottom, so this margin is the
+      // whole gap — nothing doubles up.
+      const cls = gapAttr(lastProse, "prose", "dark:prose-invert", "max-w-none");
+      out.push(`<article${cls}>\n  ${inner}\n</article>`);
       proseBuf = [];
+      lastProse = null;
     }
   };
 
@@ -708,6 +731,7 @@ export function renderContent(blocks: Block[], opts: RenderOptions = {}): string
       const html = proseBlock(b);
       const split = isEmbeddable(b.type) ? ' data-pb-split="1"' : "";
       proseBuf.push(edit ? `<div data-pb-id="${b.id}"${split}>${html}</div>` : html);
+      lastProse = b;
     } else {
       flush();
       const html = RENDERERS[b.type].top(b as never, opts);

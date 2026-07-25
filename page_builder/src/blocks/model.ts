@@ -46,8 +46,12 @@ export interface SvgFields {
   widthPct: number; // % of the container width (100 = full)
 }
 
+/// The single gap a top-level block owns, below itself. Absent = "normal".
+export type Spacing = "none" | "tight" | "normal" | "loose";
+
 interface Base {
   id: string;
+  spacing?: Spacing;
 }
 
 export interface HeadingBlock extends Base {

@@ -16,6 +16,15 @@ function isBlockType(t: unknown): t is BlockType {
   );
 }
 
+/// The blanket {...defaults, ...saved} merges below let a saved spacing win
+/// outright, including junk like null or 42 — so bad values need dropping
+/// rather than defaulting. Absent means "normal" to the renderer.
+function clampSpacing(b: Block): void {
+  if (b.spacing !== undefined && !["none", "tight", "normal", "loose"].includes(b.spacing)) {
+    delete b.spacing;
+  }
+}
+
 /// Old column-content kinds map onto real block types.
 const KIND_TO_TYPE: Record<string, BlockType> = {
   markdown: "paragraph",
@@ -41,6 +50,7 @@ function normalizeChild(raw: unknown): Block {
   const merged = { ...(newBlock(t) as object), ...(rc as object) } as Block;
   merged.type = t; // never let a stale kind/type pair through
   if (!merged.id || typeof merged.id !== "string") merged.id = crypto.randomUUID();
+  clampSpacing(merged);
   return merged;
 }
 
@@ -103,6 +113,7 @@ export function normalizeProject(data: unknown): Project {
     const base = newBlock(t) as unknown as Record<string, unknown>;
     const merged = { ...base, ...(rb as object) } as unknown as Block;
     if (!merged.id) merged.id = crypto.randomUUID();
+    clampSpacing(merged);
     if (merged.type === "columns") {
       const cols = Array.isArray(merged.columns) ? merged.columns : [];
       (merged as ColumnsBlock).columns = [normalizeChild(cols[0]), normalizeChild(cols[1])];
