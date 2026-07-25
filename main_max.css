@@ -3146,6 +3146,68 @@ nav {
     --compass-amp: 0;
   }
 }
+.logo-loop-wrap {
+  max-width: 22rem;
+  margin-inline: auto;
+}
+.logo-loop {
+  --logo-cycle: 16s;
+  display: block;
+  width: 100%;
+  height: auto;
+  transform-origin: center;
+  transition: transform 0.5s ease-out;
+  animation: logoLoopFade var(--logo-cycle) ease-in-out infinite;
+}
+.logo-loop-wrap:hover .logo-loop {
+  transform: scale(1.06);
+}
+.logo-loop path {
+  fill: currentColor;
+  fill-opacity: 0;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-dasharray: 4000;
+  stroke-dashoffset: 4000;
+  animation: logoLoopDraw var(--logo-cycle) cubic-bezier(.75,.03,.46,.46) infinite;
+}
+@keyframes logoLoopDraw {
+  0% {
+    stroke-dashoffset: 4000;
+    fill-opacity: 0;
+    stroke: currentColor;
+  }
+  33% {
+    stroke-dashoffset: 0;
+    fill-opacity: 0.01;
+    stroke: currentColor;
+  }
+  55%, 100% {
+    stroke-dashoffset: 0;
+    fill-opacity: 0.96;
+    stroke: transparent;
+  }
+}
+@keyframes logoLoopFade {
+  0%, 78% {
+    opacity: 1;
+  }
+  95%, 100% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-loop {
+    animation: none;
+    transition: none;
+  }
+  .logo-loop path {
+    animation: none;
+    stroke: transparent;
+    stroke-dashoffset: 0;
+    fill-opacity: 0.96;
+  }
+}
 .image-carousel {
   position: relative;
   width: 100%;

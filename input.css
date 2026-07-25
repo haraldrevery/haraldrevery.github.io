@@ -974,6 +974,81 @@ nav {
 
 
 
+/* ===================================
+   Logo mark — draws in, fills, fades out, loops; grows on hover (no JS)
+   ===================================
+
+   The same draw-then-fill the hero uses (logoDraw further up this file), just
+   looped instead of one-shot, with a fade-out on the end. Two animations on one
+   16s cycle, phases written as percentages of it:
+
+     0–33%    the outline draws itself (stroke-dashoffset 4000 -> 0)
+     33–55%   the fill fades in as the outline fades to transparent
+     55–78%   holds, filled
+     78–95%   the whole mark fades out
+     95–100%  empty, then the outline starts over
+
+   Hover scales the mark up slightly. That rides on `transform`, while the loop
+   only animates `opacity` and paint properties, so the two never fight — no
+   animation overriding the transition. */
+
+.logo-loop-wrap {
+  max-width: 22rem;    /* mark size */
+  margin-inline: auto;
+}
+
+.logo-loop {
+  --logo-cycle: 16s;   /* loop length: bigger = slower */
+  display: block;
+  width: 100%;
+  height: auto;
+  transform-origin: center;
+  transition: transform 0.5s ease-out;
+  animation: logoLoopFade var(--logo-cycle) ease-in-out infinite;
+}
+
+/* The wrapper is the hover target, so the whole box responds rather than only
+   the painted strokes. */
+.logo-loop-wrap:hover .logo-loop {
+  transform: scale(1.06);   /* hover growth */
+}
+
+.logo-loop path {
+  fill: currentColor;
+  fill-opacity: 0;
+  stroke: currentColor;
+  stroke-width: 3;          /* ~1px once scaled down from the 1080 viewBox */
+  stroke-dasharray: 4000;   /* same dash length the hero uses */
+  stroke-dashoffset: 4000;
+  animation: logoLoopDraw var(--logo-cycle) cubic-bezier(.75,.03,.46,.46) infinite;
+}
+
+/* Same shape as the hero's logoDraw, remapped onto the first 55% of the cycle
+   and held for the rest of it. */
+@keyframes logoLoopDraw {
+  0%        { stroke-dashoffset: 4000; fill-opacity: 0;    stroke: currentColor; }
+  33%       { stroke-dashoffset: 0;    fill-opacity: 0.01; stroke: currentColor; }
+  55%, 100% { stroke-dashoffset: 0;    fill-opacity: 0.96; stroke: transparent; }
+}
+
+@keyframes logoLoopFade {
+  0%, 78%   { opacity: 1; }
+  95%, 100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-loop { animation: none; transition: none; }
+  .logo-loop path {
+    animation: none;
+    stroke: transparent;
+    stroke-dashoffset: 0;
+    fill-opacity: 0.96;
+  }
+}
+
+
+
+
 
 
 
