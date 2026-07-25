@@ -12,6 +12,12 @@
  *
  * Rule: only emit Tailwind classes that exist in the compiled main.css —
  * there is no CSS build on export.
+ *
+ * Vertical spacing rule: every top-level block owns exactly one gap, the
+ * mb-16 (64px) below it. Never a top margin and never padding — padding
+ * cannot margin-collapse, so a block with both sides set double-counts
+ * against its neighbours and makes gaps depend on block order. Column
+ * children carry no spacing at all; the columns section owns their gap.
  */
 import { renderMarkdown } from "../markdown";
 import { PROSE_TYPES, isEmbeddable } from "./defs";
@@ -440,19 +446,25 @@ function columns(b: ColumnsBlock, opts: RenderOptions): string {
   };
   const cols = b.columns.slice(0, b.count).map((c, i) => `    <div>${renderChild(c, i)}</div>`);
   const align = b.verticalAlign === "top" ? "items-start" : "items-center";
+  // gap-16 is the column gap; below md the grid collapses to one column and that
+  // 64px would leak in as a row gap wider than the gap between whole blocks, so
+  // pin the row gap tighter (inert on desktop, where there is only one row).
+  // Inline style because md:gap-* is not in the compiled main.css.
   const inner =
     b.count === 2
-      ? `  <div class="grid md:grid-cols-2 gap-16 ${align}">\n${cols.join("\n")}\n  </div>`
+      ? `  <div class="grid md:grid-cols-2 gap-16 ${align}" style="row-gap:2rem">\n${cols.join("\n")}\n  </div>`
       : `  <div>${renderChild(b.columns[0], 0)}</div>`;
-  return `<section class="py-12 extra_fade_effect">\n${inner}\n</section>`;
+  return `<section class="mb-16 extra_fade_effect">\n${inner}\n</section>`;
 }
 
 // ----------------------------------------------------------------------- hero
 
 /// Markup for the shell's normal static back link (used when no hero exists;
 /// with a hero the hero renders the one-and-only, fade-in version instead).
+/// The mb-16 wrapper is what separates it from the first content block — the
+/// inline-flex <a> carries no margin of its own.
 export const STATIC_BACKLINK =
-  '<a href="/notebook.html" class="inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider">\n   ← Back to Notebook\n</a>';
+  '<div class="mb-16">\n   <a href="/notebook.html" class="inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider">\n   ← Back to Notebook\n   </a>\n</div>';
 
 /// Full-viewport opener built from classes already in main.css (release-hero,
 /// bg-dot-grid, extra_fade_effect, word_animation, #scroll-prompt). Rendered
@@ -619,7 +631,7 @@ const RENDERERS: Record<BlockType, Renderer> = {
     // data-pb-items marks top-level galleries as item-drag targets in the
     // preview (editor-only attribute)
     top: (b, opts) =>
-      `<section class="mb-20"${opts.editMode ? ' data-pb-items="1"' : ""}>\n  ${galleryInner(b)}\n</section>`,
+      `<section class="mb-16"${opts.editMode ? ' data-pb-items="1"' : ""}>\n  ${galleryInner(b)}\n</section>`,
     inner: (b) => galleryInner(b),
   }),
   image: renderer<ImageBlock>({
@@ -639,7 +651,7 @@ const RENDERERS: Record<BlockType, Renderer> = {
     inner: () => "",
   }),
   icons: renderer<IconsBlock>({
-    top: (b) => `<section class="mb-12">\n  ${iconsInner(b)}\n</section>`,
+    top: (b) => `<section class="mb-16">\n  ${iconsInner(b)}\n</section>`,
     inner: (b) => iconsInner(b),
   }),
   faq: renderer<FaqBlock>({
@@ -652,10 +664,14 @@ const RENDERERS: Record<BlockType, Renderer> = {
     inner: (b) => downloadsInner(b),
   }),
   audio: renderer<AudioBlock>({
-    top: (b) => `<section class="mb-12">\n  ${audioInner(b)}\n</section>`,
+    top: (b) => `<section class="mb-16">\n  ${audioInner(b)}\n</section>`,
     inner: (b) => audioInner(b),
   }),
-  raw: renderer<Block & { html: string }>({ top: (b) => b.html, inner: (b) => b.html }),
+  // wrapped so raw shares the uniform block gap; authors still control the inside
+  raw: renderer<Block & { html: string }>({
+    top: (b) => `<section class="mb-16">\n  ${b.html}\n</section>`,
+    inner: (b) => b.html,
+  }),
 };
 
 /// Tag a block's outermost element so the preview can select it; splittable
@@ -677,7 +693,11 @@ export function renderContent(blocks: Block[], opts: RenderOptions = {}): string
   const flush = () => {
     if (proseBuf.length) {
       const inner = proseBuf.join("\n  ");
-      out.push(`<article class="prose dark:prose-invert max-w-none">\n  ${inner}\n</article>`);
+      // mb-16 matches every other block's gap. prose zeroes its own last child's
+      // margin-bottom, so this margin is the whole gap — nothing doubles up.
+      out.push(
+        `<article class="prose dark:prose-invert max-w-none mb-16">\n  ${inner}\n</article>`
+      );
       proseBuf = [];
     }
   };

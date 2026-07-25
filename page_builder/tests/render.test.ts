@@ -6,7 +6,7 @@
  */
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "fs";
-import { renderContent, renderHero, heroNavReveal } from "../src/blocks/render";
+import { renderContent, renderHero, heroNavReveal, STATIC_BACKLINK } from "../src/blocks/render";
 import { BLOCK_TYPES, BLOCK_META, EMBEDDABLE_LABELS, newBlock } from "../src/blocks/defs";
 import { setSvgText } from "../src/blocks/svgStore";
 import type { Block, ColumnsBlock, GalleryBlock, GalleryItem, HeroBlock } from "../src/blocks/model";
@@ -90,7 +90,8 @@ describe("registry", () => {
       col.columns = [sample(t), newBlock("paragraph")];
       const out = renderContent([col]);
       expect(out).toContain("md:grid-cols-2 gap-16");
-      expect(out).not.toContain("<section class=\"mb-"); // children have no section wrapper
+      // only the columns wrapper itself — children get no section of their own
+      expect(out.match(/<section/g)?.length).toBe(1);
     }
   });
 
@@ -294,7 +295,7 @@ describe("round tweaks", () => {
     col.columns = [sample("audio"), newBlock("paragraph")];
     const out = renderContent([col]);
     expect(out).toContain('<audio controls class="w-full" src="/audio/a.mp3">');
-    expect(out).not.toContain('<section class="mb-12"');
+    expect(out).not.toContain('<section class="mb-16"');
   });
 
   test("hero back link rides up to the scroll-prompt row when both are on", () => {
@@ -399,5 +400,76 @@ describe("class coverage", () => {
     const esc = (c: string) => c.replace(/([:\/\[\].])/g, "\\$1");
     const missing = [...classes].filter((c) => !skip.has(c) && !css.includes("." + esc(c)));
     expect(missing).toEqual([]);
+  });
+});
+
+describe("vertical spacing", () => {
+  // Every top-level block owns exactly one gap: the mb-16 below it. Mixing
+  // padding in (columns used py-12) made gaps non-collapsible and therefore
+  // order-dependent — image->columns was 112px but columns->image was 48px.
+  const mixed = (): Block[] => {
+    const twoCol = newBlock("columns") as ColumnsBlock;
+    twoCol.columns = [sample("image"), sample("paragraph")];
+    const oneCol = newBlock("columns") as ColumnsBlock;
+    oneCol.count = 1;
+    oneCol.columns = [sample("image"), newBlock("paragraph")];
+    return [
+      sample("paragraph"),
+      sample("image"),
+      newBlock("hr"),
+      sample("gallery"),
+      twoCol,
+      oneCol,
+      sample("audio"),
+      sample("icons"),
+      sample("raw"),
+      sample("paragraph"),
+    ];
+  };
+
+  test("every top-level block carries exactly one mb-16 and no top spacing", () => {
+    const out = renderContent(mixed());
+    // one wrapper per emitted top-level element (blank-line separated)
+    const tops = out.split("\n\n");
+    expect(tops.length).toBe(10); // one per block: no two prose blocks are adjacent
+    for (const t of tops) {
+      const open = t.slice(0, t.indexOf(">") + 1);
+      expect(open).toContain("mb-16");
+    }
+    // no padding-based or off-value spacing survives anywhere
+    for (const c of ["py-12", "mb-12", "mb-20", "mt-16", "pt-12", "pb-12"]) {
+      expect(out).not.toContain(c);
+    }
+  });
+
+  test("columns spacing matches a standalone block, so splitting is neutral", () => {
+    const alone = renderContent([sample("image")]);
+    const split = newBlock("columns") as ColumnsBlock;
+    split.columns = [sample("image"), newBlock("paragraph")];
+    const inCols = renderContent([split]);
+    const cls = (s: string) => /class="([^"]+)"/.exec(s)?.[1] ?? "";
+    expect(cls(alone)).toContain("mb-16");
+    expect(cls(inCols)).toContain("mb-16");
+  });
+
+  test("stacked columns get a tighter row gap than the gap between blocks", () => {
+    const col = newBlock("columns") as ColumnsBlock;
+    col.columns = [sample("image"), sample("paragraph")];
+    const out = renderContent([col]);
+    expect(out).toContain('style="row-gap:2rem"'); // 32px < the 64px block gap
+  });
+
+  test("a lone hr is spaced symmetrically between two media blocks", () => {
+    const out = renderContent([sample("image"), newBlock("hr"), sample("image")]);
+    const tops = out.split("\n\n");
+    expect(tops.length).toBe(3);
+    // the hr's own article supplies the gap below it; prose zeroes the hr's
+    // 3em margins as both :first-child and :last-child of a one-element group
+    expect(tops[1]).toContain("mb-16");
+    expect(tops[1]).toContain("<hr>");
+  });
+
+  test("the static back link is separated from the first block", () => {
+    expect(STATIC_BACKLINK).toContain('<div class="mb-16">');
   });
 });

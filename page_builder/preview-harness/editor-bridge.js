@@ -46,6 +46,12 @@
     body.pb-dragging, body.pb-dragging * { cursor: grabbing !important; user-select: none !important; }
     #pb-drop { position: fixed; height: 3px; background: rgb(59,130,246); border-radius: 2px;
                z-index: 9998; pointer-events: none; display: none; }
+    /* Edit mode wraps each prose block in a [data-pb-id] div, which becomes
+       .prose's first/last child — so prose.css's own margin zeroing lands on
+       the div and the real element's margin collapses through it and escapes.
+       Reach one level deeper so the preview's block edges match the export. */
+    .prose > [data-pb-id]:first-child > :first-child { margin-top: 0; }
+    .prose > [data-pb-id]:last-child > :last-child { margin-bottom: 0; }
     .pb-empty { border: 2px dashed rgba(128,128,128,.4); border-radius: 8px; padding: 4rem 2rem;
                 text-align: center; opacity: .6; font-family: monospace; }
     .pb-edit [data-pb-items].pb-selected a.portfolio-item { cursor: grab; }
