@@ -938,7 +938,7 @@ nav {
 }
 
 .compass-sway {
-  animation: compassSway 28s ease-in-out infinite; /* sway speed: bigger = slower */
+  animation: compassSway 40s ease-in-out infinite; /* sway speed: bigger = slower */
 }
 
 .compass-rose {

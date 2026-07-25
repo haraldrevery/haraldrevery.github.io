@@ -3117,7 +3117,7 @@ nav {
   }
 }
 .compass-sway {
-  animation: compassSway 28s ease-in-out infinite;
+  animation: compassSway 40s ease-in-out infinite;
 }
 .compass-rose {
   display: block;
