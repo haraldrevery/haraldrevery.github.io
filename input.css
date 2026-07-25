@@ -944,7 +944,7 @@ nav {
 .compass-rose {
   display: block;
   width: 100%;
-  max-width: 24rem;   /* compass size */
+  max-width: 19rem;   /* compass size */
   height: auto;
   margin-inline: auto;
   --compass-amp: 1;
