@@ -660,17 +660,35 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+// Nothing in here may throw: the window is already prevented from closing by the
+// time this runs, so an unhandled rejection leaves the X button dead and the only
+// way out is killing the process.
 getCurrentWindow()
   .onCloseRequested(async (event) => {
-    if (!store.dirty) return;
+    if (!store.dirty) return; // not prevented -> the api destroys the window for us
     event.preventDefault();
-    const ok = await ask("There are unsaved changes. Close anyway?", { title: "Unsaved changes" });
-    if (ok) {
-      store.dirty = false;
-      void getCurrentWindow().close();
+    let ok: boolean;
+    try {
+      ok = await ask("There are unsaved changes. Close anyway?", { title: "Unsaved changes" });
+    } catch (e) {
+      // native dialog unavailable — fall back to our own modal rather than
+      // trapping the user in a window that ignores its own close button
+      toast(`Confirm dialog failed: ${e}`, true);
+      ok = (await listModal<boolean>("There are unsaved changes. Close anyway?", [
+        { label: "Close without saving", value: true },
+      ])) === true;
+    }
+    if (!ok) return;
+    store.dirty = false;
+    // destroy(), not close(): close() re-fires close-requested and only falls
+    // through because dirty was just cleared. This is the call the api itself makes.
+    try {
+      await getCurrentWindow().destroy();
+    } catch (e) {
+      toast(`Could not close the window: ${e}`, true);
     }
   })
-  .catch(() => {});
+  .catch((e) => toast(`Close guard not registered: ${e}`, true));
 
 // ---------------------------------------------------------------- boot
 
