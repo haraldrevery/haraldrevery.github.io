@@ -6,9 +6,19 @@
 #   ./healthcheck.sh --quiet    only sections that found something
 #
 # Checks:
-#   A. broken references  - src/href/srcset in HTML, url() in CSS
+#   A. broken references  - src/href/poster/srcset in HTML, url() in CSS
 #   B. case-only mismatch - works on Windows, 404s on GitHub Pages
 #   C. size budgets       - oversized images/svg, and per-page image weight
+#
+# Note on C: per-page image weight is an UPPER BOUND, not real transfer size.
+# Every srcset candidate is summed on top of the <img src>, and an image used
+# twice on a page counts twice. A browser downloads far less. Treat the number
+# as "this page is carrying too much", not as a byte count.
+#
+# Note on B: this check is only meaningful on a case-sensitive filesystem. On
+# NTFS/APFS the reference resolves and nothing is reported - which is exactly
+# the platform where wrong-cased references get created. healthcheck.ps1 does
+# the same check by comparing against the real directory listing instead.
 #
 # This script never writes, moves or deletes anything. Exit 1 if errors found.
 # Run it from the site root. Thresholds and scope are the two blocks below.
@@ -45,7 +55,26 @@ else
 fi
 
 QUIET=0
-[ "$1" = "--quiet" ] && QUIET=1
+case "$1" in
+    '')        ;;
+    --quiet)   QUIET=1 ;;
+    -h|--help)
+        printf 'usage: %s [--quiet]\n\n' "${0##*/}"
+        printf '  --quiet   print only the sections that found something\n'
+        printf '  --help    this message\n\n'
+        printf 'Thresholds can be overridden from the environment:\n'
+        printf '  IMG_MAX_KB=%s  SVG_MAX_KB=%s  PAGE_IMG_MAX_KB=%s\n' \
+               "$IMG_MAX_KB" "$SVG_MAX_KB" "$PAGE_IMG_MAX_KB"
+        exit 0 ;;
+    *)
+        printf '%s: unknown option "%s"\nusage: %s [--quiet]\n' \
+               "${0##*/}" "$1" "${0##*/}" >&2
+        exit 2 ;;
+esac
+if [ $# -gt 1 ]; then
+    printf '%s: too many arguments\nusage: %s [--quiet]\n' "${0##*/}" "${0##*/}" >&2
+    exit 2
+fi
 
 TMP=$(mktemp -d) || exit 2
 trap 'rm -rf "$TMP"' EXIT
@@ -98,14 +127,19 @@ printf '%s%d pages, %s%s\n\n' "$DIM" "$page_count" "$(echo $CSS_FILES | tr ' ' '
 : > "$TMP/refs"
 
 while IFS= read -r f; do
-    # src="..." and href="..."
-    grep -noE '(src|href)="[^"]*"' "$f" 2>/dev/null \
-      | sed -E 's/:(src|href)="/\t/; s/"$//' \
+    # src="...", href="..." and poster="..." (video thumbnails - three of them
+    # are live, and before they were listed here nothing validated them).
+    # Both quote styles: the page builder emits double quotes today, but a
+    # single-quoted attribute would otherwise drop out of the scan silently.
+    # This also picks up data-src= and xlink:href= incidentally, because -oE
+    # matches from "src="/"href=" onwards. That is harmless - leave it.
+    grep -noE "(src|href|poster)=\"[^\"]*\"|(src|href|poster)='[^']*'" "$f" 2>/dev/null \
+      | sed -E "s/:(src|href|poster)=[\"']/\t/; s/[\"']$//" \
       | awk -F'\t' -v F="$f" 'NF==2 {print F "\t" $1 "\t" $2}' >> "$TMP/refs"
 
     # srcset="a.jpg 1x, b.jpg 2x" -> one row per candidate, descriptor dropped
-    grep -noE 'srcset="[^"]*"' "$f" 2>/dev/null \
-      | sed -E 's/:srcset="/\t/; s/"$//' \
+    grep -noE "srcset=\"[^\"]*\"|srcset='[^']*'" "$f" 2>/dev/null \
+      | sed -E "s/:srcset=[\"']/\t/; s/[\"']$//" \
       | awk -F'\t' -v F="$f" 'NF==2 {
             n = split($2, parts, ",")
             for (i = 1; i <= n; i++) {
@@ -136,6 +170,30 @@ done
 : > "$TMP/missing"
 : > "$TMP/case"
 
+# resolve_ci <relative path> - echo the real on-disk path if every component
+# matches when compared case-insensitively, echo nothing otherwise.
+#
+# Called only after an exact -e test has already failed, so a hit here means
+# the reference differs from the file on disk by casing alone: fine locally,
+# a 404 on GitHub Pages. Walking component by component rather than probing
+# the basename is what lets this catch a wrong-cased *directory* - ./Photos/x
+# used to fall through to "missing file", which points at the wrong fix.
+resolve_ci() {
+    local rest=${1#./} cur=. seg hit
+    while [ -n "$rest" ]; do
+        seg=${rest%%/*}
+        if [ "$seg" = "$rest" ]; then rest=; else rest=${rest#*/}; fi
+        case "$seg" in
+            ''|.) continue ;;
+            ..)   cur=$cur/..; continue ;;
+        esac
+        hit=$(ls -A "$cur" 2>/dev/null | awk -v s="$seg" 'tolower($0) == tolower(s) { print; exit }')
+        [ -z "$hit" ] && return
+        cur=$cur/$hit
+    done
+    [ -e "$cur" ] && printf '%s\n' "$cur"
+}
+
 while IFS=$'\t' read -r f line url; do
     [ -z "$url" ] && continue
     case "$url" in
@@ -156,9 +214,11 @@ while IFS=$'\t' read -r f line url; do
     [ -e "$path" ] && continue
 
     # Exists under different casing? Fine on Windows, 404 on GitHub Pages.
-    hit=$(find "$(dirname "$path")" -maxdepth 1 -iname "$(basename "$path")" 2>/dev/null | head -1)
+    # One line per finding - section() counts findings with wc -l, so a
+    # two-line entry here reported (and charged to the error count) double.
+    hit=$(resolve_ci "$path")
     if [ -n "$hit" ]; then
-        printf '%s:%s  %s\n        -> exists as %s\n' "$f" "$line" "$url" "${hit#./}" >> "$TMP/case"
+        printf '%s:%s  %s  ->  exists as %s\n' "$f" "$line" "$url" "${hit#./}" >> "$TMP/case"
     else
         printf '%s:%s  %s\n' "$f" "$line" "$url" >> "$TMP/missing"
     fi
@@ -183,6 +243,13 @@ awk -F'\t' '{print $3}' "$TMP/refs" \
 # color_theme_app) load images from their own JS/CSS, which this script does not
 # parse. Without it, the revery_notebook background images get reported as
 # orphans when they are genuinely in use.
+#
+# Pass 2 is deliberately wider than the scan scope above: it matches a basename
+# anywhere in any source file, so an image used only by README.md, template.html
+# or test_pages/ still counts as "used" (site.png and photos/20220512_131558.jpg
+# are both in that position). That is a known, accepted over-count - it errs
+# towards not telling you to delete something. Don't "fix" it without deciding
+# what the used/orphan split is supposed to mean.
 is_referenced() {          # $1 = path like ./photos/x.jpg
     local n=${1#./}
     grep -qxF "$(echo "$n" | awk '{print tolower($0)}')" "$TMP/referenced" && return 0
@@ -231,11 +298,16 @@ while IFS= read -r f; do
         case "$rurl" in
             http://*|https://*|//*|data:*|mailto:*|tel:*|javascript:*|\#*|'') continue ;;
         esac
-        case "$rurl" in
-            *.jpg|*.jpeg|*.png|*.gif|*.webp|*.svg|*.JPG|*.JPEG|*.PNG) ;;
+        # Strip #fragment/?query first, then match the extension case-
+        # insensitively. The old order tested the raw url against a hand-listed
+        # set of case variants, so photo.JPG, foo.GIF and anything carrying a
+        # ?query silently contributed nothing to the page total. Mixed case is
+        # real here - see photos/IMG-2867.JPG.
+        c=${rurl%%\#*}; c=${c%%\?*}
+        case "${c##*.}" in
+            [jJ][pP][gG]|[jJ][pP][eE][gG]|[pP][nN][gG]|[gG][iI][fF]|[wW][eE][bB][pP]|[sS][vV][gG]) ;;
             *) continue ;;
         esac
-        c=${rurl%%\#*}; c=${c%%\?*}
         if [ "${c#/}" != "$c" ]; then p=".${c}"; else p="$(dirname "$f")/${c}"; fi
         [ -f "$p" ] && total=$(( total + $(stat -c%s "$p") ))
     done < "$TMP/refs"

@@ -65,6 +65,33 @@ or click the eleventy-win-x64.exe if on windows.
 
 If the pages don't update, delete everything inside the /notebook_pages folder and run the commands again.
 
+## Health check
+
+Before pushing, scan the site for broken image/link paths, references whose casing
+doesn't match the file on disk (these work locally but 404 on GitHub Pages), and
+oversized images. It only reads and reports - it never changes a file.
+
+On windows, be in the folder and run:
+
+```
+Just double click the "healthcheck.bat" and it will print the report.
+```
+
+On Linux, be in the folder and run:
+
+```
+chmod +x healthcheck.sh
+./healthcheck.sh
+```
+
+Add `--quiet` to print only the sections that found something, or `--help` for the
+size thresholds. Exit code is 1 when there are errors, so it can gate a deploy.
+
+Worth knowing: the casing check is the reason there are two scripts rather than one.
+Windows and macOS filesystems ignore case, so a wrong-cased reference resolves fine on
+the machine you wrote it on and only breaks once GitHub Pages serves it. Running
+`healthcheck.bat` on Windows catches it there, at the point the mistake is made.
+
 For more information, see the /information folder containing .md files. 
 
 If nothing works, install node.js and run
