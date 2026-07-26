@@ -17,7 +17,7 @@ keep using `npm start`.
 
 The binaries bundle Eleventy v3.1.2 **and** `eleventy.config.js` (with
 markdown-it, KaTeX, gray-matter). Everything else — templates, layouts in
-`eleventy_settings/`, posts, and `markdown_text/markdown_text.11tydata.js` —
+`eleventy_settings/`, posts, and `input_markdown/input_markdown.11tydata.js` —
 is read from disk on every run, so **editing content or posts never requires
 recompiling**.
 

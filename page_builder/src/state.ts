@@ -13,7 +13,7 @@ export interface Project {
   version: 1;
   meta: Meta;
   blocks: Block[];
-  // last html_extras/<slug>.html this project was exported as
+  // last input_custom_html_pages/<slug>.html this project was exported as
   exportSlug?: string;
 }
 

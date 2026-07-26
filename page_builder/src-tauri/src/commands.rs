@@ -9,6 +9,11 @@ use crate::{repo, AppState};
 
 const SITE_URL: &str = "https://haraldrevery.com";
 
+/// Repo folder that exported pages are written to (Eleventy reads it as
+/// HTML_PAGES_DIR in eleventy.config.js). Renaming that folder = change this
+/// one line and rebuild.
+const HTML_PAGES_DIR: &str = "input_custom_html_pages";
+
 fn repo_root(state: &State<AppState>) -> Result<PathBuf, String> {
     state
         .root
@@ -95,7 +100,7 @@ pub async fn locate_repo(
         .map_err(|e| format!("Invalid folder: {}", e))?;
     if !repo::validate_repo_root(&path) {
         return Err(format!(
-            "{} does not look like the site repo (needs eleventy.config.js and html_extras/)",
+            "{} does not look like the site repo (needs eleventy.config.js and eleventy_settings/)",
             path.display()
         ));
     }
@@ -425,7 +430,7 @@ pub fn export_page(
     if file_name.contains('/') || file_name.contains('\\') || !file_name.ends_with(".html") {
         return Err("Export file name must be a plain *.html name".to_string());
     }
-    let dir = repo_root(&state)?.join("html_extras");
+    let dir = repo_root(&state)?.join(HTML_PAGES_DIR);
     fs::create_dir_all(&dir).map_err(|e| format!("Cannot create {}: {e}", dir.display()))?;
     let file = dir.join(&file_name);
     let existed = file.exists();
@@ -554,7 +559,7 @@ pub struct FreshnessReport {
 
 fn load_shell_and_reference(root: &Path) -> Result<(String, String), String> {
     let shell_path = root.join("page_builder").join("shell.html");
-    let ref_path = root.join("html_extras").join(REFERENCE_PAGE);
+    let ref_path = root.join(HTML_PAGES_DIR).join(REFERENCE_PAGE);
     let shell = fs::read_to_string(&shell_path)
         .map_err(|e| format!("Cannot read {}: {}", shell_path.display(), e))?;
     let reference = fs::read_to_string(&ref_path)

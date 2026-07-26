@@ -2,9 +2,11 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 /// A directory counts as the site repo only if both markers are present,
-/// so an unrelated Eleventy project is never picked up by accident.
+/// so an unrelated Eleventy project is never picked up by accident. Both are
+/// structural (config + layouts), never a content folder — so renaming an
+/// input folder can't break repo discovery.
 fn is_repo_root(p: &Path) -> bool {
-    p.join("eleventy.config.js").is_file() && p.join("html_extras").is_dir()
+    p.join("eleventy.config.js").is_file() && p.join("eleventy_settings").is_dir()
 }
 
 fn config_file() -> Option<PathBuf> {

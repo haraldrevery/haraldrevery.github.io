@@ -526,7 +526,7 @@ async function doExport(): Promise<void> {
   }
   const remembered = store.project.exportSlug;
   const input = await promptModal(
-    "Export as html_extras/<name>.html",
+    "Export as input_custom_html_pages/<name>.html",
     remembered ?? slugify(store.meta.title),
     "The name is also the page slug (canonical URL)."
   );
@@ -686,7 +686,7 @@ function showLocateOverlay(): void {
       el(
         "p",
         { class: "hint" },
-        "Point the builder at your website folder (the one containing eleventy.config.js and html_extras/)."
+        "Point the builder at your website folder (the one containing eleventy.config.js and eleventy_settings/)."
       ),
       err,
       el(

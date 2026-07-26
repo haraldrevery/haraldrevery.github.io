@@ -7,6 +7,14 @@ const fs = require("fs");
 const path = require("path");
 const matter = require("gray-matter");
 
+// The three content input folders. Every path below goes through these, so
+// renaming an input folder is a one-line change here (plus the Tailwind globs
+// in dev.sh/dev.bat and a recompile of the standalone Eleventy binaries, which
+// bundle this file — see eleventy_binary/README.md).
+const HTML_PAGES_DIR = "./input_custom_html_pages";  // hand-written .html posts
+const MARKDOWN_DIR = "input_markdown";               // matched as a substring of inputPath
+const RELEASE_DIR = "./input_release";               // one .json/.jsonc per release
+
 // Shared slug helper (used by the "slugify" filter and the "releases" collection).
 const slugify = (str) => {
   return String(str)
@@ -18,7 +26,7 @@ const slugify = (str) => {
 };
 
 // Parse JSON that may contain // and /* */ comments and trailing commas
-// (so release_input/*.jsonc templates can be self-documenting). String-aware,
+// (so input_release/*.jsonc templates can be self-documenting). String-aware,
 // so it never touches "https://…" URLs or text inside quotes.
 const parseJsonc = (text) => {
   let out = "", inStr = false, esc = false, line = false, block = false;
@@ -128,22 +136,22 @@ module.exports = function(eleventyConfig) {
   
   eleventyConfig.setLibrary("md", markdownLibrary);
 
-  // 2. Collection: Get all posts from markdown_text folder AND html_extras folder
+  // 2. Collection: Get all posts from input_markdown folder AND input_custom_html_pages folder
   eleventyConfig.addCollection("notebook_posts", function(collectionApi) {
-    // Get markdown posts from markdown_text directory (filter out drafts)
+    // Get markdown posts from input_markdown directory (filter out drafts)
     const markdownPosts = collectionApi.getAll().filter(item => {
-        return item.inputPath.includes("markdown_text") && item.data.draft !== true;
+        return item.inputPath.includes(MARKDOWN_DIR) && item.data.draft !== true;
     });
     
-    // Get HTML files from html_extras directory (as virtual items for the collection)
+    // Get HTML files from input_custom_html_pages directory (as virtual items for the collection)
     let htmlPosts = [];
-    const htmlExtrasDir = "./html_extras";
+    const htmlPagesDir = HTML_PAGES_DIR;
     
-    if (fs.existsSync(htmlExtrasDir)) {
-      const files = fs.readdirSync(htmlExtrasDir).filter(file => file.endsWith('.html'));
+    if (fs.existsSync(htmlPagesDir)) {
+      const files = fs.readdirSync(htmlPagesDir).filter(file => file.endsWith('.html'));
       
       htmlPosts = files.map(file => {
-        const filePath = path.join(htmlExtrasDir, file);
+        const filePath = path.join(htmlPagesDir, file);
         const content = fs.readFileSync(filePath, 'utf8');
         const parsed = matter(content);
         
@@ -179,16 +187,16 @@ module.exports = function(eleventyConfig) {
     
     // Get all notebook posts (filter out drafts)
     const posts = collectionApi.getAll().filter(item => {
-      return item.inputPath.includes("markdown_text") && item.data.draft !== true;
+      return item.inputPath.includes(MARKDOWN_DIR) && item.data.draft !== true;
     });
     
-    // Also check html_extras for tags
-    const htmlExtrasDir = "./html_extras";
-    if (fs.existsSync(htmlExtrasDir)) {
-      const files = fs.readdirSync(htmlExtrasDir).filter(file => file.endsWith('.html'));
+    // Also check input_custom_html_pages for tags
+    const htmlPagesDir = HTML_PAGES_DIR;
+    if (fs.existsSync(htmlPagesDir)) {
+      const files = fs.readdirSync(htmlPagesDir).filter(file => file.endsWith('.html'));
       
       files.forEach(file => {
-        const filePath = path.join(htmlExtrasDir, file);
+        const filePath = path.join(htmlPagesDir, file);
         const content = fs.readFileSync(filePath, 'utf8');
         const parsed = matter(content);
         
@@ -219,18 +227,18 @@ module.exports = function(eleventyConfig) {
     const allTags = [];
     const tagSet = new Set();
     const allPosts = collectionApi.getAll().filter(item => {
-      return item.inputPath.includes("markdown_text") && item.data.draft !== true;
+      return item.inputPath.includes(MARKDOWN_DIR) && item.data.draft !== true;
     });
     
-    // Also check html_extras
-    const htmlExtrasDir = "./html_extras";
+    // Also check input_custom_html_pages
+    const htmlPagesDir = HTML_PAGES_DIR;
     let htmlPosts = [];
     
-    if (fs.existsSync(htmlExtrasDir)) {
-      const files = fs.readdirSync(htmlExtrasDir).filter(file => file.endsWith('.html'));
+    if (fs.existsSync(htmlPagesDir)) {
+      const files = fs.readdirSync(htmlPagesDir).filter(file => file.endsWith('.html'));
       
       htmlPosts = files.map(file => {
-        const filePath = path.join(htmlExtrasDir, file);
+        const filePath = path.join(htmlPagesDir, file);
         const content = fs.readFileSync(filePath, 'utf8');
         const parsed = matter(content);
         
@@ -310,12 +318,12 @@ module.exports = function(eleventyConfig) {
   // NEW: Filter to slugify tags for URLs
   eleventyConfig.addFilter("slugify", slugify);
 
-  // Collection: music releases generated from JSON files in release_input/.
+  // Collection: music releases generated from JSON files in input_release/.
   // Each JSON becomes one page at release/<slug>.html (via eleventy_njk/release.njk)
   // and one tile on the discography index (discography.html via eleventy_njk/discography.njk).
   // Files prefixed with "_" are skipped (a simple draft mechanism).
   eleventyConfig.addCollection("releases", function() {
-    const dir = "./release_input";
+    const dir = RELEASE_DIR;
     if (!fs.existsSync(dir)) return [];
     return fs.readdirSync(dir)
       .filter(f => (f.endsWith(".json") || f.endsWith(".jsonc")) && !f.startsWith("_"))
@@ -362,7 +370,7 @@ module.exports = function(eleventyConfig) {
   eleventyConfig.addGlobalData("buildDate", () => new Date());
 
   // JSON-LD for a single release page (eleventy_njk/release.njk). Returns a
-  // script-safe MusicAlbum string built entirely from the release_input JSON,
+  // script-safe MusicAlbum string built entirely from the input_release JSON,
   // linked to the canonical artist entity via byArtist @id. Emit with `| safe`.
   eleventyConfig.addFilter("musicAlbumLd", (release) => {
     const url = SITE_ORIGIN + release.url;
@@ -495,7 +503,7 @@ module.exports = function(eleventyConfig) {
     return html + "</ul>";
   });
 
-  // 5. Process and copy html_extras files to notebook_pages (strip frontmatter)
+  // 5. Process and copy input_custom_html_pages files to notebook_pages (strip frontmatter)
   eleventyConfig.on('eleventy.before', async () => {
     const outputDir = './notebook_pages';
     
@@ -504,13 +512,13 @@ module.exports = function(eleventyConfig) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
     
-    // Process HTML files from html_extras
-    const htmlExtrasDir = './html_extras';
-    if (fs.existsSync(htmlExtrasDir)) {
-      const files = fs.readdirSync(htmlExtrasDir).filter(file => file.endsWith('.html'));
+    // Process HTML files from input_custom_html_pages
+    const htmlPagesDir = HTML_PAGES_DIR;
+    if (fs.existsSync(htmlPagesDir)) {
+      const files = fs.readdirSync(htmlPagesDir).filter(file => file.endsWith('.html'));
       
       files.forEach(file => {
-        const inputPath = path.join(htmlExtrasDir, file);
+        const inputPath = path.join(htmlPagesDir, file);
         const content = fs.readFileSync(inputPath, 'utf8');
         
         // Parse with gray-matter to separate frontmatter from content

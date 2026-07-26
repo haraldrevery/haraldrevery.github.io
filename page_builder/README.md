@@ -2,7 +2,7 @@
 
 Desktop app (Tauri v2) for building Notebook pages visually — a live, click-to-edit
 preview that renders with the **real site CSS/JS**, exporting finished pages into
-`html_extras/` where Eleventy picks them up.
+`input_custom_html_pages/` where Eleventy picks them up.
 
 Successor to the earlier tkinter builder.
 
@@ -133,7 +133,7 @@ an image grid is one pick.
 ## Projects & export
 
 - **Save/Open**: projects are JSON in `projects/` (committed with the repo).
-- **Export**: writes front matter + full HTML to `html_extras/<slug>.html`
+- **Export**: writes front matter + full HTML to `input_custom_html_pages/<slug>.html`
   (asks before overwriting). Then run the Eleventy build as usual — the page is
   copied to `notebook_pages/` and indexed on the Notebook. `Draft` pages are
   skipped by the build.
@@ -181,7 +181,7 @@ for confirmation if warnings remain:
 ## shell.html staleness
 
 `shell.html` here is the page boilerplate (head/SEO/nav/footer), originally
-extracted from `html_extras/galdhopiggen.html`. On start the app compares its
+extracted from `input_custom_html_pages/galdhopiggen.html`. On start the app compares its
 `<nav>`, `<footer>` and head asset links against that reference page and shows
 a ⚠ badge with a diff + one-click **Adopt from reference** if the site's chrome
 has changed. (If galdhopiggen.html itself gets retired, change `REFERENCE_PAGE`

@@ -58,7 +58,7 @@ Two separate build tools, deliberately kept independent:
 | Tool | Input | Output |
 |---|---|---|
 | **Tailwind** (standalone binary) | `input.css`, `input_prose.css`, `theme.css` | `main.css`, `main_max.css`, `prose.css`, `prose_max.css` |
-| **Eleventy** (standalone binary or Node) | `.njk` templates, `markdown_text/`, `html_extras/`, `release_input/` | `notebook.html`, `notebook_pages/`, `discography.html`, `release/`, `sitemap.xml` |
+| **Eleventy** (standalone binary or Node) | `.njk` templates, `input_markdown/`, `input_custom_html_pages/`, `input_release/` | `notebook.html`, `notebook_pages/`, `discography.html`, `release/`, `sitemap.xml` |
 
 Hand-written pages (`index.html`, `music.html`, `about.html`, `contact.html`,
 `download.html`, `legal.html`, `404.html`) are **not** touched by Eleventy —
@@ -122,10 +122,10 @@ website_v2_123/
 │   ├── release.njk                          #   one page per release
 │   └── sitemap.njk                          #   sitemap.xml
 │
-├── markdown_text/                           # SOURCE: markdown notebook posts
-│   └── markdown_text.11tydata.js            #   draft handling + auto permalink/layout
-├── html_extras/                             # SOURCE: hand-built HTML notebook posts
-├── release_input/                           # SOURCE: one .json/.jsonc per release
+├── input_markdown/                          # SOURCE: markdown notebook posts
+│   └── input_markdown.11tydata.js           #   draft handling + auto permalink/layout
+├── input_custom_html_pages/                 # SOURCE: hand-built HTML notebook posts
+├── input_release/                           # SOURCE: one .json/.jsonc per release
 ├── notebook_templates/                      # Tailwind class mirror (see CSS section)
 │
 ├── input.css  → main.css / main_max.css     # site CSS (Tailwind source → build)
@@ -142,7 +142,7 @@ website_v2_123/
 │   audio/, video/, svg/, graphics/,
 │   artcover/, notebook_thumbnails/
 │
-├── page_builder/                            # Tauri app: build html_extras pages
+├── page_builder/                            # Tauri app: builds custom HTML pages
 ├── revery_notebook/                         # standalone markdown editor
 ├── color_theme_app/                         # standalone color theme tool
 ├── eleventy_binary/                         # compile scripts for the binaries
@@ -190,7 +190,7 @@ binaries — only a change to `eleventy.config.js` or the npm dependencies does.
 
 ### Markdown (the normal way)
 
-Create `markdown_text/my-post.md`:
+Create `input_markdown/my-post.md`:
 
 ```markdown
 ---
@@ -210,7 +210,7 @@ Inline math \(e^{i\pi} + 1 = 0\) and display math:
 \[ \int_0^\infty e^{-x^2}\,dx = \frac{\sqrt{\pi}}{2} \]
 ```
 
-**`permalink` and `layout` are NOT needed** — `markdown_text.11tydata.js`
+**`permalink` and `layout` are NOT needed** — `input_markdown.11tydata.js`
 computes them automatically (`notebook_pages/<fileslug>.html`, `post.njk`).
 Do not add them by hand.
 
@@ -233,7 +233,7 @@ build time: `<h2>`/`<h3>` get unique `id`s and a nested outline panel appears,
 toggled by a pure-CSS checkbox in the corner. No JavaScript. It hides itself
 automatically on posts with fewer than 2 headings.
 
-### HTML posts (`html_extras/`)
+### HTML posts (`input_custom_html_pages/`)
 
 For interactive pages (graphs, clocks, galleries) that need real markup. Write
 a full HTML body with YAML frontmatter on top; on build, Eleventy's
@@ -243,13 +243,13 @@ a full HTML body with YAML frontmatter on top; on build, Eleventy's
 Easiest route: use the **page builder** (`page_builder/`) — a desktop app with
 a live click-to-edit preview that renders in the real site CSS. It assembles a
 page from blocks (text, galleries, image, video, audio), picks media from the
-repo, and exports straight into `html_extras/`.
+repo, and exports straight into `input_custom_html_pages/`.
 
 ---
 
 ## Publishing a music release
 
-Drop one file per release in `release_input/`. Copy `_template.jsonc` (every
+Drop one file per release in `input_release/`. Copy `_template.jsonc` (every
 field is documented inline), drop the leading underscore, rename it.
 
 Each release generates:
@@ -259,12 +259,12 @@ Each release generates:
 Required fields: `type` (`Single`/`EP`/`Album`), `name`, `date`, `artcover`,
 `artcoverMin`. Everything else (`streaming`, `tracklist`, `audio`, `video`,
 `genres`, `about`, …) renders only when present. Full reference:
-`release_input/README.txt`.
+`input_release/README.txt`.
 
 `.jsonc` files may contain `//` comments and trailing commas — the config's
 own string-aware parser strips them, so `https://…` URLs are never harmed.
 
-> **Note:** `release_input/README.txt` says the grid lands at
+> **Note:** `input_release/README.txt` says the grid lands at
 > `release/index.html`. That is stale — it is actually **`discography.html`**.
 
 ---
@@ -273,9 +273,9 @@ own string-aware parser strips them, so `https://…` URLs are never harmed.
 
 | Content type | How to mark a draft | Result |
 |---|---|---|
-| `markdown_text/*.md` | `draft: true` in frontmatter | no page rendered; excluded from index, tag pages, sitemap |
-| `html_extras/*.html` | `draft: true` in frontmatter | not copied to `notebook_pages/`; excluded from collections |
-| `release_input/*` | prefix filename with `_` | skipped by the releases collection |
+| `input_markdown/*.md` | `draft: true` in frontmatter | no page rendered; excluded from index, tag pages, sitemap |
+| `input_custom_html_pages/*.html` | `draft: true` in frontmatter | not copied to `notebook_pages/`; excluded from collections |
+| `input_release/*` | prefix filename with `_` | skipped by the releases collection |
 
 Draft source files **stay tracked in git** so you can keep working on them —
 set `draft: false` (or remove the line) to publish.
@@ -302,7 +302,7 @@ deploy a tree left over from a serve session without a clean rebuild first.
 The Tailwind content globs in `dev.sh`/`dev.bat` are:
 
 ```
-./*.html, ./html_extras/**/*.{html,md}, ./notebook_templates/**/*.{html,md}
+./*.html, ./input_custom_html_pages/**/*.{html,md}, ./notebook_templates/**/*.{html,md}
 ```
 
 They **do not include `eleventy_njk/*.njk`**. So a class that exists only
@@ -392,7 +392,7 @@ The Tailwind and Eleventy binaries are gitignored (GitHub's 100 MB file limit)
 
 | Folder | What it is |
 |---|---|
-| `page_builder/` | Tauri v2 + TypeScript desktop app that assembles notebook pages from content blocks and exports to `html_extras/`. Prebuilt as `page_builder_app` at the repo root. See its README. |
+| `page_builder/` | Tauri v2 + TypeScript desktop app that assembles notebook pages from content blocks and exports to `input_custom_html_pages/`. Prebuilt as `page_builder_app` at the repo root. See its README. |
 | `revery_notebook/` | Standalone markdown editor (CodeMirror, markdown-it, KaTeX, highlight.js, DOMPurify) for drafting posts. |
 | `color_theme_app/` | Standalone React tool for picking and generating theme colors. |
 | `eleventy_binary/` | `compile.sh` + `build.mjs` — cross-compiles both Eleventy binaries with Bun. |
@@ -419,7 +419,7 @@ chmod +x eleventy-linux-x64 tailwindcss-linux-x64 dev.sh
 **A post doesn't show on the notebook index**
 Check `draft: true` isn't set; check the frontmatter is valid YAML between
 `---` fences; check `date` is `YYYY-MM-DD`; check the file is in
-`markdown_text/` or `html_extras/`.
+`input_markdown/` or `input_custom_html_pages/`.
 
 **A release doesn't show**
 Filename starts with `_` (that's the draft mechanism), or the JSON is invalid —
@@ -455,7 +455,7 @@ For reference, the ways the `*_sonnet_generated*.md` files are now wrong:
 7. **Templates are split across two folders** — `eleventy_settings/` (layouts)
    and `eleventy_njk/` (page generators). The old docs only knew the first, and
    listed `blog.njk`/`blog-tag.njk` in the wrong one.
-8. **The whole releases/discography pipeline is new** (`release_input/`,
+8. **The whole releases/discography pipeline is new** (`input_release/`,
    `release.njk`, `discography.njk`, JSON-LD filters).
 9. **`sitemap.xml` is generated now**, and there's a draft system, a build-time
    article outline, and KaTeX math — none of which existed in February.

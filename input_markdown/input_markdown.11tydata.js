@@ -1,4 +1,4 @@
-// Directory data for markdown_text/ notebook posts.
+// Directory data for input_markdown/ notebook posts.
 //
 // A post with `draft: true` is IGNORED by Eleventy: no page is rendered to
 // notebook_pages/, and it is left out of every collection (so it never appears

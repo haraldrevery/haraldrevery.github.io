@@ -1,8 +1,8 @@
 /*
  * Markdown pipeline — MUST stay an exact mirror of the site's Eleventy setup
  * (eleventy.config.js, "1. Markdown Library Settings"). Exported pages bypass
- * Eleventy's markdown engine (html_extras files are copied verbatim), so this
- * is what guarantees paragraphs/math/links come out identical to markdown_text
+ * Eleventy's markdown engine (input_custom_html_pages files are copied verbatim), so this
+ * is what guarantees paragraphs/math/links come out identical to input_markdown
  * posts. If the Eleventy config changes, change this file the same way.
  *
  * KaTeX output is "mathml": math becomes native MathML at build time, so the

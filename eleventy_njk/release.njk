@@ -21,7 +21,7 @@ eleventyExcludeFromCollections: true
     <link rel="stylesheet" href="/prose.css">
 
     <!-- ====================================================================== -->
-    <!-- Page title + SEO (generated from release_input/*.json)                 -->
+    <!-- Page title + SEO (generated from input_release/*.json)                 -->
     <!-- ====================================================================== -->
     <title>Harald Revery - {{ release.name }}</title>
     <meta name="description" content="{{ release.introduction }}">
@@ -41,7 +41,7 @@ eleventyExcludeFromCollections: true
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://haraldrevery.com{{ release.url | cleanUrl }}">
 
-    <!-- Structured data (MusicAlbum) generated from release_input/*.json -->
+    <!-- Structured data (MusicAlbum) generated from input_release/*.json -->
     <script type="application/ld+json">{{ release | musicAlbumLd | safe }}</script>
 
     <!-- Internet icon -->
