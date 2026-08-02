@@ -34,6 +34,65 @@ tries to load `devUrl` and shows "Could not connect to localhost".
 Copy the result to the repo root as `page_builder_v2_app` (the obvious name
 `page_builder_app_v2` is taken by this source folder).
 
+### Building the Windows .exe
+
+Build it **natively on the Windows machine**. Cross-compiling from Linux is
+possible with `cargo-xwin` + clang/lld, but it is fiddly, needs the Windows SDK
+headers pulled down separately, and produces a binary nobody can smoke-test on
+the machine that built it.
+
+**One-time setup** (each installer is a normal wizard; accept the defaults):
+
+1. **Rust** — [rustup.rs](https://rustup.rs). Take the default `x86_64-pc-windows-msvc`
+   toolchain. It will offer to install the Visual Studio C++ Build Tools; say
+   yes — the linker will not work without them.
+2. **Bun** — [bun.sh](https://bun.sh), or in PowerShell:
+   `powershell -c "irm bun.sh/install.ps1 | iex"`
+3. **WebView2** — already on Windows 10 and 11. Nothing to do.
+
+Close and reopen the terminal afterwards so `cargo` and `bun` are on PATH.
+Check with `cargo --version` and `bun --version`.
+
+**Every build** — from the repo root, in `cmd` or PowerShell:
+
+```bat
+cd page_builder_app_v2
+bun install
+bunx tauri build --no-bundle
+copy src-tauri\target\release\page_builder_v2.exe ..\page_builder_v2_app.exe
+```
+
+- `bun install` is required: `node_modules/` is gitignored, though `bun.lock`
+  and `Cargo.lock` are committed, so you get the same dependency versions as the
+  Linux build.
+- The first Rust build compiles every dependency and takes a few minutes.
+  Later builds are seconds.
+- `--no-bundle` skips the MSI/NSIS installer. This is a plain portable .exe;
+  `bundle.active` is false in `tauri.conf.json` anyway.
+- The .exe is named after `productName` in `tauri.conf.json`
+  (`page_builder_v2`), which is why the copy renames it — the repo root uses
+  `page_builder_v2_app.exe`, matching the Linux `page_builder_v2_app` and v1's
+  `page_builder_app.exe`.
+
+**Check it works:** double-click `page_builder_v2_app.exe` at the repo root. It
+should find the repo automatically (it looks for `eleventy.config.js` +
+`eleventy_settings/` in its own ancestors) and open with the block palette on
+the left. If it asks you to locate the folder, point it at the repo once and it
+remembers.
+
+Then commit it — both binaries live at the repo root, ~7 MB each:
+
+```bat
+git add ..\page_builder_v2_app.exe
+```
+
+Everything else is OS-agnostic. Paths are stored repo-relative and the export
+pipeline is pure string work, so a page exported on Windows is byte-identical to
+one exported on Linux.
+
+**To run the dev app instead** (`bunx tauri dev`): it serves on port 5174, so v1
+on 5173 can run at the same time.
+
 ## Why the rewrite
 
 v1 hand-rolled its editor: a 759-line string-concatenating renderer, 738 lines of
@@ -244,8 +303,8 @@ is what matters.
 
 ## Known gaps
 
-- **No Windows binary yet.** v1 ships `page_builder_app.exe`; v2 is Linux-only
-  until someone runs `bunx tauri build --no-bundle` on Windows.
+- **No Windows binary committed yet** — v1 ships `page_builder_app.exe`, v2 does
+  not. See "Building the Windows .exe" above; it has to be built on Windows.
 - **The preview is not the page.** It omits nav, footer, GLightbox and all
   scripts by design (see "How it works"). Fonts, dark mode, lightbox behaviour
   and the entry animations can only be confirmed by opening a built page in a
