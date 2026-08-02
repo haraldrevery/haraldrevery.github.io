@@ -24,6 +24,7 @@ import {
   Icons, Faq, Downloads,
   type IconsProps, type FaqProps, type DownloadsProps,
 } from "./components/Lists";
+import { Featured, type FeaturedProps } from "./components/Featured";
 import { IconItemsEditor, DownloadItemsEditor } from "./fields/ListEditors";
 import { GalleryItemsEditor } from "./fields/GalleryItemsEditor";
 import { pathField, imageField, EMPTY_IMAGE } from "./fields/mediaField";
@@ -34,6 +35,7 @@ export interface Components {
   Heading: HeadingProps;
   Gallery: GalleryProps;
   Image: ImageProps;
+  Featured: FeaturedProps;
   Svg: SvgProps;
   Video: VideoProps;
   Audio: AudioProps;
@@ -53,7 +55,10 @@ export const EMBEDDABLE: string[] = [
 ];
 // Deliberately NOT embeddable: Columns (nesting columns in columns has no
 // markup in the site's vocabulary), Divider (a rule inside a narrow column
-// reads as an accident), and Downloads (the hash table needs full width).
+// reads as an accident), Downloads (the hash table needs full width), and
+// Featured (BlockShell emits NO wrapper when nested, so the card class — and
+// with it the entire overlapping grid — would silently vanish; nothing else
+// catches that, so this comment is the guard).
 
 const animateField = {
   type: "radio" as const,
@@ -286,6 +291,32 @@ export const config: Config<{ components: Components; root: RootProps }> = {
         image: EMPTY_IMAGE, alt: "", caption: "", lightbox: true, widthPct: 100, spacing: "normal",
       },
       render: Image,
+    },
+
+    Featured: {
+      label: "Featured dispatch (photo + panel)",
+      fields: {
+        image: imageField("photos", "Photo"),
+        alt: { type: "text", label: "Alt text" },
+        tag: { type: "text", label: "Tag (small mono label)" },
+        title: { type: "text", label: "Title" },
+        excerpt: { type: "textarea", label: "Excerpt" },
+        lightbox: onOff("Open photo in lightbox"),
+        photoSide: {
+          type: "radio",
+          label: "Photo side (desktop)",
+          options: [
+            { label: "Left", value: "left" },
+            { label: "Right", value: "right" },
+          ],
+        },
+        spacing: spacingField,
+      },
+      defaultProps: {
+        image: EMPTY_IMAGE, alt: "", tag: "", title: "", excerpt: "",
+        lightbox: true, photoSide: "left", spacing: "normal",
+      },
+      render: Featured,
     },
 
     Svg: {

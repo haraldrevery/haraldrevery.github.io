@@ -36,6 +36,13 @@ function sample(type: BlockType) {
       Text: { md: "Some **bold** and $x^2$" },
       Gallery: { items: [img] },
       Image: { image: { full: img.full, thumb: img.thumb }, alt: "a", caption: "c" },
+      // photoSide "right" so the flip co-class is covered by the class guard
+      // too — the default ("left") adds no class of its own, so nothing is lost.
+      Featured: {
+        image: { full: img.full, thumb: img.thumb },
+        alt: "a", tag: "Dispatch", title: "A featured dispatch",
+        excerpt: "One paragraph of standfirst copy.", photoSide: "right",
+      },
       Svg: { src: "/svg/test.svg", alt: "s" },
       Video: { src: "/video/a.mp4", poster: "/photos/a.jpg", caption: "c" },
       Audio: { src: "/audio/a.mp3", title: "T" },

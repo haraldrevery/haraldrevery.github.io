@@ -113,8 +113,12 @@ export async function revalidateThumbs(data: Data, config: Config): Promise<void
   const items: Imageish[] = [];
   visitComponents(data, config, ({ type, props }) => {
     if (type === "Gallery") items.push(...((props.items ?? []) as GalleryItem[]));
-    // The Image block keeps {full, thumb} as ONE prop (see fields/mediaField.tsx).
-    else if (type === "Image" && props.image) items.push(props.image as Imageish);
+    // The Image and Featured blocks keep {full, thumb} as ONE prop (see
+    // fields/mediaField.tsx), so a _min twin generated after the photo was
+    // linked gets adopted for both on the next open or export.
+    else if ((type === "Image" || type === "Featured") && props.image) {
+      items.push(props.image as Imageish);
+    }
   });
   if (items.length) await recheckImages(items);
 }

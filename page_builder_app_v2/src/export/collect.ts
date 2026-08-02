@@ -147,6 +147,13 @@ export function collectStats(data: Data, config: Config): PageStats {
         // travel together. See fields/mediaField.tsx.
         if (props.image?.full) images.push({ src: props.image.full, alt: props.alt ?? "" });
         break;
+      case "Featured":
+        // Same one-prop {full, thumb} shape as Image. The photo is the block's
+        // whole point, so it belongs in the JSON-LD image list. The eyebrow
+        // `tag` is a label, not prose, so it is deliberately not counted.
+        if (props.image?.full) images.push({ src: props.image.full, alt: props.alt ?? "" });
+        words += countWords(props.title) + countWords(props.excerpt);
+        break;
       case "Faq":
         for (const it of props.items ?? []) faq.push({ q: it.q, a: it.a });
         break;
@@ -185,6 +192,10 @@ export function collectA11yIssues(
       }
     }
     if (type === "Image" && props.image?.full) {
+      totalImages++;
+      if (!(props.alt || "").trim()) missingAlt++;
+    }
+    if (type === "Featured" && props.image?.full) {
       totalImages++;
       if (!(props.alt || "").trim()) missingAlt++;
     }

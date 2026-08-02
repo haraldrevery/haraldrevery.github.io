@@ -3091,3 +3091,149 @@ iframe.wait-autoplay {
   .track:first-child { border-top-color: rgba(255, 255, 255, 0.12); }
 }
 
+
+
+/* ---- Featured dispatch (page-builder "Featured" block) ---------------
+   A photo with the frosted preview panel overlapping its inner edge.
+
+   THE OVERLAP IS OVERLAPPING GRID CELLS, NOT A NEGATIVE MARGIN.
+   The card is a 12-column grid; on desktop the photo takes columns 1-8 and
+   the panel columns 6-13, both in grid ROW 1, so they share columns 6-7.
+   Why that rather than position:absolute or a negative margin: an
+   overlapping grid item STILL SIZES ITS ROW. The section is therefore
+   always as tall as the taller of photo and panel, so a long title grows
+   the panel and the section grows with it. An absolutely positioned panel
+   would spill out of the bottom of the <section> onto the next block —
+   which has no top margin to absorb it, by the one-gap-per-block rule.
+
+   The panel is a CO-CLASS on .preview-card: padding, radius, border,
+   background and the dark override all come from there. Only what the
+   overlap itself needs is set here.
+
+   Zero JS, zero container queries: one grid, one breakpoint.
+   ---------------------------------------------------------------- */
+.featured-card {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  align-items: center;
+}
+
+/* This is an <a class="glightbox"> when a photo is picked, so it needs
+   display:block. GLightbox binds to the .glightbox class (see
+   javascript/glightbox_settings.js) and the shell already loads it. */
+.featured-card__media {
+  display: block;
+  grid-column: 1 / -1;
+  grid-row: 1;
+  min-width: 0;
+  border-radius: 1rem;           /* matches .preview-card's radius */
+  overflow: hidden;
+  aspect-ratio: 4 / 3;           /* reads best full-width on a phone */
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.featured-card__media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Gentler than .portfolio-item's scale-110: this photo is large and sits
+     under a frosted panel, so a big scale shifts the composition under the
+     overlap. Just enough to say "this opens". */
+  transition: transform 700ms cubic-bezier(0.2, 1, 0.3, 1);
+}
+
+a.featured-card__media:hover img {
+  transform: scale(1.03);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .featured-card__media img { transition: none; }
+  a.featured-card__media:hover img { transform: none; }
+}
+
+.featured-card__panel {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  min-width: 0;
+  position: relative;
+  z-index: 2;                    /* paints over the photo … */
+  margin-top: -2.75rem;          /* … and is pulled up over its bottom edge */
+  box-shadow: 0 22px 45px -22px rgba(0, 0, 0, 0.45);
+  /* Mobile blur clamp, in the spirit of the .backdrop-blur-* guards already
+     in input.css: 20px of blur over a full-bleed photo is the most expensive
+     paint on a phone. Mobile-first, so no max-width query is needed. */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* No photo picked: the panel is the only child, so drop the pull-up rather
+   than hoisting it up over the PREVIOUS block. Pure CSS state — no second
+   class for the component to keep in sync. */
+.featured-card__panel:first-child {
+  grid-row: 1;
+  margin-top: 0;
+}
+
+.featured-card__eyebrow {
+  margin: 0;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow, 0.3em);
+  opacity: 0.5;
+}
+
+.featured-card__title {
+  margin: 0.85rem 0 0;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 0.98;
+  /* .release-hero__title's recipe, one register down: this lives inside a
+     panel, not across a full-bleed hero. */
+  font-size: clamp(1.85rem, 5.5vw, 2.75rem);
+  overflow-wrap: break-word;     /* with min-width:0 above, no word can spill */
+}
+
+.featured-card__excerpt {
+  margin: 1.1rem 0 0;
+  font-size: 1.05rem;
+  line-height: var(--leading-body, 1.5);
+  opacity: 0.7;
+  max-width: 34rem;
+}
+
+
+@media (min-width: 768px) {
+  /* The overlap: both items in ROW 1, sharing columns 6 and 7. */
+  .featured-card__media {
+    grid-column: 1 / 8;
+    grid-row: 1;
+    aspect-ratio: 3 / 2;         /* cinematic once it is only 7/12 wide */
+  }
+  .featured-card__panel {
+    grid-column: 6 / -1;
+    grid-row: 1;
+    margin-top: 0;
+    /* Beats .preview-card{padding:2rem} by source order — same specificity,
+       later in the file. A display title needs the room. */
+    padding: 2.25rem 2.5rem;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  /* Photo on the right: swap the two column spans. Nothing else changes —
+     the text stays left-aligned and the shadow is side-agnostic. */
+  .featured-card-flip .featured-card__media { grid-column: 6 / -1; }
+  .featured-card-flip .featured-card__panel { grid-column: 1 / 8; }
+
+  /* LAST in this block on purpose: (0,2,0), the same specificity as the flip
+     rules above, so source order is what makes it win. */
+  .featured-card__panel:first-child { grid-column: 2 / 12; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .featured-card__media { background: rgba(255, 255, 255, 0.06); }
+  .featured-card__panel { box-shadow: 0 26px 55px -26px rgba(0, 0, 0, 0.8); }
+}
