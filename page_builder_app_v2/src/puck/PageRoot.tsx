@@ -23,7 +23,8 @@
  * content through contentConfig (passthrough root) and the hero separately.
  */
 import type { ReactNode } from "react";
-import { Hero, type HeroProps } from "./components/Hero";
+import { Hero, staticHeader, type HeroProps } from "./components/Hero";
+import { humanDate } from "../export/export";
 import { EMPTY_IMAGE } from "./fields/mediaField";
 
 export type SchemaChoice = "auto" | "blogposting" | "article" | "imagegallery" | "faqpage";
@@ -78,14 +79,24 @@ export const DEFAULT_HERO: HeroProps = {
 };
 
 export function PageRoot({
+  meta,
   hasHero,
   hero,
   children,
 }: Partial<RootProps> & { children?: ReactNode }) {
+  const m = { ...DEFAULT_META, ...meta };
   return (
     <div className="bg-topology-map">
       {hasHero && <Hero {...{ ...DEFAULT_HERO, ...hero }} id="hero" />}
-      <div className="page-container pt-24 pb-12 extra_fade_effect">{children}</div>
+      <div className="page-container pt-24 pb-12 extra_fade_effect">
+        {/* Mirrors the {{BACKLINK}} slot so the editor shows the same header the
+            export writes — otherwise a hero-less page looks title-less here and
+            gains a title on publish. */}
+        {!hasHero && (
+          <div dangerouslySetInnerHTML={{ __html: staticHeader(m, humanDate(m.date)) }} />
+        )}
+        {children}
+      </div>
     </div>
   );
 }

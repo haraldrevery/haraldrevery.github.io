@@ -147,8 +147,10 @@ export function SvgFigure(f: SvgFields) {
 }
 
 export function Svg({ spacing, puck, ...f }: SvgProps) {
-  if (!f.src && puck?.isEditing) {
-    return <EmptyHint label="No SVG — pick a file in the sidebar" />;
+  if (!f.src) {
+    // An un-themed Svg with no file would emit `<img src="">`; a themed one
+    // would publish its "[SVG — pick a file]" placeholder text.
+    return puck?.isEditing ? <EmptyHint label="No SVG — pick a file in the sidebar" /> : <></>;
   }
   return (
     <BlockShell spacing={spacing}>
@@ -168,8 +170,11 @@ export interface VideoProps {
 }
 
 export function Video({ src, poster, caption, spacing, puck }: VideoProps) {
-  if (!src && puck?.isEditing) {
-    return <EmptyHint label="No video — pick a file in the sidebar" />;
+  if (!src) {
+    // Emit NOTHING rather than an empty player. v1 shipped
+    // `<source src="">` here, which makes the browser re-request the whole
+    // page — see the same reasoning in Image.
+    return puck?.isEditing ? <EmptyHint label="No video — pick a file in the sidebar" /> : <></>;
   }
   const cap = (caption || "").trim();
   return (
@@ -198,8 +203,8 @@ export interface AudioProps {
 }
 
 export function Audio({ src, title, panel, spacing, puck }: AudioProps) {
-  if (!src && puck?.isEditing) {
-    return <EmptyHint label="No audio — pick a file in the sidebar" />;
+  if (!src) {
+    return puck?.isEditing ? <EmptyHint label="No audio — pick a file in the sidebar" /> : <></>;
   }
 
   const body = panel ? (

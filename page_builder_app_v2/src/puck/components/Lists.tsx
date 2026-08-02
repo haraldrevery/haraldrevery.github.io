@@ -41,7 +41,7 @@ export function Icons({ size, label, items, spacing, puck }: IconsProps) {
   const sizeStyle = size === "large" ? { width: "2.5rem", height: "2.5rem" } : undefined;
 
   const links = list.map((it, i) => {
-    const external = /^https?:\/\//.test(it.href);
+    const external = /^https?:\/\//.test(it.href ?? "");
     const text = it.src ? getSvgText(it.src) : undefined;
     return (
       <a
@@ -74,7 +74,7 @@ export function Icons({ size, label, items, spacing, puck }: IconsProps) {
   // file uses it, so it may not be in the compiled css.
   return (
     <BlockShell spacing={spacing}>
-      {label.trim() ? (
+      {(label ?? "").trim() ? (
         <>
           <p className="font-mono text-xs uppercase opacity-50 mb-4" style={{ letterSpacing: "0.3em" }}>
             {label}
@@ -115,7 +115,10 @@ export interface FaqProps {
  * cannot collide — clicking one question would otherwise open the other's answer.
  */
 export function Faq({ items, spacing, id, puck }: FaqProps) {
-  const list = (items ?? []).filter((it) => it.q.trim() || it.a.trim());
+  // Defensive on purpose: a component must survive props it did not expect.
+  // Puck's array field appends a blank item, and a hand-edited or older project
+  // file can be missing any field.
+  const list = (items ?? []).filter((it) => (it?.q ?? "").trim() || (it?.a ?? "").trim());
   if (list.length === 0 && puck?.isEditing) {
     return <EmptyHint label="No questions — add some in the sidebar" />;
   }
@@ -135,7 +138,7 @@ export function Faq({ items, spacing, id, puck }: FaqProps) {
               className="faq-question block p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-medium text-zinc-900 dark:text-white pr-8">{it.q}</h3>
+                <h3 className="text-xl font-medium text-zinc-900 dark:text-white pr-8">{it.q ?? ""}</h3>
                 <span className="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">
                   +
                 </span>
@@ -144,7 +147,7 @@ export function Faq({ items, spacing, id, puck }: FaqProps) {
             <div className="faq-answer">
               <div
                 className="p-4 text-zinc-800 dark:text-zinc-200"
-                dangerouslySetInnerHTML={{ __html: renderMarkdown(it.a) }}
+                dangerouslySetInnerHTML={{ __html: renderMarkdown(it.a ?? "") }}
               />
             </div>
           </div>

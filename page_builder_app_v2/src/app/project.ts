@@ -11,8 +11,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { Data } from "@measured/puck";
 import { config } from "../puck/config";
-import { exportText, slugify } from "../export/export";
-import { renderExportContent, renderExportHero } from "../export/renderExport";
+import { exportText, slugify, humanDate } from "../export/export";
+import { renderExportContent, renderExportHero, renderExportHeader } from "../export/renderExport";
 import { lintPage, type LintIssue } from "../export/lint";
 import { collectSvgSrcs } from "../export/collect";
 import { revalidateThumbs, refreshDownloadHashes, type HashReport } from "../export/fixups";
@@ -127,13 +127,19 @@ export async function buildExport(
   const slug = slugOverride?.trim() || slugify(root.meta?.title ?? "");
 
   const heroHtml = renderExportHero(data);
+  const headerHtml = renderExportHeader(data, humanDate);
   const contentHtml = renderExportContent(data);
 
   const contents = exportText({
-    shell, data, config, siteUrl, slug, heroHtml, contentHtml,
+    shell, data, config, siteUrl, slug, heroHtml, contentHtml, headerHtml,
   });
 
-  const issues = lintPage({ data, config, html: `${heroHtml}\n${contentHtml}` });
+  // The header's <h1> is part of the outline, so the check must see it in the
+  // same order the page renders: hero, then header, then content.
+  const issues = lintPage({
+    data, config,
+    html: `${heroHtml}\n${headerHtml}\n${contentHtml}`,
+  });
 
   return { slug, fileName: `${slug}.html`, contents, issues };
 }

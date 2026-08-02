@@ -14,7 +14,8 @@ import {
   frontmatterYaml, slugify, humanDate, splitTags,
   resolveSchemaType, jsonld, assembleDocument, exportText,
 } from "../src/export/export";
-import { renderExportContent, renderExportHero } from "../src/export/renderExport";
+import { renderExportContent, renderExportHero, renderExportHeader } from "../src/export/renderExport";
+import { lintPage } from "../src/export/lint";
 
 const SITE = "https://haraldrevery.com";
 const shell = readFileSync(new URL("../shell.html", import.meta.url).pathname, "utf8");
@@ -195,5 +196,90 @@ describe("exportText", () => {
     expect(out.startsWith("---\n")).toBe(true);
     const end = out.indexOf("\n---\n", 4) + 5;
     expect(out.slice(end).trimStart().startsWith("<!DOCTYPE")).toBe(true);
+  });
+});
+
+describe("a page with no hero still gets a title", () => {
+  // Markdown posts get their title from eleventy_settings/post.njk:29-36.
+  // Builder pages ARE the whole document and bypass that layout, so without
+  // this the h1 lived only in the hero and a hero-less page had no title at all.
+  const build = (data: Data, slug = "t") =>
+    assembleDocument({
+      shell, data, config, siteUrl: SITE, slug,
+      heroHtml: renderExportHero(data),
+      headerHtml: renderExportHeader(data, humanDate),
+      contentHtml: renderExportContent(data),
+    });
+
+  test("emits the date + h1 header block, matching post.njk", () => {
+    const out = build(mk([text("t", "Body.")]));
+    expect(out).toContain('<h1 class="text-5xl md:text-6xl text-zinc-900 dark:text-white mt-4 mb-4 uppercase tracking-wider">');
+    expect(out).toContain("Galdhøpiggen");
+    expect(out).toContain('<div class="mb-8 pb-8 border-b border-neutral-200 dark:border-neutral-800">');
+    expect(out).toContain('datetime="2025-08-17"');
+    expect(out).toContain("August 17, 2025");
+    // exactly one back link, and exactly one h1
+    expect(out.match(/← Back to Notebook/g)?.length).toBe(1);
+    expect(out.match(/<h1/g)?.length).toBe(1);
+  });
+
+  test("satisfies the page check's H1 requirement", () => {
+    // The header's <h1> is a real heading on the page, so the outline scan has
+    // to see it — the check runs on hero + header + content, in page order.
+    const data = mk([text("t", "Body with no heading.")]);
+    const html = [
+      renderExportHero(data),
+      renderExportHeader(data, humanDate),
+      renderExportContent(data),
+    ].join("\n");
+    const messages = lintPage({ data, config, html }).map((i) => i.message);
+    expect(messages.some((m) => m.includes("No H1"))).toBe(false);
+    expect(messages.some((m) => m.includes("No headings"))).toBe(false);
+  });
+
+  test("but an untitled page still warns — there is no h1 to find", () => {
+    const data = mk([text("t", "Body.")], { meta: { ...DEFAULT_META, date: "2025-08-17" } });
+    const html = [
+      renderExportHero(data),
+      renderExportHeader(data, humanDate),
+      renderExportContent(data),
+    ].join("\n");
+    const messages = lintPage({ data, config, html }).map((i) => i.message);
+    expect(messages.some((m) => m.includes("No headings"))).toBe(true);
+  });
+
+  test("a hero page gets neither — no duplicate title or back link", () => {
+    const data = mk([text("t", "x")], { hasHero: true, hero: { ...DEFAULT_HERO, title: "Hero title" } });
+    const out = build(data);
+    expect(out.match(/← Back to Notebook/g)?.length).toBe(1);
+    expect(out.match(/<h1/g)?.length).toBe(1);
+    expect(out).toContain("release-hero__title");
+    expect(out).not.toContain("mb-8 pb-8 border-b");
+  });
+
+  test("no title -> just the plain back link, as before", () => {
+    const data = mk([text("t", "x")], { meta: { ...DEFAULT_META, date: "2025-08-17" } });
+    const out = build(data);
+    expect(out).toContain('<div class="mb-16">');
+    expect(out).not.toContain("mb-8 pb-8 border-b");
+    expect(out.match(/<h1/g) ?? []).toHaveLength(0);
+  });
+
+  test("every class in the header exists in the compiled CSS", () => {
+    // The header is built as a STRING in export.ts, so render.test.tsx's
+    // class-coverage guard does not see it.
+    const css =
+      readFileSync(new URL("../../main.css", import.meta.url).pathname, "utf8") +
+      readFileSync(new URL("../../prose.css", import.meta.url).pathname, "utf8");
+    const out = build(mk([text("t", "x")]));
+    const header = out.slice(out.indexOf('<div class="mb-8">'), out.indexOf("{{CONTENT}}") + 1);
+    const esc = (c: string) => c.replace(/([:\/\[\].])/g, "\\$1");
+    const missing: string[] = [];
+    for (const m of header.matchAll(/class="([^"]+)"/g)) {
+      for (const c of m[1].split(/\s+/)) {
+        if (c && !css.includes("." + esc(c))) missing.push(c);
+      }
+    }
+    expect(missing).toEqual([]);
   });
 });

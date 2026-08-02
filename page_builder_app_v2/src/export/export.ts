@@ -14,7 +14,7 @@ import type { Config, Data } from "@measured/puck";
 import { renderMarkdown } from "../markdown";
 import { collectStats } from "./collect";
 import type { PageMeta, SchemaChoice, RootProps } from "../puck/PageRoot";
-import { STATIC_BACKLINK } from "../puck/components/Hero";
+import { staticHeader } from "../puck/components/Hero";
 
 export type { PageMeta, SchemaChoice };
 
@@ -197,9 +197,12 @@ export interface AssembleInput {
   data: Data;
   config: Config;
   siteUrl: string;
-  /// Pre-rendered, already formatted markup for the two content placeholders.
+  /// Pre-rendered markup for the content placeholders.
   heroHtml: string;
   contentHtml: string;
+  /// The {{BACKLINK}} slot. Optional so callers that do not build it still get
+  /// the correct default.
+  headerHtml?: string;
   slug?: string;
 }
 
@@ -228,8 +231,9 @@ export function assembleDocument(i: AssembleInput): string {
     DATE_HUMAN: e(humanDate(meta.date)),
     JSONLD: jsonld(meta, i.data, i.config, canonical, i.siteUrl),
     HERO: i.heroHtml,
-    // hero pages carry their own fade-in back link — never show both
-    BACKLINK: hasHero ? "" : STATIC_BACKLINK,
+    // Hero pages carry their own fade-in back link AND their own <h1>, so they
+    // get nothing here — never show two back links or two titles.
+    BACKLINK: i.headerHtml ?? (hasHero ? "" : staticHeader(meta, humanDate(meta.date))),
     NAV_EXTRA: navReveal ? " navi_mechanic" : "",
     NAV_SCRIPT: navReveal
       ? '<script src="/javascript/navbar_scroll_min.js" defer></script>'

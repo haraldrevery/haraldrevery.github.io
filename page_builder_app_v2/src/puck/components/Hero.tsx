@@ -51,12 +51,46 @@ export interface HeroProps {
 const escText = (s: unknown) =>
   String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+const BACKLINK_A =
+  '<a href="/notebook.html" class="inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider">\n   ← Back to Notebook\n   </a>';
+
 /// The shell's normal static back link, used when there is NO hero. With a
 /// hero, the hero renders the one-and-only fade-in version instead. The mb-16
 /// wrapper is what separates it from the first content block — the inline-flex
 /// <a> carries no margin of its own.
-export const STATIC_BACKLINK =
-  '<div class="mb-16">\n   <a href="/notebook.html" class="inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider">\n   ← Back to Notebook\n   </a>\n</div>';
+export const STATIC_BACKLINK = `<div class="mb-16">\n   ${BACKLINK_A}\n</div>`;
+
+/*
+ * The header a page gets when it has NO hero: back link, then the date and the
+ * title, exactly as markdown posts render them.
+ *
+ * Without this a hero-less page has no title at all — the h1 lived only in the
+ * hero, so the page check's "No H1" warning had no natural way to be satisfied
+ * and the page read as a body with no heading. Markdown posts get this block
+ * from eleventy_settings/post.njk:29-36; builder pages bypass that layout
+ * entirely (they ARE the whole document), so it has to be emitted here.
+ *
+ * Spacing follows post.njk when the header is present (mb-8 + a bordered
+ * block); with no title there is nothing to separate, so the back link keeps
+ * its original mb-16.
+ */
+export function staticHeader(meta: { title?: string; date?: string }, dateHuman: string): string {
+  const title = (meta.title ?? "").trim();
+  if (!title) return STATIC_BACKLINK;
+
+  const time = dateHuman
+    ? `\n    <time class="text-sm font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider" datetime="${escapeAttr(meta.date ?? "")}">\n      ${escText(dateHuman)}\n    </time>`
+    : "";
+
+  return (
+    `<div class="mb-8">\n   ${BACKLINK_A}\n</div>\n` +
+    `<div class="mb-8 pb-8 border-b border-neutral-200 dark:border-neutral-800">${time}\n` +
+    `    <h1 class="text-5xl md:text-6xl text-zinc-900 dark:text-white mt-4 mb-4 uppercase tracking-wider">\n` +
+    `      ${escText(title)}\n` +
+    `    </h1>\n` +
+    `</div>`
+  );
+}
 
 const BACKLINK_CLASS =
   "extra_fade_effect_long inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider";
@@ -165,7 +199,7 @@ export function Hero(p: HeroProps): ReactNode {
     (center ? " text-center" : "") +
     (cover ? (lightCover ? " text-black" : " text-white") : "");
 
-  const hasPrompt = !!p.scrollPrompt.trim();
+  const hasPrompt = !!(p.scrollPrompt ?? "").trim();
 
   return (
     <>
@@ -219,7 +253,7 @@ export function Hero(p: HeroProps): ReactNode {
             className="absolute text-center bottom-10 text-black dark:text-white hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors opacity-0 cursor-pointer z-50"
             style={{ left: "50%", transform: "translateX(-50%)" }}
             dangerouslySetInnerHTML={{
-              __html: escText(p.scrollPrompt.trim()).replace(/\n/g, " <br> "),
+              __html: escText((p.scrollPrompt ?? "").trim()).replace(/\n/g, " <br> "),
             }}
           />
         )}

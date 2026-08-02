@@ -303,3 +303,14 @@
   font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
   white-space: pre-wrap; word-break: break-all;
 }
+
+/* Positive counterpart to .pb-warn. Absence of a warning reads as "not checked
+   yet"; a green badge is the only thing that actually says "this is fine". */
+.pb-ok {
+  font-size: 10px;
+  color: #15803d;
+  background: #dcfce7;
+  border-radius: 3px;
+  padding: 0 4px;
+  white-space: nowrap;
+}

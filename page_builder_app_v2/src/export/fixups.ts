@@ -51,30 +51,18 @@ export function resolveThumb(
 }
 
 /*
- * Re-check `_min` thumbnails on disk and auto-adopt ones that appeared since
- * the project was saved — "link now, add the thumbnail later" is the intended
- * workflow. Also backfills pixel dimensions, which the justified gallery layout
- * needs to compute its flex ratios.
+ * Re-check a flat list of image-ish items against disk: adopt `_min` files that
+ * have appeared, flag ones that have not, and backfill pixel dimensions.
+ * Mutates in place and returns the same list.
  *
- * Hidden slots are included: a column switched back to 2 must not surface stale
- * badges for content that was simply not being rendered.
+ * Shared by the on-open pass and the gallery editor's "Re-check files" button,
+ * so a thumbnail generated mid-session can be picked up without reopening.
  */
-export async function revalidateThumbs(data: Data, config: Config): Promise<void> {
-  const gridItems: GalleryItem[] = [];
-  const singles: Imageish[] = [];
+export async function recheckImages(items: Imageish[]): Promise<Imageish[]> {
+  const withPath = items.filter((it) => it.full);
+  if (!withPath.length) return items;
 
-  visitComponents(data, config, ({ type, props }) => {
-    if (type === "Gallery") gridItems.push(...((props.items ?? []) as GalleryItem[]));
-    // The Image block keeps {full, thumb} as ONE prop (see fields/mediaField.tsx).
-    else if (type === "Image" && props.image) singles.push(props.image as Imageish);
-  });
-
-  const items: Imageish[] = [...singles, ...gridItems];
-  if (!items.length) return;
-
-  // Justified layout needs pixel dimensions; fill in any that are missing
-  // (e.g. files that appeared on disk since the project was saved).
-  const needDims = gridItems.filter((it) => it.full && (!it.w || !it.h));
+  const needDims = withPath.filter((it) => !it.w || !it.h);
   if (needDims.length) {
     const dims = await imageDims(needDims.map((it) => it.full)).catch((e) => {
       toast(`Image dimension lookup failed: ${e}`, true);
@@ -90,13 +78,11 @@ export async function revalidateThumbs(data: Data, config: Config): Promise<void
   }
 
   const paths = new Set<string>();
-  for (const it of items) {
-    if (!it.full) continue;
+  for (const it of withPath) {
     paths.add(deriveMinPath(it.full));
     if (it.thumb) paths.add(it.thumb);
   }
   const list = [...paths];
-  if (!list.length) return;
 
   // Permissive fallback (assume present) so a backend failure never blocks
   // opening a project — but SAY so, rather than silently dropping the badges.
@@ -106,12 +92,31 @@ export async function revalidateThumbs(data: Data, config: Config): Promise<void
   });
   const exists = new Map(list.map((p, i) => [p, results[i]]));
 
-  for (const it of items) {
-    if (!it.full) continue;
+  for (const it of withPath) {
     const r = resolveThumb(it, (p) => !!exists.get(p));
     it.thumb = r.thumb;
     it.thumbMissing = r.thumbMissing;
   }
+  return items;
+}
+
+/*
+ * Re-check `_min` thumbnails on disk and auto-adopt ones that appeared since
+ * the project was saved — "link now, add the thumbnail later" is the intended
+ * workflow. Also backfills pixel dimensions, which the justified gallery layout
+ * needs to compute its flex ratios.
+ *
+ * Hidden slots are included: a column switched back to 2 must not surface stale
+ * badges for content that was simply not being rendered.
+ */
+export async function revalidateThumbs(data: Data, config: Config): Promise<void> {
+  const items: Imageish[] = [];
+  visitComponents(data, config, ({ type, props }) => {
+    if (type === "Gallery") items.push(...((props.items ?? []) as GalleryItem[]));
+    // The Image block keeps {full, thumb} as ONE prop (see fields/mediaField.tsx).
+    else if (type === "Image" && props.image) items.push(props.image as Imageish);
+  });
+  if (items.length) await recheckImages(items);
 }
 
 export interface HashReport {

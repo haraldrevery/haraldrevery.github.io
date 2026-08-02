@@ -363,6 +363,10 @@ export const config: Config<{ components: Components; root: RootProps }> = {
             q: { type: "text", label: "Question" },
             a: { type: "textarea", label: "Answer (markdown)" },
           },
+          // Without this Puck appends an item with NO q/a at all, and the
+          // component crashed reading `.trim()` on undefined. Required, not
+          // cosmetic.
+          defaultItemProps: { q: "", a: "" },
           getItemSummary: (it: { q?: string }) => it.q || "Question",
         },
         spacing: spacingField,

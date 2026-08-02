@@ -7,14 +7,19 @@ import { useMemo } from "react";
 import { usePuck } from "@measured/puck";
 import { config } from "../puck/config";
 import { lintPage } from "../export/lint";
-import { renderExportContent, renderExportHero } from "../export/renderExport";
+import { renderExportContent, renderExportHero, renderExportHeader } from "../export/renderExport";
+import { humanDate } from "../export/export";
 
 export function PageCheck() {
   const data = usePuck().appState.data;
 
   const issues = useMemo(() => {
     try {
-      const html = `${renderExportHero(data as any)}\n${renderExportContent(data as any)}`;
+      const html = [
+        renderExportHero(data as any),
+        renderExportHeader(data as any, humanDate),
+        renderExportContent(data as any),
+      ].join("\n");
       return lintPage({ data: data as any, config, html });
     } catch (e) {
       // A half-typed markdown block must never take the panel down with it.

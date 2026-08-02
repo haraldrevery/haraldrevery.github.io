@@ -14,6 +14,7 @@
  */
 import { FieldLabel } from "@measured/puck";
 import { pickMedia } from "../../media";
+import { recheckImages } from "../../export/fixups";
 import type { GalleryItem } from "../components/Gallery";
 
 /// Green when alt + title + description are all filled, yellow when partial —
@@ -47,6 +48,17 @@ export function GalleryItemsEditor({
     onChange(next);
   };
 
+  /*
+   * Re-check every item against disk. The `_min` convention means you often
+   * link a photo before generating its thumbnail, and nothing else refreshes
+   * that state while the app is open — the on-open pass only runs on open.
+   */
+  const recheck = async () => {
+    const next = items.map((it) => ({ ...it }));
+    await recheckImages(next as any);
+    onChange(next);
+  };
+
   const add = async () => {
     const picked = await pickMedia("image", true, "photos");
     if (!picked.length) return;
@@ -71,6 +83,16 @@ export function GalleryItemsEditor({
       <button type="button" className="pb-items__add" onClick={add}>
         + Add photos…
       </button>
+      {items.length > 0 && (
+        <button
+          type="button"
+          className="pb-items__add"
+          onClick={recheck}
+          title="Adopt _min thumbnails generated since these photos were linked"
+        >
+          ↻ Re-check files
+        </button>
+      )}
 
       {items.length === 0 && <p className="pb-items__empty">No photos yet.</p>}
 
@@ -84,12 +106,25 @@ export function GalleryItemsEditor({
               </code>
               <div className="pb-item__badges">
                 <span className={`pb-dot pb-dot--${itemStatus(it)}`} title="alt / title / description" />
-                {it.thumbMissing && (
-                  <span className="pb-warn" title="No _min thumbnail; using the full-size image">
+                {/* Say BOTH things. "No badge" reads as "not checked yet"
+                    rather than "fine", which is the state that matters when
+                    the whole point is whether a _min exists. */}
+                {it.thumbMissing ? (
+                  <span className="pb-warn" title="No _min thumbnail; the full-size image is being used instead">
                     no _min
                   </span>
+                ) : (
+                  <span className="pb-ok" title={`Using thumbnail ${it.thumb}`}>✓ _min</span>
                 )}
-                {!it.w && <span className="pb-warn" title="Pixel size unknown — justified layout assumes 3/2">no size</span>}
+                {it.w ? (
+                  <span className="pb-ok" title="Pixel size known — justified layout can use the real ratio">
+                    {it.w}×{it.h}
+                  </span>
+                ) : (
+                  <span className="pb-warn" title="Pixel size unknown — justified layout assumes 3/2">
+                    no size
+                  </span>
+                )}
               </div>
             </div>
             <div className="pb-item__ops">
