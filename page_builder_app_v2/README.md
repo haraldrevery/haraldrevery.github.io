@@ -1,0 +1,241 @@
+# Notebook Page Builder v2
+
+Desktop app (Tauri v2) for building Notebook pages visually, rewritten on
+[Puck](https://puckeditor.com). The preview renders with the **real site CSS and
+fonts**, and finished pages export into `input_custom_html_pages/` where Eleventy
+picks them up.
+
+v1 lives on untouched in `../page_builder/` and still builds. This is a separate
+app with its own binary, config dir and project folder — see "Coexistence".
+
+## Run it
+
+```bash
+./page_builder_v2_app        # prebuilt binary at the repo root (Linux)
+```
+
+No runtime dependencies. The app finds the repo automatically when the binary is
+at the repo root (or anywhere inside it); run from elsewhere and it asks once,
+then remembers.
+
+## Build it
+
+```bash
+bun install
+bun run build                # typecheck + vite
+bunx tauri dev               # dev app (port 5174 — v1 uses 5173)
+bunx tauri build --no-bundle # release binary
+bun test tests               # 118 tests
+```
+
+**Use `bunx tauri build`, not `cargo build`.** Plain cargo produces a binary that
+tries to load `devUrl` and shows "Could not connect to localhost".
+
+Copy the result to the repo root as `page_builder_v2_app` (the obvious name
+`page_builder_app_v2` is taken by this source folder).
+
+## Why the rewrite
+
+v1 hand-rolled its editor: a 759-line string-concatenating renderer, 738 lines of
+imperative form builders, a 406-line untyped preview bridge with two pointer-drag
+state machines, and a hand-written undo store. Puck provides drag-and-drop,
+undo/redo, the outline, the component palette and — the big one — **generates
+every sidebar form from a declarative field schema**. Roughly 2,900 lines of
+plumbing went away.
+
+## How it works
+
+- A tiny localhost server (127.0.0.1, random port, GET-only, repo-jailed) serves
+  the **repo root**. The preview iframe gets a `<base href>` pointing at it, so
+  root-absolute paths (`/main.css`, `/photos/…`) resolve exactly as on the live
+  site — **with zero change to the emitted markup**. Preview and export render
+  byte-identical HTML, which is the property the whole design hangs on.
+- The fixed `<nav>` is deliberately not rendered in the preview (it would sit on
+  top of Puck's drop targets). Preview fidelity is "content region accurate,
+  page chrome omitted"; the authoritative check is the Eleventy build.
+- `Ctrl/Cmd+I` toggles Puck's interactive mode, which plays the real entry
+  animations. That is v1's edit/preview toggle, for free.
+- Export writes `input_custom_html_pages/<slug>.html`: YAML front matter plus
+  `shell.html` with every `{{PLACEHOLDER}}` filled. Eleventy's before-hook then
+  copies the body **verbatim** to `notebook_pages/`. Verified byte-identical.
+
+## Two rules that constrain everything
+
+1. **No CSS build on export.** Only Tailwind classes already present in the
+   compiled `main.css`/`prose.css` may be emitted. `tests/render.test.tsx` greps
+   the real committed CSS to enforce this. A plausible-looking `mb-24` that isn't
+   in the bundle ships as an invisible no-op.
+2. **Every top-level block owns exactly ONE gap: the margin below it.** Never a
+   top margin, never padding — padding cannot margin-collapse, so a block with
+   both sides set double-counts against its neighbours and makes gaps depend on
+   block order. `BlockShell`/`ProseShell` are the only places a spacing class may
+   be emitted.
+
+## Block anatomy
+
+Four shapes, decided by `nesting.tsx` reading a React context that `<Nested>`
+provides inside column slots:
+
+| | top level | nested in a column |
+|---|---|---|
+| prose (Text, Heading, Divider) | `<article class="prose … mb-16">` | `<div class="prose …">` |
+| everything else | `<section class="mb-16">` | no wrapper — the slot div is the wrapper |
+
+The content must be a **direct child** of the element carrying `prose`:
+`prose.css` zeroes first/last-child margins with a direct-child selector, so an
+intermediate `<div>` leaves a stray margin at the top of every prose block.
+
+## Adding a block type
+
+Four artifacts. TypeScript will not compile until all of them exist, which is the
+same "add a type and everything else fails loudly" property v1 got from its three
+parallel `Record<BlockType, …>` maps.
+
+**1. A props interface** — next to the component, exported.
+
+```tsx
+export interface QuoteProps {
+  text: string;
+  cite: string;
+  spacing: Spacing;
+  puck?: PuckContext;   // only if you need isEditing
+}
+```
+
+**2. A component** in `src/puck/components/`, returning a `BlockShell` (or
+`ProseShell` for prose). Transcribe the body from the matching `*Inner()` in v1's
+`src/blocks/render.ts`: `class` → `className`, `style="a:b"` → `style={{a:"b"}}`,
+raw HTML strings → `dangerouslySetInnerHTML`.
+
+```tsx
+export function Quote({ text, cite, spacing, puck }: QuoteProps) {
+  if (!text.trim() && puck?.isEditing) {
+    return <EmptyHint label="Empty quote — write it in the sidebar" />;
+  }
+  return (
+    <BlockShell spacing={spacing}>
+      <blockquote className="…">{text}</blockquote>
+    </BlockShell>
+  );
+}
+```
+
+*Raw markup goes through `BlockShell`'s `html` prop, never a
+`<div dangerouslySetInnerHTML>` child — that div would be an extra element on
+every page using the block.*
+
+**3. One entry in `src/puck/config.tsx`** — label, fields, defaults, renderer.
+`fields` is a mechanical translation of the matching builder in v1's
+`ui/blockForms.ts`:
+
+| v1 form control | Puck field |
+|---|---|
+| text input | `{ type: "text" }` |
+| textarea | `{ type: "textarea" }` |
+| dropdown | `{ type: "select", options }` |
+| checkbox | `{ type: "radio", options: [Off/On] }` — use the `onOff()` helper |
+| number | `{ type: "number", min, max }` |
+| repeated text group | `{ type: "array", arrayFields, getItemSummary }` |
+| **anything needing a file** | `{ type: "custom" }` — see below |
+
+Fields that only apply in some states use `resolveFields` with
+`visible: false` — **not** omission, which does not typecheck (`Fields<Props>`
+requires every prop to have a field).
+
+**4. Add it to `EMBEDDABLE`** in `config.tsx` if it may live inside a column.
+
+Then, if the block feeds structured data or checks, extend `src/export/collect.ts`
+(JSON-LD images/word count, svg prefetch, download hashes, alt-text lint), and add
+a case to `sample()` in `tests/render.test.tsx` so the class-coverage and spacing
+guards actually cover it.
+
+### Why file pickers are `custom`, not `array`
+
+A `custom` field's `onChange` can only write **its own prop**. An `array` field's
+add button appends an empty `defaultProps` entry, and there is no hook to make it
+open a native dialog instead. So anything that creates items from files owns its
+whole array as one custom field — see `GalleryItemsEditor`, `ListEditors`.
+
+The same constraint is why the Image block and the hero store their photo as one
+`{full, thumb}` prop rather than two: the picker has to set both at once.
+
+Custom fields also render their own label — wrap them in Puck's `FieldLabel` or
+the field appears unlabelled.
+
+## React quirks that bite
+
+- **React 19 hoists `<link rel="preload" as="image">` in front of every eager
+  `<img>`** — even with no fetch-priority attribute. That would land inside
+  `<body>`, where `<link>` is not valid HTML5. `stripReactPreloads()` removes
+  them; it must stay applied on every path that turns React into HTML.
+- React cannot emit a bare valueless attribute (`controls` becomes `controls=""`)
+  and self-closes void elements. Both are harmless; `format.ts` normalises void
+  elements back to the site's `<img>` convention for readable git diffs.
+- `usePuck()` takes no selector — only `createUsePuck()` does.
+- `<Puck data>` is **initial** state, copied into Puck's store on mount. Changing
+  it afterwards does not re-sync; loading a project remounts Puck via `key`.
+
+## Coexistence with v1
+
+Everything is isolated so a v2 bug cannot damage v1:
+
+| | v1 | v2 |
+|---|---|---|
+| source | `page_builder/` | `page_builder_app_v2/` |
+| binary | `page_builder_app` | `page_builder_v2_app` |
+| dev port | 5173 | 5174 |
+| config | `~/.config/page_builder/` | `~/.config/page_builder_v2/` |
+| projects | `page_builder/projects/` | `page_builder_app_v2/projects/` |
+| `shell.html` | its own | its own |
+
+Only the export target `input_custom_html_pages/` is shared — both are front ends
+for the same Eleventy input.
+
+**Project formats are incompatible.** v1 stores `{version:1, meta, blocks}`, v2
+stores `{version:2, exportSlug, data}` where `data` is Puck's. v2 refuses to open
+a v1 file rather than silently mangling it.
+
+## Tests
+
+```bash
+bun test tests
+```
+
+- `render.test.tsx` — **the class-coverage guard** (greps the real `main.css`)
+  and the one-gap-per-block rule, iterated over the whole registry.
+- `prose-parity.test.tsx` — renders each block with **v1's actual renderer** and
+  diffs. This is what proves the port rather than arguing it. Delete this file if
+  v1 is ever removed; the guards above stand on their own.
+- `format.test.ts` — the formatter is lossless, and never reflows an inline run.
+- `collect.test.ts` — tree collectors, including that content in a hidden
+  `count:1` column slot is excluded from JSON-LD and lint but never lost.
+- `export.test.tsx` — frontmatter quoting, JSON-LD, placeholder substitution.
+- `lint.test.tsx` — heading outline and SEO checks.
+
+## Reconciliation with disk
+
+Opening a project and exporting both re-check the project against what is
+actually on disk (`src/export/fixups.ts`):
+
+- **Thumbnails.** A `_min` file that appeared since the photo was linked is
+  adopted automatically — linking first and generating thumbnails later is the
+  intended workflow. Missing pixel dimensions are backfilled, which the
+  justified gallery layout needs for its flex ratios.
+- **Download hashes** are recomputed from the actual bytes. This one matters:
+  rebuilding a binary changes its bytes without touching the project, and a
+  published SHA that does not match the file is worse than no SHA at all.
+  Opening a project whose hashes drifted marks it unsaved and says so.
+
+**Shell freshness.** `shell.html` is this app's private copy of the page
+boilerplate. When its `<nav>` or `<footer>` drifts from the reference page
+(`input_custom_html_pages/galdhopiggen.html`), a badge appears under the page
+check and offers to adopt each region — showing both versions first.
+Placeholders like `{{NAV_EXTRA}}` are preserved. Note that adopting copies the
+reference page's *indentation* too, so the region is re-formatted; the content
+is what matters.
+
+## Known gaps
+
+- v1's "split a block into columns" affordance is gone; drag into a Columns slot
+  instead.
+- Preview omits nav, footer and GLightbox. Check the built page in a real browser.

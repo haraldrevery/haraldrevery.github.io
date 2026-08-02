@@ -1,0 +1,213 @@
+<h1>Notebook Page Builder</h1>
+<p>Desktop app (Tauri v2) for building Notebook pages visually — a live, click-to-edit
+preview that renders with the <strong>real site CSS/JS</strong>, exporting finished pages into
+<code>input_custom_html_pages/</code> where Eleventy picks them up.</p>
+<p>Successor to the earlier tkinter builder.</p>
+<h2>Run it</h2>
+<pre><code class="language-bash">./page_builder_app        # the prebuilt binary at the repo root (Linux)
+</code></pre>
+<p>No dependencies needed at runtime. The app finds the repo automatically when the
+binary lives at the repo root (or anywhere inside it); run from elsewhere and it
+asks you to locate the folder once, then remembers.</p>
+<h2>How it works</h2>
+<ul>
+<li>A tiny localhost server (127.0.0.1, random port, GET-only, repo-jailed) serves
+the <strong>repo root</strong>, so root-absolute paths (<code>/main.css</code>, <code>/photos/...</code>) resolve
+exactly like on the live site. The preview iframe is pixel-accurate: real
+Tailwind build, real fonts, real GLightbox.</li>
+<li><strong>Edit mode</strong>: click a block in the preview to select and edit it; hover for
+the floating handle — drag <code>⠿</code> to reorder, <code>+↑</code>/<code>+↓</code> to insert between blocks.
+Clicks never trigger links/lightbox in edit mode.</li>
+<li><strong>Preview mode</strong> (toolbar toggle): GLightbox works for real (groups, captions,
+zoom); navigation away is still blocked.</li>
+<li>Blocks: hero, heading, text (markdown + KaTeX), divider, photo gallery,
+single image, SVG, video, columns, social icons, FAQ accordion, audio,
+raw HTML. Consecutive prose blocks are grouped into one
+<code>&lt;article class=&quot;prose ...&quot;&gt;</code> exactly like the old builder.</li>
+<li><strong>Block registry</strong>: every type is defined once in
+<code>src/blocks/defs.ts</code> (label, defaults, embeddability, summary), with
+compile-checked Records for its renderer (<code>src/blocks/render.ts</code>) and form
+(<code>src/ui/blockForms.ts</code>). Adding a block type = add it to the model union
+and the compiler lists every missing piece; embeddable types automatically
+appear as column content and get the preview &quot;split&quot; affordance.</li>
+<li><strong>Columns hold real blocks</strong> — any embeddable type (text, image, gallery
+with all its layouts, video, SVG, icons, FAQ, raw) works as a column, with
+its full form reused. In edit mode each column shows a type chip (click to
+swap content type) and empty slots show a &quot;＋ pick content&quot; target; the
+floating handle's ⿲ button splits any embeddable block into 2 columns.</li>
+<li><strong>Hero</strong> (always renders first, whatever its list position — it's pinned to
+the top of the block list and injected before the page container).
+<strong>Background</strong> (none / dot grid like index.html / blurred photo backdrop /
+full-bleed photo cover that fades out at the bottom) combines freely with
+the <strong>foreground</strong>: optional themed SVG (width %, x/y offset in % of its own
+box, spacing to the text) plus kicker + H1 title + tagline, left or
+centered. Left-aligned text + SVG renders side by side (text left, svg
+right, <code>release-hero__grid</code>); centered stacks them. The cover has a long
+bottom fade-out and a <strong>tint choice</strong> (dark scrim + white text, or light
+scrim + dark text for bright photos). <strong>In-animation</strong>: fade
+(<code>extra_fade_effect</code>), per-word random-delay fade-up (<code>word_animation</code>,
+like about.html), or <strong>wave echo</strong> (the index.html imploding-outline effect
+applied to the hero SVG). Optional custom
+<strong>scroll prompt</strong> that fades in late exactly like index.html's
+<code>#scroll-prompt</code>. Hero pages have exactly ONE &quot;← Back to Notebook&quot;: the
+hero's late-fading link aligned to the page container's left edge — the
+shell's normal static link is suppressed via the `` placeholder.
+Nav reveal on scroll uses the site's own <code>navi_mechanic</code> CSS scroll-timeline
+<ul>
+<li><code>navbar_scroll</code> fallback (the <strong>one</strong> JS exception, existing site code).
+Everything else is JS-free.</li>
+</ul>
+</li>
+<li><strong>Word animation</strong> toggles on heading and text blocks wrap every word in
+the site's <code>word_animation</code> spans with deterministic pseudo-random delays
+(stable across re-exports); math, code and inline svg are left untouched.</li>
+<li><strong>FAQ accordion</strong>: about.html's CSS-only checkbox accordion, markdown
+answers, ids prefixed with the block id so multiple FAQ blocks coexist.</li>
+<li><strong>Downloads block</strong>: download.html's verification table with <strong>SHA-256 +
+SHA-512</strong> columns (MD5 deliberately dropped — it's broken). Pick files from
+the repo and the backend streams both hashes (1 MiB chunks, big zips never
+load into RAM). Hashes are <strong>recomputed at every export and on project
+open</strong>, so the published values always match the actual bytes; replaced
+files are reported, missing ones block the export with a warning.</li>
+<li><strong>Social icons panel</strong>: a row of themed SVG icons with hover-mute
+(<code>hover:opacity-50</code>), sr-only labels, and per-icon links — mirrors the footer
+/ release-page social rows. External links open in a new tab automatically.
+An optional <strong>panel label</strong> switches it to the release-page &quot;Listen
+everywhere&quot; look (mono uppercase label + left-aligned row).</li>
+<li><strong>Gallery drag-drop</strong>: with a gallery selected in edit mode, drag its images
+directly in the preview to reorder them (a small movement threshold keeps
+plain clicks working; the sidebar ↑↓ buttons remain for column galleries).</li>
+<li><strong>Galleries have two layouts.</strong> <em>Justified</em> (default): Behance/Flickr-style
+rows where every image keeps its native aspect ratio — pure CSS in the
+export (flex-grow proportional to each image's ratio + <code>aspect-ratio</code>, zero
+JS; the app reads image dimensions from the files when you pick them). The
+&quot;Row height&quot; setting is a target: rows land between ~0.75× and 1.5× of it.
+<em>Uniform</em>: the previous fixed-aspect crop grid (columns + aspect preset).
+(Lists and quotes are plain markdown now — <code>- item</code>, <code>&gt; quote</code> — so they have
+no separate block type; old projects containing them convert automatically.)</li>
+<li><strong>Columns</strong>: 1 or 2 columns, each holding any content — text, image,
+image grid, video, SVG, or raw HTML. Replaces the old fixed two-column block
+(old projects convert on open). Vertical alignment is center or top.</li>
+<li><strong>Alignment &amp; size</strong>: headings align left or centered; images and SVGs have a
+width setting (25–100% of the container, auto-centered when below 100%).</li>
+<li><strong>SVG</strong>: linked like other media, with options. &quot;Follow light/dark theme&quot;
+inlines the file with all colors replaced by <code>currentColor</code>, so it recolors
+with the site theme; off = plain <code>&lt;img&gt;</code> link. Optional smooth grow-on-hover
+(uses <code>hover:scale-105</code> utilities already in main.css) and an optional link
+wrap. <code>fill=&quot;none&quot;</code> and gradient <code>url(#…)</code> references are preserved, and
+files with no fill attributes at all (typical Illustrator exports) get
+<code>currentColor</code> on the root — SVG's default would otherwise stay black in
+dark mode.</li>
+<li><strong>Preview theme toggle</strong> (🌗 Auto / ☀ Light / 🌙 Dark in the toolbar): the
+site's dark mode is <code>prefers-color-scheme</code>, so this flips the window theme
+to check both modes — e.g. themed SVGs — without changing the OS setting.</li>
+</ul>
+<h2>Markdown + KaTeX</h2>
+<p>Text blocks are markdown rendered through <strong>the exact same pipeline as the
+site's Eleventy config</strong> (<code>src/markdown.ts</code> mirrors <code>eleventy.config.js</code> —
+markdown-it + attrs + link-attributes + texmath/KaTeX with <strong>MathML output</strong>).
+Math needs no katex.css/js in exported pages. <code>$...$</code> inline, <code>$$...$$</code> display,
+<code>{.class}</code> attributes, external links get <code>target=&quot;_blank&quot;</code> automatically.</p>
+<p><strong>If you change the markdown settings in <code>eleventy.config.js</code>, mirror the change
+in <code>src/markdown.ts</code></strong> (and keep the pinned versions in <code>package.json</code> matching
+the repo's node_modules).</p>
+<h2>Media</h2>
+<p>Picking media only <strong>links</strong> it (no copying). Paths become root-absolute
+(<code>/photos/...</code>) and the <code>_min</code> thumbnail is derived automatically
+(<code>foo.jpg</code> → <code>foo_min.jpg</code>). If the <code>_min</code> file doesn't exist yet you get a
+⚠ badge (the full-size image is used meanwhile); add the file later and reopen
+the project — it upgrades automatically. Files outside the repo are rejected.</p>
+<p>Gallery/grid pickers are <strong>multi-select</strong> (ctrl/shift-click in the file
+dialog), and inserting a gallery or SVG block opens the picker right away, so
+an image grid is one pick.</p>
+<h2>Projects &amp; export</h2>
+<ul>
+<li><strong>Save/Open</strong>: projects are JSON in <code>projects/</code> (committed with the repo).</li>
+<li><strong>Export</strong>: writes front matter + full HTML to <code>input_custom_html_pages/&lt;slug&gt;.html</code>
+(asks before overwriting). Then run the Eleventy build as usual — the page is
+copied to <code>notebook_pages/</code> and indexed on the Notebook. <code>Draft</code> pages are
+skipped by the build.</li>
+<li>The exported page never contains editor markup; export and preview come from
+the same renderer.</li>
+</ul>
+<h2>Page check (headings + SEO)</h2>
+<p>A live panel under the toolbar lints the page while you edit, and Export asks
+for confirmation if warnings remain:</p>
+<ul>
+<li><strong>Heading outline</strong> — exactly one H1 first, no level jumps (H1 → H3). This is
+what browser reader mode and search engines build the article outline from,
+and it covers heading blocks, markdown <code>#</code> headings, columns and raw HTML
+alike (it checks the rendered output).</li>
+<li><strong>SEO fields</strong> — missing/overlong title and description, missing card image,
+missing tags, images without alt text, unlabeled icons, multiple/incomplete
+heroes, missing download files. No separate SEO menu: the front-matter
+fields (title/description/tags/card image) are the SEO data, and the export
+fills everything else automatically — <code>&lt;title&gt;</code>, meta description/keywords,
+canonical, Open Graph (<code>og:type article</code>, <code>og:site_name</code>), Twitter Card, and
+JSON-LD, matching the site's own <code>base.njk</code> head.</li>
+<li><strong>Schema (JSON-LD) is content-accurate.</strong> The &quot;Schema&quot; select in page
+details defaults to <strong>Auto</strong>: photo-dominated pages emit <code>ImageGallery</code>,
+FAQ-dominated pages <code>FAQPage</code>, everything else <code>BlogPosting</code> (overrides:
+Blog post / Article / Photo gallery / FAQ page). Whatever the type, the
+entity is enriched from the real page: an image array with actual pixel
+dimensions, FAQ blocks as a machine-readable <code>FAQPage</code> entity (<code>@graph</code>),
+<code>wordCount</code>, keywords, <code>dateModified</code>. The page check shows what Auto
+resolved to.</li>
+<li>The block list shows a <strong>green/yellow dot</strong> per image-bearing block: green
+when alt/title/description are all filled, yellow when something's missing.</li>
+</ul>
+<h2>Editing safety</h2>
+<ul>
+<li><strong>Undo/redo</strong>: Ctrl+Z / Ctrl+Y (or Ctrl+Shift+Z). Rapid keystrokes coalesce
+into one step; a new edit after undo clears the redo history.</li>
+<li>Deleting a block asks for confirmation (and is undoable anyway). The Delete
+key removes the selected block; Ctrl+D duplicates it.</li>
+<li>Closing with unsaved changes asks first; Ctrl+S saves.</li>
+<li>Export remembers the slug per project: re-exporting to the same file skips
+the overwrite question, and a missing themed-SVG file blocks with a warning
+instead of silently exporting a placeholder.</li>
+</ul>
+<h2>shell.html staleness</h2>
+<p><code>shell.html</code> here is the page boilerplate (head/SEO/nav/footer), originally
+extracted from <code>input_custom_html_pages/galdhopiggen.html</code>. On start the app compares its
+<code>&lt;nav&gt;</code>, <code>&lt;footer&gt;</code> and head asset links against that reference page and shows
+a ⚠ badge with a diff + one-click <strong>Adopt from reference</strong> if the site's chrome
+has changed. (If galdhopiggen.html itself gets retired, change <code>REFERENCE_PAGE</code>
+in <code>src-tauri/src/commands.rs</code>.)</p>
+<h2>Development</h2>
+<pre><code class="language-bash">cd page_builder
+bun install
+bun test                      # unit suite (renderer/export/lint/store/svg/modals)
+bunx tauri dev                # dev app (vite + cargo, hot reload)
+bunx tauri build --no-bundle  # release binary
+cp src-tauri/target/release/page_builder ../page_builder_app
+</code></pre>
+<h3>Building the Windows binary</h3>
+<p>Build natively on the Windows machine (one-time setup: install
+<a href="https://rustup.rs" target="_blank" rel="noopener noreferrer">rustup</a> with the default MSVC toolchain — it offers to pull
+the VS Build Tools — and <a href="https://bun.sh" target="_blank" rel="noopener noreferrer">Bun</a>; WebView2 is preinstalled on
+Windows 10/11):</p>
+<pre><code class="language-bat">cd page_builder
+bun install
+bunx tauri build --no-bundle
+copy src-tauri\target\release\page_builder.exe ..\page_builder_app.exe
+</code></pre>
+<p>Both binaries live side by side at the repo root (<code>page_builder_app</code> for Linux,
+<code>page_builder_app.exe</code> for Windows), each ~7 MB — both safe to commit. All the
+path handling is OS-agnostic; exported pages are identical from either OS.</p>
+<p>(Cross-compiling the .exe from Linux is possible with <code>cargo-xwin</code> +
+clang/lld installed, but native builds are simpler and better tested.)</p>
+<p>Layout: <code>src/</code> frontend (vanilla TS — state, block renderer, export pipeline,
+UI panels), <code>preview-harness/editor-bridge.js</code> (script injected into the
+preview document; compiled into the binary), <code>src-tauri/src/</code> (repo discovery,
+static server, fs/dialog commands).</p>
+<p>Notes:</p>
+<ul>
+<li>Raw HTML blocks are inserted verbatim — <code>&lt;script&gt;</code> in them runs in the
+preview too. It's a single-author tool; mind what you paste.</li>
+<li>The renderer may only emit Tailwind classes that already exist in the
+compiled <code>main.css</code> (there is no CSS build on export). That's why the old
+<code>1/1</code> aspect preset is gone — <code>square</code> is the same thing and exists.</li>
+<li>The preview engine is WebKit (webkit2gtk), not Chromium; double-check final
+pages in your normal browser via the regular Eleventy build.</li>
+</ul>

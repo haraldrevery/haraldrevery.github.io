@@ -1,0 +1,37 @@
+<h1>Not yet ported</h1>
+<p>These are v1 files carried over verbatim by the rsync copy. They still import
+the v1 block model (<code>blocks/model.ts</code>, <code>blocks/defs.ts</code>, <code>blocks/render.ts</code>),
+which no longer exists, so they are parked here and excluded from <code>tsconfig.json</code>
+until their phase lands. <strong>Nothing here is on the build path.</strong></p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Ported in</th>
+<th>What changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>export.ts</code></td>
+<td>Phase 4, step 16</td>
+<td><code>yamlValue</code>, <code>frontmatterYaml</code>, <code>resolveSchemaType</code>, <code>jsonld</code>, <code>assembleDocument</code> port near-verbatim; only the <code>collectStats</code> / <code>renderHero</code> / <code>renderContent</code> callsites change to Puck <code>Data</code> + <code>walkTree</code>.</td>
+</tr>
+<tr>
+<td><code>lint.ts</code></td>
+<td>Phase 4, step 18</td>
+<td><code>headingIssues</code> and the meta checks port verbatim (one regex tweak: <code>/&lt;label[^&gt;]*class=&quot;[^&quot;]*faq-question/</code>, because React reorders attributes). <code>altIssues</code> and the icons/downloads walk get rewritten onto <code>walkTree</code>. The hero-count check is deleted — the hero is a root field now, so there is exactly one by construction.</td>
+</tr>
+<tr>
+<td><code>word-faq.test.ts</code></td>
+<td>Phase 3 / 6</td>
+<td>The <code>wordAnimate</code> half ports as-is (that module is unchanged); the FAQ half waits for the FAQ component in Phase 6.</td>
+</tr>
+<tr>
+<td><code>svg-modal.test.ts</code></td>
+<td>Phase 3, step 13</td>
+<td>The <code>themeSvgText</code> / <code>prepareSvgForInline</code> half survives untouched; the modal half is deleted with <code>ui/dom.ts</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>Delete this folder once it is empty.</p>
