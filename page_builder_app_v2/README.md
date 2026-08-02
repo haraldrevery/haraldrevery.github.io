@@ -25,7 +25,7 @@ bun install
 bun run build                # typecheck + vite
 bunx tauri dev               # dev app (port 5174 — v1 uses 5173)
 bunx tauri build --no-bundle # release binary
-bun test tests               # 118 tests
+bun test tests               # 164 tests
 ```
 
 **Use `bunx tauri build`, not `cargo build`.** Plain cargo produces a binary that
@@ -244,6 +244,16 @@ is what matters.
 
 ## Known gaps
 
+- **No Windows binary yet.** v1 ships `page_builder_app.exe`; v2 is Linux-only
+  until someone runs `bunx tauri build --no-bundle` on Windows.
+- **The preview is not the page.** It omits nav, footer, GLightbox and all
+  scripts by design (see "How it works"). Fonts, dark mode, lightbox behaviour
+  and the entry animations can only be confirmed by opening a built page in a
+  real browser.
 - v1's "split a block into columns" affordance is gone; drag into a Columns slot
   instead.
-- Preview omits nav, footer and GLightbox. Check the built page in a real browser.
+- `revalidateThumbs` runs on open and on export, not continuously. Generate a
+  `_min` file mid-session and use **↻ Re-check files** in the gallery editor to
+  pick it up without reopening.
+- Adopting a shell region copies the reference page's indentation too, so the
+  region is re-formatted; only its content is meaningful.

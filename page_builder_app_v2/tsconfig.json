@@ -15,8 +15,5 @@
     "isolatedModules": true,
     "noEmit": true
   },
-  "include": ["src"],
-  // src/_toport holds v1 files awaiting their port phase — see its README.
-  // Remove this exclude once that folder is empty and deleted.
-  "exclude": ["src/_toport"]
+  "include": ["src"]
 }
