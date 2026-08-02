@@ -147,6 +147,29 @@ describe("assembleDocument", () => {
     expect(out).not.toContain("navbar_scroll_min.js");
   });
 
+  test("the back link sits UNDER the title, inside the bordered header block", () => {
+    // Order, not just presence: the whole point of the layout is that the page
+    // announces itself before it offers the way out. eleventy_settings/post.njk
+    // must render markdown posts the same way.
+    const out = build(mk([text("t", "x")], { meta: { ...DEFAULT_META, title: "The Title" } }));
+    // Scope to the header block — the title also appears in the frontmatter,
+    // <title> and the og/twitter meta tags, all of which precede it.
+    const start = out.indexOf('<div class="mb-8 pb-8 border-b border-neutral-200');
+    expect(start).toBeGreaterThan(-1);
+    const header = out.slice(start, out.indexOf("</div>", start));
+    expect(header.indexOf("← Back to Notebook")).toBeGreaterThan(header.indexOf("<h1"));
+    // and it is no longer in a wrapper of its own above the block
+    expect(out).not.toContain('<div class="mb-8">');
+  });
+
+  test("a page with no title keeps the standalone back link", () => {
+    // Nothing to sit under, so the mb-16 wrapper still has to be there or the
+    // link collides with the first content block.
+    const out = build(mk([text("t", "x")], { meta: { ...DEFAULT_META, title: "" } }));
+    expect(out).toContain('<div class="mb-16">');
+    expect(out).not.toContain("border-b border-neutral-200");
+  });
+
   test("hero -> its own fade-in back link only, plus the nav reveal", () => {
     const data = mk([text("t", "x")], { hasHero: true, hero: { ...DEFAULT_HERO, title: "T" } });
     const out = build(data);

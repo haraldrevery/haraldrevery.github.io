@@ -51,18 +51,29 @@ export interface HeroProps {
 const escText = (s: unknown) =>
   String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-const BACKLINK_A =
-  '<a href="/notebook.html" class="inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider">\n   ← Back to Notebook\n   </a>';
+/*
+ * Takes its own indent because it is emitted at two different depths — on its
+ * own inside STATIC_BACKLINK, and one level deeper inside the header block.
+ * These pages are committed to git, so a hardcoded indent would leave the
+ * deeper copy visibly ragged. Layout matches eleventy_settings/post.njk.
+ */
+const backlinkA = (pad: string) =>
+  `<a href="/notebook.html" class="inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider">\n${pad}   ← Back to Notebook\n${pad}</a>`;
 
-/// The shell's normal static back link, used when there is NO hero. With a
-/// hero, the hero renders the one-and-only fade-in version instead. The mb-16
-/// wrapper is what separates it from the first content block — the inline-flex
-/// <a> carries no margin of its own.
-export const STATIC_BACKLINK = `<div class="mb-16">\n   ${BACKLINK_A}\n</div>`;
+/// The shell's normal static back link, used when there is NO hero AND the page
+/// has no title to sit under. With a hero, the hero renders the one-and-only
+/// fade-in version instead. The mb-16 wrapper is what separates it from the
+/// first content block — the inline-flex <a> carries no margin of its own.
+export const STATIC_BACKLINK = `<div class="mb-16">\n   ${backlinkA("   ")}\n</div>`;
 
 /*
- * The header a page gets when it has NO hero: back link, then the date and the
- * title, exactly as markdown posts render them.
+ * The header a page gets when it has NO hero: the date, the title, then the
+ * back link — all inside one bordered block, exactly as markdown posts render
+ * them.
+ *
+ * The back link sits UNDER the title rather than above it, so the first thing
+ * on the page is the page's own name and the way out is offered after it. Both
+ * this and post.njk have to move together or the two page kinds diverge.
  *
  * Without this a hero-less page has no title at all — the h1 lived only in the
  * hero, so the page check's "No H1" warning had no natural way to be satisfied
@@ -70,9 +81,10 @@ export const STATIC_BACKLINK = `<div class="mb-16">\n   ${BACKLINK_A}\n</div>`;
  * from eleventy_settings/post.njk:29-36; builder pages bypass that layout
  * entirely (they ARE the whole document), so it has to be emitted here.
  *
- * Spacing follows post.njk when the header is present (mb-8 + a bordered
- * block); with no title there is nothing to separate, so the back link keeps
- * its original mb-16.
+ * Spacing follows post.njk when the header is present: the h1's mb-4 sets the
+ * gap down to the link and the block's pb-8 carries it to the rule, so the
+ * link needs no wrapper of its own. With no title there is nothing to sit
+ * under and nothing to separate, so the back link keeps its original mb-16.
  */
 export function staticHeader(meta: { title?: string; date?: string }, dateHuman: string): string {
   const title = (meta.title ?? "").trim();
@@ -83,11 +95,11 @@ export function staticHeader(meta: { title?: string; date?: string }, dateHuman:
     : "";
 
   return (
-    `<div class="mb-8">\n   ${BACKLINK_A}\n</div>\n` +
     `<div class="mb-8 pb-8 border-b border-neutral-200 dark:border-neutral-800">${time}\n` +
     `    <h1 class="text-5xl md:text-6xl text-zinc-900 dark:text-white mt-4 mb-4 uppercase tracking-wider">\n` +
     `      ${escText(title)}\n` +
     `    </h1>\n` +
+    `    ${backlinkA("    ")}\n` +
     `</div>`
   );
 }

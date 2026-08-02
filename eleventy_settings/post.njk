@@ -20,12 +20,13 @@ layout: base.njk
 <div class="post-container pt-24 pb-12 extra_fade_effect">
     <article class="mx-auto">
         
-        <div class="mb-8">
-            <a href="/notebook.html" class="inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider">
-               ← Back to Notebook
-            </a>
-        </div>
-        
+        {# Date, title, then the back link. The link sits UNDER the title so the
+           first thing on the page is the page's own name. The h1's mb-4 sets
+           the gap down to the link and this block's pb-8 carries it to the
+           rule, so the link needs no wrapper of its own.
+           Builder pages emit the same block from staticHeader() in
+           page_builder_app_v2/src/puck/components/Hero.tsx — move one, move
+           both, or the two page kinds diverge. #}
         <div class="mb-8 pb-8 border-b border-neutral-200 dark:border-neutral-800">
             <time class="text-sm font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider" datetime="{{ date }}">
                 {{ date | readableDate }}
@@ -33,6 +34,9 @@ layout: base.njk
             <h1 class="text-5xl md:text-6xl text-zinc-900 dark:text-white mt-4 mb-4 uppercase tracking-wider">
                 {{ title }}
             </h1>
+            <a href="/notebook.html" class="inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider">
+               ← Back to Notebook
+            </a>
         </div>
         
         <div class="prose prose-lg max-w-none text-zinc-900 dark:text-white">
