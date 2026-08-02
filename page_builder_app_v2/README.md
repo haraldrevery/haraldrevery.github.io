@@ -71,6 +71,14 @@ plumbing went away.
    block order. `BlockShell`/`ProseShell` are the only places a spacing class may
    be emitted.
 
+   The scale is `src/puck/spacing.ts`: **None** (no class at all — mb-0 exists
+   but every hand-written page uses a bare wrapper), **Gallery gap** 8px,
+   **Tight** 32px, **Normal** 64px, **Loose** 80px. "Gallery gap" is `mb-2`,
+   which equals the `gap-2` between images in the justified gallery layout — set
+   it to make the next block sit as close as two photos in a row, e.g. when
+   stacking galleries so they read as one grid. A test asserts the two values
+   stay equal.
+
 ## Block anatomy
 
 Four shapes, decided by `nesting.tsx` reading a React context that `<Nested>`

@@ -15,6 +15,7 @@ import { Render } from "@measured/puck/rsc";
 import type { Data } from "@measured/puck";
 import { config, type Components } from "../src/puck/config";
 import { contentConfig } from "../src/puck/contentConfig";
+import { SPACING_CLASS, spacingField } from "../src/puck/spacing";
 import { Text } from "../src/puck/components/Text";
 
 // tests/ sits at the same depth as v1's, so this still resolves to the repo root.
@@ -155,5 +156,42 @@ describe("empty-state hints are editor-only", () => {
       <Text md="" animate={false} spacing="normal" id="t" puck={{ isEditing: true } as any} />,
     );
     expect(editing).toContain("pb-empty-hint");
+  });
+});
+
+describe("the spacing scale", () => {
+  // Guards the whole scale at once, rather than only the values a sample block
+  // happens to use. A new option whose class is not in the compiled CSS would
+  // silently render as no gap at all.
+  test("every spacing class exists in the compiled CSS", () => {
+    for (const [name, cls] of Object.entries(SPACING_CLASS)) {
+      if (!cls) continue; // "none" deliberately emits no class
+      expect(css.includes(`.${cls}{`), `${name} -> .${cls}`).toBe(true);
+    }
+  });
+
+  test("the field offers exactly the keys the scale defines", () => {
+    expect(spacingField.options.map((o) => o.value).sort()).toEqual(
+      Object.keys(SPACING_CLASS).sort(),
+    );
+  });
+
+  test('"gallery" matches the gap between images in a justified gallery', () => {
+    // Both resolve to calc(var(--spacing) * 2). If the gallery's gap ever
+    // changes, this is what says the option no longer means what it claims.
+    const gap = css.match(/\.gap-2\{gap:([^}]+)\}/)?.[1];
+    const mb = css.match(/\.mb-2\{margin-bottom:([^}]+)\}/)?.[1];
+    expect(gap).toBeTruthy();
+    expect(mb).toBe(gap!);
+
+    const gallery = html([sample("Gallery")]);
+    expect(gallery).toContain("gap-2");
+  });
+
+  test("a block set to gallery spacing emits mb-2", () => {
+    const out = html([
+      { type: "Heading", props: { ...sample("Heading").props, spacing: "gallery" } },
+    ]);
+    expect(out).toContain('<article class="prose dark:prose-invert max-w-none mb-2">');
   });
 });
