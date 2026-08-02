@@ -132,6 +132,21 @@
 }
 .pb-item__ops button:disabled { opacity: 0.35; cursor: default; }
 
+/* The drag handle. Only the grip is draggable, never the whole row — the row
+   holds three text inputs and click-dragging to select text must keep working.
+   touch-action must be none or the browser scrolls instead of dragging. */
+.pb-item__grip {
+  cursor: grab;
+  touch-action: none;
+  color: #71717a;
+  font-size: 13px;
+}
+.pb-item__grip:active { cursor: grabbing; }
+
+/* dnd-kit leaves a same-size gap where the row was and reorders its neighbours
+   live — that IS the drop indicator, so there is nothing else to draw. */
+.pb-item--dragging { opacity: 0.6; }
+
 .pb-item__input {
   width: 100%;
   margin-top: 6px;
@@ -314,3 +329,27 @@
   padding: 0 4px;
   white-space: nowrap;
 }
+
+/* Sort row on the Downloads editor. Deliberately NOT the full-width dashed
+   .pb-items__add style — that reads as "create something"; these reorder what
+   is already there. The arrow on each button shows the order the list is
+   currently in, so the control doubles as a status indicator. */
+.pb-items__sort {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 11px;
+  color: #a1a1aa;
+}
+.pb-items__sort button {
+  border: 1px solid #e4e4e7;
+  border-radius: 4px;
+  background: #fff;
+  font: inherit;
+  font-size: 11px;
+  padding: 2px 7px;
+  cursor: pointer;
+  color: #3f3f46;
+}
+.pb-items__sort button:hover { border-color: #2563eb; color: #2563eb; }

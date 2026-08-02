@@ -16,6 +16,7 @@ import { FieldLabel } from "@measured/puck";
 import { pickMedia } from "../../media";
 import { recheckImages } from "../../export/fixups";
 import type { GalleryItem } from "../components/Gallery";
+import { Ops, SortableItems, useListOps } from "./itemList";
 
 /// Green when alt + title + description are all filled, yellow when partial —
 /// the media-completeness dot from v1 (defs.ts:249). Alt matters for
@@ -37,16 +38,7 @@ export function GalleryItemsEditor({
 }) {
   const items = value ?? [];
 
-  const patch = (i: number, next: Partial<GalleryItem>) =>
-    onChange(items.map((it, n) => (n === i ? { ...it, ...next } : it)));
-
-  const move = (i: number, delta: number) => {
-    const j = i + delta;
-    if (j < 0 || j >= items.length) return;
-    const next = [...items];
-    [next[i], next[j]] = [next[j], next[i]];
-    onChange(next);
-  };
+  const { patch, move, remove } = useListOps(items, onChange);
 
   /*
    * Re-check every item against disk. The `_min` convention means you often
@@ -96,10 +88,14 @@ export function GalleryItemsEditor({
 
       {items.length === 0 && <p className="pb-items__empty">No photos yet.</p>}
 
-      {items.map((it, i) => (
-        <div key={`${it.full}-${i}`} className="pb-item">
+      <SortableItems items={items} onReorder={onChange}>
+        {(it, i, row) => (
+        <div ref={row.ref} className={`pb-item${row.isDragging ? " pb-item--dragging" : ""}`}>
           <div className="pb-item__head">
-            <img src={it.thumb || it.full} alt="" className="pb-item__thumb" />
+            {/* The grip is the only drag handle, so the native image drag is
+                already unreachable — this is belt-and-braces for the moment a
+                pointer-down lands on the thumb during a fast drag. */}
+            <img src={it.thumb || it.full} alt="" className="pb-item__thumb" draggable={false} />
             <div className="pb-item__meta">
               <code className="pb-item__path" title={it.full}>
                 {it.full.split("/").pop()}
@@ -127,17 +123,7 @@ export function GalleryItemsEditor({
                 )}
               </div>
             </div>
-            <div className="pb-item__ops">
-              <button type="button" onClick={() => move(i, -1)} disabled={i === 0} title="Move up">↑</button>
-              <button type="button" onClick={() => move(i, 1)} disabled={i === items.length - 1} title="Move down">↓</button>
-              <button
-                type="button"
-                onClick={() => onChange(items.filter((_, n) => n !== i))}
-                title="Remove"
-              >
-                ✕
-              </button>
-            </div>
+            <Ops i={i} count={items.length} onMove={move} onRemove={remove} grip={row.grip} />
           </div>
 
           <input
@@ -159,7 +145,8 @@ export function GalleryItemsEditor({
             onChange={(e) => patch(i, { description: e.target.value })}
           />
         </div>
-      ))}
+        )}
+      </SortableItems>
     </div>
     </FieldLabel>
   );

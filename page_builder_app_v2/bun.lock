@@ -5,6 +5,7 @@
     "": {
       "name": "page-builder-v2",
       "dependencies": {
+        "@dnd-kit/react": "0.1.18",
         "@measured/puck": "0.20.2",
         "@tauri-apps/api": "^2.9.0",
         "@tauri-apps/plugin-dialog": "^2.7.1",

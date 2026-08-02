@@ -10,41 +10,8 @@ import { FieldLabel } from "@measured/puck";
 import { hashFiles, pickMedia, prefetchSvgs } from "../../media";
 import type { IconItem, DownloadItem } from "../components/Lists";
 import { humanSize } from "../shared";
-
-function Ops({
-  i,
-  count,
-  onMove,
-  onRemove,
-}: {
-  i: number;
-  count: number;
-  onMove: (i: number, d: number) => void;
-  onRemove: (i: number) => void;
-}) {
-  return (
-    <div className="pb-item__ops">
-      <button type="button" onClick={() => onMove(i, -1)} disabled={i === 0} title="Move up">↑</button>
-      <button type="button" onClick={() => onMove(i, 1)} disabled={i === count - 1} title="Move down">↓</button>
-      <button type="button" onClick={() => onRemove(i)} title="Remove">✕</button>
-    </div>
-  );
-}
-
-function useListOps<T>(items: T[], onChange: (v: T[]) => void) {
-  return {
-    patch: (i: number, next: Partial<T>) =>
-      onChange(items.map((it, n) => (n === i ? { ...it, ...next } : it))),
-    move: (i: number, d: number) => {
-      const j = i + d;
-      if (j < 0 || j >= items.length) return;
-      const next = [...items];
-      [next[i], next[j]] = [next[j], next[i]];
-      onChange(next);
-    },
-    remove: (i: number) => onChange(items.filter((_, n) => n !== i)),
-  };
-}
+import { currentSortDir, nextSortDir, sameOrder, sortDownloads, type SortKey } from "./listOps";
+import { Ops, SortableItems, useListOps } from "./itemList";
 
 // --------------------------------------------------------------------- icons
 
@@ -76,8 +43,9 @@ export function IconItemsEditor({
           + Add SVG icons…
         </button>
         {items.length === 0 && <p className="pb-items__empty">No icons yet.</p>}
-        {items.map((it, i) => (
-          <div key={`${it.src}-${i}`} className="pb-item">
+        <SortableItems items={items} onReorder={onChange}>
+          {(it, i, row) => (
+          <div ref={row.ref} className={`pb-item${row.isDragging ? " pb-item--dragging" : ""}`}>
             <div className="pb-item__head">
               <div className="pb-item__meta">
                 <code className="pb-item__path" title={it.src}>{it.src.split("/").pop()}</code>
@@ -87,7 +55,7 @@ export function IconItemsEditor({
                   </div>
                 )}
               </div>
-              <Ops i={i} count={items.length} onMove={move} onRemove={remove} />
+              <Ops i={i} count={items.length} onMove={move} onRemove={remove} grip={row.grip} />
             </div>
             <input
               className="pb-item__input"
@@ -102,7 +70,8 @@ export function IconItemsEditor({
               onChange={(e) => patch(i, { href: e.target.value })}
             />
           </div>
-        ))}
+          )}
+        </SortableItems>
       </div>
     </FieldLabel>
   );
@@ -155,6 +124,28 @@ export function DownloadItemsEditor({
     );
   };
 
+  /*
+   * Sort the stored array — a one-shot reorder, undoable like any other edit,
+   * not a display setting the block has to carry.
+   *
+   * Direction is DERIVED from the array (see listOps.currentSortDir) rather
+   * than held in state: a stored flag goes stale the moment the user hits undo,
+   * because the array reverts and the flag does not.
+   */
+  const sortBy = (key: SortKey) => {
+    const next = sortDownloads(items, key, nextSortDir(items, key));
+    // Already in that order — committing would be an undo step that visibly
+    // does nothing.
+    if (!sameOrder(items, next)) onChange(next);
+  };
+
+  /// Arrow doubles as a status indicator: it shows the order the list is IN.
+  const arrow = (key: SortKey) => {
+    if (items.length < 2) return "";
+    const dir = currentSortDir(items, key);
+    return dir === "asc" ? " ↑" : dir === "desc" ? " ↓" : "";
+  };
+
   return (
     <FieldLabel label={label} el="div">
       <div className="pb-items">
@@ -166,9 +157,21 @@ export function DownloadItemsEditor({
             ↻ Recompute hashes
           </button>
         )}
+        {items.length > 1 && (
+          <div className="pb-items__sort">
+            <span>Sort</span>
+            <button type="button" onClick={() => sortBy("name")} title="Sort by the displayed file name">
+              Name{arrow("name")}
+            </button>
+            <button type="button" onClick={() => sortBy("size")} title="Sort by file size">
+              Size{arrow("size")}
+            </button>
+          </div>
+        )}
         {items.length === 0 && <p className="pb-items__empty">No files yet.</p>}
-        {items.map((it, i) => (
-          <div key={`${it.src}-${i}`} className="pb-item">
+        <SortableItems items={items} onReorder={onChange}>
+          {(it, i, row) => (
+          <div ref={row.ref} className={`pb-item${row.isDragging ? " pb-item--dragging" : ""}`}>
             <div className="pb-item__head">
               <div className="pb-item__meta">
                 <code className="pb-item__path" title={it.src}>{it.src.split("/").pop()}</code>
@@ -179,7 +182,7 @@ export function DownloadItemsEditor({
                   )}
                 </div>
               </div>
-              <Ops i={i} count={items.length} onMove={move} onRemove={remove} />
+              <Ops i={i} count={items.length} onMove={move} onRemove={remove} grip={row.grip} />
             </div>
             <input
               className="pb-item__input"
@@ -188,7 +191,8 @@ export function DownloadItemsEditor({
               onChange={(e) => patch(i, { label: e.target.value })}
             />
           </div>
-        ))}
+          )}
+        </SortableItems>
       </div>
     </FieldLabel>
   );
