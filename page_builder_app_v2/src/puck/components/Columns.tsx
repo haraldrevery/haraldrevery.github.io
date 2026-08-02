@@ -31,6 +31,12 @@ export interface ColumnsProps {
   left: Slot;
   right: Slot;
   spacing: Spacing;
+  /// Never read by this component and never stored. It exists only to give the
+  /// "swap left and right" button a field slot in the sidebar — Puck's
+  /// Fields<Props> is a mapped type over the props, so a field cannot exist
+  /// without a matching prop. Optional and deliberately absent from
+  /// defaultProps, so it is never written to a project file.
+  swap?: boolean;
 }
 
 export function Columns({

@@ -27,6 +27,7 @@ import {
 import { Featured, type FeaturedProps } from "./components/Featured";
 import { IconItemsEditor, DownloadItemsEditor } from "./fields/ListEditors";
 import { GalleryItemsEditor } from "./fields/GalleryItemsEditor";
+import { SwapColumnsField } from "./fields/SwapColumns";
 import { pathField, imageField, EMPTY_IMAGE } from "./fields/mediaField";
 import { PageRoot, DEFAULT_META, DEFAULT_HERO, type RootProps } from "./PageRoot";
 
@@ -458,13 +459,23 @@ export const config: Config<{ components: Components; root: RootProps }> = {
         },
         left: { type: "slot", allow: EMBEDDABLE },
         right: { type: "slot", allow: EMBEDDABLE },
+        swap: { type: "custom", render: () => <SwapColumnsField /> },
         spacing: spacingField,
       },
       // With count 1 the right slot's data is kept but not rendered, so hide
       // its field rather than offering a drop target for invisible content.
+      // The swap button goes with it — there is nothing to swap with.
       resolveFields: (data, { fields }) => ({
         ...fields,
         right: { ...fields.right, visible: data.props.count === 2 },
+        // Written out rather than spread from fields.swap: `swap` is an
+        // OPTIONAL prop, so Fields<Props> makes its field optional too and the
+        // spread would lose the `type` discriminator.
+        swap: {
+          type: "custom",
+          visible: data.props.count === 2,
+          render: () => <SwapColumnsField />,
+        },
       }),
       defaultProps: {
         count: 2,

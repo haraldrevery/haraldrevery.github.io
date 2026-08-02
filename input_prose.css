@@ -1,4 +1,15 @@
-@import "tailwindcss";
+/*
+ * Sources declared here, not via dev.sh's --content — that flag was removed in
+ * Tailwind v4 and the standalone binary now ignores it and scans the whole
+ * repo. See the same block at the top of input.css for the full story.
+ */
+@import "tailwindcss" source(none);
+
+@source "./*.html";
+@source "./input_custom_html_pages/**/*.{html,md}";
+@source "./notebook_templates/**/*.{html,md}";
+@source "./eleventy_njk/**/*.njk";
+@source "./eleventy_settings/**/*.njk";
 
 
 @plugin "@tailwindcss/typography";

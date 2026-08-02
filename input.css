@@ -1,4 +1,24 @@
-@import "tailwindcss";
+/*
+ * Sources are declared HERE, not with dev.sh's --content flag.
+ *
+ * --content was removed from the Tailwind CLI in v4; the standalone binary now
+ * ignores it silently and falls back to auto-detection, which scans the WHOLE
+ * repo. That pulled page_builder_app_v2/ into the scan and compiled in classes
+ * that only exist as string literals in its test files — including `mb-72` and
+ * `text-9xl`, the two classes tests/render.test.tsx asserts are ABSENT to prove
+ * its "only emit classes that exist in main.css" guard can actually fail.
+ *
+ * source(none) turns auto-detection off; the @source lines below reproduce the
+ * globs dev.sh used to pass. Keep this list and dev.sh/dev.bat in agreement —
+ * or better, leave the scripts' --content alone, since it is now inert.
+ */
+@import "tailwindcss" source(none);
+
+@source "./*.html";
+@source "./input_custom_html_pages/**/*.{html,md}";
+@source "./notebook_templates/**/*.{html,md}";
+@source "./eleventy_njk/**/*.njk";
+@source "./eleventy_settings/**/*.njk";
 
 @import "./theme.css";
 
