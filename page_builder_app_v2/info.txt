@@ -1,1 +1,0 @@
-The page generators content should be in this folder.
