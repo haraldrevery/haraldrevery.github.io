@@ -58,11 +58,16 @@ In accordance with the Swedish Electronic Communications Act, we provide informa
 
 | Name | Type | Purpose | Duration |
 | --- | --- | --- | --- |
-| darkMode | LocalStorage | Strictly Necessary: Remembers your visual preference (Light/Dark mode). | Persistent |
+| rvry-theme | LocalStorage | Strictly Necessary: remembers your light/dark preference in the ASCII tool ([/notebook_pages/rvry_ascii](/notebook_pages/rvry_ascii)). | Persistent |
+| rvry-tab | LocalStorage | Strictly Necessary: remembers the last tab you had open in the ASCII tool. | Persistent |
+| clock-lang | LocalStorage | Strictly Necessary: remembers your language choice on the clock page ([/notebook_pages/clock_and_date](/notebook_pages/clock_and_date)). | Persistent |
+| clock-anim | LocalStorage | Strictly Necessary: remembers your animation preference on the clock page. | Persistent |
 
-**Strictly Necessary:** We only use technical storage that is strictly necessary for the service you have explicitly requested (visual theme). These do not require prior consent under Swedish law because they do not track your behavior.
+This site sets no cookies of its own and uses no analytics or visitor tracking. The technical storage listed above is used only on the individual interactive pages named, and only to remember a setting you chose on that page. It stays in your browser and is never transmitted to us. The site-wide light/dark appearance follows your operating system or browser setting and is not stored at all.
 
-**Third-Party Cookies:** While we do not set tracking cookies, third-party content (like embedded YouTube videos or Spotify players) may set their own cookies if you interact with them. We do not control these cookies. You can manage these via your browser settings.
+**Strictly Necessary:** We only use technical storage that is strictly necessary for the service you have explicitly requested (remembering a preference you set). These do not require prior consent under Swedish law because they do not track your behavior.
+
+**Third-Party Cookies:** We do not set tracking cookies. Where a page on this site embeds content hosted by a third party — for example a video or audio player — that provider may set its own cookies or storage when the embedded content loads or when you interact with it. The same applies to any external platform you reach by following a link from this site. We do not control those cookies. You can manage them via your browser settings.
 
 #### 3.3 Legal Basis for Processing
 
@@ -192,7 +197,8 @@ We reserve the right to modify, suspend, or discontinue any part of this website
 
 The music available on this website is provided for **personal, non-commercial streaming only**. By accessing the audio player and streaming music on this site, you agree to the following:
 
-- **No Downloading or Redistribution:** You may not download, extract, copy, redistribute, or share the audio files made available through the streaming player. The music is intended solely for online listening through the website's interface. Specific assets provided in the 'Download' section of this website are exempt from the no-downloading rule but remain subject to the individual license provided with the file (Personal Use).
+- **No Downloading or Redistribution:** You may not download, extract, copy, redistribute, or share the audio files made available through the streaming player. The music is intended solely for online listening through the website's interface. Nothing in this clause limits any mandatory right you may have under applicable copyright law, including the private copying exception under 12 § of the Swedish Copyright Act (1960:729).
+- **Download Section (Personal Use):** Files offered in the [Download section](/download.html) of this website — such as wallpapers — are provided free of charge for your personal, non-commercial use, and are exempt from the no-downloading rule above. You may download them, keep them, and use them privately, for example as a wallpaper on your own devices. You may not sell, redistribute, republish, or bundle them, use them for any commercial purpose, or present them as your own work. Where a downloaded file is supplied with its own licence or readme, that document governs; otherwise these terms apply.
 - **No Commercial Use:** You may not use the music streamed on this website for any commercial purpose, including but not limited to: advertising, public performances, film/video production, or any revenue-generating activity, without obtaining explicit written permission and proper licensing from Harald Mark Thirslund.
 - **Personal Use Only:** The streaming service is provided for your personal enjoyment. You may not publicly broadcast, perform, or display the music to audiences.
 - **Technical Limitations:** The website's audio player is provided as a convenience for promotional and demonstration purposes. We do not guarantee uninterrupted access to streaming services, compatibility with all devices or browsers, or any specific audio quality.
@@ -202,7 +208,7 @@ All music streamed on this site remains the exclusive property of Harald Mark Th
 
 #### 4.5 User Indemnification
 
-You agree to indemnify, defend, and hold harmless Harald Mark Thirslund (trading as Harald Revery™), and any affiliates, from and against any and all claims, liabilities, damages, losses, costs, expenses, or fees (including reasonable attorneys' fees) arising from:
+To the extent permitted by applicable law, you agree to indemnify and hold harmless Harald Mark Thirslund (trading as Harald Revery™) from and against claims, liabilities, damages, losses, and reasonable costs (including reasonable legal fees) to the extent they are caused by your own intentional or negligent conduct in the following respects:
 
 - Your violation of these Terms of Service
 - Your violation of any third-party rights, including copyright, trademark, privacy, or other intellectual property rights
@@ -210,7 +216,7 @@ You agree to indemnify, defend, and hold harmless Harald Mark Thirslund (trading
 - Any false, misleading, or fraudulent information you provide
 - Your violation of any applicable law or regulation
 
-This indemnification obligation will survive the termination or expiration of your use of this website.
+This clause applies only to the extent the loss is actually caused by you, and does not extend to anything caused by us or by a third party. Nothing in this section limits or excludes any mandatory statutory right you have as a consumer under Swedish or EU law. This indemnification obligation will survive the termination or expiration of your use of this website.
 
 ### 5\. Disclaimer & Limitation of Liability
 
@@ -230,7 +236,7 @@ To the maximum extent permitted by Swedish law, Harald Mark Thirslund shall not 
 
 We may update this Legal Notice and Privacy Policy from time to time to reflect changes in our practices or for legal, operational, or regulatory reasons. The updated policy will be posted on this page with a revised "Last Updated" date.
 
-**Last Updated:** July 13, 2026
+**Last Updated:** August 3, 2026
 
 ### 7\. Governing Law
 
