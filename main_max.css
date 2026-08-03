@@ -4540,7 +4540,6 @@ iframe.wait-autoplay {
   border: 1px solid rgba(0, 0, 0, 0.1);
   background: rgba(255, 255, 255, 0.45);
   backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
 }
 .preview-card__divider {
   height: 1px;
@@ -4689,7 +4688,6 @@ a.featured-card__media:hover img {
   margin-top: -2.75rem;
   box-shadow: 0 22px 45px -22px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 .featured-card__panel:first-child {
   grid-row: 1;
@@ -4731,7 +4729,6 @@ a.featured-card__media:hover img {
     margin-top: 0;
     padding: 2.25rem 2.5rem;
     backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
   }
   .featured-card-flip .featured-card__media {
     grid-column: 6 / -1;

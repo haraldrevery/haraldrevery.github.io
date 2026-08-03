@@ -3021,7 +3021,6 @@ iframe.wait-autoplay {
   border: 1px solid rgba(0, 0, 0, 0.1);
   background: rgba(255, 255, 255, 0.45);
   backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
 }
 .preview-card__divider {
   height: 1px;
@@ -3182,9 +3181,13 @@ a.featured-card__media:hover img {
   box-shadow: 0 22px 45px -22px rgba(0, 0, 0, 0.45);
   /* Mobile blur clamp, in the spirit of the .backdrop-blur-* guards already
      in input.css: 20px of blur over a full-bleed photo is the most expensive
-     paint on a phone. Mobile-first, so no max-width query is needed. */
+     paint on a phone. Mobile-first, so no max-width query is needed.
+
+     DO NOT add a hand-written -webkit-backdrop-filter next to this. The build
+     adds the prefix itself; a manual copy placed AFTER the standard property
+     makes Lightning CSS drop the standard one, and then Firefox — which only
+     supports the unprefixed form — renders no blur at all. */
   backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 /* No photo picked: the panel is the only child, so drop the pull-up rather
@@ -3240,7 +3243,6 @@ a.featured-card__media:hover img {
        later in the file. A display title needs the room. */
     padding: 2.25rem 2.5rem;
     backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
   }
 
   /* Photo on the right: swap the two column spans. Nothing else changes —
