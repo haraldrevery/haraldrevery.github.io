@@ -13,7 +13,8 @@
  */
 import type { Config, Data } from "@measured/puck";
 import { collectA11yIssues } from "./collect";
-import { splitTags } from "./export";
+import { splitTags, isIsoDate } from "./export";
+import { hasSvgText } from "../blocks/svgStore";
 import type { PageMeta } from "../puck/PageRoot";
 import type { RootProps } from "../puck/PageRoot";
 
@@ -111,9 +112,23 @@ export function lintPage({ data, config, html }: LintInput): LintIssue[] {
     if (h.showSvg && !h.svgSrc) {
       issues.push({ severity: "warn", message: "Hero has 'show SVG' on but no file is picked." });
     }
+    if (h.showSvg && h.svgSrc && !hasSvgText(h.svgSrc)) {
+      issues.push({
+        severity: "warn",
+        message: `Hero SVG ${h.svgSrc} could not be read — the page would publish a “[svg … not loaded]” placeholder.`,
+      });
+    }
   }
 
   const a11y = collectA11yIssues(data, config);
+  // Same class of problem as a missing download, and louder: an unreadable svg
+  // does not just break a link, it publishes its placeholder text as body copy.
+  if (a11y.missingSvgs) {
+    issues.push({
+      severity: "warn",
+      message: `${a11y.missingSvgs} SVG${a11y.missingSvgs > 1 ? "s" : ""} could not be read — the page would publish a “[svg … not loaded]” placeholder instead of the artwork.`,
+    });
+  }
   if (a11y.missingDownloads) {
     issues.push({
       severity: "warn",
@@ -134,6 +149,24 @@ export function lintPage({ data, config, html }: LintInput): LintIssue[] {
     issues.push({
       severity: "info",
       message: `Title is ${title.length} chars — search results truncate around 55–60.`,
+    });
+  }
+
+  /*
+   * The date was the only front-matter field with no check at all, and it has
+   * the worst failure modes of any of them — see frontmatterYaml.
+   */
+  const date = (meta.date ?? "").trim();
+  if (!date) {
+    issues.push({
+      severity: "warn",
+      message:
+        "No date — the Eleventy build substitutes the day you publish, so the page dates itself to whenever you last ran the build and jumps to the top of the Notebook.",
+    });
+  } else if (!isIsoDate(date)) {
+    issues.push({
+      severity: "warn",
+      message: `Date “${date}” is not YYYY-MM-DD — Eleventy cannot parse it, so the Notebook order and the sitemap entry both break.`,
     });
   }
 

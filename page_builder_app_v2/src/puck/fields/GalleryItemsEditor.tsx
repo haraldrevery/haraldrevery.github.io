@@ -98,7 +98,7 @@ export function GalleryItemsEditor({
             <img src={it.thumb || it.full} alt="" className="pb-item__thumb" draggable={false} />
             <div className="pb-item__meta">
               <code className="pb-item__path" title={it.full}>
-                {it.full.split("/").pop()}
+                {(it.full ?? "").split("/").pop()}
               </code>
               <div className="pb-item__badges">
                 <span className={`pb-dot pb-dot--${itemStatus(it)}`} title="alt / title / description" />
@@ -129,19 +129,19 @@ export function GalleryItemsEditor({
           <input
             className="pb-item__input"
             placeholder="alt (required)"
-            value={it.alt}
+            value={it.alt ?? ""}
             onChange={(e) => patch(i, { alt: e.target.value })}
           />
           <input
             className="pb-item__input"
             placeholder="lightbox title"
-            value={it.title}
+            value={it.title ?? ""}
             onChange={(e) => patch(i, { title: e.target.value })}
           />
           <input
             className="pb-item__input"
             placeholder="lightbox description"
-            value={it.description}
+            value={it.description ?? ""}
             onChange={(e) => patch(i, { description: e.target.value })}
           />
         </div>

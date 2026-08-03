@@ -15,7 +15,7 @@ import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { PointerSensor } from "@dnd-kit/dom";
-import { moveTo, swap } from "./listOps";
+import { moveTo, sameOrder, swap } from "./listOps";
 
 // ------------------------------------------------------------ row controls
 
@@ -222,7 +222,11 @@ export function SortableItems<T extends object>({
         // re-renders mid-animation and the row visibly snaps.
         const next = live.current;
         setTimeout(() => {
-          if (next !== items) onReorder(next);
+          // Compare ORDER, not identity. Every onDragOver builds a fresh array,
+          // so dragging a row away and back again left `next` a different
+          // object holding the same order — which committed an undo step that
+          // visibly did nothing. That is exactly what sameOrder exists for.
+          if (!sameOrder(next, items)) onReorder(next);
           else setDragOrder(null);
         }, 250);
       }}

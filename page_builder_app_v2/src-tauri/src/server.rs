@@ -6,6 +6,15 @@ use tiny_http::{Header, Method, Response, Server, StatusCode};
 /// Repo root shared with the request thread; None until located.
 pub type SharedRoot = Arc<RwLock<Option<PathBuf>>>;
 
+/// The rendered page held for /__pb/preview; None until Preview is clicked.
+/// Written by the `set_preview_html` command, read by the request thread.
+pub type SharedPreview = Arc<RwLock<Option<String>>>;
+
+/// Reserved URL prefix for routes this server generates rather than reads off
+/// disk. Everything under it is answered here and NEVER falls through to
+/// serve_static, so a repo path can neither shadow it nor be shadowed by it.
+const PB_PREFIX: &str = "/__pb/";
+
 fn mime_for(path: &str) -> &'static str {
     let ext = path.rsplit('.').next().unwrap_or("").to_ascii_lowercase();
     match ext.as_str() {
@@ -73,6 +82,30 @@ fn html_response(body: String, status: u16) -> Response<std::io::Cursor<Vec<u8>>
     Response::from_data(body.into_bytes())
         .with_status_code(StatusCode(status))
         .with_header(header("Content-Type", "text/html; charset=utf-8"))
+}
+
+// The live preview document.
+//
+// Unlike v1, this is not a placeholder shell filled in over postMessage — it is
+// the exact string the exporter would write, minus the front matter Eleventy
+// strips anyway. One render path, so the preview cannot drift from the page.
+//
+// Served from this origin (rather than a srcDoc iframe) so that every
+// root-absolute URL the shell emits — the stylesheets under /, the woff2 files
+// under /fonts, the images under /photos, the scripts under /javascript —
+// resolves against the repo with no rewriting of the markup.
+//
+// no-store because the iframe reloads this URL after every re-render; a cached
+// copy would show the previous version of the page.
+fn serve_preview(req: tiny_http::Request, preview: &SharedPreview) {
+    let html = preview.read().ok().and_then(|g| g.clone());
+    let body = html.unwrap_or_else(|| {
+        "<!doctype html><meta charset=\"utf-8\"><title>Preview</title>\
+         <p style=\"font:14px system-ui;padding:2rem\">Nothing to preview yet.</p>"
+            .to_string()
+    });
+    let resp = html_response(body, 200).with_header(header("Cache-Control", "no-store"));
+    let _ = req.respond(resp);
 }
 
 fn parse_range(req: &tiny_http::Request, len: u64) -> Option<(u64, u64)> {
@@ -165,12 +198,25 @@ fn serve_static(req: tiny_http::Request, root: &std::path::Path, path: &str) {
     }
 }
 
-fn handle(req: tiny_http::Request, root: &SharedRoot) {
+fn handle(req: tiny_http::Request, root: &SharedRoot, preview: &SharedPreview) {
     if *req.method() != Method::Get {
         let _ = req.respond(html_response("405".into(), 405));
         return;
     }
+    // The query string is dropped here, which is what lets the preview iframe
+    // cache-bust with ?t=<nonce> without any further handling.
     let path = percent_decode(req.url().split('?').next().unwrap_or("/"));
+
+    // Reserved routes first, and they are exhaustive: an unknown /__pb/ path is
+    // a 404, never a file read.
+    if let Some(rest) = path.strip_prefix(PB_PREFIX) {
+        if rest == "preview" {
+            serve_preview(req, preview);
+        } else {
+            let _ = req.respond(html_response("404 not found".into(), 404));
+        }
+        return;
+    }
 
     let root_path = root.read().ok().and_then(|g| g.clone());
     let root_path = match root_path {
@@ -188,7 +234,7 @@ fn handle(req: tiny_http::Request, root: &SharedRoot) {
 }
 
 /// Bind on an ephemeral port and serve forever on a background thread.
-pub fn start(root: SharedRoot) -> u16 {
+pub fn start(root: SharedRoot, preview: SharedPreview) -> u16 {
     let server = Server::http("127.0.0.1:0").expect("failed to bind preview server");
     let port = server
         .server_addr()
@@ -197,8 +243,63 @@ pub fn start(root: SharedRoot) -> u16 {
         .expect("no port");
     std::thread::spawn(move || {
         for req in server.incoming_requests() {
-            handle(req, &root);
+            handle(req, &root, &preview);
         }
     });
     port
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::{Read, Write};
+    use std::net::TcpStream;
+
+    /// Minimal HTTP/1.1 GET — the preview iframe is the only real client, and
+    /// all that matters here is which route answers.
+    fn get(port: u16, path: &str) -> String {
+        let mut s = TcpStream::connect(("127.0.0.1", port)).unwrap();
+        write!(s, "GET {path} HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n").unwrap();
+        let mut out = String::new();
+        s.read_to_string(&mut out).unwrap();
+        out
+    }
+
+    #[test]
+    fn pb_routes_are_exhaustive_and_never_touch_the_disk() {
+        let dir = std::env::temp_dir().join("pb_server_routes");
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("__pb")).unwrap();
+        // A real file at the reserved path must stay unreachable: the prefix is
+        // answered in full, so nothing under it can shadow or be shadowed.
+        fs::write(dir.join("__pb").join("preview"), "ON DISK").unwrap();
+        fs::write(dir.join("main.css"), "body{}").unwrap();
+
+        let root: SharedRoot = Arc::new(RwLock::new(Some(dir.clone())));
+        let preview: SharedPreview = Arc::new(RwLock::new(None));
+        let port = start(root, preview.clone());
+
+        // Nothing stored yet: a placeholder, not the file on disk.
+        let empty = get(port, "/__pb/preview");
+        assert!(empty.starts_with("HTTP/1.1 200"), "{empty}");
+        assert!(empty.contains("Nothing to preview yet"));
+        assert!(!empty.contains("ON DISK"));
+
+        *preview.write().unwrap() = Some("<!DOCTYPE html><p>rendered</p>".into());
+        let served = get(port, "/__pb/preview");
+        assert!(served.contains("<p>rendered</p>"));
+        assert!(served.contains("Cache-Control: no-store"));
+        // The cache-busting query the iframe appends must not change routing.
+        assert!(get(port, "/__pb/preview?t=123").contains("<p>rendered</p>"));
+
+        // Anything else under the prefix is a 404, never a file read.
+        assert!(get(port, "/__pb/editor-bridge.js").starts_with("HTTP/1.1 404"));
+        assert!(get(port, "/__pb/").starts_with("HTTP/1.1 404"));
+
+        // Static serving is untouched, and the jail still holds.
+        assert!(get(port, "/main.css").contains("body{}"));
+        assert!(get(port, "/../../etc/passwd").starts_with("HTTP/1.1 403"));
+
+        let _ = fs::remove_dir_all(&dir);
+    }
 }

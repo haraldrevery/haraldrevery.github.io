@@ -42,7 +42,9 @@ export function Text({ md, animate, spacing, id, puck }: TextProps) {
     return <EmptyHint label="Empty text block — write markdown in the sidebar" />;
   }
 
-  const rendered = renderMarkdown(md);
+  // `?? ""` because the early return above only fires while editing — on the
+  // export path a project file missing `md` would reach markdown-it as undefined.
+  const rendered = renderMarkdown(md ?? "");
   return (
     <ProseShell
       spacing={spacing}

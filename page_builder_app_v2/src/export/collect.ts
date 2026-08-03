@@ -14,6 +14,7 @@
  */
 import { walkTree } from "@measured/puck/rsc";
 import type { Config, Data } from "@measured/puck";
+import { hasSvgText } from "../blocks/svgStore";
 import type { GalleryItem } from "../puck/components/Gallery";
 import type { RootProps } from "../puck/PageRoot";
 
@@ -177,11 +178,22 @@ export function collectDownloadPaths(data: Data, config: Config): string[] {
 export function collectA11yIssues(
   data: Data,
   config: Config,
-): { missingAlt: number; totalImages: number; unlabeledIcons: number; missingDownloads: number } {
+): {
+  missingAlt: number;
+  totalImages: number;
+  unlabeledIcons: number;
+  missingDownloads: number;
+  /// Svg / Icons sources with no text in the cache. The cache is warmed by
+  /// prefetchSvgs on open, on pick and before every export, so a cold entry here
+  /// means the file could not be read — and the renderer would emit its
+  /// "[svg … not loaded]" placeholder into the published page.
+  missingSvgs: number;
+} {
   let missingAlt = 0;
   let totalImages = 0;
   let unlabeledIcons = 0;
   let missingDownloads = 0;
+  let missingSvgs = 0;
 
   visitComponents(data, config, ({ type, props, visible }) => {
     if (!visible) return;
@@ -202,14 +214,20 @@ export function collectA11yIssues(
     if (type === "Svg" && props.src) {
       totalImages++;
       if (!(props.alt || "").trim()) missingAlt++;
+      // Only the themed path inlines the file; un-themed renders a plain <img>,
+      // which fails visibly as a broken image rather than as placeholder text.
+      if (props.themed !== false && !hasSvgText(props.src)) missingSvgs++;
     }
     if (type === "Icons") {
-      for (const it of props.items ?? []) if (!(it.label || "").trim()) unlabeledIcons++;
+      for (const it of props.items ?? []) {
+        if (!(it.label || "").trim()) unlabeledIcons++;
+        if (it.src && !hasSvgText(it.src)) missingSvgs++;
+      }
     }
     if (type === "Downloads") {
       for (const it of props.items ?? []) if (it.missing) missingDownloads++;
     }
   });
 
-  return { missingAlt, totalImages, unlabeledIcons, missingDownloads };
+  return { missingAlt, totalImages, unlabeledIcons, missingDownloads, missingSvgs };
 }

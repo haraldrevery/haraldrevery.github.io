@@ -14,6 +14,7 @@ import type { CSSProperties } from "react";
 import type { PuckContext } from "@measured/puck";
 import { BlockShell } from "../nesting";
 import { EmptyHint } from "../EmptyHint";
+import { glightboxCaption } from "../shared";
 import type { Spacing } from "../spacing";
 
 export type Aspect =
@@ -54,13 +55,6 @@ function aspectClass(aspect: string): string {
   if (aspect === "square") return "aspect-square";
   if (aspect === "video") return "aspect-video";
   return `aspect-[${aspect}]`;
-}
-
-/// GLightbox parses "key: value; key: value", so ';' and ':' are structural —
-/// strip them out of user text or the caption breaks. (v1 render.ts:71)
-function glightboxCaption(title: string, desc: string): string {
-  const clean = (s: string) => (s || "").replace(/;/g, ",").replace(/:/g, " -").trim();
-  return `title: ${clean(title)}; description: ${clean(desc)}`;
 }
 
 /// The shared <a> wrapper. `--delay` is a CSS custom property; React passes

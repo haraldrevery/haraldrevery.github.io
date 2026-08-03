@@ -47,10 +47,17 @@ export function prepareSvgForInline(svg: string): string {
   s = s.replace(/<svg([^>]*)>/i, (_m, attrs: string) => {
     let cleaned = attrs.replace(/\s(width|height)="[^"]*"/gi, "");
     cleaned = cleaned.replace(/\s(width|height)='[^']*'/gi, "");
+    // Both quote styles. Testing only for `style="` meant a single-quoted
+    // style attribute fell to the else branch and a SECOND style attribute was
+    // appended; browsers keep the first and drop the second, so the sizing was
+    // silently lost and the svg rendered at its intrinsic size.
+    const sizing = "width:100%;height:auto";
     if (/style\s*=\s*"/i.test(cleaned)) {
-      cleaned = cleaned.replace(/style\s*=\s*"([^"]*)"/i, 'style="$1;width:100%;height:auto"');
+      cleaned = cleaned.replace(/style\s*=\s*"([^"]*)"/i, `style="$1;${sizing}"`);
+    } else if (/style\s*=\s*'/i.test(cleaned)) {
+      cleaned = cleaned.replace(/style\s*=\s*'([^']*)'/i, `style='$1;${sizing}'`);
     } else {
-      cleaned += ' style="width:100%;height:auto"';
+      cleaned += ` style="${sizing}"`;
     }
     return `<svg${cleaned}>`;
   });

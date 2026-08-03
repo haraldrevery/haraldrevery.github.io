@@ -48,8 +48,10 @@ export function IconItemsEditor({
           <div ref={row.ref} className={`pb-item${row.isDragging ? " pb-item--dragging" : ""}`}>
             <div className="pb-item__head">
               <div className="pb-item__meta">
-                <code className="pb-item__path" title={it.src}>{it.src.split("/").pop()}</code>
-                {!it.label.trim() && (
+                {/* Defensive like Faq's renderer: a hand-edited or older
+                    project file can be missing any of these fields. */}
+                <code className="pb-item__path" title={it.src}>{(it.src ?? "").split("/").pop()}</code>
+                {!(it.label ?? "").trim() && (
                   <div className="pb-item__badges">
                     <span className="pb-warn" title="Screen readers announce this">no label</span>
                   </div>
@@ -60,13 +62,13 @@ export function IconItemsEditor({
             <input
               className="pb-item__input"
               placeholder="accessible label (required)"
-              value={it.label}
+              value={it.label ?? ""}
               onChange={(e) => patch(i, { label: e.target.value })}
             />
             <input
               className="pb-item__input"
               placeholder="link (https://… opens in a new tab)"
-              value={it.href}
+              value={it.href ?? ""}
               onChange={(e) => patch(i, { href: e.target.value })}
             />
           </div>
@@ -174,7 +176,7 @@ export function DownloadItemsEditor({
           <div ref={row.ref} className={`pb-item${row.isDragging ? " pb-item--dragging" : ""}`}>
             <div className="pb-item__head">
               <div className="pb-item__meta">
-                <code className="pb-item__path" title={it.src}>{it.src.split("/").pop()}</code>
+                <code className="pb-item__path" title={it.src}>{(it.src ?? "").split("/").pop()}</code>
                 <div className="pb-item__badges">
                   <span className="pb-item__size">{humanSize(it.size)}</span>
                   {it.missing && (
@@ -187,7 +189,7 @@ export function DownloadItemsEditor({
             <input
               className="pb-item__input"
               placeholder="display name (blank = file name)"
-              value={it.label}
+              value={it.label ?? ""}
               onChange={(e) => patch(i, { label: e.target.value })}
             />
           </div>

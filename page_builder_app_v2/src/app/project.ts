@@ -11,7 +11,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { Data } from "@measured/puck";
 import { config } from "../puck/config";
-import { exportText, slugify, humanDate } from "../export/export";
+import { assembleDocument, exportText, slugify, humanDate } from "../export/export";
 import { renderExportContent, renderExportHero, renderExportHeader } from "../export/renderExport";
 import { lintPage, type LintIssue } from "../export/lint";
 import { collectSvgSrcs } from "../export/collect";
@@ -106,6 +106,20 @@ export interface ExportBundle {
   issues: LintIssue[];
 }
 
+/// The three markup slots, rendered in the order the page presents them.
+/// Shared by buildExport and buildPreview so neither can drift from the other.
+function renderParts(data: Data) {
+  return {
+    heroHtml: renderExportHero(data),
+    headerHtml: renderExportHeader(data, humanDate),
+    contentHtml: renderExportContent(data),
+  };
+}
+
+const pageSlug = (data: Data, slugOverride?: string) =>
+  slugOverride?.trim() ||
+  slugify(((data.root?.props ?? {}) as Partial<RootProps>).meta?.title ?? "");
+
 /// Render + lint, without writing anything. Split out so the UI can show the
 /// page check and ask for confirmation before touching the repo.
 export async function buildExport(
@@ -123,12 +137,8 @@ export async function buildExport(
   await revalidateThumbs(data, config);
   await refreshDownloadHashes(data, config);
 
-  const root = (data.root?.props ?? {}) as Partial<RootProps>;
-  const slug = slugOverride?.trim() || slugify(root.meta?.title ?? "");
-
-  const heroHtml = renderExportHero(data);
-  const headerHtml = renderExportHeader(data, humanDate);
-  const contentHtml = renderExportContent(data);
+  const slug = pageSlug(data, slugOverride);
+  const { heroHtml, headerHtml, contentHtml } = renderParts(data);
 
   const contents = exportText({
     shell, data, config, siteUrl, slug, heroHtml, contentHtml, headerHtml,
@@ -143,6 +153,43 @@ export async function buildExport(
 
   return { slug, fileName: `${slug}.html`, contents, issues };
 }
+
+// ------------------------------------------------------------------ preview
+
+/*
+ * Render the page exactly as it will be PUBLISHED, for /__pb/preview.
+ *
+ * assembleDocument, not exportText: exportText prepends the YAML front matter,
+ * which Eleventy strips before copying the body to notebook_pages/. Previewing
+ * the exported *file* would put raw YAML at the top of the page; previewing the
+ * document gives byte-for-byte what ends up on the site.
+ *
+ * prefetchSvgs is kept — it only warms a read cache, and without it every themed
+ * svg renders its "[svg … not loaded]" placeholder.
+ *
+ * revalidateThumbs and refreshDownloadHashes are deliberately NOT run. Both
+ * mutate `data` in place (fixups.ts), so calling them here would mean that
+ * merely looking at a page silently edits the project and can flip the dirty
+ * flag. Export still runs them, so a preview may show a stale SHA — the export
+ * is what has to be correct.
+ */
+export async function buildPreview(
+  data: Data,
+  shell: string,
+  siteUrl: string,
+  slugOverride?: string,
+): Promise<string> {
+  await prefetchSvgs(collectSvgSrcs(data, config));
+  return assembleDocument({
+    shell, data, config, siteUrl,
+    slug: pageSlug(data, slugOverride),
+    ...renderParts(data),
+  });
+}
+
+/// Hand the rendered document to the Rust server thread. "" clears it.
+export const setPreviewHtml = (contents: string) =>
+  invoke<void>("set_preview_html", { contents });
 
 export const readShell = () => invoke<string>("read_shell");
 

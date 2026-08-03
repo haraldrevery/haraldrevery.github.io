@@ -50,9 +50,17 @@ export function humanDate(dateStr: string): string {
   });
 }
 
-export function splitTags(tags: string): string[] {
-  return tags.split(/[,\s]+/).map((t) => t.trim()).filter(Boolean);
+/// Tolerant of undefined on purpose: `meta` is whatever is in the project file,
+/// and a brand-new page carries `root.props = {}` until Puck's first onChange —
+/// so this ran on `undefined` and took Preview and Export down with a TypeError.
+export function splitTags(tags: string | undefined | null): string[] {
+  return String(tags ?? "").split(/[,\s]+/).map((t) => t.trim()).filter(Boolean);
 }
+
+/// A date Eleventy can parse: the shape humanDate formats and the shape every
+/// committed page carries.
+export const isIsoDate = (d: string | undefined | null): boolean =>
+  /^\d{4}-\d{2}-\d{2}$/.test(String(d ?? "").trim());
 
 /// Always double-quote. Deciding *when* to quote is what kept going wrong: a
 /// bare value breaks on ':' and '#', on indicator characters (* & ! % @ ` | >),
@@ -72,7 +80,21 @@ function yamlValue(v: string): string {
 export function frontmatterYaml(meta: PageMeta): string {
   const lines = ["---"];
   lines.push(`title: ${yamlValue(meta.title || "")}`);
-  lines.push(`date: ${meta.date || ""}`);
+  /*
+   * The one value emitted bare, and only when it is a plain ISO date.
+   *
+   * Bare keeps byte-compatibility with every committed page (`date: 2025-08-17`)
+   * and lets YAML type it as a timestamp. Anything else is quoted, because an
+   * unquoted date containing ": " makes gray-matter throw and takes the WHOLE
+   * Eleventy build down — from a typo in a text field. Quoting is safe for
+   * consumers: eleventy.config.js wraps every date in `new Date(...)`, which
+   * treats "2025-08-17" and the timestamp identically.
+   *
+   * An empty date stays empty (YAML null); the page check warns about it, since
+   * Eleventy would silently substitute the build date.
+   */
+  const date = (meta.date || "").trim();
+  lines.push(`date: ${!date || isIsoDate(date) ? date : yamlValue(date)}`);
   // quoted per entry: a tag containing ':' would otherwise parse as a map and
   // one containing ']' would end the flow sequence early
   lines.push(`tags: [${splitTags(meta.tags).map(yamlValue).join(", ")}]`);

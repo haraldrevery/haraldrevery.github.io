@@ -100,8 +100,11 @@ describe("hero checks", () => {
 });
 
 describe("SEO / front matter", () => {
+  // `date` is part of "fully filled": an empty one makes Eleventy substitute the
+  // build date, so the page check treats it as a warning like any other missing
+  // front-matter field.
   const full = {
-    meta: { ...DEFAULT_META, title: "A good title", description: "A good description.", image: "/x_min.jpg", tags: "photography" },
+    meta: { ...DEFAULT_META, title: "A good title", date: "2025-08-17", description: "A good description.", image: "/x_min.jpg", tags: "photography" },
   };
 
   test("a fully filled page has no meta complaints", () => {

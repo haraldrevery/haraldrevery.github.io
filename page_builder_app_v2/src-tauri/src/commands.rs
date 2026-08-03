@@ -166,17 +166,32 @@ fn split_ext(web: &str) -> (&str, &str) {
     }
 }
 
+fn in_repo_is_file(root: &Path, web: &str) -> bool {
+    root.join(web.trim_start_matches('/')).is_file()
+}
+
 /// The _min thumbnail convention: foo.jpg is the full-size (lightbox href),
 /// foo_min.jpg the grid thumbnail. Missing _min falls back to the full-size
 /// image and is flagged so the UI can show a warning badge instead of failing.
+///
+/// BOTH branches check the disk. Deriving the full-size path from a picked
+/// `_min` file used to be unconditional, so picking a thumbnail whose
+/// full-size twin does not exist produced a dangling lightbox href — reported
+/// to the UI as `thumb_exists: true`, i.e. with a green tick. When the twin is
+/// missing the picked file becomes both full and thumb: the link then works,
+/// and `thumb_exists: false` tells the truth (no distinct thumbnail is in use).
 fn derive_full_thumb(web: &str, root: &Path) -> (String, String, bool) {
     let (base, ext) = split_ext(web);
     if base.ends_with("_min") {
         let full = format!("{}{}", &base[..base.len() - 4], ext);
-        (full, web.to_string(), true)
+        if in_repo_is_file(root, &full) {
+            (full, web.to_string(), true)
+        } else {
+            (web.to_string(), web.to_string(), false)
+        }
     } else {
         let cand = format!("{}_min{}", base, ext);
-        let exists = root.join(cand.trim_start_matches('/')).is_file();
+        let exists = in_repo_is_file(root, &cand);
         let thumb = if exists { cand } else { web.to_string() };
         (web.to_string(), thumb, exists)
     }
@@ -458,6 +473,35 @@ pub fn export_page(
     })
 }
 
+// ---------------------------------------------------------------- preview
+
+/// Upper bound on the in-memory preview document. A real page is tens of KB;
+/// this only exists so a runaway Raw block cannot pin an unbounded string for
+/// the lifetime of the app.
+const MAX_PREVIEW_BYTES: usize = 4 * 1024 * 1024;
+
+/// Hand the rendered page to the server thread for GET /__pb/preview.
+///
+/// Memory only — previewing must never write to the repo, which is the whole
+/// point of having it. An empty string clears the slot, so closing the modal
+/// releases the document.
+#[tauri::command]
+pub fn set_preview_html(state: State<AppState>, contents: String) -> Result<(), String> {
+    if contents.len() > MAX_PREVIEW_BYTES {
+        return Err(format!(
+            "Preview document is {} bytes; the limit is {}",
+            contents.len(),
+            MAX_PREVIEW_BYTES
+        ));
+    }
+    let mut slot = state
+        .preview
+        .write()
+        .map_err(|_| "state poisoned".to_string())?;
+    *slot = (!contents.is_empty()).then_some(contents);
+    Ok(())
+}
+
 #[tauri::command]
 pub fn read_shell(state: State<AppState>) -> Result<String, String> {
     let file = repo_root(&state)?.join(APP_DIR).join("shell.html");
@@ -618,7 +662,51 @@ pub fn check_shell_freshness(state: State<AppState>) -> Result<FreshnessReport, 
 
 #[cfg(test)]
 mod tests {
-    use super::hash_one;
+    use super::{derive_full_thumb, hash_one};
+
+    /// Regression: the `_min` branch used to derive the full-size path without
+    /// checking the disk, so picking a thumbnail whose full-size twin is absent
+    /// produced a dangling lightbox href — and reported it as thumb_exists:true,
+    /// i.e. a green tick in the sidebar.
+    #[test]
+    fn picking_a_min_file_never_yields_a_dangling_full_size_path() {
+        let dir = std::env::temp_dir().join("pb_derive_full_thumb");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join("photos")).unwrap();
+
+        // A pair: both files present.
+        std::fs::write(dir.join("photos/pair.jpg"), b"x").unwrap();
+        std::fs::write(dir.join("photos/pair_min.jpg"), b"x").unwrap();
+        // An orphan thumbnail, like photos/audioplayer_texture3_min.webp.
+        std::fs::write(dir.join("photos/orphan_min.webp"), b"x").unwrap();
+        // A full-size image with no thumbnail yet.
+        std::fs::write(dir.join("photos/lonely.jpg"), b"x").unwrap();
+
+        // Picking either half of a real pair resolves to the same pair.
+        assert_eq!(
+            derive_full_thumb("/photos/pair_min.jpg", &dir),
+            ("/photos/pair.jpg".into(), "/photos/pair_min.jpg".into(), true)
+        );
+        assert_eq!(
+            derive_full_thumb("/photos/pair.jpg", &dir),
+            ("/photos/pair.jpg".into(), "/photos/pair_min.jpg".into(), true)
+        );
+
+        // The orphan becomes both full and thumb: the link works, and the flag
+        // says false because no distinct thumbnail is in use.
+        assert_eq!(
+            derive_full_thumb("/photos/orphan_min.webp", &dir),
+            ("/photos/orphan_min.webp".into(), "/photos/orphan_min.webp".into(), false)
+        );
+
+        // Unchanged behaviour: no _min yet, fall back to the full-size image.
+        assert_eq!(
+            derive_full_thumb("/photos/lonely.jpg", &dir),
+            ("/photos/lonely.jpg".into(), "/photos/lonely.jpg".into(), false)
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
     #[test]
     fn hashes_match_known_sha2_test_vectors() {

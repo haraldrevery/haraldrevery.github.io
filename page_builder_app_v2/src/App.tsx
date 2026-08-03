@@ -9,10 +9,11 @@ import { Toolbar } from "./app/Toolbar";
 import { PageCheck } from "./app/PageCheck";
 import { ShellCheck } from "./app/ShellCheck";
 import { ConfirmPrompt, ListPrompt, TextPrompt } from "./app/prompts";
+import { PreviewModal } from "./app/PreviewModal";
 import { useSaveShortcut, useTextUndoShim } from "./app/keyboard";
 import {
-  PROJECT_VERSION, buildExport, listProjects, loadProject, readShell,
-  saveProject, writeExport, type ProjectFileV2, type ProjectInfo,
+  PROJECT_VERSION, buildExport, buildPreview, listProjects, loadProject, readShell,
+  saveProject, setPreviewHtml, writeExport, type ProjectFileV2, type ProjectInfo,
 } from "./app/project";
 
 const EMPTY: Data = { root: { props: {} }, content: [] } as unknown as Data;
@@ -36,6 +37,7 @@ export default function App() {
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialog>({ kind: "none" });
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   /// Puck's `data` prop is INITIAL state — it is copied into Puck's store on
   /// mount and changing it afterwards does not re-sync. Bumping this key
@@ -58,6 +60,9 @@ export default function App() {
   }, []);
 
   const loadInto = (file: ProjectFileV2, name: string | null) => {
+    // The open preview belongs to the outgoing page; keeping it up would show a
+    // document that no longer corresponds to anything in the editor.
+    setPreviewOpen(false);
     setData(file.data);
     liveData.current = file.data;
     setExportSlug(file.exportSlug);
@@ -138,6 +143,28 @@ export default function App() {
     if (projectName) void writeProject(projectName, true);
     else setDialog({ kind: "saveAs", initial: suggestName(liveData.current) });
   }, [projectName, exportSlug]);
+
+  // ---------------------------------------------------------------- preview
+
+  /// Render the live editor state and hand it to the Rust server, which serves
+  /// it at /__pb/preview. Nothing is written to the repo, and buildPreview does
+  /// not mutate `data`, so opening a preview never dirties the project.
+  const renderPreview = async () => {
+    const shell = await readShell();
+    await setPreviewHtml(await buildPreview(liveData.current, shell, cfg!.siteUrl, exportSlug));
+  };
+
+  const doPreview = async () => {
+    setBusy("Rendering…");
+    try {
+      await renderPreview();
+      setPreviewOpen(true);
+    } catch (e) {
+      toast(String(e), true);
+    } finally {
+      setBusy(null);
+    }
+  };
 
   // ----------------------------------------------------------------- export
 
@@ -238,6 +265,7 @@ export default function App() {
             onOpen={doOpen}
             onSave={doSave}
             onSaveAs={() => setDialog({ kind: "saveAs", initial: projectName ?? suggestName(liveData.current) })}
+            onPreview={() => void doPreview()}
             onExport={startExport}
           />
           <div className="pb-layout__body">
@@ -256,6 +284,15 @@ export default function App() {
           </div>
         </div>
       </Puck>
+
+      {previewOpen && (
+        <PreviewModal
+          previewPort={cfg.previewPort}
+          title={pageTitle(liveData.current)}
+          onClose={() => setPreviewOpen(false)}
+          onReload={renderPreview}
+        />
+      )}
 
       {renderDialog()}
     </>
@@ -389,8 +426,12 @@ export default function App() {
   }
 }
 
+/// The page's own SEO title, unsanitised — for display only.
+function pageTitle(data: Data): string {
+  return String(((data.root?.props ?? {}) as any)?.meta?.title ?? "").trim();
+}
+
 /// A save-as default derived from the page title, so the common case is Enter.
 function suggestName(data: Data): string {
-  const title = ((data.root?.props ?? {}) as any)?.meta?.title ?? "";
-  return String(title).trim().replace(/[^A-Za-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "untitled";
+  return pageTitle(data).replace(/[^A-Za-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "untitled";
 }

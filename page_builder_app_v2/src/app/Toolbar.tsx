@@ -13,6 +13,7 @@ export interface ToolbarProps {
   onOpen: () => void;
   onSave: () => void;
   onSaveAs: () => void;
+  onPreview: () => void;
   onExport: () => void;
 }
 
@@ -62,6 +63,9 @@ export function Toolbar(p: ToolbarProps) {
         </button>
         <button type="button" onClick={() => history.forward()} disabled={!history.hasFuture}>
           Redo
+        </button>
+        <button type="button" onClick={p.onPreview} disabled={!!p.busy}>
+          Preview
         </button>
         <button type="button" className="pb-toolbar__primary" onClick={p.onExport}>
           Export page

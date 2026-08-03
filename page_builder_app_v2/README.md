@@ -109,14 +109,32 @@ plumbing went away.
   root-absolute paths (`/main.css`, `/photos/…`) resolve exactly as on the live
   site — **with zero change to the emitted markup**. Preview and export render
   byte-identical HTML, which is the property the whole design hangs on.
-- The fixed `<nav>` is deliberately not rendered in the preview (it would sit on
-  top of Puck's drop targets). Preview fidelity is "content region accurate,
-  page chrome omitted"; the authoritative check is the Eleventy build.
+- The fixed `<nav>` is deliberately not rendered in the **editor** frame (it
+  would sit on top of Puck's drop targets). Editor fidelity is "content region
+  accurate, page chrome omitted".
 - `Ctrl/Cmd+I` toggles Puck's interactive mode, which plays the real entry
   animations. That is v1's edit/preview toggle, for free.
+- **Preview** (toolbar) closes the gap: it renders the page exactly as it will be
+  published and serves it from that same server at `/__pb/preview`, in a
+  full-screen iframe. Because the frame *navigates* rather than using `srcDoc`,
+  root-absolute URLs resolve natively — so nav, footer, fonts, GLightbox, Alpine
+  and the one-shot entry animations are all the real thing. See "Preview" below.
 - Export writes `input_custom_html_pages/<slug>.html`: YAML front matter plus
   `shell.html` with every `{{PLACEHOLDER}}` filled. Eleventy's before-hook then
   copies the body **verbatim** to `notebook_pages/`. Verified byte-identical.
+- The live **page check** runs the real export renderers, so what it scans is
+  exactly what would be written — which also makes it cost a full page render
+  (~7 ms on a 24-block page). The DATA it runs against is therefore debounced by
+  300 ms, so a typing burst costs one render instead of one per character. The
+  export path is unchanged and still renders on demand; `runPageCheck` in
+  `app/PageCheck.tsx` is a plain function of the data so it stays testable
+  without a React renderer.
+- Every front-matter value is double-quoted **except `date`**, which stays bare
+  when it is a plain `YYYY-MM-DD` — that is what the committed pages carry, and
+  what lets YAML type it as a timestamp. Anything else gets quoted, because an
+  unquoted date containing `": "` makes gray-matter throw and stops the whole
+  site build. The page check warns on both a missing date (Eleventy silently
+  substitutes the build date) and a non-ISO one.
 
 ## Two rules that constrain everything
 
@@ -278,6 +296,53 @@ bun test tests
   `count:1` column slot is excluded from JSON-LD and lint but never lost.
 - `export.test.tsx` — frontmatter quoting, JSON-LD, placeholder substitution.
 - `lint.test.tsx` — heading outline and SEO checks.
+- `preview.test.tsx` — that the preview equals the export minus its front matter,
+  and that rendering one does not mutate the project.
+- `regressions.test.tsx` — one describe per fixed defect, named for the symptom
+  rather than the fix, so a failure says what broke for the user.
+
+The Rust side has its own: `cargo test` in `src-tauri/` covers atomic writes,
+the SHA-2 vectors, and that `/__pb/` is answered in full and never falls through
+to a file read.
+
+## Preview
+
+**Preview** in the toolbar renders the current page and shows it running, in a
+full-screen iframe pointed at `http://127.0.0.1:<port>/__pb/preview`.
+
+- `buildPreview` (`src/app/project.ts`) calls **`assembleDocument`, not
+  `exportText`** — the difference is the YAML front matter, which Eleventy strips
+  before copying the body to `notebook_pages/`. Previewing the exported *file*
+  would put raw YAML at the top of the page.
+- It deliberately skips `revalidateThumbs` and `refreshDownloadHashes`. Both
+  mutate `data` in place, so reusing `buildExport` here would mean that merely
+  *looking* at a page silently edits the project and flips the dirty flag. A
+  preview can therefore show a stale SHA; the export is what has to be right.
+- The document lives in Rust memory (`AppState.preview`), handed over by
+  `set_preview_html` and cleared when the modal closes. **Nothing is written to
+  the repo** — that is the point of previewing before exporting.
+- `server.rs` reserves the whole `/__pb/` prefix and answers it in full; an
+  unknown path under it is a 404, never a file read. A file at
+  `<repo>/__pb/preview` cannot shadow the route, and the route cannot shadow it.
+- **It executes author-supplied JavaScript** — `Raw` blocks and markdown with
+  `html: true` are unsanitised by design, and running them is the point. Note
+  this is *safer* than the editor frame: Puck's frame is `srcDoc` and inherits
+  the app's origin, so script in a Raw block can reach
+  `parent.__TAURI_INTERNALS__`. A frame navigated to 127.0.0.1 is cross-origin
+  and cannot. Do not add a CSP to the route — it would block GLightbox and
+  Alpine, which is exactly what the preview exists to verify.
+- **Reload re-points `src`; it never calls `location.reload()`.** The preview's
+  nav and back-links are live, so by the time you press it you may have clicked
+  through to `/notebook.html` on the repo server — reload would faithfully
+  reload *that* instead of returning you to your draft.
+- **Dark mode.** The site has no `data-theme`; it is pure
+  `prefers-color-scheme`, so the only lever is the window theme. WebKitGTK does
+  not resolve that identically for a `srcDoc` frame and a network-loaded one —
+  on a GTK dark theme with `color-scheme` at `default`, the editor renders dark
+  and the preview came up light. The modal therefore pins the app document's own
+  resolved scheme on open and puts *that* back on close. Restoring `"system"`
+  would not do: `setTheme(null)` is not the same as never having called
+  `setTheme`, and would leave the editor lighter than it started.
 
 ## Reconciliation with disk
 
@@ -305,10 +370,11 @@ is what matters.
 
 - **No Windows binary committed yet** — v1 ships `page_builder_app.exe`, v2 does
   not. See "Building the Windows .exe" above; it has to be built on Windows.
-- **The preview is not the page.** It omits nav, footer, GLightbox and all
-  scripts by design (see "How it works"). Fonts, dark mode, lightbox behaviour
-  and the entry animations can only be confirmed by opening a built page in a
-  real browser.
+- **Preview still is not the Eleventy build.** It renders the published document
+  faithfully, but front matter is omitted (Eleventy strips it anyway), so
+  mistakes in `date:`/`tags:` — which drive the Notebook and tag collections —
+  do not surface there. The page check is the tool for that. Styling is also
+  only as fresh as the last Tailwind build.
 - v1's "split a block into columns" affordance is gone; drag into a Columns slot
   instead.
 - `revalidateThumbs` runs on open and on export, not continuously. Generate a

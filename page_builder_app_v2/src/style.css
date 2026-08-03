@@ -269,6 +269,39 @@
 .pb-modal__list em { font-size: 11px; color: #a1a1aa; font-style: normal; }
 .pb-modal__issues { margin: 8px 0 0; padding-left: 18px; font-size: 12px; line-height: 1.5; color: #b45309; }
 
+/* ---- full-page preview -------------------------------------------------
+   Sits above the small modals (z 3000) because Preview can be open while a
+   toast is showing, and the frame must not be dimmed by anything. */
+.pb-preview {
+  position: fixed; inset: 0; z-index: 3500;
+  display: flex; flex-direction: column; background: #18181b;
+}
+.pb-preview__bar {
+  display: flex; align-items: center; gap: 12px; flex: none;
+  padding: 8px 12px; background: #27272a; color: #e4e4e7; font-size: 13px;
+}
+.pb-preview__title { flex: none; max-width: 30ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pb-preview__note { flex: 1; min-width: 0; font-size: 11px; color: #a1a1aa; }
+.pb-preview__note code { font-size: 11px; }
+.pb-preview__themes { display: flex; flex: none; border: 1px solid #52525b; border-radius: 6px; overflow: hidden; }
+.pb-preview__themes button {
+  padding: 5px 10px; border: none; background: none; color: #d4d4d8;
+  cursor: pointer; font: inherit; font-size: 12px;
+}
+.pb-preview__themes button:hover { background: #3f3f46; }
+.pb-preview__themes .is-current { background: #1d4ed8; color: #fff; }
+.pb-preview__ops { display: flex; gap: 6px; flex: none; }
+.pb-preview__ops button {
+  padding: 5px 12px; border: 1px solid #52525b; border-radius: 6px;
+  background: #3f3f46; color: #e4e4e7; cursor: pointer; font: inherit; font-size: 12px;
+}
+.pb-preview__ops button:hover:not(:disabled) { border-color: #a1a1aa; }
+.pb-preview__ops button:disabled { opacity: 0.45; cursor: default; }
+.pb-preview__close { background: #1d4ed8 !important; border-color: #1d4ed8 !important; color: #fff; }
+/* White, not transparent: the site paints its own background and a see-through
+   frame would show the editor chrome behind an unfinished page. */
+.pb-preview__frame { flex: 1; min-height: 0; width: 100%; border: 0; background: #fff; }
+
 /* Breadcrumb: Page › <selected block>. Restores the way back to page-level
    fields, which the default Puck header provides but a custom layout does not. */
 .pb-toolbar__crumbs {

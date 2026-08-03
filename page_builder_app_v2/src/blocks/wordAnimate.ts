@@ -62,6 +62,25 @@ export function wrapHtmlWords(html: string, seed: string): string {
       break;
     }
     if (lt > i) flushText(html.slice(i, lt));
+
+    /*
+     * Comments terminate on "-->", not on the first ">". Scanning for ">" split
+     * `<!-- a > b -->` after the inner ">", so " b " was wrapped in animation
+     * spans and the "-->" ended up INSIDE one — i.e. rendered as visible text.
+     * markdown-it passes author comments straight through (html: true), so this
+     * was reachable from any Text block with word animation on.
+     */
+    if (html.startsWith("<!--", lt)) {
+      const end = html.indexOf("-->", lt);
+      if (end === -1) {
+        out += html.slice(lt);
+        break;
+      }
+      out += html.slice(lt, end + 3);
+      i = end + 3;
+      continue;
+    }
+
     const gt = html.indexOf(">", lt);
     if (gt === -1) {
       out += html.slice(lt);
