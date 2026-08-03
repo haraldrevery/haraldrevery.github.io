@@ -1,0 +1,6 @@
+{
+  "name": "CodeMirror",
+  "description": "Code editor library used in the Revery Notebook markdown editor.",
+  "copyright": "Copyright (c) 2017–2025 by Marijn Haverbeke and contributors",
+  "license": "MIT"
+}

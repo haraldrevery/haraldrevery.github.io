@@ -11,7 +11,16 @@ music.html
 about.html
 contact.html
 download.html
+
+# legal.html is GENERATED from input_legal/legal.md — listed here because the
+# input and output directories are both the repo root, so without this Eleventy
+# would read its own output back in as a template.
 legal.html
+
+# Raw license texts + their sidecars are data, not pages. Without this the
+# README.md in there would inherit input_legal.11tydata.js's permalink and fight
+# legal.md over legal.html.
+input_legal/licenses/
 
 # Ignore assets/configs
 node_modules/

@@ -1100,6 +1100,9 @@
   .block {
     display: block;
   }
+  .contents {
+    display: contents;
+  }
   .flex {
     display: flex;
   }
@@ -1895,6 +1898,9 @@
   }
   .break-all {
     word-break: break-all;
+  }
+  .whitespace-pre-line {
+    white-space: pre-line;
   }
   .text-black {
     color: var(--color-black);

@@ -19,6 +19,7 @@ possible, no npm needed to build.**
 - [Running the build](#running-the-build)
 - [Writing a notebook post](#writing-a-notebook-post)
 - [Publishing a music release](#publishing-a-music-release)
+- [Editing the Legal page](#editing-the-legal-page)
 - [Drafts](#drafts)
 - [CSS / Tailwind](#css--tailwind)
 - [SEO: sitemap, canonicals, JSON-LD](#seo-sitemap-canonicals-json-ld)
@@ -58,11 +59,16 @@ Two separate build tools, deliberately kept independent:
 | Tool | Input | Output |
 |---|---|---|
 | **Tailwind** (standalone binary) | `input.css`, `input_prose.css`, `theme.css` | `main.css`, `main_max.css`, `prose.css`, `prose_max.css` |
-| **Eleventy** (standalone binary or Node) | `.njk` templates, `input_markdown/`, `input_custom_html_pages/`, `input_release/` | `notebook.html`, `notebook_pages/`, `discography.html`, `release/`, `sitemap.xml` |
+| **Eleventy** (standalone binary or Node) | `.njk` templates, `input_markdown/`, `input_custom_html_pages/`, `input_release/`, `input_legal/` | `notebook.html`, `notebook_pages/`, `discography.html`, `release/`, `sitemap.xml`, `legal.html`, `licence/` |
 
 Hand-written pages (`index.html`, `music.html`, `about.html`, `contact.html`,
-`download.html`, `legal.html`, `404.html`) are **not** touched by Eleventy —
-they are listed in `.eleventyignore` and edited directly.
+`download.html`, `404.html`) are **not** touched by Eleventy — they are listed
+in `.eleventyignore` and edited directly.
+
+`legal.html` is the exception: it *looks* hand-written but is **generated** from
+`input_legal/legal.md`. It is in `.eleventyignore` only so Eleventy does not read
+its own output back in. Edit the Markdown, never the HTML — see
+[Editing the Legal page](#editing-the-legal-page).
 
 ---
 
@@ -102,8 +108,9 @@ website_v2_123/
 │
 ├── index.html, music.html, about.html,      # hand-written pages
 │   contact.html, download.html,             # (Eleventy ignores these —
-│   legal.html, 404.html, h.html             #  edit them directly)
+│   404.html, h.html                         #  edit them directly)
 │
+├── legal.html                               # GENERATED (input_legal/legal.md)
 ├── notebook.html                            # GENERATED (blog.njk, page 1)
 ├── discography.html                         # GENERATED (discography.njk)
 ├── sitemap.xml                              # GENERATED (sitemap.njk)
@@ -113,7 +120,9 @@ website_v2_123/
 ├── eleventy_settings/                       # layouts / includes (Eleventy's `includes` dir)
 │   ├── base.njk                             #   page shell (head, meta, CSS links)
 │   ├── nav.njk, footer.njk                  #   shared nav + footer
-│   └── post.njk                             #   notebook post layout (+ outline)
+│   ├── post.njk                             #   notebook post layout (+ outline)
+│   ├── legal.njk                            #   legal page layout
+│   └── license_blocks.njk                   #   generated Section 10 blocks
 │
 ├── eleventy_njk/                            # templates that GENERATE pages
 │   ├── blog.njk                             #   notebook index, 40/page
@@ -126,6 +135,10 @@ website_v2_123/
 │   └── input_markdown.11tydata.js           #   draft handling + auto permalink/layout
 ├── input_custom_html_pages/                 # SOURCE: hand-built HTML notebook posts
 ├── input_release/                           # SOURCE: one .json/.jsonc per release
+├── input_legal/                             # SOURCE: the legal page
+│   ├── legal.md                             #   the prose (sections 1-10)
+│   ├── licenses/                            #   one licence text per library
+│   └── input_legal.11tydata.js              #   builds Section 10 + syncs licence/
 ├── notebook_templates/                      # Tailwind class mirror (see CSS section)
 │
 ├── input.css  → main.css / main_max.css     # site CSS (Tailwind source → build)
@@ -146,7 +159,7 @@ website_v2_123/
 ├── revery_notebook/                         # standalone markdown editor
 ├── color_theme_app/                         # standalone color theme tool
 ├── eleventy_binary/                         # compile scripts for the binaries
-└── licence/                                 # licences of bundled libraries
+└── licence/                                 # GENERATED from input_legal/licenses/
 ```
 
 ---
@@ -266,6 +279,67 @@ own string-aware parser strips them, so `https://…` URLs are never harmed.
 
 > **Note:** `input_release/README.txt` says the grid lands at
 > `release/index.html`. That is stale — it is actually **`discography.html`**.
+
+---
+
+## Editing the Legal page
+
+`legal.html` is **generated** — never edit it directly, a rebuild overwrites it.
+Everything lives in `input_legal/`:
+
+```
+input_legal/
+├── legal.md                  the prose, sections 1-10 (edit this)
+├── licenses/                 one raw licence text per library (+ optional .json)
+└── input_legal.11tydata.js   wires it together (permalink, layout, licence/ sync)
+```
+
+### Changing the wording
+
+Edit `input_legal/legal.md` and rebuild. It is ordinary Markdown; section
+numbers (`### 4\. Terms of Service`) are hand-written, so renumbering is manual.
+The frontmatter `title` feeds `<title>` and the OG/Twitter tags, `heading` is
+the visible page heading.
+
+The body **stops** after Section 10's intro. Below that, 10.1 (the library list)
+is generated and 10.2 (the closing "No Warranty" paragraph) comes from the
+`licenseClosing` frontmatter — it has to render *after* the generated list, which
+is why it sits in the frontmatter rather than the body. Every word of legal prose
+is still in this one file.
+
+### Adding a third-party licence
+
+**Drop the licence file into `input_legal/licenses/`, named after the library,
+with no file extension. That is the whole procedure.**
+
+The build reads the library name from the filename, finds the copyright notice in
+the text, sniffs the licence family for the badge, and puts the complete verbatim
+licence behind a "Show full license" toggle. The file is also published to
+`licence/<name>` so the block's link resolves.
+
+An optional `<name>.json` sidecar overrides any of that — `name`, `description`,
+`copyright`, `license`, `licenseUrl` — for when the file cannot speak for itself.
+Full details in `input_legal/licenses/README.md`. Most libraries need no sidecar.
+
+The list is alphabetical by display name; there is no ordering to maintain.
+
+### The one thing that fails the build
+
+**A library whose copyright notice cannot be found.** Not every licence file
+contains one — `mathjs-develop` is the bare Apache-2.0 template with an unfilled
+`Copyright [yyyy] [name of copyright owner]` appendix, so Jos de Jong's name is
+nowhere in it. Rather than render an unattributed block (which would breach the
+licence), the build stops and asks for a `copyright` in the sidecar.
+
+Same for a sidecar with no local text file and no `licenseUrl`.
+
+### Two gotchas
+
+- `licence/` is **generated** from `input_legal/licenses/`. Do not add files
+  there by hand; they will sit unreferenced while the real source is elsewhere.
+- Eleventy caches directory data files, so **adding** a licence while
+  `npm start` is running needs a dev-server restart. Editing `legal.md` or a
+  sidecar's values reloads normally.
 
 ---
 
@@ -461,3 +535,6 @@ For reference, the ways the `*_sonnet_generated*.md` files are now wrong:
    article outline, and KaTeX math — none of which existed in February.
 10. **Four CSS outputs**, not two (`main_max.css` / `prose_max.css` for
     debugging).
+11. **`legal.html` is generated**, not hand-written — it comes from
+    `input_legal/legal.md`, and `licence/` is generated too. Both used to be
+    edited by hand.

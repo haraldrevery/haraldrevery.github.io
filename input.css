@@ -19,6 +19,7 @@
 @source "./notebook_templates/**/*.{html,md}";
 @source "./eleventy_njk/**/*.njk";
 @source "./eleventy_settings/**/*.njk";
+@source "./input_legal/**/*.md";
 
 @import "./theme.css";
 
@@ -3258,4 +3259,76 @@ a.featured-card__media:hover img {
 @media (prefers-color-scheme: dark) {
   .featured-card__media { background: rgba(255, 255, 255, 0.06); }
   .featured-card__panel { box-shadow: 0 26px 55px -26px rgba(0, 0, 0, 0.8); }
+}
+
+/* ======================================================================
+   Legal page — third-party license cards (Section 10)
+   Emitted by eleventy_settings/license_blocks.njk. The card chrome is
+   Tailwind utilities in that template; only the disclosure and the
+   verbatim license text need real CSS, because neither can be expressed
+   as utilities without fighting the browser defaults.
+   No JavaScript: <details> is native HTML.
+   ====================================================================== */
+
+/* The license family shown next to the library name (MIT, BSD 3-Clause, …). */
+.license-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 0.2rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.7rem;
+  line-height: 1.5;
+  text-transform: none;
+  vertical-align: 0.08em;
+  opacity: 0.75;
+}
+
+.license-details > summary {
+  cursor: pointer;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+  user-select: none;
+}
+
+.license-details > summary:hover { opacity: 1; }
+
+/* The license text, verbatim. pre-wrap (not plain `pre`) is the important
+   part: license files are hard-wrapped at ~80 columns, but the Apache and
+   MPL texts contain longer lines that would otherwise push the whole page
+   sideways on a phone. */
+.license-details > pre {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  max-height: 28rem;
+  overflow: auto;
+  border-left: 2px solid rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.03);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.7rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-color-scheme: dark) {
+  .license-badge { border-color: rgba(255, 255, 255, 0.22); }
+  .license-details > pre {
+    border-left-color: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.04);
+  }
+}
+
+/* Best effort: force closed disclosures open when printing, so a printed copy
+   of the page carries the notices too. Browsers differ on whether they honour
+   this, which is fine — /licence/<slug> is the canonical copy either way. */
+@media print {
+  .license-details > summary ~ * { display: block !important; }
+  .license-details > pre {
+    max-height: none;
+    overflow: visible;
+  }
 }

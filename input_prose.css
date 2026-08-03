@@ -10,6 +10,7 @@
 @source "./notebook_templates/**/*.{html,md}";
 @source "./eleventy_njk/**/*.njk";
 @source "./eleventy_settings/**/*.njk";
+@source "./input_legal/**/*.md";
 
 
 @plugin "@tailwindcss/typography";

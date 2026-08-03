@@ -1,0 +1,7 @@
+{
+  "name": "Tailwind CSS",
+  "description": "Utility-first CSS framework used for styling throughout the website.",
+  "copyright": "Copyright (c) Tailwind Labs, Inc.",
+  "license": "MIT",
+  "licenseUrl": "https://github.com/tailwindlabs/tailwindcss/blob/main/LICENSE"
+}
