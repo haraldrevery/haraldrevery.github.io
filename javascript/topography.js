@@ -17,6 +17,11 @@
  * submerge: it slides down on a slow cycle until it is entirely below the
  * plain and the map closes over it without a trace, then rises back through,
  * surfacing in the low ground first and knitting together as it goes.
+ *
+ * The cursor adds a hill: a soft swell in the terrain under the pointer,
+ * unprojected back onto the ground plane so it sits where the cursor is
+ * rather than where the pixel is. It is part of the terrain, not an overlay,
+ * so the contours bend around it and it occludes what is behind it.
  */
 
 const canvas = document.getElementById('topography-canvas');
@@ -74,7 +79,7 @@ const ORBIT_EASE = 0.05;           // how lazily the view follows the cursor
 // side of YAW, in degrees; set it to 0 to park the camera. A cursor takes over
 // the moment it moves, and hands back once it has sat still for MOUSE_IDLE
 // seconds — otherwise a cursor abandoned on screen would freeze the drift.
-const DRIFT_YAW = 8 * Math.PI / 180;
+const DRIFT_YAW = 14 * Math.PI / 180;
 const DRIFT_PERIOD = 28;           // seconds for the main swing
 const MOUSE_IDLE = 4;              // seconds of a still cursor before drift resumes
 
@@ -92,6 +97,26 @@ const NOISE_SCALE = 0.08;    // per grid cell
 const NOISE_AMP = 0.62;
 const DRIFT = 0.02;           // noise units per second
 const EVOLVE = 0.05;          // z travel per second
+
+// Cursor hill
+//
+// >>> THE BUMP UNDER THE POINTER — TWEAK IT HERE <<<
+// A swell added to the terrain (not to the island, which stays rigid) at the
+// spot on the ground plane the cursor is pointing at. RADIUS is its half-width
+// in grid cells, HEIGHT its peak in field units — for scale, LEVEL_STEP is the
+// gap between two contour lines, so 0.45 is five lines' worth of lift. EASE is
+// how lazily it slides after the cursor, FADE how quickly it grows in when a
+// cursor arrives and dies away when one leaves the window.
+const HILL_RADIUS = 10;       // grid cells
+const HILL_HEIGHT = 0.6;     // field units at the peak
+const HILL_EASE = 0.14;
+const HILL_FADE = 0.05;
+const HILL_R2 = HILL_RADIUS * HILL_RADIUS;
+// The height the cursor is taken to be touching, when the screen point is
+// unprojected back onto the ground. The plain averages around half NOISE_AMP,
+// and the hill stands on top of it, so aiming at that puts the cursor on the
+// swell's crown instead of on the flat some distance beyond it.
+const HILL_REF_H = NOISE_AMP * 0.5 + HILL_HEIGHT;
 
 // Logo island. Distances below are in grid cells.
 //
@@ -137,12 +162,35 @@ const SINK = 0.5;             // how far below that floor it hides when sunk;
 const BLEND = 0.28;           // width of the union's blend band
 const BREATH_PERIOD = 24;     // seconds
 
+// >>> HOW LONG THE LOGO STAYS HIDDEN <<<
+// The fraction of each cycle the island spends entirely under the map. The
+// motion is a triangle wave eased with a smoothstep, which left to itself
+// keeps the logo out of sight for about 0.37 of the period; this warps the
+// wave to hit whatever share is asked for instead. BREATH_PERIOD and the
+// height it reaches are untouched — only the shape of the climb changes, so
+// the time saved down there is spent dwelling at the top. Keep it under the
+// natural 0.37: asking for more makes it loiter at the bottom instead.
+const SUBMERGE_SHARE = 0.28;
+
+// Where in the cycle the animation starts, as a fraction of the period. 0.5 is
+// the top; a little under that opens with the logo up and still rising, so the
+// page does not load onto a held pose.
+const BREATH_OFFSET = 0.45;
+
 // The rise at which the island's rim reaches the plain's floor — the first
 // moment any of it can surface. Below this it is under the map no matter what
 // the terrain is doing, so the rim fade is measured from here rather than from
 // the bottom of the cycle; otherwise RIM_ALPHA_MIN would be a value that never
 // actually appears on screen. Derived, so it follows SINK and LOGO_HEIGHT.
 const RISE_SURFACED = SINK / (LOGO_HEIGHT + SINK);
+
+// Turning SUBMERGE_SHARE into the warp that delivers it. The triangle wave
+// sits below any threshold x for exactly x of its period, so all that is
+// needed is a curve sending SUBMERGE_SHARE to whatever raw phase the
+// smoothstep maps onto RISE_SURFACED. A power curve does it, holds both ends
+// of the range put, and stays monotonic, so nothing downstream notices.
+const SURFACE_PHASE = 0.5 - Math.sin(Math.asin(1 - 2 * RISE_SURFACED) / 3);
+const BREATH_WARP = Math.log(SURFACE_PHASE) / Math.log(SUBMERGE_SHARE);
 
 let width, height, dpr, cell;
 let cols, rows, halfCols, halfRows;
@@ -157,6 +205,11 @@ let cx, cy, zoom, fog;
 let yaw = YAW, pitch = PITCH;
 let yawTarget = YAW, pitchTarget = PITCH;
 let mouseInside = false, mouseLast = -1e9;
+let mouseX = 0, mouseY = 0;
+
+// The hill, in the same camera-grid coordinates the field is sampled in, so it
+// stays put under the cursor while the world yaws underneath it.
+let hillI = 0, hillJ = 0, hillAmp = 0, hillPlaced = false;
 let sinP = Math.sin(PITCH), cosP = Math.cos(PITCH);
 let sinY = Math.sin(YAW), cosY = Math.cos(YAW);
 
@@ -175,6 +228,62 @@ function updateCamera(t) {
     pitch += (pitchTarget - pitch) * ORBIT_EASE;
     sinP = Math.sin(pitch); cosP = Math.cos(pitch);
     sinY = Math.sin(yaw); cosY = Math.cos(yaw);
+}
+
+/*
+ * Put the hill where the cursor is pointing.
+ *
+ * project() maps a grid node and a height to a pixel; this runs it backwards
+ * for a point at HILL_REF_H, which is the one unknown the screen position
+ * cannot supply. Solving pY for the depth gives
+ *
+ *     wz = (wy * (Y sinP - FOCAL cosP) - Y FOCAL) / (Y cosP + FOCAL sinP)
+ *
+ * with Y the cursor's offset from the centre in world units. The denominator
+ * is the horizon: it goes to zero for a cursor level with it and negative
+ * above, which is the sky, so that case is simply dropped. pX then divides out
+ * by the same perspective scale.
+ */
+function updateHill() {
+    let want = 0;
+
+    if (mouseInside) {
+        const Y = (mouseY - cy) / zoom;
+        const den = FOCAL * sinP + Y * cosP;
+        if (den > 1e-3) {
+            const wy = (HILL_REF_H - ELEV_REF) * ELEV_SCALE;
+            const wz = (wy * (Y * sinP - FOCAL * cosP) - Y * FOCAL) / den;
+            const scale = FOCAL / (FOCAL + wz * cosP - wy * sinP);
+            const gj = halfRows - wz;
+            const gi = halfCols + (mouseX - cx) / (scale * zoom);
+
+            // Easing in grid space rather than screen space, so the swell
+            // trails the cursor across the ground instead of across the pixels
+            // — the same lag looks longer near the horizon, which is right.
+            if (hillPlaced) {
+                hillI += (gi - hillI) * HILL_EASE;
+                hillJ += (gj - hillJ) * HILL_EASE;
+            } else {
+                hillI = gi; hillJ = gj; hillPlaced = true;
+            }
+            want = 1;
+        }
+    }
+
+    hillAmp += (want - hillAmp) * HILL_FADE;
+    // Fully gone: forget the position too, so the next cursor swells where it
+    // actually is rather than sliding in from wherever the last one stopped.
+    if (hillAmp < 1e-3) { hillAmp = 0; hillPlaced = false; }
+}
+
+// The swell itself. Zero value and zero slope at the rim, so it meets the
+// terrain without a crease for the contours to catch on.
+function hillAt(gi, gj) {
+    const dx = gi - hillI, dy = gj - hillJ;
+    const r2 = dx * dx + dy * dy;
+    if (r2 >= HILL_R2) return 0;
+    const u = 1 - r2 / HILL_R2;
+    return HILL_HEIGHT * hillAmp * u * u;
 }
 
 // Contour segments, split per level into lines outside the logo and lines
@@ -437,16 +546,24 @@ function prepRim(t, top) {
 
     for (let p = 0; p < rimX.length; p++) {
         const mx = rimX[p], my = rimY[p];
-        const ground = fbm(mx * NOISE_SCALE + drift,
-                           my * NOISE_SCALE - drift * 0.6, z) * NOISE_AMP;
+
+        // Camera-grid position first: the hill lives in those coordinates, and
+        // the rim has to feel it the same way the plates do, or it would hang
+        // in the air through a swell the terrain around it has already risen
+        // over.
+        const rx = mx - halfCols, ry = my - halfRows;
+        const ci = rx * cosY + ry * sinY + halfCols;
+        const cj = -rx * sinY + ry * cosY + halfRows;
+
+        let ground = fbm(mx * NOISE_SCALE + drift,
+                         my * NOISE_SCALE - drift * 0.6, z) * NOISE_AMP;
+        if (hillAmp > 0) ground += hillAt(ci, cj);
         if (ground >= top) { rimOk[p] = 0; continue; } // still under the plain
 
         rimOk[p] = 1;
         rimH[p] = smax(ground, top, BLEND);
-
-        const rx = mx - halfCols, ry = my - halfRows;
-        rimI[p] = rx * cosY + ry * sinY + halfCols;
-        rimJ[p] = -rx * sinY + ry * cosY + halfRows;
+        rimI[p] = ci;
+        rimJ[p] = cj;
 
         let b = rimJ[p] | 0;
         if (b < 0) b = 0; else if (b > rows - 1) b = rows - 1;
@@ -504,8 +621,12 @@ function smax(a, b, k) {
  */
 function sampleField(t) {
     const w = cols + 1;
-    breath = 0.5 + 0.5 * Math.sin(t * (2 * Math.PI / BREATH_PERIOD));
-    rise = breath * breath * (3 - 2 * breath); // dwell at both ends of the cycle
+
+    // Triangle wave, warped so the sunk stretch takes SUBMERGE_SHARE of the
+    // period, then smoothstepped — which is what puts the dwell at the top.
+    const u = (t / BREATH_PERIOD + BREATH_OFFSET) % 1;
+    breath = Math.pow(1 - Math.abs(2 * u - 1), BREATH_WARP);
+    rise = breath * breath * (3 - 2 * breath);
 
     // Rim height: below the plain's floor when sunk, full height when risen.
     const top = -SINK + (LOGO_HEIGHT + SINK) * rise;
@@ -517,6 +638,11 @@ function sampleField(t) {
     for (let j = 0; j <= rows; j++) {
         const row = j * w;
         const dj = j - halfRows;
+
+        // Whole rows miss the hill entirely; skipping them keeps it off the
+        // hot path when it is inactive and cheap when it is not.
+        const hillRow = hillAmp > 0 && Math.abs(j - hillJ) < HILL_RADIUS;
+
         for (let i = 0; i <= cols; i++) {
             const di = i - halfCols;
 
@@ -524,9 +650,12 @@ function sampleField(t) {
             const rx = di * cosY - dj * sinY;
             const ry = di * sinY + dj * cosY;
 
+            // The hill is added in camera-grid space, not world space, so it
+            // is pinned to the cursor rather than drifting with the noise.
             const ground = fbm((rx + halfCols) * NOISE_SCALE + drift,
                                (ry + halfRows) * NOISE_SCALE - drift * 0.6,
-                               z) * NOISE_AMP;
+                               z) * NOISE_AMP
+                         + (hillRow ? hillAt(i, j) : 0);
 
             const m = sampleMesa(rx + halfCols, ry + halfRows);
             const island = top + m;
@@ -829,6 +958,7 @@ function buildFog() {
 function animate() {
     const t = performance.now() * 0.001;
     updateCamera(t);
+    updateHill();
     sampleField(t);
     buildContours(t);
     draw(t);
@@ -879,6 +1009,8 @@ function setup() {
     window.addEventListener('mousemove', e => {
         mouseInside = true;
         mouseLast = performance.now() * 0.001;
+        mouseX = e.clientX;
+        mouseY = e.clientY;
         yawTarget = YAW + ((e.clientX / width) * 2 - 1) * YAW_RANGE;
         pitchTarget = PITCH + ((e.clientY / height) * 2 - 1) * TILT_RANGE;
     });
