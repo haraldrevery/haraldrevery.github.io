@@ -22,6 +22,11 @@
  * unprojected back onto the ground plane so it sits where the cursor is
  * rather than where the pixel is. It is part of the terrain, not an overlay,
  * so the contours bend around it and it occludes what is behind it.
+ *
+ * A click drops a stone in it: a ring travels out from the point struck,
+ * fading as it goes. That one rides on top of the finished surface rather than
+ * inside the terrain, so the logo's plates and its traced outline ride it too
+ * and the whole relief model rocks like a sheet before settling.
  */
 
 const canvas = document.getElementById('topography-canvas');
@@ -118,6 +123,29 @@ const HILL_R2 = HILL_RADIUS * HILL_RADIUS;
 // swell's crown instead of on the flat some distance beyond it.
 const HILL_REF_H = NOISE_AMP * 0.5 + HILL_HEIGHT;
 
+// Click ripple
+//
+// >>> THE DROPLET WAVE — TWEAK IT HERE <<<
+// A ring expanding from wherever the pointer was pressed. Unlike the hill this
+// is laid over the finished surface, so the island rides it instead of hiding
+// it: the monogram's plates and its outline rock as the wave goes through.
+// HEIGHT is the crest at birth in field units (LEVEL_STEP is one contour line
+// apart, so 0.5 is about five lines of lift); SPEED and LIFE together set how
+// far it gets — 30 x 2.8 is roughly half the screen. WIDTH is the half-width of
+// the packet, so a bigger number is a longer, lazier swell. SPREAD is the
+// distance over which the crest loses half its height to the ring growing
+// longer. LOBES is how many crests are in the packet: 1 is a single droplet
+// ring, 2-3 makes it a train chasing itself outward.
+const RIPPLE_MAX = 4;         // rings at once; a fifth click recycles the oldest
+const RIPPLE_HEIGHT = 0.5;    // field units at the crest, at birth
+const RIPPLE_SPEED = 30;      // grid cells per second
+const RIPPLE_WIDTH = 7;       // grid cells, half-width of the packet
+const RIPPLE_LIFE = 2.8;      // seconds from click to nothing
+const RIPPLE_SPREAD = 55;     // cells over which the crest halves
+const RIPPLE_LOBES = 1;
+const RIPPLE_INV_W = 1 / RIPPLE_WIDTH;
+const RIPPLE_WAVE = Math.PI * RIPPLE_LOBES;
+
 // Logo island. Distances below are in grid cells.
 //
 // >>> LOGO RESOLUTION — RAISE THIS FOR A SHARPER SILHOUETTE <<<
@@ -210,6 +238,25 @@ let mouseX = 0, mouseY = 0;
 // The hill, in the same camera-grid coordinates the field is sampled in, so it
 // stays put under the cursor while the world yaws underneath it.
 let hillI = 0, hillJ = 0, hillAmp = 0, hillPlaced = false;
+
+// Ripples, in those same coordinates. A click writes a slot in the pool; the
+// slots are recycled round-robin, so a burst of clicking costs nothing and
+// allocates nothing. Everything a frame needs to evaluate a ring — its radius,
+// what is left of its amplitude, the band it occupies — is worked out once in
+// updateRipples and read straight out of the scratch arrays by the node loop.
+const rippleSrcI = new Float32Array(RIPPLE_MAX);
+const rippleSrcJ = new Float32Array(RIPPLE_MAX);
+const rippleBorn = new Float64Array(RIPPLE_MAX);
+let rippleNext = 0, rippleSeeded = 0;
+
+const rpI = new Float32Array(RIPPLE_MAX);
+const rpJ = new Float32Array(RIPPLE_MAX);
+const rpR = new Float32Array(RIPPLE_MAX);      // radius of the ring, in cells
+const rpAmp = new Float32Array(RIPPLE_MAX);
+const rpIn2 = new Float32Array(RIPPLE_MAX);    // squared radii of the band the
+const rpOut2 = new Float32Array(RIPPLE_MAX);   // packet occupies
+const rpOut = new Float32Array(RIPPLE_MAX);    // unsquared, for the row test
+let rippleLive = 0;
 let sinP = Math.sin(PITCH), cosP = Math.cos(PITCH);
 let sinY = Math.sin(YAW), cosY = Math.cos(YAW);
 
@@ -231,43 +278,52 @@ function updateCamera(t) {
 }
 
 /*
- * Put the hill where the cursor is pointing.
+ * Screen pixel back to a grid position — project() run backwards.
  *
- * project() maps a grid node and a height to a pixel; this runs it backwards
- * for a point at HILL_REF_H, which is the one unknown the screen position
- * cannot supply. Solving pY for the depth gives
+ * project() needs a grid node and a height to give a pixel; going the other way
+ * the height is the one thing the screen cannot supply, so it is passed in.
+ * Solving pY for the depth gives
  *
  *     wz = (wy * (Y sinP - FOCAL cosP) - Y FOCAL) / (Y cosP + FOCAL sinP)
  *
- * with Y the cursor's offset from the centre in world units. The denominator
- * is the horizon: it goes to zero for a cursor level with it and negative
- * above, which is the sky, so that case is simply dropped. pX then divides out
- * by the same perspective scale.
+ * with Y the pixel's offset from the centre in world units. The denominator is
+ * the horizon: it goes to zero for a point level with it and negative above,
+ * which is the sky and has no ground position at all — hence the return value.
+ * pX then divides out by the same perspective scale.
+ *
+ * Writes gX/gY rather than returning a pair, the way project() writes pX/pY:
+ * this runs per pointer event and per frame, and neither wants the garbage.
  */
+let gX = 0, gY = 0;
+
+function screenToGrid(sx, sy, h) {
+    const Y = (sy - cy) / zoom;
+    const den = FOCAL * sinP + Y * cosP;
+    if (den <= 1e-3) return false;              // at or above the horizon
+
+    const wy = (h - ELEV_REF) * ELEV_SCALE;
+    const wz = (wy * (Y * sinP - FOCAL * cosP) - Y * FOCAL) / den;
+    const scale = FOCAL / (FOCAL + wz * cosP - wy * sinP);
+    gX = halfCols + (sx - cx) / (scale * zoom);
+    gY = halfRows - wz;
+    return true;
+}
+
+// Put the hill where the cursor is pointing.
 function updateHill() {
     let want = 0;
 
-    if (mouseInside) {
-        const Y = (mouseY - cy) / zoom;
-        const den = FOCAL * sinP + Y * cosP;
-        if (den > 1e-3) {
-            const wy = (HILL_REF_H - ELEV_REF) * ELEV_SCALE;
-            const wz = (wy * (Y * sinP - FOCAL * cosP) - Y * FOCAL) / den;
-            const scale = FOCAL / (FOCAL + wz * cosP - wy * sinP);
-            const gj = halfRows - wz;
-            const gi = halfCols + (mouseX - cx) / (scale * zoom);
-
-            // Easing in grid space rather than screen space, so the swell
-            // trails the cursor across the ground instead of across the pixels
-            // — the same lag looks longer near the horizon, which is right.
-            if (hillPlaced) {
-                hillI += (gi - hillI) * HILL_EASE;
-                hillJ += (gj - hillJ) * HILL_EASE;
-            } else {
-                hillI = gi; hillJ = gj; hillPlaced = true;
-            }
-            want = 1;
+    if (mouseInside && screenToGrid(mouseX, mouseY, HILL_REF_H)) {
+        // Easing in grid space rather than screen space, so the swell trails
+        // the cursor across the ground instead of across the pixels — the same
+        // lag looks longer near the horizon, which is right.
+        if (hillPlaced) {
+            hillI += (gX - hillI) * HILL_EASE;
+            hillJ += (gY - hillJ) * HILL_EASE;
+        } else {
+            hillI = gX; hillJ = gY; hillPlaced = true;
         }
+        want = 1;
     }
 
     hillAmp += (want - hillAmp) * HILL_FADE;
@@ -284,6 +340,80 @@ function hillAt(gi, gj) {
     if (r2 >= HILL_R2) return 0;
     const u = 1 - r2 / HILL_R2;
     return HILL_HEIGHT * hillAmp * u * u;
+}
+
+// A click, taken back to the ground and dropped in the pool. Recorded as an
+// origin and a birth time, not as a shape: the shape is whatever that origin
+// and time have grown into by the frame that reads it.
+function addRipple(sx, sy, t) {
+    if (!screenToGrid(sx, sy, HILL_REF_H)) return;   // clicked the sky
+
+    rippleSrcI[rippleNext] = gX;
+    rippleSrcJ[rippleNext] = gY;
+    rippleBorn[rippleNext] = t;
+    rippleNext = (rippleNext + 1) % RIPPLE_MAX;
+    if (rippleSeeded < RIPPLE_MAX) rippleSeeded++;
+}
+
+/*
+ * Age every ring once a frame and compact the survivors to the front of the
+ * scratch arrays. Doing it here rather than inside rippleAt is the whole reason
+ * the effect is affordable: the node loop runs tens of thousands of times a
+ * frame and must not be working out radii and decay curves while it does.
+ */
+function updateRipples(t) {
+    rippleLive = 0;
+
+    for (let s = 0; s < rippleSeeded; s++) {
+        const age = t - rippleBorn[s];
+        if (age < 0 || age >= RIPPLE_LIFE) continue;
+
+        const R = age * RIPPLE_SPEED;
+        const a = age / RIPPLE_LIFE;
+        const fade = (1 - a) * (1 - a);
+        // Two separate losses: the ring retiring on its own clock, and its
+        // energy thinning as it is smeared around an ever-longer circle.
+        const amp = RIPPLE_HEIGHT * fade / (1 + R / RIPPLE_SPREAD);
+
+        // Clamped at zero rather than folded, so a ring younger than its own
+        // width is a blob covering the point struck. That is what reads as the
+        // impact — without it the wave would appear out of nowhere at radius W.
+        const inner = R - RIPPLE_WIDTH;
+        const outer = R + RIPPLE_WIDTH;
+
+        const k = rippleLive++;
+        rpI[k] = rippleSrcI[s];
+        rpJ[k] = rippleSrcJ[s];
+        rpR[k] = R;
+        rpAmp[k] = amp;
+        rpIn2[k] = inner > 0 ? inner * inner : 0;
+        rpOut2[k] = outer * outer;
+        rpOut[k] = outer;
+    }
+}
+
+/*
+ * The wave at one grid position: every live ring summed.
+ *
+ * The band test is on squared distance, so the common case — a node nowhere
+ * near this ring — costs two multiplies and a compare and never touches a
+ * square root. Only nodes actually inside the packet pay for the profile.
+ */
+function rippleAt(gi, gj) {
+    let sum = 0;
+    for (let k = 0; k < rippleLive; k++) {
+        const dx = gi - rpI[k], dy = gj - rpJ[k];
+        const d2 = dx * dx + dy * dy;
+        if (d2 <= rpIn2[k] || d2 >= rpOut2[k]) continue;
+
+        // -1 behind the front, 0 on it, +1 ahead of it.
+        const u = (Math.sqrt(d2) - rpR[k]) * RIPPLE_INV_W;
+        // Windowed to zero in value and slope at both ends of the packet, so
+        // the wave dies into the surface instead of stepping off it.
+        const win = 1 - u * u;
+        sum += rpAmp[k] * Math.cos(RIPPLE_WAVE * u) * win * win;
+    }
+    return sum;
 }
 
 // Contour segments, split per level into lines outside the logo and lines
@@ -561,7 +691,12 @@ function prepRim(t, top) {
         if (ground >= top) { rimOk[p] = 0; continue; } // still under the plain
 
         rimOk[p] = 1;
-        rimH[p] = smax(ground, top, BLEND);
+        // The ripple goes on after the union, so the outline rides the wave
+        // along with the plates it sits on. Deliberately not part of the test
+        // above: measuring cover against a rippled ground would make the rim
+        // blink out every time a crest swept across it.
+        rimH[p] = smax(ground, top, BLEND)
+                + (rippleLive > 0 ? rippleAt(ci, cj) : 0);
         rimI[p] = ci;
         rimJ[p] = cj;
 
@@ -643,6 +778,12 @@ function sampleField(t) {
         // hot path when it is inactive and cheap when it is not.
         const hillRow = hillAmp > 0 && Math.abs(j - hillJ) < HILL_RADIUS;
 
+        // Same for the rings: a row no packet reaches skips the whole test.
+        let rippleRow = false;
+        for (let k = 0; k < rippleLive; k++) {
+            if (Math.abs(j - rpJ[k]) < rpOut[k]) { rippleRow = true; break; }
+        }
+
         for (let i = 0; i <= cols; i++) {
             const di = i - halfCols;
 
@@ -661,7 +802,12 @@ function sampleField(t) {
             const island = top + m;
 
             const k = row + i;
-            field[k] = smax(ground, island, BLEND);
+            // The ripple is laid over the finished surface, not mixed into the
+            // terrain: the union has already decided what the ground is, and
+            // the wave lifts whatever that turned out to be — plain, cliff or
+            // the island's crown alike.
+            field[k] = smax(ground, island, BLEND)
+                     + (rippleRow ? rippleAt(i, j) : 0);
             // Inside the silhouette (the island's rim is 0) and actually
             // surfaced here — so a sunk logo leaves no bright trace behind.
             onIsland[k] = (m > 0 && island > ground) ? 1 : 0;
@@ -959,6 +1105,7 @@ function animate() {
     const t = performance.now() * 0.001;
     updateCamera(t);
     updateHill();
+    updateRipples(t);
     sampleField(t);
     buildContours(t);
     draw(t);
@@ -1016,6 +1163,13 @@ function setup() {
     });
     // Leaving the window hands the camera straight back to the drift.
     window.addEventListener('mouseout', () => { mouseInside = false; });
+
+    // pointerdown, not click: it fires on the press rather than the release,
+    // which an impact wants, and it covers touch, where the hill never appears
+    // because mousemove never fires.
+    window.addEventListener('pointerdown', e => {
+        addRipple(e.clientX, e.clientY, performance.now() * 0.001);
+    });
 
     animate();
 }
