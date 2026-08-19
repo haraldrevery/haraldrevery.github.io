@@ -44,55 +44,84 @@ function resize() {
     centerY = height / 2;
 }
 
+// Sampling budget is spread by geometry rather than per path, so a small shape and
+// a large one end up with the same grains per unit of outline / filled area.
+const OUTLINE_SHARE = 0.3;
+const AREA_PROBES = 2000;
+
+function measurePath(path, probe) {
+    const bbox = path.getBBox();
+    let hits = 0;
+
+    // Monte Carlo estimate of how much of the bounding box the shape actually fills
+    if (path.isPointInFill) {
+        for (let i = 0; i < AREA_PROBES; i++) {
+            probe.x = bbox.x + Math.random() * bbox.width;
+            probe.y = bbox.y + Math.random() * bbox.height;
+            if (path.isPointInFill(probe)) hits++;
+        }
+    }
+
+    const hitRatio = hits / AREA_PROBES;
+    return {
+        path: path,
+        bbox: bbox,
+        len: path.getTotalLength(),
+        hitRatio: hitRatio,
+        area: bbox.width * bbox.height * hitRatio
+    };
+}
+
 function getLogoPoints() {
     const points = [];
-    const paths = svg.querySelectorAll('path');
-    const samplesPerPath = Math.floor(particleCount / paths.length);
-    
-    paths.forEach(path => {
-        const len = path.getTotalLength();
-        
-        // Get points along the path outline
-        for(let i = 0; i < samplesPerPath * 0.3; i++) {
-            const pt = path.getPointAtLength(Math.random() * len);
-            const spread = 6;
-            points.push({
-                x: (pt.x - 500) * 0.7 + (Math.random() - 0.5) * spread - 70, // Shifted 4% left
-                y: (pt.y - 550) * 0.7 + (Math.random() - 0.5) * spread,
-                z: (Math.random() - 0.5) * 50
-            });
+    const probe = svg.createSVGPoint();
+    const shapes = [];
+    svg.querySelectorAll('path').forEach(path => shapes.push(measurePath(path, probe)));
+
+    const totalLen = shapes.reduce((sum, s) => sum + s.len, 0);
+    const totalArea = shapes.reduce((sum, s) => sum + s.area, 0);
+
+    // Without isPointInFill (no area measurable) everything goes to the outlines
+    const outlineBudget = particleCount * (totalArea > 0 ? OUTLINE_SHARE : 1);
+    const fillBudget = particleCount - outlineBudget;
+
+    const push = (x, y, spread) => {
+        points.push({
+            x: (x - 500) * 0.7 + (Math.random() - 0.5) * spread - 70, // Shifted 4% left
+            y: (y - 550) * 0.7 + (Math.random() - 0.5) * spread,
+            z: (Math.random() - 0.5) * 50
+        });
+    };
+
+    shapes.forEach(shape => {
+        // Outline: constant number of points per unit of path length
+        const outlineSamples = Math.round(outlineBudget * (shape.len / totalLen));
+        for (let i = 0; i < outlineSamples; i++) {
+            const pt = shape.path.getPointAtLength(Math.random() * shape.len);
+            push(pt.x, pt.y, 6);
         }
-        
-        // Fill interior with additional points
-        const bbox = path.getBBox();
-        const fillSamples = samplesPerPath * 0.7;
+
+        if (shape.area <= 0) return;
+
+        // Interior: constant number of points per unit of filled area
+        const fillSamples = Math.round(fillBudget * (shape.area / totalArea));
+        // Rejection sampling needs ~1/hitRatio tries per hit; the margin covers variance
+        const maxAttempts = Math.ceil(fillSamples / shape.hitRatio * 1.5) + 100;
         let generated = 0;
         let attempts = 0;
-        const maxAttempts = fillSamples * 5;
-        
-        while(generated < fillSamples && attempts < maxAttempts) {
+
+        while (generated < fillSamples && attempts < maxAttempts) {
             attempts++;
-            const x = bbox.x + Math.random() * bbox.width;
-            const y = bbox.y + Math.random() * bbox.height;
-            
-            // Use a temporary point for hit testing
-            const pt = svg.createSVGPoint();
-            pt.x = x;
-            pt.y = y;
-            
-            // Check if point is inside the path using isPointInFill
-            if (path.isPointInFill && path.isPointInFill(pt)) {
-                const spread = 4;
-                points.push({
-                    x: (x - 500) * 0.7 + (Math.random() - 0.5) * spread - 70, // Shifted 4% left
-                    y: (y - 550) * 0.7 + (Math.random() - 0.5) * spread,
-                    z: (Math.random() - 0.5) * 50
-                });
+            probe.x = shape.bbox.x + Math.random() * shape.bbox.width;
+            probe.y = shape.bbox.y + Math.random() * shape.bbox.height;
+
+            if (shape.path.isPointInFill(probe)) {
+                push(probe.x, probe.y, 4);
                 generated++;
             }
         }
     });
-    
+
     return points;
 }
 
