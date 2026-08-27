@@ -4,7 +4,7 @@ date: 2011-02-05
 image: /photos/2015-2023/waitinginrain2019may_min.jpg
 description: What to stack up when trying to survive for 6 months (AI generated).
 tags: [survival]
-draft: false
+draft: true
 ---
 
 I just asked different LLM models what is needed to survive for 6 months. These are the results:
