@@ -19,7 +19,7 @@ if (!document.querySelector('.post-container')) return;
 // button. Never creating the elements means nothing can reveal them.
 if (navigator.maxTouchPoints > 0 || 'ontouchstart' in window) return;
 
-var SCALES  = [1, 0.75, 0.55, 0.40, 0.28];  // default → 80% → 60% → 45% of default width
+var SCALES  = [1, 0.75, 0.55, 0.40, 0.28, 0.18];  // 100% → 75% → 55% → 40% → 28% → 18% of default width
 var NARROW  = '><';                   // shown while there's still room to narrow
 var WIDEN   = '<>';                   // shown at the narrowest step: next press widens back
 var index   = 0;                      // current step in SCALES
