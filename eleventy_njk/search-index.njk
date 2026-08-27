@@ -1,0 +1,25 @@
+---
+permalink: /search-index.json
+eleventyExcludeFromCollections: true
+---
+{#-
+  SITE SEARCH — part 1 of 3 (see eleventy_settings/search.njk for the full map).
+  Emits /search-index.json consumed by /javascript/search.js.
+
+  To index MORE content later: add a field to the objects below, or add another
+  {% for %} loop over a new collection (keep the {{ comma() }} joiner pattern).
+  Every string value must go through `| dump | safe` — dump alone gets
+  HTML-entity-escaped by Nunjucks autoescape and corrupts the JSON.
+
+  To REMOVE search: delete this file (and the other files listed in search.njk),
+  plus the generated /search-index.json at the repo root.
+-#}
+{%- set comma = joiner(",") -%}
+[
+{%- for post in collections.notebook_posts %}{{ comma() }}
+{"url":{{ post.url | dump | safe }},"title":{{ post.data.title | dump | safe }},"type":"post","date":"{{ post.date | isoDate }}","description":{{ (post.data.description or "") | truncate(160) | dump | safe }},"tags":{{ (post.data.tags or []) | dump | safe }}}
+{%- endfor %}
+{%- for r in collections.releases %}{{ comma() }}
+{"url":{{ r.url | dump | safe }},"title":{{ r.name | dump | safe }},"type":"release","date":"{{ r.year }}","description":{{ (r.introduction or "") | truncate(160) | dump | safe }},"tags":{{ (r.genres or []) | dump | safe }}}
+{%- endfor %}
+]

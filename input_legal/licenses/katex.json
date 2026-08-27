@@ -1,0 +1,4 @@
+{
+  "name": "KaTeX",
+  "description": "Fast math typesetting library used to render LaTeX expressions in the Notebook."
+}

@@ -1,0 +1,35 @@
+{#-
+  SITE SEARCH — part 2 of 3. The whole feature is exactly these pieces:
+    1. eleventy_njk/search-index.njk   -> builds /search-index.json (the data)
+    2. eleventy_settings/search.njk    -> this include (the markup)
+    3. javascript/search.js (+_min)    -> fetch/filter/dropdown logic
+
+  REUSE on an Eleventy page:  {% include "search.njk" %}
+  REUSE on a hand-written page (music.html etc., outside Eleventy): copy this
+  file's HTML below as-is (drop the njk comments) — paths are absolute, so it
+  works from any depth, and root *.html is already Tailwind-scanned.
+  Safe to include twice on one page: no hardcoded ids, JS init is idempotent.
+
+  REMOVE the feature: delete the 4 files above (+ generated /search-index.json)
+  and any include lines / pasted snippets. Optionally revert the dev.sh
+  --content globs (they now also scan eleventy_njk/ + eleventy_settings/,
+  which is a good fix regardless of search).
+
+  NO-JS: the [hidden] attribute keeps this invisible (removed by search.js on
+  init), so without JavaScript the page renders exactly as before.
+
+  Z-INDEX: if the host page has sibling sections with fade/transform animations
+  (e.g. .extra_fade_effect), each one is a stacking context — give the section
+  containing this widget "relative z-20" or the dropdown paints underneath
+  later sections (see the notebook section in blog.njk).
+-#}
+<div data-search hidden class="relative max-w-md mx-auto mb-8">
+    <input type="search" autocomplete="off" spellcheck="false"
+           placeholder="Search notes + releases"
+           aria-label="Search notes and releases"
+           role="combobox" aria-expanded="false" aria-autocomplete="list"
+           class="w-full appearance-none px-4 pt-2 pb-1 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-sm tracking-widest rounded-lg placeholder:uppercase placeholder:text-neutral-500 focus:outline-none focus:bg-neutral-300 dark:focus:bg-neutral-700 transition-colors">
+    <ul role="listbox" hidden
+        class="absolute left-0 right-0 mt-2 z-10 bg-neutral-200 dark:bg-neutral-800 rounded-lg shadow-lg max-h-96 overflow-y-auto text-left"></ul>
+</div>
+<script src="/javascript/search_min.js" defer></script>

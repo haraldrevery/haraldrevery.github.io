@@ -1,0 +1,92 @@
+/* source(none) disables Tailwind v4's automatic source detection (which
+   would otherwise scan ALL of www/ — including vendor *.min.js — and
+   scavenge random tokens into the output, nondeterministically). The
+   @source lines below are the ONLY files scanned for class names.
+   Paths are relative to this file. */
+@import "tailwindcss" source(none);
+@source "../index.html";
+@source "../pdf_print.html";
+@source "../jvscrpt_and_css_extra/markdown_editor_*.js";
+@source "../jvscrpt_and_css_extra/project_sidebar.js";
+@source "../jvscrpt_and_css_extra/native_api.js";
+
+@import "./theme.css";
+
+
+@layer base {
+
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: -10%; 
+  width: 120%;
+  height: 120%;
+  z-index: -50; 
+  background-image: linear-gradient(to bottom right, #dedede, #ffffff, #dedede);
+  background-size: 200% 200%;
+  pointer-events: none;
+  background-color: #ffffff;
+}
+
+/* 3. Dark Mode for EVERYONE */
+@media (prefers-color-scheme: dark) {
+  body::before {
+    background-image: linear-gradient(to bottom right, #000000, #141414, #262626) !important;
+  }
+}
+@media (prefers-color-scheme: dark) {
+    body {
+      background-color: #000000; /* Pure black to match your dark gradient start */
+    }
+  }
+  /* 2. Responsive Root Scaling (V1 Logic) */
+  html {
+    font-size: var(--text-body-mobile); /* Mobile Root Base */
+    scroll-behavior: smooth;
+  }
+
+  @media (min-width: 900px) {
+    html {
+      font-size: var(--text-body); /* Desktop Root Base */
+    }
+  }
+
+  /* 3. Global Body Styling */
+  body {
+    font-family: var(--font-brand) !important;
+    font-size: var(--text-body-mobile); 
+    line-height: var(--text-line-row-space);                 
+    letter-spacing: var(--tracking-body);            
+  }
+
+  @media (min-width: 900px) {
+    body {
+      font-size: var(--text-body); /* V1 Desktop Scaling */
+    }
+
+    
+  }
+
+/* No x scroll */
+html, 
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+  position: relative;
+}
+
+  /* 4. Technical Typography Override */
+  .font-mono {
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    line-height: 1.2;
+    letter-spacing: 0.026em;
+  }
+
+}
+
+/* Everything below the base layer (old-website components: glass-nav,
+   portfolio, hero animations, GLightbox, carousel, topology backgrounds,
+   ~2400 lines) was removed 2026-07-16 — the notebook app uses none of it.
+   It lives in git history before this date if ever needed again. */

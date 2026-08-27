@@ -1,0 +1,46 @@
+<h1>Verifying RVRY_ASCII</h1>
+<p>Static site, no build step. Must be served over HTTP (file:// taints the canvas).</p>
+<h2>Launch</h2>
+<pre><code class="language-bash">python3 -m http.server 8931   # from the project root
+</code></pre>
+<p>Only Firefox is installed here (no Chromium/Playwright). Drive it headless with a
+fresh profile so the user's real profile and localStorage stay untouched:</p>
+<pre><code class="language-bash">PROF=$(mktemp -d); firefox --headless --no-remote --profile &quot;$PROF&quot; &lt;url&gt;
+firefox --headless --screenshot out.png &lt;url&gt;   # boot screenshot
+</code></pre>
+<h2>Drive</h2>
+<p>Headless Firefox has no automation driver, so use a same-origin driver page:
+serve a <code>driver.html</code> (from the scratchpad, via a small custom HTTP server that
+also accepts <code>POST /result/&lt;name&gt;</code> and writes the body to disk) that loads
+<code>/index.html</code> in an iframe and drives the real UI with real DOM events, then
+POSTs a JSON report back. Patterns that work:</p>
+<ul>
+<li><strong>File drops</strong> (the real input path): <code>new DataTransfer()</code>, <code>dt.items.add(file)</code>,
+<code>new DragEvent('drop', {bubbles:true, dataTransfer:dt})</code> on <code>#img-drop</code> /
+<code>#obf-drop</code> / <code>#ply-drop</code>. Test images: draw on a canvas, <code>toBlob</code>, wrap in <code>File</code>.</li>
+<li><strong>Sliders</strong>: set <code>.value</code> then dispatch <code>input</code> (bubbles). Selects/checkboxes:
+set then dispatch <code>change</code>.</li>
+<li><strong>Exports</strong>: downloads go through a created <code>&lt;a&gt;.click()</code> — override
+<code>app.HTMLAnchorElement.prototype.click</code> in the iframe window to capture
+<code>{href, download}</code>, then <code>fetch(href)</code> the blob URL to inspect content
+(<code>createImageBitmap</code> for PNG dimensions).</li>
+<li><strong>Cropper</strong>: pointer handlers call <code>stage.setPointerCapture</code>, which throws for
+synthetic events — stub it (<code>stage.setPointerCapture = ()=&gt;{}</code>) before
+dispatching <code>PointerEvent</code>s. Drag a <code>.crop-handle</code> element (its <code>dataset.dir</code>
+selects resize mode).</li>
+<li><strong>Minimal test GIF</strong>: a hand-built 1×1 2-frame GIF89a decodes fine through
+<code>RVRY.decodeGif</code> (see git-less history: GCE <code>21 F9 04 04 0A 00 00 00</code> + image
+<code>2C 00×8 … 00 02 02 44 01 00</code>, twice, <code>3B</code> trailer).</li>
+<li><strong>Code-art Python check</strong>: capture <code>#obf-out</code> text, POST it back, run it with
+<code>python3</code> — it must execute unchanged.</li>
+</ul>
+<h2>Gotchas</h2>
+<ul>
+<li>Image loads are async: after a drop, wait for <code>#img-thumb</code> to unhide <em>and</em>
+settle before opening the cropper or asserting, or a late <code>setImage</code> will
+reset crop state mid-test.</li>
+<li><code>rafThrottle</code> renders on the next animation frame — poll with ~100ms waits,
+don't assert immediately after dispatching.</li>
+<li>All app modules are IIFEs on <code>window.RVRY</code>; internal closures (e.g. the
+<code>render</code> reference inside <code>renderColorHTML</code>) can't be spied via <code>RVRY.*</code>.</li>
+</ul>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Featured dispatch — block preview</title>
+
+<!-- The REAL compiled bundle: gives us the fonts, .page-container, and the
+     existing .preview-card frosted panel this block builds on. -->
+<link rel="stylesheet" href="main.css">
+<link rel="stylesheet" href="prose.css">
+
+
+</head>
+
+<!-- body classes copied verbatim from page_builder_app_v2/shell.html:53 -->
+<body class="min-h-screen text-black dark:text-white">
+
+<!-- page-container + pt-24 pb-12 copied from shell.html:116, so each block
+     sits in exactly the column width it will have on a real notebook page.
+     extra_fade_effect is deliberately omitted here so nothing is mid-animation
+     while you look at it. -->
+<div class="page-container pt-24 pb-12">
+
+  <p class="probe">1 — photo left (the default)</p>
+
+  <section class="featured-card mb-16">
+    <a class="glightbox featured-card__media" href="photos/2025galdhoepiggen/2025h_close_to_galdhopiggen_top5.jpg"
+       data-gallery="single" data-glightbox="title: Close to the top; description: ">
+      <img src="photos/2025galdhoepiggen/2025h_close_to_galdhopiggen_top5_min.jpg"
+           alt="Close to the top of Galdhøpiggen" loading="lazy">
+    </a>
+    <div class="preview-card featured-card__panel">
+      <p class="featured-card__eyebrow">Dispatch 004</p>
+      <h2 class="featured-card__title">Close to the top</h2>
+      <p class="featured-card__excerpt">
+        Four hours up through the cloud layer and then, all at once, above it —
+        the ridge running out ahead like a drawn line.
+      </p>
+    </div>
+  </section>
+
+  <p class="probe">2 — photo right (adds featured-card-flip)</p>
+
+  <section class="featured-card featured-card-flip mb-16">
+    <a class="glightbox featured-card__media" href="photos/2025galdhoepiggen/2025christian_on_galdhopiggen1.jpg"
+       data-gallery="single" data-glightbox="title: The long way round; description: ">
+      <img src="photos/2025galdhoepiggen/2025christian_on_galdhopiggen1_min.jpg"
+           alt="Christian on Galdhøpiggen" loading="lazy">
+    </a>
+    <div class="preview-card featured-card__panel">
+      <p class="featured-card__eyebrow">Field notes</p>
+      <h2 class="featured-card__title">The long way round</h2>
+      <p class="featured-card__excerpt">
+        The same panel, mirrored. Nothing else changes — the text stays
+        left-aligned and the shadow is side-agnostic.
+      </p>
+    </div>
+  </section>
+
+  <p class="probe">
+    3 — long title and excerpt: the panel must GROW THE SECTION, never spill
+    past it. The photo re-centres against the taller panel.
+  </p>
+
+  <section class="featured-card mb-16">
+    <a class="glightbox featured-card__media" href="photos/2025galdhoepiggen/2025styggebreen_glacier_2.jpg"
+       data-gallery="single" data-glightbox="title: An unreasonably long featured title that has to wrap onto three or four lines Donaudampfschiffahrtsgesellschaftskapitaen; description: ">
+      <img src="photos/2025galdhoepiggen/2025styggebreen_glacier_2_min.jpg"
+           alt="Styggebreen glacier" loading="lazy">
+    </a>
+    <div class="preview-card featured-card__panel">
+      <p class="featured-card__eyebrow">Dispatch 005 — long form</p>
+      <h2 class="featured-card__title">
+        An unreasonably long featured title that has to wrap onto three or four
+        lines Donaudampfschiffahrtsgesellschaftskapitaen
+      </h2>
+      <p class="featured-card__excerpt">
+        A longer excerpt, to check that the panel outgrows the photo cleanly and
+        that the two still share one grid row rather than one of them escaping
+        the section. The section's only gap is the 64px beneath it, so anything
+        that spilled would land on the next block.
+      </p>
+    </div>
+  </section>
+
+  <p class="probe">
+    4 — no photo: the :first-child rule drops the pull-up and centres the
+    panel. Nothing may hang above the section's top edge.
+  </p>
+
+  <section class="featured-card mb-16">
+    <div class="preview-card featured-card__panel">
+      <p class="featured-card__eyebrow">Text only</p>
+      <h2 class="featured-card__title">No photo picked</h2>
+      <p class="featured-card__excerpt">
+        The panel is the only child, so it takes grid row 1 and loses its
+        negative top margin.
+      </p>
+    </div>
+  </section>
+
+  <p class="probe">5 — short excerpt, photo right</p>
+
+  <section class="featured-card featured-card-flip mb-16">
+    <a class="glightbox featured-card__media" href="photos/2025galdhoepiggen/2025somwhere_at_galdhopiggen.jpg"
+       data-gallery="single" data-glightbox="title: Short and wide; description: ">
+      <img src="photos/2025galdhoepiggen/2025somwhere_at_galdhopiggen_min.jpg"
+           alt="Somewhere on Galdhøpiggen" loading="lazy">
+    </a>
+    <div class="preview-card featured-card__panel">
+      <p class="featured-card__eyebrow">Quiet variant</p>
+      <h2 class="featured-card__title">Short and wide</h2>
+      <p class="featured-card__excerpt">
+        A shorter standfirst, to check the panel does not collapse below a
+        comfortable height when there is little to say.
+      </p>
+    </div>
+  </section>
+
+  <!-- The neighbour: proves the ONE gap below is the only gap, and that
+       nothing from the card above overlaps it. -->
+  <article class="prose dark:prose-invert max-w-none mb-16">
+    <p>A following block. The gap above this paragraph is the featured card's
+    <code>mb-16</code> and nothing else.</p>
+  </article>
+
+</div>
+
+<!-- Same two scripts the real shell loads (shell.html:271-274), relative so
+     they resolve over file://. Click any photo to test the lightbox. -->
+<script src="javascript/glightbox.min.js" defer></script>
+<script src="javascript/glightbox_settings_min.js" defer></script>
+</body>
+</html>

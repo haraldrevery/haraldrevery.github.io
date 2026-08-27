@@ -1,0 +1,4 @@
+{
+  "name": "DOMPurify",
+  "description": "XSS sanitisation library used as a security measure in the Revery Notebook markdown editor."
+}

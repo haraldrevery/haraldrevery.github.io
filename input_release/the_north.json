@@ -1,0 +1,27 @@
+{
+  "type": "Single",
+  "name": "The North",
+  "slug": "the_north",
+  "date": "2022-11-25",
+  "artist": "Harald Revery & Light Titum",
+  "isrc": "QZTAY2218472",
+  "genres": ["Bounce", "Big Room", "Rave"],
+  "kicker": "New Single — Out Now",
+  "introduction": "Bass from the mountains up north",
+  "artcover": "/artcover/thenorth11.jpg",
+  "artcoverMin": "/artcover/thenorth11_min.jpg",
+  "about": "<p>After 7 years of collecting dust on our hard drives, we finally finished it. </p>",
+  "streaming": {
+    "spotify": "https://open.spotify.com/artist/3e27f6Y3wBFJ1YYLNkrjNu",
+    "apple": "https://music.apple.com/se/artist/harald-revery/1275991562",
+    "soundcloud": "https://soundcloud.com/haraldrevery",
+    "tidal": "https://tidal.com/artist/9065421",
+    "youtube": "https://www.youtube.com/c/HaraldRevery",
+    "odysee": "https://odysee.com/@HaraldRevery:f",
+    "deezer": "https://www.deezer.com/en/artist/13080459",
+    "amazon": "https://www.amazon.com/music/player/artists/B0756QY6D9/harald-revery"
+  },
+  "tracklist": [
+    { "order": 1, "name": "The North", "version": "", "length": "3:24", "isrc": "QZTAY2218472" }
+  ]
+}

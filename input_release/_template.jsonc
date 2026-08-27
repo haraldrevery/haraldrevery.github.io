@@ -1,0 +1,64 @@
+// =============================================================================
+//  RELEASE TEMPLATE  —  copy me to publish a release
+// =============================================================================
+//  1. Copy this file and rename it, e.g.  my-song.jsonc   (or .json)
+//  2. REMOVE the leading underscore — files starting with "_" are ignored
+//     (this file stays a draft precisely because it is named _template.jsonc).
+//  3. Fill in the fields below. Comments and trailing commas are allowed in
+//     .jsonc files, so keep or delete these notes freely.
+//
+//  Build the site as usual (./dev.sh or the eleventy binary) to generate:
+//     release/<slug>.html      the release page
+//     release/index.html       the discography grid (one tile per release)
+// =============================================================================
+{
+  // ---- Required ------------------------------------------------------------
+  "type": "Single",                         // "Single" | "EP" | "Album"
+  "name": "Song Name",                      // release title (shown big in the hero)
+  "date": "2026-07-11",                     // release date, "YYYY-MM-DD"
+  "artcover": "/artcover/example11.jpg",        // full-size cover image
+  "artcoverMin": "/artcover/example11_min.jpg", // minimized cover (hero + grid tile)
+
+  // ---- Recommended ---------------------------------------------------------
+  "slug": "song-name",                      // URL -> release/<slug>.html.
+                                            // Omit to auto-generate from "name".
+  "artist": "Harald Revery",                // defaults to "Harald Revery" if omitted
+  "isrc": "XXXXXXXXXXXX",                   // the release's ISRC code
+  "genres": ["Melodic House", "Electronic"],// hero chips + the "Genre" row
+  "kicker": "New Single — Out Now",         // small line above the title.
+                                            // Omit for an auto "New <type> — Out Now".
+  "introduction": "One-line tagline shown under the title (also used as the page description and social-share text).",
+  "about": "<p>The story of the release. HTML is allowed: <em>emphasis</em>, links, multiple &lt;p&gt; paragraphs.</p>",
+
+  // ---- Optional: streaming (include ONLY the links you have) ---------------
+  "streaming": {
+    "spotify": "https://open.spotify.com/...",
+    "apple": "https://music.apple.com/...",
+    "soundcloud": "https://soundcloud.com/...",
+    "tidal": "https://tidal.com/...",
+    "deezer": "https://www.deezer.com/...",
+    "amazon": "https://music.amazon.com/...",
+    "youtube": "https://www.youtube.com/...",
+    "odysee": "https://odysee.com/..."
+  },
+
+  // ---- Optional: audio preview players (delete for none) -------------------
+  "audio": [
+    { "label": "Preview", "src": "/music/mp3/harald_revery_-_example.mp3" }
+    // add more: { "label": "Extended Mix", "src": "/music/mp3/..._(extended_mix).mp3" }
+  ],
+
+  // ---- Optional: tracklist for EPs / albums (delete for a single) ----------
+  //  order = track number, version is optional (shown dimmed), isrc optional.
+  "tracklist": [
+    { "order": 1, "name": "First Track",  "version": "",             "length": "3:24", "isrc": "XXXXXXXXXXXX" },
+    { "order": 2, "name": "Second Track", "version": "Extended Mix", "length": "5:12", "isrc": "XXXXXXXXXXXX" }
+  ],
+
+  // ---- Optional: music video (delete for none) -----------------------------
+  "video": {
+    "src": "/video/under_25_mb/harald_revery_-_example.mp4",
+    "thumbnail": "/video/thumbnail/example_thumbnail.jpg",
+    "description": "A line or two about the video (optional)."
+  }
+}

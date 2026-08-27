@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="main.css"> 
+  <title>Enhanced Wavy Animation</title>
+  <style>
+
+    section {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #00ff37;
+    }
+    section .wave {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+      transition: 0.5s;
+    }
+    section .wave span {
+      content: "";
+      position: absolute;
+      width: 325vh;
+      height: 325vh;
+      left: 50%;
+      background: #000;
+    }
+    .content {
+      position: relative;
+      z-index: 10;
+      font-size: 4em;
+      letter-spacing: 2px;
+      color: #fff;
+      text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Top layer waves */
+    section .wave.wave1 span {
+      top: 0;
+      transform: translate(-50%, -85%);
+    }
+    section .wave.wave1 span:nth-child(1) {
+      border-radius: 45%;
+      background: rgba(20, 20, 20, 0.9);
+      animation: animate 20s linear infinite;
+    }
+    section .wave.wave1 span:nth-child(2) {
+      border-radius: 40%;
+      background: rgba(20, 20, 20, 0.7);
+      animation: animate 25s linear infinite reverse;
+    }
+    section .wave.wave1 span:nth-child(3) {
+      border-radius: 42.5%;
+      background: rgba(20, 20, 20, 0.5);
+      animation: animate 30s linear infinite;
+    }
+    
+    /* Middle-top layer waves */
+    section .wave.wave2 span {
+      top: 0;
+      transform: translate(-50%, -75%);
+    }
+    section .wave.wave2 span:nth-child(1) {
+      border-radius: 43%;
+      background: rgba(20, 20, 20, 0.8);
+      animation: animate 18s linear infinite reverse;
+    }
+    section .wave.wave2 span:nth-child(2) {
+      border-radius: 41%;
+      background: rgba(20, 20, 20, 0.6);
+      animation: animate 28s linear infinite;
+    }
+    section .wave.wave2 span:nth-child(3) {
+      border-radius: 39%;
+      background: rgba(20, 20, 20, 0.4);
+      animation: animate 35s linear infinite reverse;
+    }
+    
+    /* Middle layer waves */
+    section .wave.wave3 span {
+      top: 0;
+      transform: translate(-50%, -65%);
+    }
+    section .wave.wave3 span:nth-child(1) {
+      border-radius: 44%;
+      background: rgba(20, 20, 20, 0.7);
+      animation: animate 22s linear infinite;
+    }
+    section .wave.wave3 span:nth-child(2) {
+      border-radius: 38%;
+      background: rgba(20, 20, 20, 0.5);
+      animation: animate 32s linear infinite reverse;
+    }
+    section .wave.wave3 span:nth-child(3) {
+      border-radius: 42%;
+      background: rgba(20, 20, 20, 0.3);
+      animation: animate 27s linear infinite;
+    }
+    
+    /* Middle-bottom layer waves */
+    section .wave.wave4 span {
+      top: 0;
+      transform: translate(-50%, -55%);
+    }
+    section .wave.wave4 span:nth-child(1) {
+      border-radius: 40%;
+      background: rgba(20, 20, 20, 0.6);
+      animation: animate 24s linear infinite reverse;
+    }
+    section .wave.wave4 span:nth-child(2) {
+      border-radius: 43%;
+      background: rgba(20, 20, 20, 0.4);
+      animation: animate 29s linear infinite;
+    }
+    section .wave.wave4 span:nth-child(3) {
+      border-radius: 41%;
+      background: rgba(20, 20, 20, 0.25);
+      animation: animate 33s linear infinite reverse;
+    }
+    
+    /* Bottom layer waves */
+    section .wave.wave5 span {
+      top: 0;
+      transform: translate(-50%, -45%);
+    }
+    section .wave.wave5 span:nth-child(1) {
+      border-radius: 42%;
+      background: rgba(20, 20, 20, 0.5);
+      animation: animate 26s linear infinite;
+    }
+    section .wave.wave5 span:nth-child(2) {
+      border-radius: 39%;
+      background: rgba(20, 20, 20, 0.35);
+      animation: animate 31s linear infinite reverse;
+    }
+    section .wave.wave5 span:nth-child(3) {
+      border-radius: 44%;
+      background: rgba(20, 20, 20, 0.2);
+      animation: animate 36s linear infinite;
+    }
+    
+    @keyframes animate {
+      0% {
+        transform: translate(-50%, -75%) rotate(0deg);
+      }
+      100% {
+        transform: translate(-50%, -75%) rotate(360deg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <section>
+    <div class="wave wave1">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <div class="wave wave2">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <div class="wave wave3">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <div class="wave wave4">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <div class="wave wave5">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <div class="content">
+      <h2>Wavy Animation</h2>
+    </div>
+  </section>
+</body>
+</html>

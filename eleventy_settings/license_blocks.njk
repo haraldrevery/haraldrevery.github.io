@@ -1,0 +1,55 @@
+{#
+  Section 10's library list — generated, never hand-edit the output.
+
+  Data comes from input_legal/input_legal.11tydata.js:
+    licenses[]  one per file in input_legal/licenses/, already sorted A-Z, each
+                with .name .description .copyright .license .text .href
+
+  Each card shows the copyright notice up front and the complete, unmodified
+  license inside a native <details>. No JavaScript — <details> is plain HTML, in
+  keeping with the site's "as little js as possible" rule.
+
+  ESCAPING: .copyright and .text are read verbatim out of third-party license
+  files and are deliberately NOT piped through `| safe`. Nunjucks autoescaping is
+  what stops a license containing "<" or "&" from breaking the page.
+
+  Card chrome is Tailwind utilities (same classes the hand-written page used, so
+  it looks unchanged); only the <details>/<pre> behaviour needs real CSS, which
+  lives in input.css as .license-details.
+
+  The cards sit in `not-prose` so the typography plugin leaves them alone — they
+  must read as cards, not as body copy.
+#}
+{%- set sec = sectionNumber or 10 -%}
+
+<h4 class="font-bold mt-8 mb-2 text-lg">{{ sec }}.1 {{ licenseListHeading }}</h4>
+
+<div class="not-prose mt-5 space-y-4">
+{%- for lib in licenses %}
+  <div class="p-4 border border-gray-200 dark:border-gray-700 rounded text-sm">
+    <p>
+      <strong>{{ lib.name }}</strong>
+      {%- if lib.license %} <span class="license-badge">{{ lib.license }}</span>{% endif %}
+    </p>
+    {%- if lib.description %}
+    <p class="mt-1">{{ lib.description }}</p>
+    {%- endif %}
+    <p class="font-mono mt-2 text-xs whitespace-pre-line">{{ lib.copyright }}</p>
+
+    {%- if lib.text %}
+    <details class="license-details mt-3">
+      <summary>Show full license</summary>
+      <pre>{{ lib.text }}</pre>
+    </details>
+    <p class="mt-2"><a href="{{ lib.href }}" class="underline hover:opacity-75 transition text-xs">License file: {{ lib.href }}</a></p>
+    {%- else %}
+    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">License text: <a href="{{ lib.href }}" target="_blank" rel="noopener noreferrer" class="underline hover:opacity-75 transition">{{ lib.href }}</a></p>
+    {%- endif %}
+  </div>
+{%- endfor %}
+</div>
+
+{%- if licenseClosing %}
+<h4 class="font-bold mt-8 mb-2 text-lg">{{ sec }}.2 {{ licenseClosingHeading }}</h4>
+<p>{{ licenseClosing }}</p>
+{%- endif %}

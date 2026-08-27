@@ -1,0 +1,34 @@
+{
+  "type": "Single",
+  "name": "Uninhabited Island",
+  "slug": "uninhabited_island",
+  "date": "2024-8-14",
+  "artist": "Harald Revery",
+  "isrc": "QZTB52410896",
+  "genres": ["Soundtrack", "Nature"],
+  "kicker": "New Single — Out Now",
+  "introduction": "An escape to an unknown land.",
+  "artcover": "/artcover/uninhabitedisland11.jpg",
+  "artcoverMin": "/artcover/uninhabitedisland11_min.jpg",
+  "streaming": {
+    "spotify": "https://open.spotify.com/artist/3e27f6Y3wBFJ1YYLNkrjNu",
+    "apple": "https://music.apple.com/se/artist/harald-revery/1275991562",
+    "soundcloud": "https://soundcloud.com/haraldrevery",
+    "tidal": "https://tidal.com/artist/9065421",
+    "youtube": "https://www.youtube.com/c/HaraldRevery",
+    "odysee": "https://odysee.com/@HaraldRevery:f",
+    "deezer": "https://www.deezer.com/en/artist/13080459",
+    "amazon": "https://www.amazon.com/music/player/artists/B0756QY6D9/harald-revery"
+  },
+  "audio": [
+    { "label": "Preview", "src": "/music/mp3/harald_revery_-_uninhabited_island.mp3" }
+  ],
+  "tracklist": [
+    { "order": 1, "name": "Uninhabited Island", "version": "", "length": "2:40", "isrc": "QZTB52410896" }
+  ],
+  "video": {
+    "src": "/video/under_25_mb/harald_revery_-_uninhabited_island.mp4",
+    "thumbnail": "/video/thumbnail/uninhabitedisland_thumbnail.jpg",
+    "description": "Visualizer animation video for Uninhabited Island."
+  }
+}

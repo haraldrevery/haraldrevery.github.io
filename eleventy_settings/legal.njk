@@ -1,0 +1,74 @@
+{#
+  Layout for the Legal page (input_legal/legal.md -> /legal.html).
+
+  Deliberately NOT base.njk: this page has its own canonical/OG/Twitter block and
+  carries no article metadata, which base.njk would add. It also loads no
+  JavaScript at all — keep it that way.
+
+  Section 10's license blocks come from license_blocks.njk, driven by
+  input_legal/licenses/*.json. See input_legal/licenses/README.md.
+#}<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <link rel="canonical" href="https://haraldrevery.com{{ page.url | cleanUrl }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/main.css">
+    <link rel="stylesheet" href="/prose.css">
+    <title>Harald Revery - {{ title }}</title>
+
+    <meta name="description" content="{{ description }}">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="{{ title }} - Harald Revery" />
+    <meta property="og:description" content="Privacy policy, imprint, and terms of use for the official website of Harald Revery." />
+    <meta property="og:image" content="https://haraldrevery.com/opengraphimg.jpg" />
+    <meta property="og:url" content="https://haraldrevery.com{{ page.url | cleanUrl }}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Harald Revery" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="{{ title }} - Harald Revery" />
+    <meta name="twitter:description" content="Privacy policy, imprint, and terms of use for the official website of Harald Revery." />
+    <meta name="twitter:image" content="https://haraldrevery.com/opengraphimg.jpg" />
+
+    <!-- Preload LCP image (page load optimization) -->
+    <link rel="preload" href="/fonts/HaraldReveryTextFont.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/HaraldReveryMonoFont.woff2" as="font" type="font/woff2" crossorigin>
+
+
+    <!-- Internet icon -->
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
+    <link rel="shortcut icon" href="/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#171717">
+</head>
+
+<body class="min-h-screen text-zinc-900 dark:text-white">
+
+{% include "nav.njk" %}
+
+<!-- svg background start -->
+<div class="bg-topology-map">
+
+ <div class="page-container">
+
+ <h2 class="font-signika text-4xl md:text-5xl mb-12 w-fit pt-22">{{ heading or title }}</h2>
+
+ <div class="legal-body prose prose-lg max-w-none text-justify text-zinc-900 dark:text-white">
+
+{{ content | safe }}
+
+{% include "license_blocks.njk" %}
+
+ </div>
+ </div>
+
+{% include "footer.njk" %}
+
+</div>
+</body>
+</html>

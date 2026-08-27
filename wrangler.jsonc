@@ -1,0 +1,8 @@
+{
+  "name": "website",
+  "compatibility_date": "2026-01-30",
+  "assets": {
+    "directory": "./",
+    "exclude": [".git", "node_modules", "wrangler.jsonc"]
+  }
+}

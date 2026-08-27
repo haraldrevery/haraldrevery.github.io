@@ -1,0 +1,20 @@
+# Cloudflare response headers for haraldrevery.com (served from ./ via wrangler assets).
+# Docs: https://developers.cloudflare.com/workers/static-assets/headers/
+#
+# The CSP below is the UNION of what every page on the site actually uses, so it
+# will not break anything that currently works, plus real hardening:
+#   - script 'unsafe-inline'  -> inline event handlers on interactive notebook pages
+#   - script 'unsafe-eval'    -> Alpine.js and math.js evaluate expressions
+#   - style  'unsafe-inline'  -> the many inline style="" attributes
+#   - img/media data: blob:   -> clock canvas + jsPDF (event_card)
+#   - everything else 'self'  -> all JS/CSS/fonts/audio are self-hosted
+#   - object-src 'none', base-uri 'self', frame-ancestors 'self' -> hardening
+# If you later embed a YouTube/Spotify player or add Cloudflare Web Analytics,
+# those origins must be added (frame-src / script-src / connect-src).
+
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN
+  Permissions-Policy: geolocation=(), camera=(), microphone=()

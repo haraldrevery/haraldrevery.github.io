@@ -1,0 +1,388 @@
+/*
+ * App chrome outside Puck. Puck owns the editor UI (panels, fields, drawer,
+ * outline), so this is deliberately tiny — v1's 431-line dark theme is gone
+ * along with the hand-built panels it styled. Puck's chrome is light, so v1's
+ * `color-scheme: dark` pin is gone too; it existed to stop native selects
+ * rendering white-on-white against the dark editor.
+ *
+ * Values are literal rather than themed: there are only a handful of rules,
+ * and a variable layer would cost more than it saves.
+ *
+ * NB Puck copies host stylesheets into the preview iframe. Everything here is
+ * id-scoped or pb-prefixed so nothing can leak onto the rendered page.
+ */
+
+#pb-toast {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translate(-50%, 20px);
+  background: #1c1c1e;
+  color: #f4f4f5;
+  border: 1px solid #3f3f46;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 2000;
+  max-width: 80vw;
+}
+
+#pb-toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+#pb-toast.error {
+  border-color: #f87171;
+  color: #fca5a5;
+}
+
+/* Boot / fatal states, shown instead of Puck until the backend config lands. */
+.pb-boot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 0 2rem;
+  text-align: center;
+  font: 14px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #52525b;
+}
+
+.pb-boot--error {
+  color: #b91c1c;
+}
+
+.pb-boot code {
+  background: #f4f4f5;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+/* ---- GalleryItemsEditor (a Puck `custom` field) -------------------------
+   Puck styles its own field types; a custom field renders whatever we give
+   it, so these are the only bespoke form styles in the app. Kept close to
+   Puck's own visual language rather than v1's dark chrome. */
+
+.pb-items__add {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px dashed #a1a1aa;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: #3f3f46;
+}
+.pb-items__add:hover { border-color: #2563eb; color: #2563eb; }
+
+.pb-items__empty { margin: 0 0 10px; color: #a1a1aa; font-size: 13px; }
+
+.pb-item {
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+.pb-item__head { display: flex; gap: 8px; align-items: flex-start; }
+
+.pb-item__thumb {
+  width: 44px; height: 44px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #f4f4f5;
+  flex: none;
+}
+
+.pb-item__meta { flex: 1; min-width: 0; }
+
+.pb-item__path {
+  display: block;
+  font-size: 11px;
+  color: #52525b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pb-item__badges { display: flex; gap: 6px; align-items: center; margin-top: 4px; }
+
+/* alt + title + description all filled = green, partial = amber */
+.pb-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.pb-dot--ok { background: #22c55e; }
+.pb-dot--partial { background: #f59e0b; }
+
+.pb-warn { font-size: 10px; color: #b45309; background: #fef3c7; border-radius: 3px; padding: 0 4px; }
+
+.pb-item__ops { display: flex; gap: 2px; flex: none; }
+.pb-item__ops button {
+  width: 22px; height: 22px;
+  border: 1px solid #e4e4e7;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+  padding: 0;
+}
+.pb-item__ops button:disabled { opacity: 0.35; cursor: default; }
+
+/* The drag handle. Only the grip is draggable, never the whole row — the row
+   holds three text inputs and click-dragging to select text must keep working.
+   touch-action must be none or the browser scrolls instead of dragging. */
+.pb-item__grip {
+  cursor: grab;
+  touch-action: none;
+  color: #71717a;
+  font-size: 13px;
+}
+.pb-item__grip:active { cursor: grabbing; }
+
+/* dnd-kit leaves a same-size gap where the row was and reorders its neighbours
+   live — that IS the drop indicator, so there is nothing else to draw. */
+.pb-item--dragging { opacity: 0.6; }
+
+.pb-item__input {
+  width: 100%;
+  margin-top: 6px;
+  padding: 5px 7px;
+  border: 1px solid #e4e4e7;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 12px;
+}
+
+/* ---- app shell ---------------------------------------------------------
+   A custom <Puck> layout: Puck.Components/Outline/Preview/Fields placed by
+   hand so the toolbar and the page-check panel can sit alongside them. */
+
+.pb-layout { display: flex; flex-direction: column; height: 100vh; }
+.pb-layout__body { display: flex; flex: 1; min-height: 0; }
+.pb-layout__left,
+.pb-layout__right {
+  width: 280px;
+  flex: none;
+  overflow-y: auto;
+  border-color: #e4e4e7;
+  border-style: solid;
+  border-width: 0;
+  background: #fff;
+}
+.pb-layout__left { border-right-width: 1px; }
+.pb-layout__right { border-left-width: 1px; display: flex; flex-direction: column; }
+.pb-layout__center { flex: 1; min-width: 0; background: #f4f4f5; overflow: auto; }
+
+/* ---- toolbar ---- */
+.pb-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e4e4e7;
+  background: #fff;
+  flex: none;
+}
+.pb-toolbar__title {
+  font: 13px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+  display: flex; align-items: center; gap: 8px;
+}
+.pb-toolbar__dot { color: #f59e0b; }
+.pb-toolbar__busy { color: #71717a; font-style: italic; }
+.pb-toolbar__ops { display: flex; gap: 6px; }
+.pb-toolbar__ops button {
+  padding: 5px 10px;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+.pb-toolbar__ops button:hover:not(:disabled) { border-color: #a1a1aa; }
+.pb-toolbar__ops button:disabled { opacity: 0.4; cursor: default; }
+.pb-toolbar__primary { background: #1d4ed8 !important; border-color: #1d4ed8 !important; color: #fff; }
+
+/* ---- page check ---- */
+.pb-check { border-top: 1px solid #e4e4e7; padding: 12px 16px; font-size: 12px; }
+.pb-check__head {
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 600; margin-bottom: 8px;
+}
+.pb-check__ok { color: #16a34a; font-weight: 400; }
+.pb-check__warn { color: #b45309; font-weight: 400; }
+.pb-check__info { color: #71717a; font-weight: 400; }
+.pb-check__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.pb-check__item { padding-left: 12px; border-left: 3px solid #d4d4d8; line-height: 1.45; color: #3f3f46; }
+.pb-check__item--warn { border-left-color: #f59e0b; }
+.pb-check__item--info { border-left-color: #d4d4d8; color: #71717a; }
+
+/* ---- media field ---- */
+.pb-media { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.pb-media__path {
+  font-size: 11px; color: #52525b; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0;
+}
+.pb-media__ops { display: flex; gap: 4px; flex: none; }
+.pb-media__ops button {
+  padding: 3px 8px; border: 1px solid #e4e4e7; border-radius: 4px;
+  background: #fff; cursor: pointer; font: inherit; font-size: 11px;
+}
+
+/* ---- modals ---- */
+.pb-modal {
+  position: fixed; inset: 0; z-index: 3000;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+}
+.pb-modal__box {
+  background: #fff; border-radius: 10px; padding: 20px;
+  width: min(460px, 90vw); max-height: 80vh; overflow: auto;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+.pb-modal__title { margin: 0 0 12px; font-size: 15px; }
+.pb-modal__label { display: block; font-size: 12px; color: #52525b; margin-bottom: 6px; }
+.pb-modal__body { font-size: 13px; line-height: 1.5; color: #3f3f46; }
+.pb-modal__input {
+  width: 100%; padding: 7px 9px; border: 1px solid #d4d4d8;
+  border-radius: 6px; font: inherit; font-size: 13px;
+}
+.pb-modal__ops { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.pb-modal__ops button {
+  padding: 6px 14px; border: 1px solid #e4e4e7; border-radius: 6px;
+  background: #fff; cursor: pointer; font: inherit; font-size: 13px;
+}
+.pb-modal__primary { background: #1d4ed8 !important; border-color: #1d4ed8 !important; color: #fff; }
+.pb-modal__danger { background: #b91c1c !important; border-color: #b91c1c !important; color: #fff; }
+.pb-modal__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.pb-modal__list button {
+  width: 100%; display: flex; justify-content: space-between; align-items: baseline;
+  gap: 12px; padding: 8px 10px; border: 1px solid #e4e4e7; border-radius: 6px;
+  background: #fff; cursor: pointer; font: inherit; font-size: 13px; text-align: left;
+}
+.pb-modal__list button:hover { border-color: #1d4ed8; }
+.pb-modal__list em { font-size: 11px; color: #a1a1aa; font-style: normal; }
+.pb-modal__issues { margin: 8px 0 0; padding-left: 18px; font-size: 12px; line-height: 1.5; color: #b45309; }
+
+/* ---- full-page preview -------------------------------------------------
+   Sits above the small modals (z 3000) because Preview can be open while a
+   toast is showing, and the frame must not be dimmed by anything. */
+.pb-preview {
+  position: fixed; inset: 0; z-index: 3500;
+  display: flex; flex-direction: column; background: #18181b;
+}
+.pb-preview__bar {
+  display: flex; align-items: center; gap: 12px; flex: none;
+  padding: 8px 12px; background: #27272a; color: #e4e4e7; font-size: 13px;
+}
+.pb-preview__title { flex: none; max-width: 30ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pb-preview__note { flex: 1; min-width: 0; font-size: 11px; color: #a1a1aa; }
+.pb-preview__note code { font-size: 11px; }
+.pb-preview__themes { display: flex; flex: none; border: 1px solid #52525b; border-radius: 6px; overflow: hidden; }
+.pb-preview__themes button {
+  padding: 5px 10px; border: none; background: none; color: #d4d4d8;
+  cursor: pointer; font: inherit; font-size: 12px;
+}
+.pb-preview__themes button:hover { background: #3f3f46; }
+.pb-preview__themes .is-current { background: #1d4ed8; color: #fff; }
+.pb-preview__ops { display: flex; gap: 6px; flex: none; }
+.pb-preview__ops button {
+  padding: 5px 12px; border: 1px solid #52525b; border-radius: 6px;
+  background: #3f3f46; color: #e4e4e7; cursor: pointer; font: inherit; font-size: 12px;
+}
+.pb-preview__ops button:hover:not(:disabled) { border-color: #a1a1aa; }
+.pb-preview__ops button:disabled { opacity: 0.45; cursor: default; }
+.pb-preview__close { background: #1d4ed8 !important; border-color: #1d4ed8 !important; color: #fff; }
+/* White, not transparent: the site paints its own background and a see-through
+   frame would show the editor chrome behind an unfinished page. */
+.pb-preview__frame { flex: 1; min-height: 0; width: 100%; border: 0; background: #fff; }
+
+/* Breadcrumb: Page › <selected block>. Restores the way back to page-level
+   fields, which the default Puck header provides but a custom layout does not. */
+.pb-toolbar__crumbs {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: #71717a; flex: 1;
+}
+.pb-toolbar__crumbs button {
+  border: none; background: none; padding: 2px 6px; border-radius: 4px;
+  cursor: pointer; font: inherit; color: #1d4ed8;
+}
+.pb-toolbar__crumbs button:hover { background: #eff6ff; }
+.pb-toolbar__crumbs .is-current { color: #18181b; font-weight: 600; }
+.pb-toolbar__sep { color: #a1a1aa; }
+
+/* A disabled primary/danger button must LOOK disabled — the !important
+   background would otherwise keep it fully saturated and clickable-looking. */
+.pb-modal__ops button:disabled { opacity: 0.4; cursor: default; }
+
+/* ---- shell freshness ---------------------------------------------------
+   Only rendered when the app's shell.html has drifted from the reference
+   page, so it is loud on purpose: every export until it is fixed ships
+   stale nav/footer markup. */
+.pb-shell {
+  border-top: 1px solid #e4e4e7;
+  padding: 12px 16px;
+  font-size: 12px;
+  background: #fffbeb;
+}
+.pb-shell__head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-weight: 600; color: #b45309; margin-bottom: 6px;
+}
+.pb-shell__ref { font-weight: 400; color: #a1a1aa; font-size: 11px; }
+.pb-shell__body { margin: 0 0 8px; color: #78350f; line-height: 1.45; }
+.pb-shell__region {
+  display: block; width: 100%; text-align: left;
+  padding: 6px 8px; margin-bottom: 4px;
+  border: 1px solid #fcd34d; border-radius: 4px;
+  background: #fff; cursor: pointer; font: inherit; font-size: 12px;
+}
+.pb-shell__region:hover:not(:disabled) { border-color: #b45309; }
+.pb-shell__region:disabled { opacity: 0.5; cursor: default; }
+.pb-shell__label { margin: 12px 0 4px; font-size: 11px; color: #71717a; font-weight: 600; }
+.pb-shell__pre {
+  margin: 0; padding: 8px; max-height: 180px; overflow: auto;
+  background: #f4f4f5; border-radius: 4px;
+  font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: pre-wrap; word-break: break-all;
+}
+
+/* Positive counterpart to .pb-warn. Absence of a warning reads as "not checked
+   yet"; a green badge is the only thing that actually says "this is fine". */
+.pb-ok {
+  font-size: 10px;
+  color: #15803d;
+  background: #dcfce7;
+  border-radius: 3px;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+
+/* Sort row on the Downloads editor. Deliberately NOT the full-width dashed
+   .pb-items__add style — that reads as "create something"; these reorder what
+   is already there. The arrow on each button shows the order the list is
+   currently in, so the control doubles as a status indicator. */
+.pb-items__sort {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 11px;
+  color: #a1a1aa;
+}
+.pb-items__sort button {
+  border: 1px solid #e4e4e7;
+  border-radius: 4px;
+  background: #fff;
+  font: inherit;
+  font-size: 11px;
+  padding: 2px 7px;
+  cursor: pointer;
+  color: #3f3f46;
+}
+.pb-items__sort button:hover { border-color: #2563eb; color: #2563eb; }
