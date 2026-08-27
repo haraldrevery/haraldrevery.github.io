@@ -3,9 +3,6 @@
 # npm registry is down. Only this secondary tool's copy stays ignored:
 revery_notebook/build_tools/node_modules/
 
-# Stale duplicate CSS backups
-css_bkup/
-
 # OS / editor cruft
 .DS_Store
 Thumbs.db

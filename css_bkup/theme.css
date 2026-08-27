@@ -1,0 +1,69 @@
+@theme {
+  /* Font Families */
+  --font-brand: "HaraldText", sans-serif;
+  --font-mono: "HaraldMono", monospace;
+
+  /* V1 Extracted Sizes */
+  --text-body: 1.22rem;         /* global font size */
+  --text-body-mobile: 1.22rem;  /* global font size for phones */
+  --text-mono: 1.22rem;
+  --text-nav: 1.4rem;
+
+
+  --katex-font-size: 0.7em;      /* scaling the MathML for the blog (hope the revery notebook editor doesn't jank) */
+  --text-line-row-space: 1.24;   /* tight line-height — headings & display text */
+  --leading-body: 1.5;           /* body-copy line-height (paragraphs, list items) */
+  --tracking-body: 0.0em;     /* global letter-spacing (space between characters/letters)*/
+
+  /* Nav + label letter-spacing. Tailwind turns each of these into a utility
+     (--tracking-nav -> class "tracking-nav"), same as --text-nav -> "text-nav"
+     above, so the nav's character spacing is tunable from right here instead of
+     being hardcoded into every page's markup. */
+  --tracking-brand: 0.2em;       /* nav wordmark "Harald Revery", below md */
+  --tracking-brand-wide: 0.275em;  /* nav wordmark, md and up */
+  --tracking-nav: 0.15em;        /* desktop nav links */
+  --tracking-nav-menu: 0.27em;    /* mobile fullscreen menu links */
+  --tracking-eyebrow: 0.3em;     /* small uppercase kicker labels (not the nav) */
+
+  /* Colors */
+  --color-brand: #0f3d81;       /* accent / focus-outline blue */
+
+  /* Page backdrop — the body::before animated gradient (light + dark) */
+  --color-backdrop-light-edge:   #dedede;
+  --color-backdrop-light-center: #ffffff;
+  --color-backdrop-dark-start:   #000000;
+  --color-backdrop-dark-mid:     #141414;
+  --color-backdrop-dark-end:     #262626;
+
+  /* Breakpoints and Animations */
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-nav-desktop: 1140px;
+  --animate-gradient-slow: gradient-shift 15s ease infinite;
+
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+}
+
+/* 1. Font Definitions */
+@font-face {
+    font-family: 'HaraldText';
+    src: url('./fonts/HaraldReveryTextFont.woff2') format('woff2'),
+         url('./fonts/HaraldReveryTextFont.woff') format('woff'),
+         url('./fonts/HaraldReveryTextFont.ttf') format('truetype');
+    font-weight: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'HaraldMono';
+    src: url('./fonts/HaraldReveryMonoFont.woff2') format('woff2'),
+         url('./fonts/HaraldReveryMonoFont.woff') format('woff'),
+         url('./fonts/HaraldReveryMonoFont.ttf') format('truetype');
+    font-weight: normal;
+    font-display: swap;
+}
+
