@@ -36,6 +36,9 @@ fn main() {
             commands::export_page,
             commands::set_preview_html,
             commands::read_shell,
+            commands::write_recovery,
+            commands::read_recovery,
+            commands::clear_recovery,
             commands::check_shell_freshness,
             commands::adopt_shell_region,
         ])

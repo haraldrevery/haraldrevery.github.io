@@ -25,7 +25,7 @@ bun install
 bun run build                # typecheck + vite
 bunx tauri dev               # dev app (port 5174 — v1 uses 5173)
 bunx tauri build --no-bundle # release binary
-bun test tests               # 226 tests (see Tests: v1 deps required)
+bun test tests               # 254 tests (see Tests: v1 deps required)
 ```
 
 **Use `bunx tauri build`, not `cargo build`.** Plain cargo produces a binary that
@@ -219,9 +219,17 @@ every page using the block.*
 | textarea | `{ type: "textarea" }` |
 | dropdown | `{ type: "select", options }` |
 | checkbox | `{ type: "radio", options: [Off/On] }` — use the `onOff()` helper |
-| number | `{ type: "number", min, max }` |
+| number | `numberField(label, min?, max?)` — **not** `{ type: "number" }`, see below |
 | repeated text group | `{ type: "array", arrayFields, getItemSummary }` |
 | **anything needing a file** | `{ type: "custom" }` — see below |
+
+*Use `numberField()` for every number, bounded or not. Puck's built-in
+`number` field validates on each keystroke and drops the event when the value is
+outside `[min, max]`; the input is controlled, so the keystroke is erased and a
+field with a `min` above 9 cannot be typed into at all — only stepped with the
+spinners. `fields/numberField.tsx` holds the in-progress text locally and
+enforces the bounds on commit instead. The decisions are pure and tested in
+`fields/numberOps.ts`.*
 
 Fields that only apply in some states use `resolveFields` with
 `visible: false` — **not** omission, which does not typecheck (`Fields<Props>`
@@ -285,7 +293,7 @@ a v1 file rather than silently mangling it.
 ```bash
 bun install                      # in THIS folder
 (cd ../page_builder && bun install)   # and in v1 — see below
-bun test tests                   # 226 tests
+bun test tests                   # 254 tests
 ```
 
 `prose-parity.test.tsx` imports v1's real renderer from `../page_builder/src/`,
@@ -353,6 +361,40 @@ full-screen iframe pointed at `http://127.0.0.1:<port>/__pb/preview`.
   would not do: `setTheme(null)` is not the same as never having called
   `setTheme`, and would leave the editor lighter than it started.
 
+## Split into columns
+
+The breadcrumb carries a **Split into columns** button while a block is
+selected. It wraps that block in a 2-column `Columns` block with the block as
+the left column's only child — v1's split affordance, rebuilt on Puck's data
+model. The block keeps its own id and props and simply moves, so the operation
+is undone by dragging it back out (or with one Ctrl+Z: `setData` is excluded
+from Puck's history by default, so the dispatch passes `recordHistory`).
+
+- The new Columns block **inherits the split block's spacing**. A nested block
+  emits no gap of its own — the columns section owns it — so without that, a
+  split would silently change the page's vertical rhythm.
+- It is offered only on top-level blocks whose type is in `EMBEDDABLE`, and is
+  shown disabled rather than hidden elsewhere so the reason is discoverable.
+  Splitting a `Featured` would be silent data damage rather than an error:
+  nested, `BlockShell` emits no wrapper, so the card class and the whole
+  overlapping grid would just vanish.
+- `tests/split.test.tsx` asserts the split renders byte-identical to a
+  hand-built Columns block, which is what makes it a move rather than a rewrite.
+
+## Crash recovery
+
+There is no autosave over your project files — deliberately; that would destroy
+the meaning of both the dirty flag and "Discard". Instead, while a page has
+unsaved changes the app snapshots it every 15s to `recovery.json` **in the
+config dir** (`~/.config/page_builder_v2/`), never into `projects/` where it
+would appear in the Open list and be committed to git.
+
+On the next launch a draft is offered back ("Restore" / "Not now"). It is
+deleted the moment the work is safe: on save, on opening another project, on
+starting a new page, and on closing through the discard prompt. Anything
+unparseable, or from v1, is deleted rather than offered — a corrupt safety net
+that prompts on every launch is worse than none.
+
 ## Reconciliation with disk
 
 Opening a project and exporting both re-check the project against what is
@@ -384,8 +426,9 @@ is what matters.
   mistakes in `date:`/`tags:` — which drive the Notebook and tag collections —
   do not surface there. The page check is the tool for that. Styling is also
   only as fresh as the last Tailwind build.
-- v1's "split a block into columns" affordance is gone; drag into a Columns slot
-  instead.
+- Splitting is TOP-LEVEL only: a block already inside a column cannot be split
+  again, because Columns is not in `EMBEDDABLE` and nesting columns in columns
+  has no markup in the site's vocabulary.
 - `revalidateThumbs` runs on open and on export, not continuously. Generate a
   `_min` file mid-session and use **↻ Re-check files** in the gallery editor to
   pick it up without reopening.

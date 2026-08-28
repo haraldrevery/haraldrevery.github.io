@@ -5,6 +5,10 @@ import { config } from "./puck/config";
 import { makeSiteFrame } from "./puck/SiteFrame";
 import { useAppConfig } from "./appConfig";
 import { toast } from "./ui/toast";
+import {
+  RECOVERY_MS, agoLabel, clearRecovery, readRecovery, writeRecovery,
+  type FoundDraft,
+} from "./app/recovery";
 import { Toolbar } from "./app/Toolbar";
 import { PageCheck } from "./app/PageCheck";
 import { ShellCheck } from "./app/ShellCheck";
@@ -26,7 +30,8 @@ type Dialog =
   | { kind: "exportSlug"; initial: string }
   | { kind: "exportWarn"; slug: string; issues: string[] }
   | { kind: "confirmExportOverwrite"; slug: string; fileName: string; contents: string; path: string }
-  | { kind: "discard"; then: () => void };
+  | { kind: "discard"; then: () => void }
+  | { kind: "restore"; draft: FoundDraft };
 
 export default function App() {
   const cfg = useAppConfig();
@@ -78,7 +83,12 @@ export default function App() {
     else then();
   };
 
-  const doNew = () => guardUnsaved(() => loadInto({ version: PROJECT_VERSION, data: EMPTY }, null));
+  const doNew = () =>
+    guardUnsaved(() => {
+      // Whatever the draft held, the user has just said to abandon it.
+      void clearRecovery();
+      loadInto({ version: PROJECT_VERSION, data: EMPTY }, null);
+    });
 
   const doOpen = () =>
     guardUnsaved(async () => {
@@ -96,6 +106,7 @@ export default function App() {
     try {
       const { file, hashes } = await loadProject(name);
       if (epoch !== openEpoch.current) return; // a later Open won
+      void clearRecovery();
       loadInto(file, name);
       // Report reconciliation against disk. `dirtied` means the project on disk
       // no longer matches what was just loaded, so mark it unsaved.
@@ -111,6 +122,48 @@ export default function App() {
       if (epoch === openEpoch.current) setBusy(null);
     }
   };
+
+  // --------------------------------------------------------------- recovery
+
+  /*
+   * Offer any draft a crash left behind. Runs once, and only once the repo is
+   * located: a draft is not actionable in an app that cannot open or export
+   * anything, and the boot screen is already showing that as the real problem.
+   */
+  const checkedRecovery = useRef(false);
+  useEffect(() => {
+    if (!cfg?.repoRoot || checkedRecovery.current) return;
+    checkedRecovery.current = true;
+    void readRecovery().then((draft) => {
+      if (draft) setDialog({ kind: "restore", draft });
+    });
+  }, [cfg?.repoRoot]);
+
+  /*
+   * Snapshot while — and only while — there are unsaved changes. The effect is
+   * keyed on `dirty`, so a clean project costs nothing and the interval stops
+   * itself the moment the work is saved.
+   *
+   * Writes once immediately as well as on the interval: dirty goes false->true
+   * exactly once per edit session, so that is one extra write, and without it a
+   * crash in the first 15 seconds would still cost everything.
+   *
+   * A failed snapshot is deliberately silent. This runs every 15s in the
+   * background; a toast per failure would bury the errors that matter under the
+   * one error the user cannot act on anyway.
+   */
+  useEffect(() => {
+    if (!dirty) return;
+    const snapshot = () => {
+      void writeRecovery({
+        name: projectName,
+        file: { version: PROJECT_VERSION, exportSlug, data: liveData.current },
+      }).catch(() => {});
+    };
+    snapshot();
+    const t = setInterval(snapshot, RECOVERY_MS);
+    return () => clearInterval(t);
+  }, [dirty, projectName, exportSlug]);
 
   // ------------------------------------------------------------------- save
 
@@ -131,6 +184,8 @@ export default function App() {
       // title bar and the Open list disagree.
       setProjectName(res.name);
       setDirty(false);
+      // The work is on disk; the safety net has nothing left to protect.
+      void clearRecovery();
       toast(`Saved ${res.name}.json`);
     } catch (e) {
       toast(String(e), true);
@@ -236,7 +291,9 @@ export default function App() {
       setDialog({
         kind: "discard",
         then: () => {
-          void win.destroy();
+          // Clear BEFORE destroying: the user chose to discard, so being
+          // offered the same work again on next launch would ignore that.
+          void clearRecovery().finally(() => void win.destroy());
         },
       });
     });
@@ -320,6 +377,36 @@ export default function App() {
     switch (dialog.kind) {
       case "none":
         return null;
+
+      case "restore":
+        return (
+          <ConfirmPrompt
+            title="Unsaved work found"
+            message={
+              <>
+                <p>
+                  Changes to <strong>{dialog.draft.name ?? "an untitled page"}</strong> were
+                  never saved ({agoLabel(dialog.draft.modified)}). Restore them?
+                </p>
+                <p>
+                  “Not now” keeps the draft — it is discarded once you save, open
+                  another project, or start a new page.
+                </p>
+              </>
+            }
+            confirmLabel="Restore"
+            cancelLabel="Not now"
+            onCancel={close}
+            onConfirm={() => {
+              close();
+              loadInto(dialog.draft.file, dialog.draft.name);
+              // Restored work is still unsaved work: the dot stays, the close
+              // guard still fires, and the autosave keeps snapshotting it.
+              setDirty(true);
+              toast("Unsaved work restored — save it to keep it.");
+            }}
+          />
+        );
 
       case "discard":
         return (

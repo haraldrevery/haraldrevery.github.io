@@ -15,6 +15,18 @@ fn config_file() -> Option<PathBuf> {
     dirs::config_dir().map(|d| d.join("page_builder_v2").join("config.json"))
 }
 
+/*
+ * The crash-recovery draft, beside config.json in the app's OWN config dir.
+ *
+ * Deliberately not in the repo and not in `projects/`: this is not the user's
+ * work product, it is a safety net for work that has not become one yet. A
+ * draft sitting in `projects/` would show up in the Open list as if it were a
+ * real project, and would be committed to git along with the site.
+ */
+pub fn recovery_file() -> Option<PathBuf> {
+    dirs::config_dir().map(|d| d.join("page_builder_v2").join("recovery.json"))
+}
+
 pub fn persist_repo_root(root: &Path) {
     if let Some(cf) = config_file() {
         if let Some(parent) = cf.parent() {

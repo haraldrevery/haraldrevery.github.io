@@ -502,6 +502,71 @@ pub fn set_preview_html(state: State<AppState>, contents: String) -> Result<(), 
     Ok(())
 }
 
+// ------------------------------------------------------------- recovery
+//
+// A periodic snapshot of unsaved work, so a crash or a power loss does not cost
+// the session. Three rules keep it from being able to damage anything:
+//
+//   1. It lives in the config dir, never in the repo — see repo::recovery_file.
+//   2. It is written with write_atomic like every other write here, so a crash
+//      DURING the snapshot cannot leave a half-written draft that then fails to
+//      parse on the one occasion it is needed.
+//   3. Rust never parses it. The payload shape belongs to the frontend, and a
+//      draft this app cannot understand is a draft it must not act on, so the
+//      contents pass through as an opaque string.
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RecoveryInfo {
+    pub contents: String,
+    /// Unix seconds, so the restore prompt can say how old the draft is.
+    pub modified: u64,
+}
+
+#[tauri::command]
+pub fn write_recovery(contents: String) -> Result<(), String> {
+    let path = repo::recovery_file().ok_or("No config directory available")?;
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)
+            .map_err(|e| format!("Cannot create {}: {e}", parent.display()))?;
+    }
+    write_atomic(&path, &contents)
+}
+
+/// None = nothing to recover. A draft that cannot be READ is reported as None
+/// rather than as an error: the caller is booting, and a missing safety net
+/// must never be the thing that stops the app from starting.
+#[tauri::command]
+pub fn read_recovery() -> Result<Option<RecoveryInfo>, String> {
+    let Some(path) = repo::recovery_file() else {
+        return Ok(None);
+    };
+    let Ok(contents) = fs::read_to_string(&path) else {
+        return Ok(None);
+    };
+    let modified = fs::metadata(&path)
+        .ok()
+        .and_then(|m| m.modified().ok())
+        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    Ok(Some(RecoveryInfo { contents, modified }))
+}
+
+/// Called once the work is safe (saved, or replaced by an open/new). Already
+/// gone is success, not an error — the draft only ever needs to not exist.
+#[tauri::command]
+pub fn clear_recovery() -> Result<(), String> {
+    let Some(path) = repo::recovery_file() else {
+        return Ok(());
+    };
+    match fs::remove_file(&path) {
+        Ok(()) => Ok(()),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(e) => Err(format!("Cannot remove {}: {e}", path.display())),
+    }
+}
+
 #[tauri::command]
 pub fn read_shell(state: State<AppState>) -> Result<String, String> {
     let file = repo_root(&state)?.join(APP_DIR).join("shell.html");

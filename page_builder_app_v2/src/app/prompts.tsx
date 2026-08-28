@@ -94,6 +94,7 @@ export function ConfirmPrompt({
   title,
   message,
   confirmLabel = "Continue",
+  cancelLabel = "Cancel",
   danger,
   onConfirm,
   onCancel,
@@ -101,6 +102,9 @@ export function ConfirmPrompt({
   title: string;
   message: ReactNode;
   confirmLabel?: string;
+  /// For prompts where declining is a real choice rather than an escape hatch
+  /// ("Not now" on the recovery draft), so the button says what it does.
+  cancelLabel?: string;
   danger?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -124,7 +128,7 @@ export function ConfirmPrompt({
       <div className="pb-modal__body">{message}</div>
       <div className="pb-modal__ops">
         <button ref={danger ? focus : undefined} type="button" onClick={onCancel}>
-          Cancel
+          {cancelLabel}
         </button>
         <button
           ref={danger ? undefined : focus}

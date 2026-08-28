@@ -28,6 +28,7 @@ import { Featured, type FeaturedProps } from "./components/Featured";
 import { IconItemsEditor, DownloadItemsEditor } from "./fields/ListEditors";
 import { GalleryItemsEditor } from "./fields/GalleryItemsEditor";
 import { SwapColumnsField } from "./fields/SwapColumns";
+import { numberField } from "./fields/numberField";
 import { pathField, imageField, EMPTY_IMAGE } from "./fields/mediaField";
 import { PageRoot, DEFAULT_META, DEFAULT_HERO, type RootProps } from "./PageRoot";
 
@@ -134,9 +135,9 @@ export const config: Config<{ components: Components; root: RootProps }> = {
           image: imageField("photos", "Photo"),
           showSvg: onOff("Show SVG"),
           svgSrc: pathField("svg", "svg", "SVG file"),
-          svgWidthPct: { type: "number", label: "SVG width (%)", min: 5, max: 100 },
-          svgX: { type: "number", label: "SVG offset X (%)" },
-          svgY: { type: "number", label: "SVG offset Y (%)" },
+          svgWidthPct: numberField("SVG width (%)", 5, 100),
+          svgX: numberField("SVG offset X (%)"),
+          svgY: numberField("SVG offset Y (%)"),
           kicker: { type: "text", label: "Kicker" },
           title: { type: "text", label: "Title (h1)" },
           tagline: { type: "textarea", label: "Tagline" },
@@ -235,7 +236,7 @@ export const config: Config<{ components: Components; root: RootProps }> = {
             { label: "Feature (first image 2×2)", value: "feature" },
           ],
         },
-        rowHeight: { type: "number", label: "Target row height (px)", min: 60, max: 900 },
+        rowHeight: numberField("Target row height (px)", 60, 900),
         columns: {
           type: "select",
           label: "Columns",
@@ -285,7 +286,7 @@ export const config: Config<{ components: Components; root: RootProps }> = {
         alt: { type: "text", label: "Alt text" },
         caption: { type: "text", label: "Caption" },
         lightbox: onOff("Open in lightbox"),
-        widthPct: { type: "number", label: "Width (%)", min: 5, max: 100 },
+        widthPct: numberField("Width (%)", 5, 100),
         spacing: spacingField,
       },
       defaultProps: {
@@ -328,7 +329,7 @@ export const config: Config<{ components: Components; root: RootProps }> = {
         hoverGrow: onOff("Grow on hover"),
         link: { type: "text", label: "Link (optional)" },
         alt: { type: "text", label: "Alt text" },
-        widthPct: { type: "number", label: "Width (%)", min: 5, max: 100 },
+        widthPct: numberField("Width (%)", 5, 100),
         spacing: spacingField,
       },
       defaultProps: {

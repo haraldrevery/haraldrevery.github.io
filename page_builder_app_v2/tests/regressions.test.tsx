@@ -17,6 +17,7 @@ import { runPageCheck } from "../src/app/PageCheck";
 import { wrapHtmlWords } from "../src/blocks/wordAnimate";
 import { prepareSvgForInline, setSvgText } from "../src/blocks/svgStore";
 import { sameOrder, moveTo } from "../src/puck/fields/listOps";
+import { liveValue, settledValue } from "../src/puck/fields/numberOps";
 
 const SITE = "https://haraldrevery.com";
 const shell = readFileSync(new URL("../shell.html", import.meta.url).pathname, "utf8");
@@ -160,6 +161,49 @@ describe("dragging a row away and back is not an undo step", () => {
     const roundTrip = moveTo(moveTo(items, 0, 1), 1, 0);
     expect(roundTrip).not.toBe(items); // a different object …
     expect(sameOrder(roundTrip, items)).toBe(true); // … holding the same order
+  });
+});
+
+describe("a gallery's target row height can be typed, not just stepped", () => {
+  /*
+   * Puck's own number field rejects an out-of-range keystroke by not calling
+   * onChange, which on a controlled input erases it. With min 60 that froze the
+   * field completely — every first digit is below 60, so no multi-digit number
+   * was reachable and the spinner buttons were the only way to change it.
+   */
+  const MIN = 60, MAX = 900;
+
+  test("every prefix of 320 survives on the way to 320", () => {
+    // The old field died on the first of these. null means "held in the box",
+    // which is the pass condition — what must NOT happen is a clamp to 60.
+    expect(liveValue("3", MIN, MAX)).toBeNull();
+    expect(liveValue("32", MIN, MAX)).toBeNull();
+    expect(liveValue("320", MIN, MAX)).toBe(320);
+  });
+
+  test("a legal value publishes immediately, so the spinners still commit", () => {
+    expect(liveValue("321", MIN, MAX)).toBe(321);
+    expect(liveValue("60", MIN, MAX)).toBe(60);
+    expect(liveValue("900", MIN, MAX)).toBe(900);
+  });
+
+  test("out of range is held while typing and clamped on leaving", () => {
+    expect(liveValue("9999", MIN, MAX)).toBeNull();
+    expect(settledValue("9999", MIN, MAX)).toBe(MAX);
+    expect(settledValue("1", MIN, MAX)).toBe(MIN);
+  });
+
+  test("an emptied box reverts instead of becoming 0 or the minimum", () => {
+    expect(settledValue("", MIN, MAX)).toBeNull();
+    expect(settledValue("   ", MIN, MAX)).toBeNull();
+    expect(settledValue("abc", MIN, MAX)).toBeNull();
+  });
+
+  test("an unbounded field still accepts a negative offset", () => {
+    // The hero's SVG offsets have no min/max and were never broken; they must
+    // keep working now that they route through the same code.
+    expect(liveValue("-40")).toBe(-40);
+    expect(settledValue("-40")).toBe(-40);
   });
 });
 
