@@ -2,6 +2,7 @@
 # Linux and Windows) so the site builds without `npm install` even if the
 # npm registry is down. Only this secondary tool's copy stays ignored:
 revery_notebook/build_tools/node_modules/
+node_modules/
 
 # OS / editor cruft
 .DS_Store
