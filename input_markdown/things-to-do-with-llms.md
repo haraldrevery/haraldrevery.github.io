@@ -35,7 +35,7 @@ LLMs can easily make a nice template for writing reports, books, letters that lo
 In contrast of having a static website that is your digital presence, I think it's also important to bring what is digital to the real world. In the last couple of decades (well, as long I have been alive) there has been a push to store everything digitally, despite its technology being really fragile (HDD's, SSD's and CD's can barely store something reliably for 10 years...). As humans, it's really dangerous to rely on storing information in a format that requires advanced electronics and logic to extract said information. Paper has proven to be the most durable and cost effective medium. Books are simply battle tested and has stood the test of time for storing information. Just keep it away from fire and water, it will lasts for ~100 years (assume quality ink to guarantee easy readability) and you only need light and reading skills to extract information from the medium. 
 
 
-Having a printer and some nice *print ready* templates to take what ever you have to the physical paper seems like a good thing to have, LLMs can help you automate this for your personal texts.
+Having a printer and some nice *print ready* templates to take what ever you have to a physical paper seems like a good thing to have, LLMs can help you automate this for your personal texts.
 
 
 ---
