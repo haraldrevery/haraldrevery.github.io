@@ -74,4 +74,4 @@ To be clear: Yes, I'm stating that "AI slop" is better than your average indie g
 ---
 
 
-I hope this can spark some nice projects while this AI craze lasts. 
+I hope this can spark the motivation to do some nice projects while this AI craze lasts. 
