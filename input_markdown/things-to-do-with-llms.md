@@ -67,7 +67,7 @@ In the end of the day, you have to make the choice between trusting a group of s
 
 ## Mini game
 
-This is more to just to get to know "*how the sausage gets made*" kind of a project. Games are one of those fields where the quality has dropped down really bad in the digital realm. To know how truly bad the average indie game developer is, prompt the LLM to make a game. Push the tech and see how far it can go. It's really amazing how these models with some smart folder structure and framework instruction they can go. This should give an insight how how bad game developers are in general and how they don't deserve your money.
+This is more to just to get to know "*how the sausage gets made*" kind of a project. Games are one of those fields where the quality has dropped down really bad in the digital realm. To know how truly bad the average indie game developer is, prompt the LLM to make a game. Push the tech and see how far it can go. It's really amazing how far these models can go, provided some smart folder structure, framework and instructions. This should give an insight how how bad game developers are in general and how they don't deserve your money.
 
 To be clear: Yes, I'm stating that "AI slop" is better than your average indie game. 
 
