@@ -26,7 +26,7 @@ In the digital age, being under social media algorithms and being forced to pres
 
 ## LaTeX templates (letters, reports, books and so on) 
 
-This is more personal, maybe you use other formats, but I personally have to use LaTeX due to my fields requires heavy mathematical formulas, yet, so far there is no way of doing it in a simpler way. Since LLMs are really good at generating LaTeX syntax, it's also more pleasant to write its syntax.
+This might be a more personal file format that most people don't use, maybe you use other formats for document writing, but I personally have to use LaTeX due to my career field requires heavy mathematical formulas, yet, so far there is no other way of doing it in a simpler/convenient way. Since LLMs are really good at generating LaTeX syntax, it's more pleasant to write its syntax now.
 
 LLMs can easily make a nice template for writing reports, books, letters that looks so sleek and are not a structural mess! I think that whenever you write something, the text represents you in some way, having a default LaTeX/Google Docs just stinks "I don't care, here is my work", just a nice template you can grab saves you from that bad image. 
 
