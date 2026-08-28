@@ -180,6 +180,19 @@ export function SortableItems<T extends object>({
   /// order that no longer matches the data.
   useEffect(() => setDragOrder(null), [items]);
 
+  /*
+   * The pending drop-settle commit (see onDragEnd). Held in a ref so unmounting
+   * mid-settle can cancel it: without this, switching to another block inside
+   * the 250ms window fires onChange for a field that no longer exists.
+   */
+  const commit = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (commit.current) clearTimeout(commit.current);
+    },
+    [],
+  );
+
   // 5px before a drag starts, matching Puck's own array field, so a plain click
   // on the grip is not treated as a drag.
   const sensors = useMemo(
@@ -221,7 +234,9 @@ export function SortableItems<T extends object>({
         // 250ms is dnd-kit's drop-settle animation; committing inside it
         // re-renders mid-animation and the row visibly snaps.
         const next = live.current;
-        setTimeout(() => {
+        if (commit.current) clearTimeout(commit.current);
+        commit.current = setTimeout(() => {
+          commit.current = null;
           // Compare ORDER, not identity. Every onDragOver builds a fresh array,
           // so dragging a row away and back again left `next` a different
           // object holding the same order — which committed an undo step that

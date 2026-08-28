@@ -5,9 +5,30 @@
  */
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
-function Modal({ title, children }: { title: string; children: ReactNode }) {
+/*
+ * Escape closes every prompt, and it is bound HERE, on the modal container —
+ * never on window. PreviewModal already owns a window-level Escape listener,
+ * and a prompt can be open on top of it (Ctrl+S reaches the parent document
+ * through the preview overlay, so Save-As can mount above the preview). A
+ * second window listener would close the prompt AND the preview on one key.
+ * Keydown from a focused child bubbles to this div, which is all we need.
+ */
+function Modal({
+  title,
+  onCancel,
+  children,
+}: {
+  title: string;
+  onCancel: () => void;
+  children: ReactNode;
+}) {
   return (
-    <div className="pb-modal">
+    <div
+      className="pb-modal"
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onCancel();
+      }}
+    >
       <div className="pb-modal__box">
         <h2 className="pb-modal__title">{title}</h2>
         {children}
@@ -41,16 +62,17 @@ export function TextPrompt({
   const ok = allowEmpty || !!value.trim();
 
   return (
-    <Modal title={title}>
+    <Modal title={title} onCancel={onCancel}>
       <label className="pb-modal__label">{label}</label>
       <input
         ref={ref}
         className="pb-modal__input"
         value={value}
         onChange={(e) => setValue(e.target.value)}
+        // Escape is Modal's, via bubbling — binding it here too would just call
+        // onCancel twice.
         onKeyDown={(e) => {
           if (e.key === "Enter" && ok) onConfirm(value.trim());
-          if (e.key === "Escape") onCancel();
         }}
       />
       <div className="pb-modal__ops">
@@ -83,12 +105,29 @@ export function ConfirmPrompt({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  /*
+   * Which button starts focused IS the Enter policy. A focused <button> is
+   * activated by Enter natively, so there is deliberately no Enter handler
+   * here — one would fire *alongside* the native activation and, with focus on
+   * Cancel, both cancel and confirm the same prompt.
+   *
+   * Danger prompts focus Cancel, because every one of them is reached by
+   * confirming the PREVIOUS prompt: TextPrompt's Enter closes it and mounts
+   * the overwrite confirmation in the same tick, so a held or double-tapped
+   * Enter would otherwise replace a file the user never agreed to replace.
+   */
+  const focus = useRef<HTMLButtonElement>(null);
+  useEffect(() => focus.current?.focus(), []);
+
   return (
-    <Modal title={title}>
+    <Modal title={title} onCancel={onCancel}>
       <div className="pb-modal__body">{message}</div>
       <div className="pb-modal__ops">
-        <button type="button" onClick={onCancel}>Cancel</button>
+        <button ref={danger ? focus : undefined} type="button" onClick={onCancel}>
+          Cancel
+        </button>
         <button
+          ref={danger ? undefined : focus}
           type="button"
           className={danger ? "pb-modal__danger" : "pb-modal__primary"}
           onClick={onConfirm}
@@ -113,15 +152,25 @@ export function ListPrompt({
   onPick: (name: string) => void;
   onCancel: () => void;
 }) {
+  /// Focus the first project so Enter opens it and Tab walks the list. Safe to
+  /// make that the default action: doOpen runs the unsaved-changes guard BEFORE
+  /// this list is ever shown, so picking one cannot discard unsaved work.
+  const focus = useRef<HTMLButtonElement>(null);
+  useEffect(() => focus.current?.focus(), []);
+
   return (
-    <Modal title={title}>
+    <Modal title={title} onCancel={onCancel}>
       {items.length === 0 ? (
         <p className="pb-modal__body">{empty}</p>
       ) : (
         <ul className="pb-modal__list">
-          {items.map((it) => (
+          {items.map((it, i) => (
             <li key={it.name}>
-              <button type="button" onClick={() => onPick(it.name)}>
+              <button
+                ref={i === 0 ? focus : undefined}
+                type="button"
+                onClick={() => onPick(it.name)}
+              >
                 <span>{it.name}</span>
                 {it.sub && <em>{it.sub}</em>}
               </button>
@@ -130,7 +179,9 @@ export function ListPrompt({
         </ul>
       )}
       <div className="pb-modal__ops">
-        <button type="button" onClick={onCancel}>Cancel</button>
+        <button ref={items.length === 0 ? focus : undefined} type="button" onClick={onCancel}>
+          Cancel
+        </button>
       </div>
     </Modal>
   );

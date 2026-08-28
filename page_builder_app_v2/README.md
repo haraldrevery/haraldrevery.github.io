@@ -25,7 +25,7 @@ bun install
 bun run build                # typecheck + vite
 bunx tauri dev               # dev app (port 5174 — v1 uses 5173)
 bunx tauri build --no-bundle # release binary
-bun test tests               # 164 tests
+bun test tests               # 226 tests (see Tests: v1 deps required)
 ```
 
 **Use `bunx tauri build`, not `cargo build`.** Plain cargo produces a binary that
@@ -283,8 +283,17 @@ a v1 file rather than silently mangling it.
 ## Tests
 
 ```bash
-bun test tests
+bun install                      # in THIS folder
+(cd ../page_builder && bun install)   # and in v1 — see below
+bun test tests                   # 226 tests
 ```
+
+`prose-parity.test.tsx` imports v1's real renderer from `../page_builder/src/`,
+so it resolves v1's own `markdown-it` out of v1's `node_modules/`. Both folders
+gitignore `node_modules/`, so on a fresh clone the suite fails with
+`Cannot find package 'markdown-it'` until v1 has been installed too. That is the
+cost of testing against the real v1 renderer rather than a copy of it; the rest
+of the suite has no such dependency.
 
 - `render.test.tsx` — **the class-coverage guard** (greps the real `main.css`)
   and the one-gap-per-block rule, iterated over the whole registry.

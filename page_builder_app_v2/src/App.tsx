@@ -22,10 +22,10 @@ type Dialog =
   | { kind: "none" }
   | { kind: "saveAs"; initial: string }
   | { kind: "open"; items: ProjectInfo[] }
-  | { kind: "confirmSaveOverwrite"; name: string; file: ProjectFileV2 }
+  | { kind: "confirmSaveOverwrite"; name: string }
   | { kind: "exportSlug"; initial: string }
   | { kind: "exportWarn"; slug: string; issues: string[] }
-  | { kind: "confirmExportOverwrite"; fileName: string; contents: string; path: string }
+  | { kind: "confirmExportOverwrite"; slug: string; fileName: string; contents: string; path: string }
   | { kind: "discard"; then: () => void };
 
 export default function App() {
@@ -124,7 +124,7 @@ export default function App() {
     try {
       const res = await saveProject(name, file, overwrite);
       if (!res.written && res.exists) {
-        setDialog({ kind: "confirmSaveOverwrite", name, file });
+        setDialog({ kind: "confirmSaveOverwrite", name });
         return;
       }
       // Sanitising is lossy, so adopt the name the backend actually used or the
@@ -170,6 +170,22 @@ export default function App() {
 
   const startExport = () => setDialog({ kind: "exportSlug", initial: exportSlug ?? "" });
 
+  /*
+   * Record the slug the page was just published under. Both export paths end
+   * here — the direct write and the overwrite confirmation — because the slug
+   * is part of the project file, so forgetting it on one path leaves the title
+   * bar, the next Export dialog and the preview's canonical URL describing a
+   * file that is no longer the one on disk.
+   *
+   * A changed slug is an unsaved change: without the dirty flag you could
+   * export under a new name, close on the "no changes" path, and lose the
+   * association silently.
+   */
+  const adoptExportSlug = (slug: string) => {
+    if (slug !== exportSlug) setDirty(true);
+    setExportSlug(slug);
+  };
+
   const runExport = async (slugInput: string, skipWarnings: boolean) => {
     setBusy("Rendering…");
     try {
@@ -186,13 +202,14 @@ export default function App() {
       if (!res.written && res.exists) {
         setDialog({
           kind: "confirmExportOverwrite",
+          slug: bundle.slug,
           fileName: bundle.fileName,
           contents: bundle.contents,
           path: res.path,
         });
         return;
       }
-      setExportSlug(bundle.slug);
+      adoptExportSlug(bundle.slug);
       toast(`Exported ${bundle.fileName} — run the Eleventy build to publish.`);
     } catch (e) {
       toast(String(e), true);
@@ -413,6 +430,7 @@ export default function App() {
               setBusy("Writing…");
               try {
                 await writeExport(dialog.fileName, dialog.contents, true);
+                adoptExportSlug(dialog.slug);
                 toast(`Exported ${dialog.fileName} — run the Eleventy build to publish.`);
               } catch (e) {
                 toast(String(e), true);
