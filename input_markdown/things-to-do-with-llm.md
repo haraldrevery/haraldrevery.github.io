@@ -57,7 +57,7 @@ This one is making a lot noise, but personally I think making simple versions of
 
 Here are some of the apps I have made:
 - Simple markdown, latex or just `.docx` editor, so you don't have to rely on expensive, ugly and bloat software to edit a spreadsheet or a text file.
-- Media converter app / script, have your favourite settings as default and just run.
+- Media converter app / script, have your favorite settings as default and just run.
 -  Screen savers / wall paper loops: If you got a logo or something for a brand, make some self container webpages with interesting visuals. See it as a sibling project to the OBS Studio streaming layout or if you have a branding project and you need some background visuals (TV billboards or background in a video and so on).
 
 
