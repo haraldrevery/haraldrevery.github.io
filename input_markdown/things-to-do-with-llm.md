@@ -1,13 +1,10 @@
 ---
-title: Things to do with LLM
+title: Things to do with LLM's
 date: 2026-08-28
 image: /notebook_thumbnails/some_text_just_works_min.jpg
 tags: [thoughts]
 description: Things to do with "AI" (LLM) that are useful before the bubble bursts, regulations hit or gets too expensive. 
 ---
-
-
-# Things to do with LLM
 
 Lately, I have been experimenting a lot with Large Language Model (LLM), despite me being very hesitant to using AI tools for various reasons, I do find it very useful for certain tasks, one being to generate code (specifically HTML, JavaScript and Python), some mixed results with Rust and C++, but here some cool projects to do while the "AI" hype is carrying most of the computational costs. Maybe models gets better and cheaper or it will be regulated, expensive, hitting the data wall or the limit of just token prediction algorithms can do leading to another "AI winter". Anyway, consider these projects until then, the current model performances are pretty good for these types of projects.
 
