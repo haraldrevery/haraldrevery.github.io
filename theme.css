@@ -12,7 +12,7 @@
 
   --katex-font-size: 0.7em;      /* scaling the MathML for the blog (hope the revery notebook editor doesn't jank) */
   --text-line-row-space: 1.24;   /* tight line-height — headings & display text */
-  --leading-body: 1.5;           /* body-copy line-height (paragraphs, list items) */
+  --leading-body: 1.4;           /* body-copy line-height (paragraphs, list items), between 1.2 and 1.5 looks good */
   --tracking-body: 0.0em;     /* global letter-spacing (space between characters/letters)*/
 
   /* Nav + label letter-spacing. Tailwind turns each of these into a utility
