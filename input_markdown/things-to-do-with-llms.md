@@ -28,7 +28,7 @@ In the digital age, being under social media algorithms and being forced to pres
 
 Maybe you use other formats for document writing, but I personally have to use LaTeX due to my career field requires heavy mathematical formulas. So far in the world of mathematics and physics there is no other way of doing it in a simpler/convenient way. Since LLMs are really good at generating LaTeX syntax, it's more pleasant to write its syntax now.
 
-LLMs can easily make a nice template for writing reports, books, letters that looks so sleek and are not a structural mess! I think that whenever you write something, the text represents *you* in some way, having a default LaTeX/Google Docs just stinks "*I don't care, here is my word salad slop*", just a nice template you can grab saves you from that bad image. 
+LLMs can easily make a nice template for writing reports, books, letters that looks so sleek and are not a structural mess! I think that whenever you write something, the text represents *you* in some way, having a default LaTeX settings or a Google Docs layout just stinks "*I don't care, here is my word salad slop*", just a nice template you can grab saves you from that bad image. 
 
 ### Archival considerations
 
@@ -71,7 +71,8 @@ In the end of the day, you have to make the choice between trusting a group of s
 
 This is more to just to get to know "*how the sausage gets made*" kind of a project. Games are one of those fields where the quality has dropped down really bad in the digital realm. To know how truly bad the average indie game developer is, prompt the LLM to make a game. Push the tech and see how far it can go. It's really amazing how far these models can go, provided some smart folder structure, framework and instructions. This should give an insight how how bad game developers are in general and how they don't deserve your money.
 
-To be clear: Yes, I'm stating that "AI slop" is better than your average indie game. 
+To be clear: Yes, I'm stating that "AI slop" is better than your average indie game. It's way more fun to burn that €20 on LLM tokens / a subscription to create *my own* AI slop than to waste the same amount of money on someone elses indie slop, that I wouldn't even download if it was free. 
+
 
 ---
 
