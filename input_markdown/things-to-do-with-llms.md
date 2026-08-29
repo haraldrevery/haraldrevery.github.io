@@ -62,7 +62,6 @@ Here are some of the apps I have made:
 
 In the end of the day, you have to make the choice between trusting a group of strangers code or some LLM generated code (that was trained on these strangers work...). Judging at the state of modern software, I'm willing to trust the "AI slop" now, at least I get a glimpse of its code rather than proprietary software with zero insight or an open source project with +1000 files that no human can ever read. Just keep a bunch of backups of your work and don't "YOLO code" or "one shot prompt" too many features, make the apps import/export files rather than opening and editing them, then it should *mostly* be fine. 
 
-
 ---
 
 
