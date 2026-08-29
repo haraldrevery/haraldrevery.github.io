@@ -26,13 +26,13 @@ In the digital age, being under social media algorithms and being forced to pres
 
 ## LaTeX templates (letters, reports, books and so on) 
 
-This might be a more personal file format that most people don't use, maybe you use other formats for document writing, but I personally have to use LaTeX due to my career field requires heavy mathematical formulas, yet, so far there is no other way of doing it in a simpler/convenient way. Since LLMs are really good at generating LaTeX syntax, it's more pleasant to write its syntax now.
+Maybe you use other formats for document writing, but I personally have to use LaTeX due to my career field requires heavy mathematical formulas. So far in the world of mathematics and physics there is no other way of doing it in a simpler/convenient way. Since LLMs are really good at generating LaTeX syntax, it's more pleasant to write its syntax now.
 
 LLMs can easily make a nice template for writing reports, books, letters that looks so sleek and are not a structural mess! I think that whenever you write something, the text represents you in some way, having a default LaTeX/Google Docs just stinks "I don't care, here is my work", just a nice template you can grab saves you from that bad image. 
 
 ### Archival considerations
 
-In contrast of having a static website that is your digital presence, I think it's also important to bring what is digital to the real world. In the last couple of decades (well, as long I have been alive) there has been a push to store everything digitally, despite its technology being really fragile (HDDs, SSDs and CDs can barely store something reliably for 10 years...). As humans, it's really dangerous to rely on storing information in a format that requires advanced electronics and logic to extract said information. Paper has proven to be the most durable and cost effective medium. Books are simply battle tested and has stood the test of time for storing information. Just keep it away from fire and water, it will lasts for ~100 years (assume quality ink to guarantee easy readability) and you only need light and reading skills to extract information from the medium. 
+In contrast of having a static website that is your digital presence, I think it's also important to bring what is digital to the real world. In the last couple of decades (well, as long I have been alive) there has been a push to store everything digitally, despite its technology being really fragile (HDDs, SSDs and CDs can barely store something reliably for 10 years...). As humans, it's really dangerous to rely on storing information in a format that requires advanced electronics and logic to extract said information. Paper has proven to be the most durable and cost effective medium. Books are simply battle tested and has stood the test of time for storing information. Just keep it away from fire and water, it will lasts for ~100 years (provided it's acid-free paper and some quality ink to guarantee easy readability) and you only need light and reading skills to extract information from the medium. 
 
 
 Having a printer and some nice *print ready* templates to take what ever you have to a physical paper seems like a good thing to have, LLMs can help you automate this for your personal texts.
@@ -53,14 +53,15 @@ Making an OBS Studio layout for screen recording, having screen + camera view wi
 
 ## "Vibe coded" apps
 
-This one is making a lot noise, but personally I think making simple versions of commercial software that can run on any hardware is convenient. Even if they might contain jank, it's at least *my own jank*. Every commercial software out there is made to synchronise to a server (spyware) and require you to have subscription for certain features or even just opening up your files (let's be real here, it's ransomware at this point). A simple app that just changes a files content without enforced Internet connection, ads, and payments is how computers are supposed to work. LLMs can finally make computers usable again. 
+This one is making a lot noise, but personally I think making simple versions of commercial software that can run on any hardware is convenient. Even if they might contain jank, it's at least *my own jank* that I know how work around. Every commercial software out there is made to synchronise to a server (spyware) and require you to have subscription for certain features or even just opening up your files (let's be real here, it's ransomware at this point). A simple app that just changes a files content without enforced Internet connection, ads, and payments is how computers are supposed to work. LLMs can finally make computers usable again. 
 
 Here are some of the apps I have made:
 - Simple markdown, latex or just `.docx` editor, so you don't have to rely on expensive, ugly and bloat software just to edit a spreadsheet or a text/document file.
 - Media converter app / script, have your favorite settings as default and just run.
--  Screen savers / wall paper loops: If you got a logo or something for a brand, make some self container webpages with interesting visuals. See it as a sibling project to the OBS Studio streaming layout or if you have a branding project and you need some background visuals (TV billboards or background in a video and so on).
+- Screen savers / wall paper loops: If you got a logo or something for a brand, make some self container webpages with interesting visuals. See it as a sibling project to the OBS Studio streaming layout or if you have a branding project and you need some background visuals (TV billboards or background in a video and so on).
 
-In the end of the day, you have to make the choice between trusting a group of strangers code or some LLM generated code. Judging at the state of modern software, I'm willing to trust the "AI slop" now.
+In the end of the day, you have to make the choice between trusting a group of strangers code or some LLM generated code (that was trained on these strangers work...). Judging at the state of modern software, I'm willing to trust the "AI slop" now, at least I get a glimpse of its code rather than proprietary software with zero insight or an open source project with +1000 files that no human can ever read. Just keep a bunch of backups of your work and don't "YOLO code" or "one shot prompt" too many features, make the apps import/export files rather than opening and editing them, then it should *mostly* be fine. 
+
 
 ---
 
