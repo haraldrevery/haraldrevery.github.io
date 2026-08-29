@@ -4,6 +4,13 @@ layout: base.njk
 {% set body = content | addAnchors %}
 {% set outline = body | toc %}
 
+{# Reading-width: apply the saved scale BEFORE .post-container below is parsed,
+   so a remembered width never renders full-width and then snaps narrow.
+   Same pre-paint pattern as the theme snippet in rvry_ascii.html. The touch
+   guard mirrors javascript/reading_width.js, which never builds the button on
+   touch devices — without it a stored width would apply with no way to undo it. #}
+<script>try{if(!(navigator.maxTouchPoints>0||'ontouchstart' in window)){var w=parseFloat(localStorage.getItem('rvry-reading-width'));if(w>0.1&&w<=1)document.documentElement.style.setProperty('--reading-scale',w);}}catch(e){}</script>
+
 {% if outline %}
 {# No-JS article outline: hidden checkbox drives the toggle; visible by default #}
 <input type="checkbox" id="article-outline-toggle" class="article-outline-toggle">

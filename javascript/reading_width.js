@@ -22,10 +22,27 @@ if (navigator.maxTouchPoints > 0 || 'ontouchstart' in window) return;
 var SCALES  = [1, 0.75, 0.55, 0.40, 0.28, 0.18];  // 100% → 75% → 55% → 40% → 28% → 18% of default width
 var NARROW  = '><';                   // shown while there's still room to narrow
 var WIDEN   = '<>';                   // shown at the narrowest step: next press widens back
+var KEY     = 'rvry-reading-width';   // localStorage key (see legal.md §3.2)
 var index   = 0;                      // current step in SCALES
 
 // '<>' only at the last (narrowest) step, where the next click returns to default.
 function glyphFor(i) { return i === SCALES.length - 1 ? WIDEN : NARROW; }
+
+// Restore the saved step. The inline snippet at the top of post.njk has already
+// applied the width before paint, so there's nothing to re-apply here — we only
+// need `index` to match it, or the glyph and the next click would be out of sync.
+// SCALES stays the single source of truth: anything not in it (hand-edited
+// storage, or a value from an older SCALES list) resets to the default width so
+// the button can never disagree with what's on screen.
+try {
+    var saved = SCALES.indexOf(parseFloat(localStorage.getItem(KEY)));
+    if (saved > 0) {
+        index = saved;
+    } else {
+        document.documentElement.style.removeProperty('--reading-scale');
+        localStorage.removeItem(KEY);
+    }
+} catch (e) {}
 
 // Transparent hover target in the very corner (reveals the button on hover).
 var zone = document.createElement('div');
@@ -48,6 +65,12 @@ btn.addEventListener('click', function () {
     index = (index + 1) % SCALES.length;
     document.documentElement.style.setProperty('--reading-scale', SCALES[index]);
     btn.textContent = glyphFor(index);
+    // Remember the step so the next page opens at the same width. The default
+    // step stores nothing, so a reader who never uses the button never gets a key.
+    try {
+        if (index === 0) localStorage.removeItem(KEY);
+        else localStorage.setItem(KEY, SCALES[index]);
+    } catch (e) {}
 });
 
 // Insert into the SAME stacking context as the outline button. That button

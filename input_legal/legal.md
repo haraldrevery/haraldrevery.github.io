@@ -60,10 +60,12 @@ In accordance with the Swedish Electronic Communications Act, we provide informa
 | --- | --- | --- | --- |
 | rvry-theme | LocalStorage | Strictly Necessary: remembers your light/dark preference in the ASCII tool ([/notebook_pages/rvry_ascii](/notebook_pages/rvry_ascii)). | Persistent |
 | rvry-tab | LocalStorage | Strictly Necessary: remembers the last tab you had open in the ASCII tool. | Persistent |
+| rvry-settings | LocalStorage | Strictly Necessary: remembers the settings you chose in the ASCII tool. | Persistent |
 | clock-lang | LocalStorage | Strictly Necessary: remembers your language choice on the clock page ([/notebook_pages/clock_and_date](/notebook_pages/clock_and_date)). | Persistent |
 | clock-anim | LocalStorage | Strictly Necessary: remembers your animation preference on the clock page. | Persistent |
+| rvry-reading-width | LocalStorage | Strictly Necessary: remembers the reading-column width you chose with the width button on notebook articles. | Persistent |
 
-This site sets no cookies of its own and uses no analytics or visitor tracking. The technical storage listed above is used only on the individual interactive pages named, and only to remember a setting you chose on that page. It stays in your browser and is never transmitted to us. The site-wide light/dark appearance follows your operating system or browser setting and is not stored at all.
+This site sets no cookies of its own and uses no analytics or visitor tracking. The technical storage listed above is used only on the interactive pages and notebook articles named above, and only to remember a setting you chose yourself. It stays in your browser and is never transmitted to us. The site-wide light/dark appearance follows your operating system or browser setting and is not stored at all.
 
 **Strictly Necessary:** We only use technical storage that is strictly necessary for the service you have explicitly requested (remembering a preference you set). These do not require prior consent under Swedish law because they do not track your behavior.
 
