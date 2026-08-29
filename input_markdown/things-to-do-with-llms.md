@@ -60,7 +60,8 @@ Here are some of the apps I have made:
 - Media converter app / script, have your favorite settings as default and just run.
 - Screen savers / wall paper loops: If you got a logo or something for a brand, make some self container webpages with interesting visuals. See it as a sibling project to the OBS Studio streaming layout or if you have a branding project and you need some background visuals (TV billboards or background in a video and so on).
 
-In the end of the day, you have to make the choice between trusting a group of strangers code or some LLM generated code (that was trained on these strangers work...). Judging at the state of modern software, I'm willing to trust the "AI slop" now, at least I get a glimpse of its code rather than proprietary software with zero insight or an open source project with +1000 files that no human can ever read. Just keep a bunch of backups of your work and don't "YOLO code" or "one shot prompt" too many features, make the apps import/export files rather than opening and editing them, then it should *mostly* be fine. 
+In the end of the day, you have to make the choice between trusting a group of strangers code or some LLM generated code (that was trained on these strangers work...). Judging at the state of modern software, I'm willing to trust the "AI slop" now. Just keep a bunch of backups of your work and don't "YOLO code" or "one shot prompt" too many features, make the apps import/export files rather than opening and editing them, then it should *mostly* be fine. 
+
 
 ---
 
