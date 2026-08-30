@@ -54,7 +54,7 @@ Making an OBS Studio layout for screen recording, having screen + camera view wi
 
 ## "Vibe coded" apps
 
-This one is making a lot noise, but personally I think making simple versions of commercial software that can run on any hardware is convenient. Even if they might contain jank, it's at least *my own jank* that I know how work around. Every commercial software out there is made to synchronise to a server (spyware) and require you to have subscription for certain features or even just opening up your files (let's be real here, it's ransomware at this point). A simple app that just changes a files content without enforced Internet connection, ads, and payments is how computers are supposed to work. LLMs can finally make computers usable again. 
+This one is making a lot noise, but personally I think making simple versions of commercial software that can run on any hardware is convenient. Even if they might contain jank, it's at least *my own jank* that I know how work around. Every commercial software out there is made to synchronise to a server (spyware) and require you to have a paid subscription for certain features or even just opening up your files (let's be real here, it's ransomware at this point). A simple app that just changes a files content without enforced Internet connection, ads, and payments is how computers are supposed to work. LLMs can finally make computers usable again. 
 
 Here are some of the apps I have made:
 - Simple markdown, latex or just `.docx` editor, so you don't have to rely on expensive, ugly and bloat software just to edit a spreadsheet or a text/document file.
