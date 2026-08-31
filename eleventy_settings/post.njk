@@ -1,7 +1,10 @@
 ---
 layout: base.njk
 ---
-{% set body = content | addAnchors %}
+{# demoteHeadings first: the <h1> below is this page's only h1, so a body that
+   also uses "# Foo" is shifted down a level before ids and the outline are
+   derived from it. No-op for a body that already starts at h2. #}
+{% set body = content | demoteHeadings | addAnchors %}
 {% set outline = body | toc %}
 
 {# Reading-width: apply the saved scale BEFORE .post-container below is parsed,
@@ -35,7 +38,7 @@ layout: base.njk
            page_builder_app_v2/src/puck/components/Hero.tsx — move one, move
            both, or the two page kinds diverge. #}
         <div class="mb-8 pb-8 border-b border-neutral-200 dark:border-neutral-800">
-            <time class="text-sm font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider" datetime="{{ date }}">
+            <time class="text-sm font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider" datetime="{{ date | isoStamp }}">
                 {{ date | readableDate }}
             </time>
             <h1 class="text-5xl md:text-6xl text-zinc-900 dark:text-white mt-4 mb-4 uppercase tracking-wider">
@@ -57,7 +60,7 @@ layout: base.njk
 <div class="post-container pt-24">
   <hr>
   <div class="py-2">
-    <time class="text-sm font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider" datetime="{{ date }}">
+    <time class="text-sm font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider" datetime="{{ date | isoStamp }}">
         {{ date | readableDate }}
     </time>
   </div>

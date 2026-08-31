@@ -317,11 +317,95 @@ done < "$TMP/pages"
 sort -rn -o "$TMP/heavy" "$TMP/heavy" 2>/dev/null
 
 # ---------------------------------------------------------------------------
+# Orphaned build output.
+#
+# Eleventy's output dir IS the repo root, so the build only ever writes - it
+# never deletes. Set `draft: true` on a published post and the already-generated
+# notebook_pages/<slug>.html stays on disk, live and reachable, even though
+# notebook.html, sitemap.xml and search-index.json have all dropped it. The same
+# applies to a tag page whose last post went draft, to a post whose source was
+# renamed or deleted, to release/ pages, and to licence/ texts (syncLicenceDir
+# in input_legal/input_legal.11tydata.js publishes but never prunes).
+#
+# Report-only, like every other check here: it names the files, you delete them.
+# Nothing below removes anything - a false positive must never cost a live page.
+# ---------------------------------------------------------------------------
+: > "$TMP/orphan"
+
+# Mirrors the "slugify" filter in eleventy.config.js. Kept deliberately literal:
+# that filter is ASCII-only (\w), so "Ångström" -> "ngstrm" there and here.
+slugify() {
+    printf '%s' "$1" | tr '[:upper:]' '[:lower:]' \
+        | sed -e 's/[^a-z0-9_ -]//g' -e 's/[[:space:]]\{1,\}/-/g' -e 's/--\{1,\}/-/g'
+}
+
+# Frontmatter body of a source file. Sources are CRLF, hence the tr.
+fm() { sed -e '1{/^---/!q}' -e '1d' -e '/^---/,$d' "$1" 2>/dev/null | tr -d '\r'; }
+is_draft() { fm "$1" | grep -qi '^draft:[[:space:]]*true[[:space:]]*$'; }
+
+# Every slug and tag a LIVE (non-draft) source is allowed to publish.
+: > "$TMP/live_slugs"; : > "$TMP/live_tags"
+for src in input_markdown/*.md input_custom_html_pages/*.html; do
+    [ -f "$src" ] || continue
+    is_draft "$src" && continue
+    b=$(basename "$src"); printf '%s\n' "${b%.*}" >> "$TMP/live_slugs"
+    fm "$src" | sed -n 's/^tags:[[:space:]]*\[\(.*\)\][[:space:]]*$/\1/p' \
+        | tr ',' '\n' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' \
+        | while read -r t; do
+              [ -n "$t" ] && printf '%s\n' "$(slugify "$t")" >> "$TMP/live_tags"
+          done
+done
+sort -u -o "$TMP/live_slugs" "$TMP/live_slugs"
+sort -u -o "$TMP/live_tags"  "$TMP/live_tags"
+
+for f in notebook_pages/*.html; do
+    [ -f "$f" ] || continue
+    b=$(basename "$f" .html)
+    case "$b" in
+        notebook-page-*)  # index pagination - driven by post count, not by a source
+            continue ;;
+        tag-*)
+            t=${b#tag-}; t=${t%%-page-[0-9]*}
+            grep -qxF "$t" "$TMP/live_tags" \
+                || printf '%s   no live post carries tag "%s"\n' "$f" "$t" >> "$TMP/orphan" ;;
+        *)
+            grep -qxF "$b" "$TMP/live_slugs" \
+                || printf '%s   source is draft, renamed or deleted\n' "$f" >> "$TMP/orphan" ;;
+    esac
+done
+
+# release/<slug>.html <- input_release/*.json ("_" prefix = draft, as in the config)
+: > "$TMP/live_releases"
+for j in input_release/*.json input_release/*.jsonc; do
+    [ -f "$j" ] || continue
+    case "$(basename "$j")" in _*) continue ;; esac
+    s=$(sed -n 's/.*"slug"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$j" | head -1)
+    [ -z "$s" ] && s=$(slugify "$(sed -n 's/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$j" | head -1)")
+    [ -n "$s" ] && printf '%s\n' "$s" >> "$TMP/live_releases"
+done
+sort -u -o "$TMP/live_releases" "$TMP/live_releases"
+for f in release/*.html; do
+    [ -f "$f" ] || continue
+    b=$(basename "$f" .html)
+    grep -qxF "$b" "$TMP/live_releases" \
+        || printf '%s   no input_release/ json produces this slug\n' "$f" >> "$TMP/orphan"
+done
+
+# licence/<slug> <- input_legal/licenses/<slug> (extensionless raw texts)
+for f in licence/*; do
+    [ -f "$f" ] || continue
+    [ -f "input_legal/licenses/$(basename "$f")" ] \
+        || printf '%s   no matching input_legal/licenses/ text\n' "$f" >> "$TMP/orphan"
+done
+
+# ---------------------------------------------------------------------------
 # Report.
 # ---------------------------------------------------------------------------
 printf '%sReferences%s\n' "$BLD" "$RST"
 section "$TMP/missing" "broken references (missing file)"            error
 section "$TMP/case"    "case-only mismatch (breaks on GitHub Pages)" error
+
+section "$TMP/orphan"  "orphaned build output (still live, no live source)" error
 
 printf '\n%sSize budgets%s\n' "$BLD" "$RST"
 section "$TMP/big_used"   "images over ${IMG_MAX_KB} kB, used on a live page" warn

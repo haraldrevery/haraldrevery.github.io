@@ -425,8 +425,10 @@
 }
 
 .article-outline-list,
-.article-outline-sublist { list-style: none; margin: 0; padding: 0; }
-.article-outline-sublist { padding-left: 1.15rem; margin-top: 0.15rem; }   /* H3 sub-headers indent */
+.article-outline-sublist,
+.article-outline-subsublist { list-style: none; margin: 0; padding: 0; }
+.article-outline-sublist,
+.article-outline-subsublist { padding-left: 1.15rem; margin-top: 0.15rem; }   /* sub-header indent */
 .article-outline-panel li { margin: 0.1rem 0; }
 
 /* Offset in-page anchor jumps so a heading clears the fixed nav bar (no JS) */
@@ -444,6 +446,7 @@
   transition: color 0.15s, border-color 0.15s;
 }
 .article-outline-sublist a { font-size: 0.85rem; color: #525252; }
+.article-outline-subsublist a { font-size: 0.8rem; color: #6b6b6b; }
 .article-outline-panel a:hover { color: #171717; border-left-color: #171717; }
 
 @media (prefers-color-scheme: dark) {
@@ -457,6 +460,7 @@
   .article-outline-heading { color: #a3a3a3; }
   .article-outline-panel a { color: #d4d4d4; }
   .article-outline-sublist a { color: #a3a3a3; }
+  .article-outline-subsublist a { color: #8f8f8f; }
   .article-outline-panel a:hover { color: #ffffff; border-left-color: #ffffff; }
 }
 

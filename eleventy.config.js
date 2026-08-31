@@ -569,7 +569,31 @@ module.exports = function(eleventyConfig) {
   // file is missing or is a format with no readable header (e.g. SVG).
   eleventyConfig.addFilter("imageMeta", (src) => imageMeta(src || "/opengraphimg.jpg"));
 
-  // Article outline (no client JS): inject id="" into <h2>/<h3> so anchor links work.
+  // post.njk already renders the post title as the page's single <h1>, so a body
+  // that also opens with "# Foo" emits a second one and dilutes the heading
+  // semantics. When (and only when) the rendered body contains an h1, shift every
+  // heading down one level so the relative hierarchy is preserved: h1->h2, h2->h3,
+  // h3->h4, and so on. A body that already starts at h2 is returned untouched, so
+  // this is a no-op for every post that was correct to begin with.
+  //
+  // <pre> blocks are masked out first: a post that *shows* "<h1>" as sample markup
+  // must not have its example silently rewritten. h6 is left alone (no h7 exists).
+  eleventyConfig.addFilter("demoteHeadings", (content) => {
+    if (!content) return content;
+    const blocks = [];
+    let masked = String(content).replace(/<pre[\s\S]*?<\/pre>/gi, (m) => {
+      blocks.push(m);
+      return "@@RVRYPRE" + (blocks.length - 1) + "@@";
+    });
+    if (!/<h1[\s>]/i.test(masked)) return content;   // nothing to demote
+    // Deepest level first, so a heading is never shifted twice in one pass.
+    for (let lvl = 5; lvl >= 1; lvl--) {
+      masked = masked.replace(new RegExp("<(/?)h" + lvl + "(?=[\\s>])", "gi"), "<$1h" + (lvl + 1));
+    }
+    return masked.replace(/@@RVRYPRE(\d+)@@/g, (m, i) => blocks[Number(i)]);
+  });
+
+  // Article outline (no client JS): inject id="" into <h2>/<h3>/<h4> so anchor links work.
   // Runs at build time on rendered markdown HTML. Respects an existing id (e.g. from
   // markdown-it-attrs) and de-duplicates slugs so every id is unique.
   eleventyConfig.addFilter("addAnchors", (content) => {
@@ -583,7 +607,7 @@ module.exports = function(eleventyConfig) {
       .trim()
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-");
-    return content.replace(/<h([23])([^>]*)>([\s\S]*?)<\/h\1>/g, (m, level, attrs, inner) => {
+    return content.replace(/<h([234])([^>]*)>([\s\S]*?)<\/h\1>/g, (m, level, attrs, inner) => {
       if (/\bid\s*=/.test(attrs)) return m;            // keep author-supplied id
       let base = toSlug(inner) || "section";
       let slug = base, i = 1;
@@ -593,35 +617,43 @@ module.exports = function(eleventyConfig) {
     });
   });
 
-  // Build a nested <ul> outline (H2 with H3 nested) from already-anchored content.
+  // Build a nested <ul> outline (H2 > H3 > H4) from already-anchored content.
   // Reads the real id="" values so it always matches addAnchors. Returns "" when
   // there are fewer than 2 headings (so the toggle can be hidden on short posts).
   eleventyConfig.addFilter("toc", (content) => {
     if (!content) return "";
     const heads = [];
-    const re = /<h([23])[^>]*\bid="([^"]+)"[^>]*>([\s\S]*?)<\/h\1>/g;
+    const re = /<h([234])[^>]*\bid="([^"]+)"[^>]*>([\s\S]*?)<\/h\1>/g;
     let m;
     while ((m = re.exec(content)) !== null) {
-      heads.push({ level: +m[1], id: m[2], text: m[3].replace(/<[^>]+>/g, "").trim() });
+      heads.push({
+        level: +m[1],
+        id: m[2],
+        text: m[3].replace(/<[^>]+>/g, "").trim(),
+        children: [],
+      });
     }
     if (heads.length < 2) return "";
-    let html = '<ul class="article-outline-list">';
-    let openLi = false, openSub = false;
+    // Nest each heading under the nearest preceding shallower one. A heading with
+    // no shallower ancestor (an H3 before any H2, say) stays at the top level.
+    const roots = [];
+    const stack = [];
     for (const h of heads) {
-      if (h.level === 2) {
-        if (openSub) { html += "</ul>"; openSub = false; }
-        if (openLi) { html += "</li>"; openLi = false; }
-        html += `<li><a href="#${h.id}">${h.text}</a>`;
-        openLi = true;
-      } else {
-        if (!openLi) { html += `<li><a href="#${h.id}">${h.text}</a></li>`; continue; }
-        if (!openSub) { html += '<ul class="article-outline-sublist">'; openSub = true; }
-        html += `<li><a href="#${h.id}">${h.text}</a></li>`;
-      }
+      while (stack.length && stack[stack.length - 1].level >= h.level) stack.pop();
+      (stack.length ? stack[stack.length - 1].children : roots).push(h);
+      stack.push(h);
     }
-    if (openSub) html += "</ul>";
-    if (openLi) html += "</li>";
-    return html + "</ul>";
+    const CLASSES = ["article-outline-list", "article-outline-sublist", "article-outline-subsublist"];
+    const render = (nodes, depth) => {
+      let out = '<ul class="' + CLASSES[Math.min(depth, CLASSES.length - 1)] + '">';
+      for (const n of nodes) {
+        out += '<li><a href="#' + n.id + '">' + n.text + "</a>";
+        if (n.children.length) out += render(n.children, depth + 1);
+        out += "</li>";
+      }
+      return out + "</ul>";
+    };
+    return render(roots, 0);
   });
 
   // 5. Process and copy input_custom_html_pages files to notebook_pages (strip frontmatter)
