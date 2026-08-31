@@ -58,10 +58,10 @@ In accordance with the Swedish Electronic Communications Act, we provide informa
 
 | Name | Type | Purpose | Duration |
 | --- | --- | --- | --- |
-| rvry-theme | LocalStorage | Strictly Necessary: remembers your light/dark preference in the ASCII tool ([/notebook_pages/rvry_ascii](/notebook_pages/rvry_ascii)). | Persistent |
+| rvry-theme | LocalStorage | Strictly Necessary: remembers your light/dark preference in the ASCII tool ([/notebook_pages/rvry_ascii](/notebook_pages/rvry_ascii.html)). | Persistent |
 | rvry-tab | LocalStorage | Strictly Necessary: remembers the last tab you had open in the ASCII tool. | Persistent |
 | rvry-settings | LocalStorage | Strictly Necessary: remembers the settings you chose in the ASCII tool. | Persistent |
-| clock-lang | LocalStorage | Strictly Necessary: remembers your language choice on the clock page ([/notebook_pages/clock_and_date](/notebook_pages/clock_and_date)). | Persistent |
+| clock-lang | LocalStorage | Strictly Necessary: remembers your language choice on the clock page ([/notebook_pages/clock_and_date](/notebook_pages/clock_and_date.html)). | Persistent |
 | clock-anim | LocalStorage | Strictly Necessary: remembers your animation preference on the clock page. | Persistent |
 | rvry-reading-width | LocalStorage | Strictly Necessary: remembers the reading-column width you chose with the width button on notebook articles. | Persistent |
 
