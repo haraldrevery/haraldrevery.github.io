@@ -148,6 +148,25 @@ while IFS= read -r f; do
                 if (tok[1] != "") print F "\t" $1 "\t" tok[1]
             }
         }' >> "$TMP/refs"
+    # Share images: <meta property="og:image"> and <meta name="twitter:image">.
+    # These are absolute (https://haraldrevery.com/...) and would be dropped as
+    # external by the resolver below, so the site origin is stripped here to turn
+    # them back into local paths. Nothing else validated them: imageMeta() in
+    # eleventy.config.js swallows a missing file and still emits the tag, so a
+    # typo'd `image:` in frontmatter shipped a 404 share image with no build
+    # error and no finding here. The og:image:width/height pair is simply absent
+    # in that case - which is the only visible symptom, and easy to miss.
+    #
+    # Matching requires a quote straight after the property name, so og:image:width,
+    # og:image:height and og:image:alt are correctly NOT treated as file refs.
+    # The JSON-LD block carries the same path a second time but is deliberately
+    # not scanned: its other "url" fields are page URLs, not files, and would all
+    # report as missing. Checking og:image covers it - both come from imageMeta().
+    grep -noE '<meta[^>]*(og:image|twitter:image)"[^>]*content="[^"]*"' "$f" 2>/dev/null \
+      | sed -E 's|^([0-9]+):.*content="([^"]*)"$|\1\t\2|' \
+      | sed "s|\thttps://haraldrevery.com|\t|" \
+      | awk -F'\t' -v F="$f" 'NF==2 && $2 ~ /^\// {print F "\t" $1 "\t" $2}' >> "$TMP/refs"
+
     # url(...) inside inline style attributes, e.g.
     #   style="background-image: url('/photos/audioplayer_texture1.jpg')"
     # music.html alone has four of these; without this pass they are invisible.
