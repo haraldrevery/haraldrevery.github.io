@@ -1,3 +1,7 @@
+// NOT the live deploy. The site is served by GitHub Pages behind Cloudflare
+// (see update_to_git_guide.md); this file and `_headers` only take effect if
+// the site is ever migrated to Cloudflare Workers assets via `wrangler deploy`.
+// Read the STATUS block at the top of `_headers` before changing either.
 {
   "name": "website",
   "compatibility_date": "2026-01-30",

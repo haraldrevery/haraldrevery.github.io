@@ -105,6 +105,73 @@ const artistRef = (name) => ({
   "name": name || "Harald Revery",
 });
 
+// Read an image's pixel size straight from its header bytes. Deliberately
+// dependency-free: node_modules is committed and the standalone Eleventy
+// binaries bundle this file, so pulling in an image library would mean an
+// npm install plus a recompile of both binaries (eleventy_binary/README.md).
+// Handles PNG, GIF, WebP and JPEG (including progressive/Exif files); returns
+// null for anything else (e.g. SVG), which callers treat as "size unknown".
+const readImageSize = (buf) => {
+  if (buf.length >= 24 && buf.toString("ascii", 1, 4) === "PNG")
+    return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+  if (buf.length >= 10 && buf.toString("ascii", 0, 3) === "GIF")
+    return { width: buf.readUInt16LE(6), height: buf.readUInt16LE(8) };
+  if (buf.length >= 30 && buf.toString("ascii", 0, 4) === "RIFF" && buf.toString("ascii", 8, 12) === "WEBP") {
+    const f = buf.toString("ascii", 12, 16);
+    if (f === "VP8 ") return { width: buf.readUInt16LE(26) & 0x3fff, height: buf.readUInt16LE(28) & 0x3fff };
+    if (f === "VP8L") { const b = buf.readUInt32LE(21); return { width: (b & 0x3fff) + 1, height: ((b >> 14) & 0x3fff) + 1 }; }
+    if (f === "VP8X") return { width: (buf.readUIntLE(24, 3) & 0xffffff) + 1, height: (buf.readUIntLE(27, 3) & 0xffffff) + 1 };
+  }
+  if (buf.length >= 4 && buf[0] === 0xff && buf[1] === 0xd8) {
+    let i = 2;
+    while (i + 9 < buf.length) {
+      if (buf[i] !== 0xff) { i++; continue; }
+      const m = buf[i + 1];
+      if (m === 0xd8 || m === 0x01 || (m >= 0xd0 && m <= 0xd7)) { i += 2; continue; }
+      // SOF0-SOF15 carry the frame size; DHT/JPG/DAC share the range but do not.
+      if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc)
+        return { height: buf.readUInt16BE(i + 5), width: buf.readUInt16BE(i + 7) };
+      i += 2 + buf.readUInt16BE(i + 2);
+    }
+  }
+  return null;
+};
+
+// Resolve a root-relative site path ("/notebook_thumbnails/x.jpg") to an
+// absolute URL plus its intrinsic size, for og:image / JSON-LD ImageObject.
+// Memoised because every post asks for the same handful of files. A missing or
+// unreadable file yields url-only, so a typo degrades instead of failing a build.
+const imageMetaCache = new Map();
+const imageMeta = (src) => {
+  const rel = String(src == null ? "" : src).trim();
+  if (!rel) return null;
+  if (imageMetaCache.has(rel)) return imageMetaCache.get(rel);
+  const meta = { url: /^https?:\/\//.test(rel) ? rel : SITE_ORIGIN + rel };
+  if (!/^https?:\/\//.test(rel)) {
+    try {
+      const fd = fs.openSync(path.join(".", rel.replace(/^\/+/, "")), "r");
+      try {
+        // 64 KB is well past the SOF marker of every image on this site.
+        const buf = Buffer.alloc(65536);
+        const read = fs.readSync(fd, buf, 0, 65536, 0);
+        const size = readImageSize(buf.subarray(0, read));
+        if (size) { meta.width = size.width; meta.height = size.height; }
+      } finally { fs.closeSync(fd); }
+    } catch (e) { /* size unknown - url-only is still valid */ }
+  }
+  imageMetaCache.set(rel, meta);
+  return meta;
+};
+
+// Normalise anything Eleventy hands us as a date (Date, YAML date, string) to a
+// full ISO-8601 timestamp. Returns null rather than throwing on junk, so one bad
+// frontmatter date can never take out a whole page's structured data.
+const isoStamp = (d) => {
+  if (d == null || d === "") return null;
+  const dt = d instanceof Date ? d : new Date(d);
+  return Number.isNaN(dt.getTime()) ? null : dt.toISOString();
+};
+
 module.exports = function(eleventyConfig) {
 
 
@@ -349,6 +416,11 @@ module.exports = function(eleventyConfig) {
     return new Date(dateObj).toISOString().slice(0, 10);
   });
 
+  // Full ISO-8601 timestamp for article:published_time / article:modified_time.
+  // Yields "" (so the meta tag stays empty rather than the build dying) on a
+  // date Eleventy could not parse.
+  eleventyConfig.addFilter("isoStamp", (dateObj) => isoStamp(dateObj) || "");
+
   // Strip a trailing ".html" so every emitted URL (canonical, og:url, sitemap
   // <loc>) matches the clean URL Cloudflare Pages actually serves — it 308-
   // redirects /foo.html -> /foo. Leaves "/" and already-clean URLs untouched.
@@ -447,6 +519,55 @@ module.exports = function(eleventyConfig) {
     };
     return jsonLdScript(graph);
   });
+
+  // JSON-LD for a notebook post (eleventy_settings/base.njk). Takes the page's
+  // own frontmatter as an object and returns a script-safe Article string.
+  //
+  // This MUST be built here rather than hand-written in the template: Nunjucks
+  // autoescaping turns a quote in a description into &quot; inside the JSON
+  // (corrupting the value) and leaves a backslash untouched (producing an
+  // invalid \escape, which makes Google drop the whole block). Same reason
+  // eleventy_njk/search-index.njk pipes every value through `| dump | safe`.
+  // Emit with `| safe`.
+  eleventyConfig.addFilter("articleLd", (data) => {
+    const d = data || {};
+    const url = SITE_ORIGIN + String(d.url || "").replace(/\.html$/, "");
+    const published = isoStamp(d.date);
+    const obj = {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "@id": url + "#article",
+      "mainEntityOfPage": { "@type": "WebPage", "@id": url },
+      "url": url,
+      "headline": d.title || "Untitled",
+      "inLanguage": "en",
+      "author": {
+        "@type": "Person",
+        "name": "Harald Revery",
+        "url": SITE_ORIGIN + "/about",
+      },
+      // The canonical artist entity declared in full in index.html. MusicGroup
+      // is an Organization subtype, so it is a valid Article publisher.
+      "publisher": { "@id": SITE_ORIGIN + "/#artist" },
+    };
+    if (d.description) obj.description = d.description;
+    if (published) {
+      obj.datePublished = published;
+      obj.dateModified = isoStamp(d.updated) || published;
+    }
+    const img = imageMeta(d.image || "/opengraphimg.jpg");
+    if (img) {
+      obj.image = { "@type": "ImageObject", "url": img.url };
+      if (img.width) { obj.image.width = img.width; obj.image.height = img.height; }
+    }
+    return jsonLdScript(obj);
+  });
+
+  // Absolute URL + intrinsic size for a page's share image, so base.njk can emit
+  // og:image:width/height (which stop crawlers guessing and let previews reserve
+  // space). Returns { url, width?, height? }; width/height are absent when the
+  // file is missing or is a format with no readable header (e.g. SVG).
+  eleventyConfig.addFilter("imageMeta", (src) => imageMeta(src || "/opengraphimg.jpg"));
 
   // Article outline (no client JS): inject id="" into <h2>/<h3> so anchor links work.
   // Runs at build time on rendered markdown HTML. Respects an existing id (e.g. from

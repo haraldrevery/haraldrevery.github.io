@@ -26,52 +26,51 @@
     <link rel="preload" href="/fonts/HaraldReveryTextFont.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/HaraldReveryMonoFont.woff2" as="font" type="font/woff2" crossorigin>
 
-    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
-    <link rel="shortcut icon" href="/favicon.ico" sizes="any">
-    
+    {# Share image: absolute URL + intrinsic size, read from the file itself by
+       the imageMeta filter so og:image:width/height can never drift from the
+       actual asset. width/height are omitted when the size is unreadable. #}
+    {% set ogImage = (image or "/opengraphimg.jpg") | imageMeta %}
+
     {# Open Graph Meta Tags #}
-    <meta property="og:title" content="{{ title }} - Harald Revery" />
+    {# Title shape is "Harald Revery - <page>" everywhere: <title>, og, twitter. #}
+    <meta property="og:title" content="Harald Revery - {{ title }}" />
     <meta property="og:url" content="https://haraldrevery.com{{ page.url | cleanUrl }}" />
     <meta property="og:type" content="{% if layout == "post.njk" or date %}article{% else %}website{% endif %}" />
     <meta property="og:site_name" content="Harald Revery" />
+    <meta property="og:locale" content="en_US" />
     {% if description %}
     <meta property="og:description" content="{{ description }}" />
     {% endif %}
-    {% if image %}
-    <meta property="og:image" content="https://haraldrevery.com{{ image }}" />
-    {% else %}
-    <meta property="og:image" content="https://haraldrevery.com/opengraphimg.jpg" />
+    <meta property="og:image" content="{{ ogImage.url }}" />
+    {% if ogImage.width %}
+    <meta property="og:image:width" content="{{ ogImage.width }}" />
+    <meta property="og:image:height" content="{{ ogImage.height }}" />
+    {% endif %}
+    <meta property="og:image:alt" content="Harald Revery - {{ title }}" />
+
+    {% if layout == "post.njk" or date %}
+    <meta property="article:published_time" content="{{ date | isoStamp }}" />
+    <meta property="article:modified_time" content="{{ (updated or date) | isoStamp }}" />
+    <meta property="article:author" content="https://haraldrevery.com/about" />
     {% endif %}
 
     {# Twitter Card #}
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="{{ title }} - Harald Revery" />
+    <meta name="twitter:title" content="Harald Revery - {{ title }}" />
     {% if description %}
     <meta name="twitter:description" content="{{ description }}" />
     {% endif %}
-    {% if image %}
-    <meta name="twitter:image" content="https://haraldrevery.com{{ image }}" />
-    {% else %}
-    <meta name="twitter:image" content="https://haraldrevery.com/opengraphimg.jpg" />
-    {% endif %}
-    
-    {# Schema.org Structured Data for Articles #}
+    <meta name="twitter:image" content="{{ ogImage.url }}" />
+    <meta name="twitter:image:alt" content="Harald Revery - {{ title }}" />
+
+    {# Schema.org structured data for notebook posts. Built by the articleLd
+       filter in eleventy.config.js, NOT hand-written here: interpolating
+       frontmatter straight into a JSON literal lets Nunjucks autoescaping put
+       &quot; inside string values and lets a stray backslash produce invalid
+       JSON, which makes Google discard the entire block. #}
     {% if layout == "post.njk" or date %}
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      "headline": "{{ title }}",
-      "author": {
-        "@type": "Person",
-        "name": "Harald Revery"
-      },
-      "datePublished": "{{ date.toISOString() }}",
-      "dateModified": "{{ date.toISOString() }}"{% if description %},
-      "description": "{{ description }}"{% endif %}{% if image %},
-      "image": "https://haraldrevery.com{{ image }}"{% else %},
-      "image": "https://haraldrevery.com/opengraphimg.jpg"{% endif %}
-    }
+    {{ { title: title, description: description, image: image, date: date, updated: updated, url: page.url } | articleLd | safe }}
     </script>
     {% endif %}
 </head>
