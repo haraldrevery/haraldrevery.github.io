@@ -162,6 +162,14 @@
         }
         els.meta.textContent = `${res.cols} × ${res.rows} chars`;
       } catch (e) {
+        // A failed render leaves no current art. Without clearing it, the
+        // copy / TXT / MD / HTML exports kept handing back the PREVIOUS image's
+        // output while an error banner was on screen. Dropping the sample also
+        // forces a fresh one on the next attempt.
+        state.sample = null;
+        state.lastText = "";
+        RVRY.ui.showPlaceholder(els.out, "Could not render this image.");
+        els.meta.textContent = "—";
         showError(e.message);
       }
     }

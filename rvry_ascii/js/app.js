@@ -97,7 +97,16 @@
     // Double-tap / double-click a slider -> reset to its HTML default.
     // Pointer-based so it works on touch too (dblclick doesn't fire on touch);
     // a drag is rejected so only genuine taps in place count.
-    const reset = () => { range.value = def; fire(); };
+    // A real "input" event, not a bare fire(): persist.watch() saves settings
+    // only from capture-phase input/change, so calling fire() directly repainted
+    // the readout and re-rendered while localStorage kept the pre-reset value —
+    // the reset silently reverted on the next load. Dispatching also reaches the
+    // extra listeners some ranges carry (e.g. ply-capfps -> refreshTrim), which
+    // fire() never did. The "input" listener above then runs fire() for us.
+    const reset = () => {
+      range.value = def;
+      range.dispatchEvent(new Event("input", { bubbles: true }));
+    };
     let lastTap = 0, downX = 0, downY = 0, moved = false;
     range.addEventListener("pointerdown", (e) => { downX = e.clientX; downY = e.clientY; moved = false; });
     range.addEventListener("pointermove", (e) => {
@@ -311,7 +320,16 @@
   /* ---------- tabs ---------- */
   function initTabs() {
     const buttons = document.querySelectorAll(".tab-btn");
-    const panels = { image: $("tab-image"), text: $("tab-text"), obfuscate: $("tab-obfuscate"), player: $("tab-player") };
+    // Only the panels that actually exist. Three copies of this page's markup
+    // are kept and only two of them are generated, so one can lag behind this
+    // script; a missing panel used to throw out of activate() and abort boot
+    // before any tab initialiser ran. Same posture as the player tab's trim
+    // controls, which already degrade instead of throwing.
+    const panels = {};
+    for (const name of ["image", "text", "obfuscate", "player"]) {
+      const el = $("tab-" + name);
+      if (el) panels[name] = el;
+    }
     const exportGroups = document.querySelectorAll(".export-group");
     const activate = (name, persist) => {
       buttons.forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
@@ -374,10 +392,17 @@
     initTabs();
     initPaste();
     initFonts();            // populate select options first…
-    RVRY.initImageTab();    // …then wire each tab (fills preset/dither options)…
-    RVRY.initTextTab();
-    RVRY.initObfuscateTab();
-    RVRY.initPlayerTab();
+    // …then wire each tab (fills preset/dither options). Independently: a tab
+    // whose markup is missing throws while reading its elements, and without
+    // this one stale page copy would take the other three tabs — and the
+    // settings restore below — down with it. The failure stays visible in the
+    // console rather than being swallowed.
+    [["image", RVRY.initImageTab], ["text", RVRY.initTextTab],
+     ["obfuscate", RVRY.initObfuscateTab], ["player", RVRY.initPlayerTab]
+    ].forEach(([name, init]) => {
+      try { init(); }
+      catch (e) { console.error(`RVRY_ASCII: the ${name} tab failed to initialise`, e); }
+    });
     RVRY.persist.restore(); // …then apply saved values (options now exist) + re-render
     RVRY.persist.watch();
   });

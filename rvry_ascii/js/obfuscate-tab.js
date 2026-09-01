@@ -82,31 +82,46 @@ for i in range(1, 5):
         return;
       }
       const width = +els.width.value, ratio = +els.ratio.value;
-      if (state.dirty || !state.sample) {
-        state.sample = RVRY.sampleImage(state.source, { width, ratio, braille: false, alphaMode: els.alpha.value });
-        state.dirty = false;
+      // Same posture as the Image and Text tabs: RVRY.sampleImage throws on a
+      // tainted canvas, and without this the exception escaped through
+      // rafThrottle as an uncaught error — no banner, stale art left on screen,
+      // and every later keystroke throwing again.
+      try {
+        if (state.dirty || !state.sample) {
+          state.sample = RVRY.sampleImage(state.source, { width, ratio, braille: false, alphaMode: els.alpha.value });
+          state.dirty = false;
+        }
+        const tone = { exposure: +els.exposure.value, contrast: +els.contrast.value, gamma: +els.gamma.value };
+        const common = { threshold: +els.threshold.value, invert: els.invert.checked, tone };
+        let res, python = els.lang.value === "python";
+        if (python) {
+          const wrap = RVRY.pyWrap(els.text.value);
+          res = RVRY.flowText(state.sample, Object.assign({
+            tokens: wrap.tokens, filler: wrap.filler, header: wrap.header, footer: wrap.footer, repeat: false
+          }, common));
+          els.usage.textContent = res.total ? describePy(res, wrap.bytes) : "—";
+        } else {
+          res = RVRY.flowText(state.sample, Object.assign({
+            text: els.text.value, repeat: els.repeat.checked
+          }, common));
+          els.usage.textContent = describeUsage(res, els.repeat.checked);
+        }
+        state.lastText = res.text;
+        if (res.text) RVRY.ui.showArt(els.out, res.text);
+        else RVRY.ui.showPlaceholder(els.out, els.text.value.trim()
+          ? "(no ink — lower the threshold or toggle Invert)"
+          : "(enter some text to flow into the image)");
+        els.meta.textContent = `${res.cols} × ${res.rows} chars`;
+      } catch (e) {
+        // No current art: clear what the copy / TXT / MD / HTML exports read so
+        // none of them can return the previous image's output.
+        state.sample = null;
+        state.lastText = "";
+        RVRY.ui.showPlaceholder(els.out, "Could not render this image.");
+        els.meta.textContent = "—";
+        els.usage.textContent = "—";
+        showError(e.message);
       }
-      const tone = { exposure: +els.exposure.value, contrast: +els.contrast.value, gamma: +els.gamma.value };
-      const common = { threshold: +els.threshold.value, invert: els.invert.checked, tone };
-      let res, python = els.lang.value === "python";
-      if (python) {
-        const wrap = RVRY.pyWrap(els.text.value);
-        res = RVRY.flowText(state.sample, Object.assign({
-          tokens: wrap.tokens, filler: wrap.filler, header: wrap.header, footer: wrap.footer, repeat: false
-        }, common));
-        els.usage.textContent = res.total ? describePy(res, wrap.bytes) : "—";
-      } else {
-        res = RVRY.flowText(state.sample, Object.assign({
-          text: els.text.value, repeat: els.repeat.checked
-        }, common));
-        els.usage.textContent = describeUsage(res, els.repeat.checked);
-      }
-      state.lastText = res.text;
-      if (res.text) RVRY.ui.showArt(els.out, res.text);
-      else RVRY.ui.showPlaceholder(els.out, els.text.value.trim()
-        ? "(no ink — lower the threshold or toggle Invert)"
-        : "(enter some text to flow into the image)");
-      els.meta.textContent = `${res.cols} × ${res.rows} chars`;
     }
     const rerender = RVRY.ui.rafThrottle(render);
 
