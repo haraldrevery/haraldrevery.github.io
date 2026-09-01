@@ -376,6 +376,10 @@
   function initFonts() {
     // txt-srcfont is the banner *lettering* font; the rest style previews
     const selects = ["img-font", "obf-font", "ply-font", "txt-font", "txt-srcfont"].map($);
+    // Mark the odd one out so the picker knows a proportional face is fine here:
+    // this font is rasterised into a bitmap and then sampled, it never draws the
+    // glyph grid, so it must not raise the "not fixed-width" warning.
+    if ($("txt-srcfont")) $("txt-srcfont").dataset.fontRole = "lettering";
     selects.forEach((s) => s && RVRY.ui.populateFontSelect(s));
     // Local Font Access API (Chromium, requires user gesture + permission).
     // Offer via the theme toolbar? Simpler: try silently; ignore rejection.

@@ -201,11 +201,17 @@
   }
 
   /* ---- Font picker ----
-     Curated cross-platform monospace stack + project fonts. Optionally
-     augmented with real installed fonts via the Local Font Access API. ---- */
+     `always: true` marks the entries this page can guarantee — the two
+     webfonts it ships itself and the generic the browser must provide. Every
+     other entry names a font that only exists if the OS happens to have it
+     installed, and a CSS stack fails silently: the picker used to offer 15
+     choices that collapsed to 6 distinct renderings on a stock Linux box, with
+     Consolas, Menlo, Fira Code, JetBrains Mono and friends all quietly drawing
+     the same generic monospace. Those are probed at startup and dropped when
+     absent, so the list only ever offers what it can actually deliver. ---- */
   const BASE_FONTS = [
-    { label: "HaraldMono (brand)", value: '"HaraldMono", monospace' },
-    { label: "System monospace", value: "ui-monospace, monospace" },
+    { label: "HaraldMono (brand)", value: '"HaraldMono", monospace', always: true },
+    { label: "System monospace", value: "ui-monospace, monospace", always: true },
     { label: "Courier New", value: '"Courier New", monospace' },
     { label: "Consolas", value: "Consolas, monospace" },
     { label: "Menlo", value: "Menlo, monospace" },
@@ -218,19 +224,152 @@
     { label: "Cascadia Code", value: '"Cascadia Code", monospace' },
     { label: "Source Code Pro", value: '"Source Code Pro", monospace' },
     { label: "IBM Plex Mono", value: '"IBM Plex Mono", monospace' },
-    { label: "HaraldText (sans)", value: '"HaraldText", sans-serif' }
+    { label: "HaraldText (sans)", value: '"HaraldText", sans-serif', always: true }
   ];
+
+  // First family of a CSS stack, e.g. '"Courier New", monospace' -> '"Courier New"'
+  const firstFamily = (stack) => String(stack).split(",")[0].trim();
+
+  /* Is a family really installed? Measure the same string twice, once backed by
+     each of two very different generics. If the family resolves, both use its
+     glyphs and the widths match; if it does not, the two fallbacks are measured
+     instead and differ. (Probing a family the page ships itself would race
+     font-display:swap, which is what `always` above is for.) */
+  const PROBE = "mmmwwwiiil0O@#MW";
+  function familyAvailable(stack) {
+    const fam = firstFamily(stack);
+    _measureCtx.font = `72px ${fam}, monospace`;
+    const a = _measureCtx.measureText(PROBE).width;
+    _measureCtx.font = `72px ${fam}, serif`;
+    const b = _measureCtx.measureText(PROBE).width;
+    return Math.abs(a - b) < 0.01;
+  }
+
+  /* The whole render path lays glyphs on a fixed grid pitched to measureText("M"),
+     so a proportional face draws every narrow glyph adrift in an M-wide cell.
+     Used to filter installed fonts, and to warn (never to block) on an import. */
+  function isMonospaceFamily(stack) {
+    _measureCtx.font = `72px ${stack}`;
+    const w = _measureCtx.measureText("M").width;
+    for (const ch of "il1W.@") {
+      if (Math.abs(_measureCtx.measureText(ch).width - w) > 0.01) return false;
+    }
+    return true;
+  }
+
+  /* ---- Custom font import ----
+     Registered from an ArrayBuffer, so no network fetch happens and the page's
+     `font-src 'self' data:` CSP never comes into play. The option's value is an
+     ordinary CSS stack, exactly like every built-in entry, so the preview, the
+     PNG/GIF rasterisers, fontCellRatio and the HTML export all keep treating it
+     as just another font — nothing downstream learns a new case.
+     Deliberately session-scoped: a font file cannot ride RVRY.persist (which
+     skips file inputs), and storing one would mean a new IndexedDB layer. On
+     reload the saved value names an option that no longer exists and
+     persist.restore() falls back to the default on its own. ---- */
+  const CUSTOM_FAMILY = "RVRYCustomFont";
+  const CUSTOM_VALUE = `"${CUSTOM_FAMILY}", monospace`;
+  const LOAD_SENTINEL = "__rvry-load-font__";
+  const fontSelects = [];
+  const lastFontValue = new WeakMap();
+  let customFace = null, fontInput = null;
+
+  function pickFontFile(onFile) {
+    if (!fontInput) {
+      fontInput = document.createElement("input");
+      fontInput.type = "file";
+      fontInput.accept = ".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2";
+      fontInput.className = "hidden";
+      document.body.appendChild(fontInput);
+    }
+    fontInput.onchange = () => {
+      const f = fontInput.files && fontInput.files[0];
+      fontInput.value = "";            // allow re-picking the same file
+      if (f) onFile(f);
+    };
+    fontInput.click();
+  }
+
+  function addCustomOption(select, label) {
+    let opt = select.querySelector("option[data-custom]");
+    if (!opt) {
+      opt = document.createElement("option");
+      opt.dataset.custom = "1";
+      opt.value = CUSTOM_VALUE;
+      select.insertBefore(opt, select.querySelector("option[data-loadfont]"));
+    }
+    opt.textContent = label;
+  }
+
+  async function installCustomFont(file) {
+    const face = new FontFace(CUSTOM_FAMILY, await file.arrayBuffer());
+    await face.load();                 // throws on anything that isn't a font
+    if (customFace) { try { document.fonts.delete(customFace); } catch (e) {} }
+    document.fonts.add(face);
+    customFace = face;
+    const label = "Custom: " + file.name.replace(/\.[^.]+$/, "");
+    for (const s of fontSelects) addCustomOption(s, label);
+    return { mono: isMonospaceFamily(CUSTOM_VALUE) };
+  }
+
+  function onFontSelectChange(e) {
+    const sel = e.currentTarget;
+    if (sel.value !== LOAD_SENTINEL) { lastFontValue.set(sel, sel.value); return; }
+    const previous = lastFontValue.get(sel) || (sel.options[0] && sel.options[0].value) || "";
+    // Only a real user gesture may open a file dialog. persist.restore() and our
+    // own post-install notification both dispatch synthetic change events; a
+    // stale or hand-edited localStorage entry naming the sentinel would
+    // otherwise pop a file picker during boot.
+    if (!e.isTrusted) { sel.value = previous; return; }
+    // Restore the previous choice synchronously. This handler is registered
+    // before any tab wires its own, so nothing downstream ever reads the
+    // sentinel, and a cancelled file dialog leaves the picker untouched.
+    sel.value = previous;
+    pickFontFile(async (file) => {
+      try {
+        const info = await installCustomFont(file);
+        sel.value = CUSTOM_VALUE;
+        lastFontValue.set(sel, CUSTOM_VALUE);
+        sel.dispatchEvent(new Event("change", { bubbles: true }));
+        toast(`Loaded ${file.name}`);
+        // The banner tab's lettering font is rasterised into an image and then
+        // sampled, so a proportional face is a perfectly good choice there; only
+        // the fonts that draw the glyph grid need the warning.
+        if (!info.mono && sel.dataset.fontRole !== "lettering") {
+          toast("Note: that font is not fixed-width, so the grid will look uneven.", 5200);
+        }
+      } catch (err) {
+        toast(`Could not read ${file.name} — needs a .ttf, .otf, .woff or .woff2 font.`, 4200);
+      }
+    });
+  }
 
   function populateFontSelect(select) {
     select.innerHTML = "";
     for (const f of BASE_FONTS) {
+      if (!f.always && !familyAvailable(f.value)) continue;
       const o = document.createElement("option");
       o.value = f.value; o.textContent = f.label;
       select.appendChild(o);
     }
+    const load = document.createElement("option");
+    load.dataset.loadfont = "1";
+    load.value = LOAD_SENTINEL;
+    load.textContent = "Load font file…";
+    select.appendChild(load);
+    // a font imported before this select was built still belongs in it
+    if (customFace) addCustomOption(select, "Custom font");
+    if (fontSelects.indexOf(select) < 0) {
+      fontSelects.push(select);
+      select.addEventListener("change", onFontSelectChange);
+    }
+    lastFontValue.set(select, select.value);
   }
 
-  // Progressive enhancement: pull real installed monospace-ish fonts.
+  // Progressive enhancement: pull real installed fonts (Chromium, permissioned).
+  // Filtered to fixed-width faces — the API has no such filter and returns every
+  // display and script face installed, each of which renders as garbage on the
+  // fixed grid while looking like a legitimate choice in the list.
   async function loadSystemFonts(select) {
     if (!("queryLocalFonts" in window)) return false;
     try {
@@ -242,11 +381,12 @@
         const fam = f.family;
         if (seen.has(fam)) continue;
         seen.add(fam);
+        if (!isMonospaceFamily(`"${fam}"`)) continue;
         const o = document.createElement("option");
         o.value = `"${fam}"`; o.textContent = fam;
         group.appendChild(o);
       }
-      if (group.children.length) select.appendChild(group);
+      if (group.children.length) select.insertBefore(group, select.querySelector("option[data-loadfont]"));
       return true;
     } catch (e) {
       return false;
@@ -292,7 +432,8 @@
     toast, copyText, download,
     exportTxt, exportMd, exportHtml, exportPng, paintPreview,
     showArt, showArtHtml, showPlaceholder, isPlaceholder,
-    BASE_FONTS, populateFontSelect, loadSystemFonts,
+    BASE_FONTS, populateFontSelect, loadSystemFonts, installCustomFont,
+    familyAvailable, isMonospaceFamily,
     fontCellRatio, wireRatioFit,
     debounce, rafThrottle
   };
