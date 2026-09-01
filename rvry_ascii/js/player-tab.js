@@ -290,7 +290,7 @@ show(0);
       font: $("ply-font"), fontsize: $("ply-fontsize"), stage: $("ply-stage"),
       out: $("ply-out"), meta: $("ply-meta"),
       first: $("ply-first"), stepback: $("ply-stepback"), play: $("ply-play"),
-      stepfwd: $("ply-stepfwd"), last: $("ply-last"),
+      stepfwd: $("ply-stepfwd"), last: $("ply-last"), preview: $("ply-preview"),
       seek: $("ply-seek"), counter: $("ply-counter"),
       video: $("ply-video")
     };
@@ -317,7 +317,8 @@ show(0);
       videoUrl: null,
       mode: null,        // "video" | "gif" — which source Generate converts
       gif: null,         // decoded GIF { width, height, frames, truncated }
-      generating: false  // a Generate run is in flight (button acts as Stop)
+      generating: false, // a Generate run is in flight (button acts as Stop)
+      preview: false     // the single frame on screen is a scrub preview
     };
 
     function setAlert(el, msg) {
@@ -405,6 +406,8 @@ show(0);
       els.trimHint.textContent =
         `≈${n} frame${n === 1 ? "" : "s"} at ${capfps} fps capture.` +
         (r.full ? " Drag to convert only part of the clip." : "");
+      // the scrub slider spans the trimmed section, so it follows the handles
+      if (scrubbing() && state.mode === "video") configureSeekForSource();
     }
     // keep the handles from crossing, then repaint the readout
     if (hasTrim) {
@@ -419,12 +422,50 @@ show(0);
       els.capfps.addEventListener("input", refreshTrim);
     }
 
+    /* ---- seek slider: two ranges, one meaning ----
+       With a sequence loaded the slider indexes those frames. Before Generate
+       has run there is nothing to index, so it scrubs the SOURCE instead — the
+       trimmed span of a video, or a GIF's own frames — which is what lets
+       "Preview this frame" convert a single frame from anywhere in the clip
+       without paying for the whole sequence first. state.preview keeps the
+       slider scrubbing while such a preview is on screen, instead of collapsing
+       to the 0..0 range one frame would otherwise imply. */
+    const scrubbing = () =>
+      state.preview || (!state.frames.length && (state.mode === "video" || state.mode === "gif"));
+    const gifFrameCount = () => (state.gif ? state.gif.frames.length : 0);
+
+    function configureSeekForSource() {
+      if (state.mode === "gif") {
+        els.seek.min = 0; els.seek.step = 1;
+        els.seek.max = Math.max(0, gifFrameCount() - 1);
+      } else {
+        const r = trimRange();
+        els.seek.min = r.t0; els.seek.max = r.t1;
+        els.seek.step = r.dur > 600 ? 0.5 : r.dur > 60 ? 0.1 : 0.01;
+        const v = +els.seek.value;
+        if (!(v >= r.t0 && v <= r.t1)) els.seek.value = r.t0;
+      }
+      paintScrubCounter();
+    }
+    function configureSeekForFrames() {
+      els.seek.min = 0; els.seek.step = 1;
+      els.seek.max = Math.max(0, state.frames.length - 1);
+      els.seek.value = state.index;
+    }
+    function paintScrubCounter() {
+      els.counter.textContent = state.mode === "gif"
+        ? (gifFrameCount() ? `${Math.round(+els.seek.value) + 1} / ${gifFrameCount()} src` : "0 / 0")
+        : fmtTime(+els.seek.value);
+    }
+
     /* ---- frame display ---- */
     function showFrame(i) {
       if (!state.frames.length) return;
       state.index = ((i % state.frames.length) + state.frames.length) % state.frames.length;
       const f = state.frames[state.index];
       RVRY.ui.showArtHtml(els.out, f.html);
+      // in scrub mode the slider is holding a source position, not a frame index
+      if (scrubbing()) { paintScrubCounter(); return; }
       els.seek.value = state.index;
       els.counter.textContent = `${state.index + 1} / ${state.frames.length}`;
     }
@@ -432,8 +473,8 @@ show(0);
       stop();
       state.frames = frames;
       state.index = 0;
-      els.seek.max = Math.max(0, frames.length - 1);
-      els.seek.value = 0;
+      state.preview = false;      // a real sequence: the slider indexes it again
+      configureSeekForFrames();
       els.meta.textContent = `${frames.length} frame${frames.length === 1 ? "" : "s"}`;
       if (frames.length) showFrame(0);
       else RVRY.ui.showPlaceholder(els.out, "No frames.");
@@ -471,7 +512,87 @@ show(0);
     els.last.addEventListener("click", () => { stop(); showFrame(state.frames.length - 1); });
     els.stepfwd.addEventListener("click", () => { stop(); showFrame(state.index + 1); });
     els.stepback.addEventListener("click", () => { stop(); showFrame(state.index - 1); });
-    els.seek.addEventListener("input", () => { stop(); showFrame(+els.seek.value); });
+    els.seek.addEventListener("input", () => {
+      stop();
+      if (scrubbing()) { paintScrubCounter(); return; }   // nothing to index yet
+      showFrame(+els.seek.value);
+    });
+
+    /* ---- single-frame preview ----
+       Converts exactly one frame at the slider's source position, so the glyph
+       set, width, ratio and colour can be judged on real content without
+       sitting through a seek-decode pass over the whole clip. The result is
+       installed as the loaded frame rather than merely painted, so the counter,
+       the seek slider and every export agree about what is on screen — showing
+       it any other way would leave .txt / .ans exporting a different frame than
+       the preview. */
+    async function previewFrame() {
+      if (state.generating) return;
+      if (state.mode !== "video" && state.mode !== "gif") {
+        setAlert(els.error, state.frames.length
+          ? "These frames came from a text / ANSI file — there is no source to re-convert from."
+          : "Load a video or GIF first.");
+        return;
+      }
+      if (state.mode === "video" && !state.videoReady) {
+        setAlert(els.error, "Load a video or GIF first."); return;
+      }
+      setAlert(els.error, "");
+      // Coming from a generated sequence the slider indexes frames, not source
+      // position. Carry the spot being viewed across proportionally so Preview
+      // does not jump back to the start of the clip.
+      const wasFrames = !scrubbing();
+      const frac = (wasFrames && state.frames.length > 1)
+        ? state.index / (state.frames.length - 1) : null;
+      configureSeekForSource();
+      if (frac !== null) {
+        const lo = +els.seek.min, hi = +els.seek.max;
+        els.seek.value = lo + frac * (hi - lo);
+        paintScrubCounter();
+      }
+      const { opts, useColor } = convertOpts();
+      let f = null, where = "";
+      els.preview.disabled = true;
+      try {
+        if (state.mode === "gif") {
+          const i = Math.max(0, Math.min(gifFrameCount() - 1, Math.round(+els.seek.value)));
+          const gf = state.gif.frames[i];
+          // a one-off canvas; generateFromGif reuses a single one across its loop
+          const cv = document.createElement("canvas");
+          cv.width = state.gif.width; cv.height = state.gif.height;
+          cv.getContext("2d").putImageData(
+            new ImageData(gf.data, state.gif.width, state.gif.height), 0, 0);
+          f = frameFromSource(cv, opts, useColor);
+          where = `frame ${i + 1} of ${gifFrameCount()}`;
+        } else {
+          const r = trimRange();
+          const t = Math.max(r.t0, Math.min(r.t1 - 0.001, +els.seek.value));
+          els.progress.textContent = `Preview — seeking to ${fmtTime(t)}…`;
+          const stalled = await seekTo(t);
+          f = frameFromSource(els.video, opts, useColor);
+          where = fmtTime(t) + (stalled ? " (seek timed out — may show a nearby frame)" : "");
+        }
+      } catch (e) {
+        setAlert(els.error, e.message);
+      } finally {
+        els.preview.disabled = false;
+      }
+      if (!f) {
+        if (wasFrames) configureSeekForFrames();   // leave the sequence usable
+        setAlert(els.error, "Could not sample a frame at this position.");
+        els.progress.textContent = "Preview failed.";
+        return;
+      }
+      stop();
+      state.frames = [f];
+      state.index = 0;
+      state.preview = true;
+      els.meta.textContent = "1 frame (preview)";
+      els.progress.textContent = `Preview at ${where}.`;
+      showFrame(0);
+      setAlert(els.info, "Single-frame preview — press “Generate frames” for the whole clip.");
+    }
+    els.preview.addEventListener("click", () => { previewFrame(); });
     RVRY.slider(els.fps, els.fpsV, 0, () => {});
     RVRY.slider(els.speed, els.speedV, 2, () => {});
 
@@ -557,9 +678,12 @@ show(0);
           : `Long animation — only the first ${maxFrames} frames were decoded. `;
         if (gif.width * gif.height > WARN_PIXELS) warnMsg += `High resolution (${gif.width}×${gif.height}) — conversion may be slow. `;
         if (warnMsg) setAlert(els.warn, warnMsg);
+        // nothing is generated yet, so the seek slider scrubs the GIF's own frames
+        state.preview = false; state.frames = []; state.index = 0;
+        configureSeekForSource();
         setAlert(els.info, n === 1
-          ? "Static GIF (1 frame). Set options and press “Generate frames”."
-          : `GIF ready (${n} frames). Set options and press “Generate frames”.`);
+          ? "Static GIF (1 frame). Set options, or preview a frame, then press “Generate frames”."
+          : `GIF ready (${n} frames). Scrub and press the preview button to check one frame, or “Generate frames” for all.`);
       } catch (e) {
         state.mode = null;
         setAlert(els.error, "Could not decode this GIF: " + e.message);
@@ -581,13 +705,16 @@ show(0);
         const w = els.video.videoWidth, h = els.video.videoHeight, dur = els.video.duration;
         els.meta.textContent = `${w}×${h}, ${dur.toFixed(1)}s`;
         resetTrim(dur);
+        // nothing is generated yet, so the seek slider scrubs the clip itself
+        state.preview = false; state.frames = []; state.index = 0;
+        configureSeekForSource();
         const pixels = w * h;
         let warnMsg = "";
         if (file.size > WARN_BYTES) warnMsg = `Large file (${(file.size/1048576).toFixed(0)} MB). `;
         if (pixels > WARN_PIXELS) warnMsg += `High resolution (${w}×${h}). Processing may be slow — a low-res clip is recommended. `;
         if (!isFinite(dur)) warnMsg += "Unknown duration — stream may not seek reliably. ";
         if (warnMsg) setAlert(els.warn, warnMsg + "You can still generate, but consider trimming/downscaling first.");
-        else setAlert(els.info, "Video ready. Set options and press “Generate frames”.");
+        else setAlert(els.info, "Video ready. Scrub and press the preview button to check one frame, or “Generate frames” for all.");
       };
       els.video.onerror = () => setAlert(els.error, "Could not load this video format in the browser.");
     }

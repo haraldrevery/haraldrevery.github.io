@@ -578,6 +578,7 @@ select:hover, input[type="text"]:hover, textarea:hover { border-color: var(--ink
 #ply-stepback .ctl-ico    { --ctl-ico: url('../svg_icons_to_use/step_back.svg'); }
 #ply-stepfwd  .ctl-ico    { --ctl-ico: url('../svg_icons_to_use/step_forward.svg'); }
 #ply-last     .ctl-ico    { --ctl-ico: url('../svg_icons_to_use/last_step.svg'); }
+#ply-preview  .ctl-ico    { --ctl-ico: url('../svg_icons_to_use/camera.svg'); }
 #ply-play  .ctl-ico       { --ctl-ico: url('../svg_icons_to_use/play.svg'); }
 #ply-play.playing .ctl-ico { --ctl-ico: url('../svg_icons_to_use/pause.svg'); }
 .frame-counter {
