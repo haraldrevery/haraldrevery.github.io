@@ -259,7 +259,10 @@
         x++;
       }
       flush();
-      html += "\n"; // runs never span rows
+      // newline BETWEEN rows only — a trailing one would make this html one
+      // row taller than render()'s text, and every export re-derives the row
+      // count by splitting on "\n"
+      if (y < rows.length - 1) html += "\n";
     }
     return html;
   }
@@ -325,11 +328,10 @@
       if (footer != null) out.push(footer);
       return out;
     };
-    if (!n) {
-      const body = wrap([]);
-      return { text: body.join("\n"), cols: w, rows: body.length,
-        placed: 0, total: 0, loops: 0, complete: true };
-    }
+    // No tokens at all -> no program. Emitting just the header/footer here
+    // would render a broken exec(bytes.fromhex(\n).decode()); callers show
+    // their own "enter some text" placeholder on empty output instead.
+    if (!n) return empty;
 
     // which token goes at running index i, and whether anything is left to place
     const token = (i) => (i < n ? tokens[i] : (repeat ? tokens[i % n] : filler));

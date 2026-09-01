@@ -308,12 +308,13 @@
       }
       btn.title = "Switch to " + (t === "dark" ? "light" : "dark") + " mode";
     };
-    const stored = localStorage.getItem("rvry-theme");
+    let stored = null;
+    try { stored = localStorage.getItem("rvry-theme"); } catch (e) {}
     if (stored) document.documentElement.setAttribute("data-theme", stored);
     btn.addEventListener("click", () => {
       const next = current() === "dark" ? "light" : "dark";
       document.documentElement.setAttribute("data-theme", next);
-      localStorage.setItem("rvry-theme", next);
+      try { localStorage.setItem("rvry-theme", next); } catch (e) {}
       paint();
     });
     if (mq.addEventListener) mq.addEventListener("change", paint);

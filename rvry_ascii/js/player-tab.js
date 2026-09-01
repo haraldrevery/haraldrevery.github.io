@@ -80,6 +80,18 @@
     flushOpen();
     return html;
   }
+  /* Drop every escape sequence except real SGR (ESC[…m), which is the only
+     one we render. Cursor moves, erases and private modes (ESC[?25l) would
+     otherwise survive ansiToHtml() as literal text — visible as "[5A" in the
+     preview and in the PNG/GIF/.ans exports, while stripAnsi() removed them
+     from .text. Applied once in parseAnsiFile so both views are always built
+     from identical input and cannot drift apart. */
+  function stripNonSgr(text) {
+    return text
+      .replace(/\x1b\[([0-9;?]*)([A-Za-z])/g,
+        (seq, params, final) => (final === "m" && params.indexOf("?") < 0 ? seq : ""))
+      .replace(/\x1b[()][A-Za-z0-9]/g, "");
+  }
   // strip all escape sequences -> plain text
   function stripAnsi(text) {
     return text.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "").replace(/\x1b[()][A-Za-z0-9]/g, "");
@@ -89,12 +101,16 @@
     const parts = text.split(/\x1b\[2J|\x0c/);
     const frames = [];
     for (let p of parts) {
-      // drop cursor-home at frame start, keep content
-      const cleaned = p.replace(/^\s*\x1b\[[0-9;]*H/, "");
+      // drop cursor-home at frame start, keep content, then remove every
+      // non-SGR sequence so html and text below agree by construction
+      const cleaned = stripNonSgr(p.replace(/^\s*\x1b\[[0-9;]*H/, ""));
       if (stripAnsi(cleaned).trim() === "" && parts.length > 1) continue;
       frames.push({ html: ansiToHtml(cleaned), text: stripAnsi(cleaned) });
     }
-    if (!frames.length) frames.push({ html: ansiToHtml(text), text: stripAnsi(text) });
+    if (!frames.length) {
+      const cleaned = stripNonSgr(text);
+      frames.push({ html: ansiToHtml(cleaned), text: stripAnsi(cleaned) });
+    }
     return frames;
   }
 
