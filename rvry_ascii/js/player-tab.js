@@ -325,6 +325,12 @@ show(0);
        clip, not all of it. The two sliders span the video's duration; they
        are kept at least one capture interval apart so a run always has at
        least one frame, and they reset to the full clip on every new file. */
+    /* The page markup and this script live in separate files, and copies of
+       the page exist under notebook_pages/ and input_custom_html_pages/. If
+       one of them lags behind, the trim controls simply will not be there —
+       so every trim path degrades to "whole clip" instead of throwing and
+       taking the entire player tab down with it. */
+    const hasTrim = !!(els.trimWrap && els.trimIn && els.trimOut && els.trimV && els.trimHint);
     const MIN_SPAN = 0.05;
     // largest value a range input can actually hold: min + n*step, <= max
     function gridMax(el, fallback) {
@@ -341,6 +347,7 @@ show(0);
     function trimRange() {
       const dur = isFinite(els.video.duration) ? els.video.duration : 0;
       if (!dur) return { t0: 0, t1: 0, span: 0, dur: 0, full: true };
+      if (!hasTrim) return { t0: 0, t1: dur, span: dur, dur, full: true };
       let t0 = Math.max(0, Math.min(dur, +els.trimIn.value || 0));
       let t1 = Math.max(0, Math.min(dur, +els.trimOut.value || 0));
       if (t1 < t0) { const tmp = t0; t0 = t1; t1 = tmp; }
@@ -355,6 +362,7 @@ show(0);
       return { t0, t1, span: t1 - t0, dur, full: t0 <= 0 && t1 >= dur - 1e-6 };
     }
     function resetTrim(dur) {
+      if (!hasTrim) return;
       const usable = isFinite(dur) && dur > 0;
       els.trimWrap.classList.toggle("hidden", !usable);
       if (!usable) return;
@@ -366,6 +374,7 @@ show(0);
       refreshTrim();
     }
     function refreshTrim() {
+      if (!hasTrim) return;
       const r = trimRange();
       if (!r.dur) { els.trimV.textContent = "whole clip"; return; }
       els.trimV.textContent = r.full
@@ -378,15 +387,17 @@ show(0);
         (r.full ? " Drag to convert only part of the clip." : "");
     }
     // keep the handles from crossing, then repaint the readout
-    els.trimIn.addEventListener("input", () => {
-      if (+els.trimIn.value > +els.trimOut.value) els.trimOut.value = els.trimIn.value;
-      refreshTrim();
-    });
-    els.trimOut.addEventListener("input", () => {
-      if (+els.trimOut.value < +els.trimIn.value) els.trimIn.value = els.trimOut.value;
-      refreshTrim();
-    });
-    els.capfps.addEventListener("input", refreshTrim);
+    if (hasTrim) {
+      els.trimIn.addEventListener("input", () => {
+        if (+els.trimIn.value > +els.trimOut.value) els.trimOut.value = els.trimIn.value;
+        refreshTrim();
+      });
+      els.trimOut.addEventListener("input", () => {
+        if (+els.trimOut.value < +els.trimIn.value) els.trimIn.value = els.trimOut.value;
+        refreshTrim();
+      });
+      els.capfps.addEventListener("input", refreshTrim);
+    }
 
     /* ---- frame display ---- */
     function showFrame(i) {
@@ -474,7 +485,7 @@ show(0);
     async function loadGif(file) {
       els.videoPanel.classList.remove("hidden");
       els.capfpsWrap.classList.add("hidden"); // GIF frames keep their own timing
-      els.trimWrap.classList.add("hidden");   // no timeline to trim against
+      if (hasTrim) els.trimWrap.classList.add("hidden"); // no timeline to trim against
       state.mode = "gif"; state.gif = null; dropVideo();
       try {
         const buf = await file.arrayBuffer();
@@ -507,7 +518,7 @@ show(0);
     function loadVideo(file) {
       els.videoPanel.classList.remove("hidden");
       els.capfpsWrap.classList.remove("hidden");
-      els.trimWrap.classList.remove("hidden");
+      if (hasTrim) els.trimWrap.classList.remove("hidden");
       state.mode = "video"; state.gif = null;
       if (state.videoUrl) URL.revokeObjectURL(state.videoUrl); // free the previous clip
       const url = URL.createObjectURL(file);
