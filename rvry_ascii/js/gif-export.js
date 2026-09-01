@@ -160,8 +160,21 @@
   }
 
   /* ---- frame rasterization (same markup walk as the .ans exporter) ---- */
-  let _canvas = null;
-  const workCanvas = () => _canvas || (_canvas = document.createElement("canvas"));
+  /* One work canvas, and its 2D context created ONCE with willReadFrequently.
+     Context attributes are only honoured by the FIRST getContext() call for an
+     element; a later call returns the existing context and silently ignores
+     them. frameMetrics() below runs first — the export dialog also calls it on
+     every slider move — so creating a plain context there left the flag off and
+     every per-frame getImageData() in encodeGifAnimation stalling on a GPU
+     readback, which is the one place in this file that reads pixels in a loop. */
+  let _canvas = null, _ctx = null;
+  function workCtx() {
+    if (!_ctx) {
+      _canvas = document.createElement("canvas");
+      _ctx = _canvas.getContext("2d", { willReadFrequently: true });
+    }
+    return _ctx;
+  }
   const MAX_SIDE = 3000;
 
   // Character grid across all frames -> pixel metrics; shrinks the pixel
@@ -173,7 +186,7 @@
       if (lines.length > rows) rows = lines.length;
       for (const l of lines) if (l.length > cols) cols = l.length;
     }
-    const ctx = workCanvas().getContext("2d");
+    const ctx = workCtx();
     let px = Math.max(2, Math.round(fontPx || 8));
     let charW, pad, W, H;
     while (true) {
@@ -226,9 +239,8 @@
     const yieldUI = () => new Promise((r) => setTimeout(r, 0));
 
     const m = frameMetrics(frames, opts.font, opts.fontSize);
-    const cv = workCanvas();
-    cv.width = m.W; cv.height = m.H;
-    const ctx = cv.getContext("2d", { willReadFrequently: true });
+    const ctx = workCtx();
+    ctx.canvas.width = m.W; ctx.canvas.height = m.H;
 
     /* pass 1 — palette histogram from a spread of sample frames */
     const hist = new Map();

@@ -88,7 +88,7 @@
           const src = drawBanner();
           if (!src) {
             state.sample = null; state.lastText = "";
-            els.out.textContent = "Type some text to render.";
+            RVRY.ui.showPlaceholder(els.out, "Type some text to render.");
             els.meta.textContent = "—";
             return;
           }
@@ -99,11 +99,11 @@
         }
         const res = RVRY.render(state.sample, opts);
         state.lastText = res.text;
-        els.out.textContent = res.text;
+        RVRY.ui.showArt(els.out, res.text);
         els.meta.textContent = `${res.cols} × ${res.rows} chars`;
       } catch (e) {
         state.sample = null; state.lastText = "";
-        els.out.textContent = "Banner too large to render — use fewer lines or shorter text.";
+        RVRY.ui.showPlaceholder(els.out, "Banner too large to render — use fewer lines or shorter text.");
         els.meta.textContent = "—";
       }
     }

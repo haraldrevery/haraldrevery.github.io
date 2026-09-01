@@ -156,9 +156,9 @@
         const res = RVRY.render(state.sample, opts);
         state.lastText = res.text;
         if (opts.color && state.sample.rgb) {
-          els.out.innerHTML = RVRY.renderColorHTML(state.sample, opts, res);
+          RVRY.ui.showArtHtml(els.out, RVRY.renderColorHTML(state.sample, opts, res));
         } else {
-          els.out.textContent = res.text;
+          RVRY.ui.showArt(els.out, res.text);
         }
         els.meta.textContent = `${res.cols} × ${res.rows} chars`;
       } catch (e) {

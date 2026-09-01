@@ -89,6 +89,24 @@
     download(`${(opts.name || "rvry-ascii")}-${ts()}.html`, html, "text/html;charset=utf-8");
   }
 
+  /* ---- Preview output: art vs. empty-state message ----
+     A preview <pre> is the single source that BOTH the PNG export and
+     fit-to-width read, and it is also where each tab shows "load an image",
+     "no ink", "type some text" and friends. Those messages are not art, and
+     nothing in the element's contents distinguishes them: exporting one
+     produced a PNG of the sentence, and fitting to one pinned the font size to
+     the slider maximum (and left the stage laid out for it). Route both kinds
+     of write through here so the distinction is recorded on the element rather
+     than guessed downstream. ---- */
+  const clearPlaceholder = (preEl) => { delete preEl.dataset.placeholder; };
+  function showArt(preEl, text) { preEl.textContent = text; clearPlaceholder(preEl); }
+  function showArtHtml(preEl, html) { preEl.innerHTML = html; clearPlaceholder(preEl); }
+  function showPlaceholder(preEl, msg) {
+    preEl.textContent = msg;
+    preEl.dataset.placeholder = "1";
+  }
+  const isPlaceholder = (preEl) => preEl.dataset.placeholder === "1";
+
   /* ---- Fixed glyph grid ----
      Lays the <pre>'s content on a strict grid (every glyph advances by the
      measured "M" width). Single source of truth for BOTH the PNG export and
@@ -140,7 +158,9 @@
     const font = opts.font || "monospace";
     const bg = opts.bg || "#0a0b0d";
     const fg = opts.fg || "#e9eaec";
-    if (!(preEl.textContent || "").trim()) { toast("Nothing to export yet"); return; }
+    if (isPlaceholder(preEl) || !(preEl.textContent || "").trim()) {
+      toast("Nothing to export yet"); return;
+    }
 
     const { cols, rows } = textDims(preEl);
     // pick a scale that keeps the canvas within browser limits (~8000px)
@@ -271,6 +291,7 @@
   RVRY.ui = {
     toast, copyText, download,
     exportTxt, exportMd, exportHtml, exportPng, paintPreview,
+    showArt, showArtHtml, showPlaceholder, isPlaceholder,
     BASE_FONTS, populateFontSelect, loadSystemFonts,
     fontCellRatio, wireRatioFit,
     debounce, rafThrottle

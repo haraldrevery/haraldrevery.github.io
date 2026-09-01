@@ -8,9 +8,15 @@
 
   /* ---------- shared control helpers (used by every tab) ---------- */
 
-  RVRY.fillGlyphSelect = function (select, defaultKey) {
+  // opts.allowCustom:false omits the "Custom string…" preset. Its ramp in
+  // GLYPH_PRESETS is only a placeholder for whatever the user types, so a tab
+  // with no custom-ramp input must not offer it — picking it there silently
+  // rendered everything with the literal ramp "RVRY".
+  RVRY.fillGlyphSelect = function (select, defaultKey, opts) {
+    const allowCustom = !opts || opts.allowCustom !== false;
     select.innerHTML = "";
     for (const key in RVRY.GLYPH_PRESETS) {
+      if (key === "custom" && !allowCustom) continue;
       const o = document.createElement("option");
       o.value = key; o.textContent = RVRY.GLYPH_PRESETS[key].label;
       select.appendChild(o);
@@ -72,7 +78,18 @@
       const min = +range.min, max = +range.max;
       return v < min ? min : v > max ? max : v;
     };
-    const paint = () => { if (valSpan) valSpan.textContent = fmt(range.value); };
+    // The readout doubles as an inline editor (see beginEdit), so painting it
+    // has to tear that editor down explicitly: writing textContent removes the
+    // <input> from the DOM either way, and an editor discarded without its
+    // finish() running would leave the "already editing" state stuck on and
+    // the readout permanently uneditable.
+    let editor = null;
+    const closeEditor = () => { const e = editor; editor = null; if (e) e.remove(); };
+    const paint = () => {
+      if (!valSpan) return;
+      closeEditor();
+      valSpan.textContent = fmt(range.value);
+    };
     const fire = () => { paint(); onchange(+range.value); };
     paint();
 
@@ -96,13 +113,17 @@
     if (valSpan) {
       valSpan.classList.add("editable");
       valSpan.title = "Click to type a value";
-      valSpan.addEventListener("click", () => beginEdit());
+      // preventDefault: most readouts sit inside a <label for="…"> (every tone,
+      // threshold, capture-FPS, playback-FPS and speed slider does). A click on
+      // the label forwards focus to the range input as its default action,
+      // which would steal focus from the editor opened below before it could be
+      // typed into — and, never having been focused, it would never blur back
+      // to close itself either.
+      valSpan.addEventListener("click", (e) => { e.preventDefault(); beginEdit(); });
     }
 
-    let editing = false;
     function beginEdit() {
-      if (editing) return;
-      editing = true;
+      if (editor) { editor.focus(); editor.select(); return; }
       const inp = document.createElement("input");
       inp.type = "text";
       inp.className = "val-edit";
@@ -110,10 +131,14 @@
       inp.setAttribute("inputmode", "decimal");
       valSpan.textContent = "";
       valSpan.appendChild(inp);
+      editor = inp;
       inp.focus(); inp.select();
-      let closed = false;
       const finish = (apply) => {
-        if (closed) return; closed = true; editing = false;
+        // Not the live editor any more: Enter/Escape already ran, or a repaint
+        // (slider drag, double-tap reset, settings restore) discarded it. Either
+        // way this blur must not write a stale value back.
+        if (editor !== inp) return;
+        editor = null;
         if (apply) {
           const v = parseFloat(inp.value);
           if (isFinite(v)) range.value = clampVal(v);
@@ -137,6 +162,11 @@
     canvas.className = "ascii-canvas";
     preEl.classList.add("has-canvas");
     preEl.after(canvas);
+    // Whatever the markup seeded the <pre> with ("Load an image to begin.", or
+    // nothing at all) is an empty-state message, not art. Every tab wires its
+    // preview before its first render, so this is always the correct starting
+    // state; the first RVRY.ui.showArt* call clears it.
+    RVRY.ui.showPlaceholder(preEl, preEl.textContent);
 
     const repaint = RVRY.ui.rafThrottle(() => {
       RVRY.ui.paintPreview(preEl, canvas, {
@@ -188,6 +218,9 @@
   const _measure = document.createElement("canvas").getContext("2d");
   RVRY.wireZoom = function (preEl, stageEl, sizeRange, btns) {
     const fit = () => {
+      // An empty-state message is not art: fitting to one pinned the size to
+      // the slider maximum and left the stage laid out for the sentence.
+      if (RVRY.ui.isPlaceholder(preEl)) return;
       const text = preEl.textContent || "";
       let cols = 1;
       for (const line of text.split("\n")) if (line.length > cols) cols = line.length;

@@ -127,12 +127,20 @@
     // Split into frames on clear-screen / form-feed markers.
     const parts = text.split(/\x1b\[2J|\x0c/);
     const frames = [];
-    for (let p of parts) {
+    for (const p of parts) {
       // drop cursor-home at frame start, keep content, then remove every
       // non-SGR sequence so html and text below agree by construction
       const cleaned = stripNonSgr(p.replace(/^\s*\x1b\[[0-9;]*H/, ""));
-      if (stripAnsi(cleaned).trim() === "" && parts.length > 1) continue;
-      frames.push({ html: ansiToHtml(cleaned), text: stripAnsi(cleaned) });
+      const plain = stripAnsi(cleaned);
+      // Skip only the fragments a separator leaves behind — the empty string
+      // before a leading marker, after a trailing one, or between two in a row.
+      // Those hold no cells at all, so `plain` is exactly "". A frame that is
+      // merely BLANK still holds its rows of spaces: every ramp starts with " ",
+      // so a fully dark frame (a fade-to-black, a held pause) renders as spaces.
+      // Testing .trim() here dropped those too, silently changing frame count
+      // and timing on every .ans / .txt export-and-reload round trip.
+      if (plain === "") continue;
+      frames.push({ html: ansiToHtml(cleaned), text: plain });
     }
     if (!frames.length) {
       const cleaned = stripNonSgr(text);
@@ -286,7 +294,7 @@ show(0);
       video: $("ply-video")
     };
 
-    RVRY.fillGlyphSelect(els.preset, "detailed");
+    RVRY.fillGlyphSelect(els.preset, "detailed", { allowCustom: false });
 
     const state = {
       frames: [],        // [{html, text}]
@@ -404,7 +412,7 @@ show(0);
       if (!state.frames.length) return;
       state.index = ((i % state.frames.length) + state.frames.length) % state.frames.length;
       const f = state.frames[state.index];
-      els.out.innerHTML = f.html;
+      RVRY.ui.showArtHtml(els.out, f.html);
       els.seek.value = state.index;
       els.counter.textContent = `${state.index + 1} / ${state.frames.length}`;
     }
@@ -416,7 +424,7 @@ show(0);
       els.seek.value = 0;
       els.meta.textContent = `${frames.length} frame${frames.length === 1 ? "" : "s"}`;
       if (frames.length) showFrame(0);
-      else els.out.textContent = "No frames.";
+      else RVRY.ui.showPlaceholder(els.out, "No frames.");
     }
 
     /* ---- transport ---- */
@@ -467,15 +475,46 @@ show(0);
     }
 
     /* ---- file loading ---- */
+    /* Anything that is not a video or a GIF is read as ANSI/text frames, and
+       neither the drop nor the paste path enforces the file input's accept
+       list — so an arbitrary binary used to be parsed into frames of mojibake
+       and announced as a successful load. file.text() decodes as UTF-8, which
+       turns any byte sequence that is not valid UTF-8 into U+FFFD, so a NUL or
+       a replacement character in the head of the file is a reliable "this was
+       never text" signal. */
+    function looksBinary(s) {
+      const n = Math.min(s.length, 8192);          // a header sample is enough
+      for (let i = 0; i < n; i++) {
+        const c = s.charCodeAt(i);
+        if (c === 0 || c === 0xFFFD) return true;
+      }
+      return false;
+    }
+
     async function handleFile(file) {
       setAlert(els.error, ""); setAlert(els.warn, ""); setAlert(els.info, "");
       const isVideo = /video\//i.test(file.type) || /\.(mp4|webm|mov|m4v|ogg)$/i.test(file.name);
       if (isVideo) return loadVideo(file);
       const isGif = /image\/gif/i.test(file.type) || /\.gif$/i.test(file.name);
       if (isGif) return loadGif(file);
-      // otherwise text / ansi — drop any previous video/GIF source state
+      // Otherwise text / ANSI. Read and validate BEFORE touching any state, so
+      // a rejected file leaves the currently loaded clip and frames untouched.
+      // file.text() is the only rejecting call on this path (loadVideo is
+      // synchronous and loadGif guards itself), and all three callers invoke
+      // handleFile without a .catch().
+      let txt;
+      try { txt = await file.text(); }
+      catch (e) {
+        setAlert(els.error, `Could not read “${file.name}”: ${e.message}`);
+        return;
+      }
+      if (!txt.trim() || looksBinary(txt)) {
+        setAlert(els.error,
+          `“${file.name}” is not a video, a GIF, or an ANSI / text frames file.`);
+        return;
+      }
+      // committed — drop any previous video/GIF source state
       state.mode = null; state.gif = null; dropVideo();
-      const txt = await file.text();
       const frames = parseAnsiFile(txt);
       setFrames(frames);
       setAlert(els.info, `Loaded ${frames.length} frame(s) from ${file.name}.`);

@@ -12,6 +12,10 @@
 
   function describeUsage(res, repeat) {
     if (!res.total) return "—";
+    // No ink at all: flowText found no cells to fill, so nothing was placed.
+    // The ratios below would otherwise blame the text length for what is
+    // really a threshold/invert problem. Mirrors describePy's no-ink branch.
+    if (!res.placed) return "⚠ No ink — nothing was placed. Lower the threshold or toggle Invert.";
     if (repeat) {
       if (res.loops >= 1) return `Shape filled — text tiled ${res.loops.toFixed(1)}× (${res.total} chars).`;
       return `Code used: ${Math.round(res.loops * 100)}% of one pass (${res.total} chars) — text longer than the shape.`;
@@ -74,7 +78,7 @@ for i in range(1, 5):
 
     function render() {
       if (!state.source) {
-        els.out.textContent = "Load an image, then flow your code into it.";
+        RVRY.ui.showPlaceholder(els.out, "Load an image, then flow your code into it.");
         return;
       }
       const width = +els.width.value, ratio = +els.ratio.value;
@@ -98,10 +102,10 @@ for i in range(1, 5):
         els.usage.textContent = describeUsage(res, els.repeat.checked);
       }
       state.lastText = res.text;
-      if (res.text) els.out.textContent = res.text;
-      else els.out.textContent = els.text.value.trim()
+      if (res.text) RVRY.ui.showArt(els.out, res.text);
+      else RVRY.ui.showPlaceholder(els.out, els.text.value.trim()
         ? "(no ink — lower the threshold or toggle Invert)"
-        : "(enter some text to flow into the image)";
+        : "(enter some text to flow into the image)");
       els.meta.textContent = `${res.cols} × ${res.rows} chars`;
     }
     const rerender = RVRY.ui.rafThrottle(render);
