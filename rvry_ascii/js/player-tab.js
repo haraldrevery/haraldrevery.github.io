@@ -10,12 +10,39 @@
   const $ = (id) => document.getElementById(id);
 
   // Limits used for the "too large" warning + safety caps
-  const MAX_FRAMES = 900;
   const WARN_PIXELS = 1280 * 720;
   const WARN_BYTES = 60 * 1024 * 1024;
   // Decoded GIF frames are full W×H RGBA buffers; cap their total size so a
   // large, long GIF can't exhaust memory before conversion even starts.
   const MAX_GIF_BYTES = 384 * 1024 * 1024;
+
+  /* ---------- how many frames fit ----------
+     Frames are held as {html, text} strings, and their cost varies by two
+     orders of magnitude with the settings: a 100-column mono frame is ~12 KB,
+     a 220-column color one ~280 KB. A flat frame count therefore has to be
+     set for the worst case, which is why this used to stop at 900 frames
+     (75s at the default capture rate) even for a cheap mono clip with ~25x
+     the headroom to spare. Budget the total bytes instead and derive the
+     count from a real measured frame, the way loadGif already budgets
+     decoded GIF pixels. */
+  const FRAME_BUDGET_BYTES = 320 * 1024 * 1024;
+  const MAX_FRAMES_CEILING = 20000;  // absolute stop, so a tiny frame can't run away
+  const MIN_FRAMES = 60;             // always allow a usable minimum
+  const FALLBACK_FRAMES = 900;       // when frame 0 can't be measured
+
+  // UTF-16 code units, plus rough per-frame object/allocation overhead
+  function frameCost(f) {
+    return f ? (f.html.length + f.text.length) * 2 + 96 : 0;
+  }
+  // "(≈120 KB per frame)" — omitted when frame 0 could not be sampled
+  function costNote(f) {
+    return f ? ` (≈${(frameCost(f) / 1024).toFixed(0)} KB per frame at these settings)` : "";
+  }
+  function framesThatFit(sample) {
+    if (!sample) return FALLBACK_FRAMES;
+    return Math.max(MIN_FRAMES, Math.min(MAX_FRAMES_CEILING,
+      Math.floor(FRAME_BUDGET_BYTES / Math.max(1, frameCost(sample)))));
+  }
 
   /* ---------- ANSI (SGR) -> HTML ---------- */
   const ANSI_16 = [
@@ -152,27 +179,33 @@
     if (cur) out += "\x1b[0m";
     return out;
   }
-  function framesToAnsi(frames) {
-    let out = "";
+  /* One chunk per frame rather than one concatenated string. A long color
+     animation can exceed the engine's maximum string length (~536M chars in
+     V8) — and gets there sooner than that figure suggests, because building
+     the string keeps transient copies alive. Blob accepts the parts array
+     directly and never joins them, so the download path has no string
+     ceiling at all; framesToAnsi keeps returning a string for callers that
+     want one. */
+  function framesToAnsiParts(frames) {
+    const parts = [];
     for (let i = 0; i < frames.length; i++) {
-      out += "\x1b[2J\x1b[H" + htmlToAnsi(frames[i].html);
+      parts.push("\x1b[2J\x1b[H", htmlToAnsi(frames[i].html));
     }
-    return out;
+    return parts;
+  }
+  function framesToAnsi(frames) {
+    return framesToAnsiParts(frames).join("");
   }
   /* ---------- frames -> standalone HTML player ----------
      One self-contained file: frames embedded as JSON, minimal transport
      (click / space toggles play). Opens anywhere a browser exists. */
-  function buildAnimHtml(frames, opts) {
+  function buildAnimHtmlParts(frames, opts) {
     opts = opts || {};
     const fps = Math.max(1, Math.min(60, +opts.fps || 12));
     const loop = opts.loop !== false;
     const font = opts.font || "monospace";
     const size = +opts.fontSize || 8;
-    const data = JSON.stringify(frames.map((f) => f.html))
-      .replace(/</g, "\\u003c")           // no </script> breakout
-      .replace(/\u2028/g, "\\u2028") // JSON leaves U+2028/29 raw; invalid in JS source
-      .replace(/\u2029/g, "\\u2029");
-    return `<!doctype html>
+    const head = `<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -187,7 +220,8 @@
 </style></head>
 <body><pre id="s"></pre><div id="hud"></div>
 <script>
-var F=${data},FPS=${fps},LOOP=${loop},i=0,on=F.length>1;
+var F=`;
+    const tail = `,FPS=${fps},LOOP=${loop},i=0,on=F.length>1;
 var s=document.getElementById("s"),h=document.getElementById("hud");
 function show(n){i=((n%F.length)+F.length)%F.length;s.innerHTML=F[i];
   h.textContent=(i+1)+" / "+F.length+(on?"":" — paused (click or space)");}
@@ -198,12 +232,33 @@ document.addEventListener("click",toggle);
 document.addEventListener("keydown",function(e){if(e.key===" "){e.preventDefault();toggle();}});
 show(0);
 </script></body></html>`;
+    /* Escape per frame instead of over the whole payload. The structural JSON
+       characters ([ ] , ") are never <, U+2028 or U+2029, so escaping each
+       element gives byte-identical output to escaping the joined array — but
+       without holding three transient copies of the entire animation, which
+       is what put a hard ceiling on this export. */
+    const enc = (h) => JSON.stringify(h)
+      .replace(/</g, "\\u003c")           // no </script> breakout
+      .replace(/\u2028/g, "\\u2028") // JSON leaves U+2028/29 raw; invalid in JS source
+      .replace(/\u2029/g, "\\u2029");
+    const parts = [head, "["];
+    for (let i = 0; i < frames.length; i++) {
+      if (i) parts.push(",");
+      parts.push(enc(frames[i].html));
+    }
+    parts.push("]", tail);
+    return parts;
+  }
+  function buildAnimHtml(frames, opts) {
+    return buildAnimHtmlParts(frames, opts).join("");
   }
 
   // exposed for reuse/testing (pure string transforms)
   RVRY.parseAnsiFile = parseAnsiFile;
   RVRY.framesToAnsi = framesToAnsi;
+  RVRY.framesToAnsiParts = framesToAnsiParts;
   RVRY.buildAnimHtml = buildAnimHtml;
+  RVRY.buildAnimHtmlParts = buildAnimHtmlParts;
 
   function init() {
     const els = {
@@ -239,12 +294,28 @@ show(0);
       videoReady: false,
       videoUrl: null,
       mode: null,        // "video" | "gif" — which source Generate converts
-      gif: null          // decoded GIF { width, height, frames, truncated }
+      gif: null,         // decoded GIF { width, height, frames, truncated }
+      generating: false  // a Generate run is in flight (button acts as Stop)
     };
 
     function setAlert(el, msg) {
       if (!msg) { el.classList.remove("show"); return; }
       el.textContent = msg; el.classList.add("show");
+    }
+
+    /* ---- generation run state ----
+       Long clips can take minutes of seek-decode, so Generate doubles as the
+       stop control while a run is in flight rather than sitting disabled.
+       Frames captured before a stop are kept and loaded. */
+    let genAbort = false;
+    const GEN_LABEL = els.generate.textContent;
+    function setGenerating(on) {
+      state.generating = on;
+      if (on) genAbort = false;
+      els.generate.textContent = on ? "Stop" : GEN_LABEL;
+      // reuse the existing ghost style rather than adding a CSS class
+      els.generate.classList.toggle("primary", !on);
+      els.generate.classList.toggle("ghost", on);
     }
 
     /* ---- frame display ---- */
@@ -340,15 +411,15 @@ show(0);
         const size = RVRY.gifSize(buf);
         const frameBytes = size ? size.width * size.height * 4 : 0;
         const memFrames = frameBytes
-          ? Math.max(1, Math.floor(MAX_GIF_BYTES / frameBytes)) : MAX_FRAMES;
-        const maxFrames = Math.min(MAX_FRAMES, memFrames);
+          ? Math.max(1, Math.floor(MAX_GIF_BYTES / frameBytes)) : MAX_FRAMES_CEILING;
+        const maxFrames = Math.min(MAX_FRAMES_CEILING, memFrames);
         const gif = RVRY.decodeGif(buf, { maxFrames });
         if (!gif.frames.length) throw new Error("no frames found.");
         state.gif = gif;
         const n = gif.frames.length;
         els.meta.textContent = `${gif.width}×${gif.height}, ${n} frame${n === 1 ? "" : "s"} (GIF)`;
         let warnMsg = "";
-        if (gif.truncated) warnMsg += memFrames < MAX_FRAMES
+        if (gif.truncated) warnMsg += memFrames < MAX_FRAMES_CEILING
           ? `Large frames — only the first ${maxFrames} fit the memory limit; the rest were skipped. `
           : `Long animation — only the first ${maxFrames} frames were decoded. `;
         if (gif.width * gif.height > WARN_PIXELS) warnMsg += `High resolution (${gif.width}×${gif.height}) — conversion may be slow. `;
@@ -441,14 +512,26 @@ show(0);
       if (!dur) { setAlert(els.error, "Cannot determine duration; this video isn't seekable."); return; }
       let count = Math.max(1, Math.floor(dur * capfps)); // ≥1 even for sub-interval clips
       let step = 1 / capfps;
-      if (count > MAX_FRAMES) {
-        count = MAX_FRAMES; step = dur / count;
-        setAlert(els.warn, `Capped to ${MAX_FRAMES} frames to stay within memory. Effective FPS reduced.`);
-      }
       const { opts, useColor } = convertOpts();
       const frames = [];
-      els.generate.disabled = true;
-      for (let i = 0; i < count; i++) {
+      setGenerating(true);
+      // Frame 0 sits at t=0 under any step, so it can be captured before the
+      // budget is known and then used to measure it. Only after that does the
+      // count get trimmed — which keeps cheap settings from paying the price
+      // of the most expensive ones.
+      els.progress.textContent = `Generating… 1 / ${count}`;
+      await seekTo(0);
+      const first = frameFromSource(els.video, opts, useColor);
+      if (first) frames.push(first);
+      const cap = framesThatFit(first);
+      if (count > cap) {
+        count = cap; step = dur / count;
+        setAlert(els.warn, `Capped to ${cap} frames to stay within memory` +
+          `${costNote(first)}. Effective FPS reduced — a narrower width, or ` +
+          `color off, allows more frames.`);
+      }
+      for (let i = 1; i < count; i++) {
+        if (genAbort) break;
         await seekTo(Math.min(dur - 0.001, i * step));
         const f = frameFromSource(els.video, opts, useColor);
         if (f) frames.push(f);
@@ -457,13 +540,18 @@ show(0);
           await new Promise((r) => setTimeout(r, 0)); // yield to UI
         }
       }
-      els.generate.disabled = false;
-      els.progress.textContent = `Done — ${frames.length} frames @ ${capfps} fps capture.`;
+      const stopped = genAbort;
+      setGenerating(false);
+      els.progress.textContent = stopped
+        ? `Stopped — kept ${frames.length} of ${count} frames.`
+        : `Done — ${frames.length} frames @ ${capfps} fps capture.`;
       // real input event so the readout repaints and the value persists
       els.fps.value = Math.min(30, capfps);
       els.fps.dispatchEvent(new Event("input", { bubbles: true }));
       setFrames(frames);
-      setAlert(els.info, `Generated ${frames.length} frames. Press play ▶`);
+      setAlert(els.info, stopped
+        ? `Stopped at ${frames.length} frames — they're loaded and playable. Press play ▶`
+        : `Generated ${frames.length} frames. Press play ▶`);
     }
 
     async function generateFromGif() {
@@ -477,30 +565,51 @@ show(0);
       const ctx = cv.getContext("2d");
       const frames = [];
       let totalMs = 0;
-      els.generate.disabled = true;
-      for (let i = 0; i < gif.frames.length; i++) {
+      setGenerating(true);
+      // limit starts at the whole GIF and is trimmed once frame 0 has been
+      // converted and its real cost is known
+      let limit = gif.frames.length;
+      for (let i = 0; i < limit; i++) {
+        if (genAbort) break;
         const gf = gif.frames[i];
         ctx.putImageData(new ImageData(gf.data, gif.width, gif.height), 0, 0);
         const f = frameFromSource(cv, opts, useColor);
         if (f) { frames.push(f); totalMs += gf.delayMs; }
-        if (i % 5 === 0 || i === gif.frames.length - 1) {
-          els.progress.textContent = `Converting… ${i + 1} / ${gif.frames.length}`;
+        if (i === 0) {
+          const cap = framesThatFit(f);
+          if (limit > cap) {
+            limit = cap;
+            setAlert(els.warn, `Converting the first ${cap} of ${gif.frames.length} ` +
+              `frames to stay within memory${costNote(f)}. A narrower width, or ` +
+              `color off, allows more frames.`);
+          }
+        }
+        if (i % 5 === 0 || i === limit - 1) {
+          els.progress.textContent = `Converting… ${i + 1} / ${limit}`;
           await new Promise((r) => setTimeout(r, 0)); // yield to UI
         }
       }
-      els.generate.disabled = false;
+      const stopped = genAbort;
+      setGenerating(false);
       // playback rate from the GIF's own frame delays (player uses a fixed fps)
       const avg = frames.length ? totalMs / frames.length : 100;
       const fps = Math.max(1, Math.min(30, Math.round(1000 / avg)));
       els.fps.value = fps;
       els.fps.dispatchEvent(new Event("input", { bubbles: true }));
-      els.progress.textContent = `Done — ${frames.length} frames from GIF (≈${fps} fps).`;
+      els.progress.textContent = stopped
+        ? `Stopped — kept ${frames.length} of ${limit} frames.`
+        : `Done — ${frames.length} frames from GIF (≈${fps} fps).`;
       setFrames(frames);
-      setAlert(els.info, `Converted ${frames.length} frames. Press play ▶`);
+      setAlert(els.info, stopped
+        ? `Stopped at ${frames.length} frames — they're loaded and playable. Press play ▶`
+        : `Converted ${frames.length} frames. Press play ▶`);
     }
-    els.generate.addEventListener("click", () => generate().catch((e) => {
-      els.generate.disabled = false; setAlert(els.error, e.message);
-    }));
+    els.generate.addEventListener("click", () => {
+      if (state.generating) { genAbort = true; return; }
+      generate().catch((e) => {
+        setGenerating(false); setAlert(els.error, e.message);
+      });
+    });
 
     /* wiring */
     els.drop.addEventListener("click", () => els.file.click());
@@ -532,22 +641,25 @@ show(0);
     els.ans.addEventListener("click", () => {
       if (!state.frames.length) { RVRY.ui.toast("Generate or load frames first"); return; }
       RVRY.ui.download(`rvry-anim-${animTs()}.ans`,
-        framesToAnsi(state.frames), "text/plain;charset=utf-8");
+        new Blob(framesToAnsiParts(state.frames), { type: "text/plain;charset=utf-8" }));
       RVRY.ui.toast(`Saved ${state.frames.length} frames as ANSI`);
     });
     els.animTxt.addEventListener("click", () => {
       if (!state.frames.length) { RVRY.ui.toast("Generate or load frames first"); return; }
       // form-feed separates frames (understood by this tab's .txt loader)
+      const parts = [];
+      state.frames.forEach((f, i) => { if (i) parts.push("\x0c"); parts.push(f.text); });
       RVRY.ui.download(`rvry-anim-${animTs()}.txt`,
-        state.frames.map((f) => f.text).join("\x0c"), "text/plain;charset=utf-8");
+        new Blob(parts, { type: "text/plain;charset=utf-8" }));
       RVRY.ui.toast(`Saved ${state.frames.length} frames as text`);
     });
     els.animHtml.addEventListener("click", () => {
       if (!state.frames.length) { RVRY.ui.toast("Generate or load frames first"); return; }
-      RVRY.ui.download(`rvry-anim-${animTs()}.html`, buildAnimHtml(state.frames, {
-        fps: +els.fps.value, loop: els.loop.checked,
-        font: els.font.value, fontSize: +els.fontsize.value
-      }), "text/html;charset=utf-8");
+      RVRY.ui.download(`rvry-anim-${animTs()}.html`,
+        new Blob(buildAnimHtmlParts(state.frames, {
+          fps: +els.fps.value, loop: els.loop.checked,
+          font: els.font.value, fontSize: +els.fontsize.value
+        }), { type: "text/html;charset=utf-8" }));
       RVRY.ui.toast(`Saved a standalone HTML player (${state.frames.length} frames)`);
     });
 

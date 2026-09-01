@@ -24,11 +24,22 @@
     const CLEAR = 1 << minCodeSize, EOI = CLEAR + 1;
     let codeSize = minCodeSize + 1, next = EOI + 1;
     let dict = new Map();                 // (prev<<8 | pixel) -> code
-    const bytes = [];
+    // A growable Uint8Array, not a JS number Array: on a long animation the
+    // boxed-array form costs ~8 bytes per output byte, and that transient
+    // overhead — per frame, on top of the frames themselves — is what runs
+    // the tab out of memory long before the GIF itself gets large.
+    let bytes = new Uint8Array(1024), len = 0;
+    const put = (b) => {
+      if (len === bytes.length) {
+        const grown = new Uint8Array(bytes.length * 2);
+        grown.set(bytes); bytes = grown;
+      }
+      bytes[len++] = b;
+    };
     let acc = 0, nbits = 0;
     const emit = (code) => {
       acc |= code << nbits; nbits += codeSize;
-      while (nbits >= 8) { bytes.push(acc & 255); acc >>= 8; nbits -= 8; }
+      while (nbits >= 8) { put(acc & 255); acc >>= 8; nbits -= 8; }
     };
     emit(CLEAR);
     let prev = indices[0];
@@ -49,8 +60,8 @@
       prev = k;
     }
     emit(prev); emit(EOI);
-    if (nbits > 0) bytes.push(acc & 255);
-    return bytes;
+    if (nbits > 0) put(acc & 255);
+    return bytes.subarray(0, len);
   }
 
   /* ---- GIF89a byte writer ---- */
@@ -58,39 +69,48 @@
     let bits = 1;
     while ((1 << bits) < palette.length) bits++;
     const minCodeSize = Math.max(2, bits);
+    // Every part is a Uint8Array so the finished file can be handed straight
+    // to a Blob without first concatenating it into one buffer.
     const parts = [];
+    const put = (a) => parts.push(a instanceof Uint8Array ? a : Uint8Array.from(a));
     const u16 = (v) => [v & 255, (v >> 8) & 255];
 
-    parts.push([0x47, 0x49, 0x46, 0x38, 0x39, 0x61,          // "GIF89a"
+    put([0x47, 0x49, 0x46, 0x38, 0x39, 0x61,                 // "GIF89a"
       ...u16(width), ...u16(height),
       0x80 | 0x70 | (bits - 1), 0, 0]);                      // GCT, res 8-bit
-    const gct = [];
+    const gct = new Uint8Array((1 << bits) * 3);
     for (let i = 0; i < (1 << bits); i++) {
       const p = palette[i] || [0, 0, 0];
-      gct.push(p[0], p[1], p[2]);
+      gct[i * 3] = p[0]; gct[i * 3 + 1] = p[1]; gct[i * 3 + 2] = p[2];
     }
-    parts.push(gct);
+    put(gct);
     if (loopForever) {
-      parts.push([0x21, 0xFF, 11,
+      put([0x21, 0xFF, 11,
         0x4E, 0x45, 0x54, 0x53, 0x43, 0x41, 0x50, 0x45, 0x32, 0x2E, 0x30, // NETSCAPE2.0
         3, 1, 0, 0, 0]);                                     // loop count 0 = forever
     }
 
     function addFrame(indices, delayCs) {
-      parts.push([0x21, 0xF9, 4, 0x04, ...u16(delayCs), 0, 0]); // GCE, disposal 1
-      parts.push([0x2C, 0, 0, 0, 0, ...u16(width), ...u16(height), 0, minCodeSize]);
+      put([0x21, 0xF9, 4, 0x04, ...u16(delayCs), 0, 0]);     // GCE, disposal 1
+      put([0x2C, 0, 0, 0, 0, ...u16(width), ...u16(height), 0, minCodeSize]);
       const data = lzwEncode(minCodeSize, indices);
-      for (let off = 0; off < data.length; off += 255) {      // 255-byte sub-blocks
+      // all 255-byte sub-blocks for this frame in one allocation, each
+      // prefixed by its length, then the terminating zero byte
+      const nBlocks = Math.ceil(data.length / 255);
+      const blocks = new Uint8Array(data.length + nBlocks + 1);
+      for (let off = 0, o = 0; off < data.length; off += 255) {
         const n = Math.min(255, data.length - off);
-        const block = new Uint8Array(n + 1);
-        block[0] = n;
-        for (let j = 0; j < n; j++) block[j + 1] = data[off + j];
-        parts.push(block);
+        blocks[o++] = n;
+        blocks.set(data.subarray(off, off + n), o); o += n;
       }
-      parts.push([0]);                                       // block terminator
+      put(blocks);                                           // last byte is the 0 terminator
+    }
+    let sealed = false;
+    function seal() {
+      if (!sealed) { put([0x3B]); sealed = true; }           // trailer
     }
     function finish() {
-      parts.push([0x3B]);                                    // trailer
+      seal();
       let total = 0;
       for (const p of parts) total += p.length;
       const out = new Uint8Array(total);
@@ -98,7 +118,13 @@
       for (const p of parts) { out.set(p, o); o += p.length; }
       return out;
     }
-    return { addFrame, finish };
+    // Same bytes as finish(), but without materializing the whole file as a
+    // second buffer first — the Blob references the parts in place.
+    function finishBlob() {
+      seal();
+      return new Blob(parts, { type: "image/gif" });
+    }
+    return { addFrame, finish, finishBlob };
   }
 
   /* ---- median-cut palette from a color histogram (rgb24 -> count) ---- */
@@ -264,7 +290,7 @@
       if (aborted()) return null;
       await yieldUI();
     }
-    return new Blob([gif.finish()], { type: "image/gif" });
+    return gif.finishBlob();
   }
 
   RVRY.GifBuilder = GifBuilder;
