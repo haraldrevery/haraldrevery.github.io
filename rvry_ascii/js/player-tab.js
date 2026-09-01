@@ -279,6 +279,7 @@ show(0);
       trimWrap: $("ply-trim-wrap"), trimIn: $("ply-trim-in"), trimOut: $("ply-trim-out"),
       trimV: $("ply-trim-v"), trimHint: $("ply-trim-hint"),
       preset: $("ply-preset"), color: $("ply-color"), invert: $("ply-invert"),
+      custom: $("ply-custom"), customWrap: $("ply-custom-wrap"),
       generate: $("ply-generate"), progress: $("ply-progress"),
       fps: $("ply-fps"), fpsV: $("ply-fps-v"),
       speed: $("ply-speed"), speedV: $("ply-speed-v"), loop: $("ply-loop"),
@@ -294,7 +295,18 @@ show(0);
       video: $("ply-video")
     };
 
-    RVRY.fillGlyphSelect(els.preset, "detailed", { allowCustom: false });
+    /* The "Custom string…" preset needs a field to type the ramp into; its
+       entry in GLYPH_PRESETS is only a placeholder. This control's markup lives
+       in three page copies and only two are generated, so offer the preset when
+       the field is actually there and fall back to preset-only when a copy lags
+       behind — the same degradation the trim controls use. */
+    const hasCustom = !!(els.custom && els.customWrap);
+    RVRY.fillGlyphSelect(els.preset, "detailed", { allowCustom: hasCustom });
+    const syncCustom = () => {
+      if (hasCustom) els.customWrap.classList.toggle("hidden", els.preset.value !== "custom");
+    };
+    els.preset.addEventListener("change", syncCustom);
+    syncCustom();
 
     const state = {
       frames: [],        // [{html, text}]
@@ -624,11 +636,17 @@ show(0);
     }
 
     function convertOpts() {
-      const preset = RVRY.GLYPH_PRESETS[els.preset.value];
+      const presetKey = els.preset.value;
+      const preset = RVRY.GLYPH_PRESETS[presetKey];
+      // Read like the Image and Text tabs: the typed ramp wins for "custom",
+      // and an empty field falls back to the preset table's placeholder.
+      const ramp = (presetKey === "custom" && hasCustom)
+        ? (els.custom.value || "RVRY")
+        : (preset ? preset.ramp : " .:-=+*#%@");
       const opts = {
         width: +els.width.value, ratio: +els.ratio.value,
         braille: !!(preset && preset.braille),
-        ramp: preset ? preset.ramp : " .:-=+*#%@",
+        ramp,
         dither: "none", threshold: 0.5,
         tone: { exposure: 1, contrast: 0, gamma: 1, invert: els.invert.checked }
       };

@@ -232,7 +232,7 @@
       if (RVRY.ui.isPlaceholder(preEl)) return;
       const text = preEl.textContent || "";
       let cols = 1;
-      for (const line of text.split("\n")) if (line.length > cols) cols = line.length;
+      for (const line of text.split("\n")) { const n = RVRY.cellCount(line); if (n > cols) cols = n; }
       // char-width : font-size ratio for the current monospace face
       _measure.font = "100px " + (preEl.style.fontFamily || "monospace");
       const ratio = _measure.measureText("M").width / 100 || 0.6;

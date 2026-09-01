@@ -128,7 +128,7 @@
   function textDims(preEl) {
     const lines = (preEl.textContent || "").split("\n");
     let cols = 1;
-    for (const l of lines) if (l.length > cols) cols = l.length;
+    for (const l of lines) { const n = RVRY.cellCount(l); if (n > cols) cols = n; }
     return { cols, rows: lines.length };
   }
 

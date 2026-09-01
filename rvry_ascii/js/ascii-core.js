@@ -267,6 +267,30 @@
     return html;
   }
 
+  /* ---------------------------------------------------------------
+     cellCount(line) -> how many glyph CELLS a rendered line occupies.
+       render() builds lines from Array.from(ramp), and drawGrid/drawFrame
+       advance one cell per `for…of` step — both are code points. Measuring
+       with String#length instead counts a surrogate pair as two, so one
+       astral glyph (an emoji in a custom ramp) inflated the column count and
+       every consumer sized to it: the preview canvas, fit-to-width, the PNG
+       export and the GIF encoder all came out ~1.8x too wide with a blank
+       right margin. Counted in place rather than via [...s] — frameMetrics
+       walks every line of every frame on each GIF-dialog slider move.
+     --------------------------------------------------------------- */
+  function cellCount(s) {
+    let n = 0;
+    for (let i = 0; i < s.length; i++) {
+      n++;
+      const c = s.charCodeAt(i);
+      if (c >= 0xd800 && c <= 0xdbff && i + 1 < s.length) {
+        const d = s.charCodeAt(i + 1);
+        if (d >= 0xdc00 && d <= 0xdfff) i++;   // surrogate pair = one cell
+      }
+    }
+    return n;
+  }
+
   function escapeHtml(s) {
     return s.replace(/[&<>]/g, (c) => (c === "&" ? "&amp;" : c === "<" ? "&lt;" : "&gt;"));
   }
@@ -439,6 +463,6 @@
     GLYPH_PRESETS, DITHER,
     clamp, clamp01,
     sampleImage, applyTone, ditherLevels, render, renderColorHTML, flowText, pyWrap, convert,
-    escapeHtml, srcSize
+    escapeHtml, srcSize, cellCount
   };
 })(window);

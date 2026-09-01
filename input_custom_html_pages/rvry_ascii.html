@@ -393,6 +393,11 @@ console.log(seq.join(", "));</textarea>
               <label for="ply-preset">Character set</label>
               <select id="ply-preset"></select>
             </div>
+            <div class="field hidden" id="ply-custom-wrap">
+              <label for="ply-custom">Custom characters (dark &rarr; dense)</label>
+              <input type="text" id="ply-custom" value="RVRY" spellcheck="false" />
+              <div class="hint">Frames are drawn using only these characters &mdash; applies on Generate.</div>
+            </div>
             <label class="check"><input type="checkbox" id="ply-color" checked /> Color (ANSI truecolor)</label>
             <label class="check"><input type="checkbox" id="ply-invert" /> Invert mapping</label>
             <button class="btn primary" id="ply-generate" style="width:100%;margin-top:.7rem">Generate frames</button>

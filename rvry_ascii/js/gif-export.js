@@ -184,7 +184,7 @@
     for (const f of frames) {
       const lines = f.text.split("\n");
       if (lines.length > rows) rows = lines.length;
-      for (const l of lines) if (l.length > cols) cols = l.length;
+      for (const l of lines) { const n = RVRY.cellCount(l); if (n > cols) cols = n; }
     }
     const ctx = workCtx();
     let px = Math.max(2, Math.round(fontPx || 8));
