@@ -236,7 +236,15 @@
       // char-width : font-size ratio for the current monospace face
       _measure.font = "100px " + (preEl.style.fontFamily || "monospace");
       const ratio = _measure.measureText("M").width / 100 || 0.6;
-      const avail = stageEl.clientWidth - 32; // stage padding (1rem each side)
+      // Measure the stage padding instead of assuming it. clientWidth already
+      // excludes the scrollbar but INCLUDES padding, and the padding is 1rem —
+      // which is not 16px here: the site sets html{font-size:1.22rem} in
+      // main.css, so the root em is ~19.5px and a hardcoded 32 over-estimated
+      // the usable width by ~7px, occasionally picking a font size one step too
+      // large and giving the stage a horizontal scrollbar.
+      const cs = getComputedStyle(stageEl);
+      const pad = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+      const avail = Math.max(1, stageEl.clientWidth - pad);
       let px = Math.floor(avail / (cols * ratio));
       px = Math.max(+sizeRange.min, Math.min(+sizeRange.max, px));
       sizeRange.value = px;

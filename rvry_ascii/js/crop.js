@@ -110,9 +110,16 @@
       } else if (p.x >= rect.x && p.x <= rect.x + rect.w && p.y >= rect.y && p.y <= rect.y + rect.h) {
         drag = { mode: "move", sx: p.x, sy: p.y, start: Object.assign({}, rect) };
       } else {
-        // draw a new selection starting here
-        rect = { x: p.x, y: p.y, w: MIN, h: MIN };
-        drag = { mode: "resize", dir: "se", sx: p.x, sy: p.y, start: Object.assign({}, rect) };
+        // Draw a new selection from here. The anchor carries zero size — a
+        // MIN-sized one made the moving edge run MIN px ahead of the cursor,
+        // since it is measured as start + size + delta. clampRect() below
+        // still enforces the minimum once the drag is under way.
+        // `rect` itself is left alone until the pointer actually moves: a bare
+        // click outside the box must not replace the current selection with a
+        // MIN-sized one. The resize branch assigns all four fields, so the
+        // first move overwrites it completely and nothing stale survives.
+        drag = { mode: "resize", dir: "se", sx: p.x, sy: p.y,
+                 start: { x: p.x, y: p.y, w: 0, h: 0 } };
       }
       stage.setPointerCapture(e.pointerId);
     });
@@ -121,6 +128,7 @@
       if (!drag) return;
       const p = localPt(e);
       const dx = p.x - drag.sx, dy = p.y - drag.sy;
+      if (!dx && !dy) return;   // a click can emit a zero-distance move; it changes nothing
       const s = drag.start;
       if (drag.mode === "move") {
         rect.x = s.x + dx; rect.y = s.y + dy;
@@ -150,7 +158,14 @@
     stage.addEventListener("pointercancel", endDrag);
 
     /* ---- close / actions ---- */
+    /* Enter runs apply() from the document handler, and if the Apply button
+       holds focus the browser's synthesized click on it can run apply() a
+       second time. One flag makes both close() and apply() one-shot, so the
+       crop is never delivered twice. */
+    let closed = false;
     function close() {
+      if (closed) return;
+      closed = true;
       document.removeEventListener("keydown", onKey);
       overlay.remove();
     }
@@ -161,6 +176,7 @@
     document.addEventListener("keydown", onKey);
 
     function apply() {
+      if (closed) return;
       // origin leaves ≥1px of image so the size clamps below stay valid (hi ≥ 1)
       const ox = clamp(Math.round(rect.x / scale), 0, natW - 1);
       const oy = clamp(Math.round(rect.y / scale), 0, natH - 1);

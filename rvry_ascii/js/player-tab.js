@@ -318,6 +318,7 @@ show(0);
       mode: null,        // "video" | "gif" — which source Generate converts
       gif: null,         // decoded GIF { width, height, frames, truncated }
       generating: false, // a Generate run is in flight (button acts as Stop)
+      loading: false,    // a file is being read/validated (see beginLoad below)
       preview: false     // the single frame on screen is a scrub preview
     };
 
@@ -339,6 +340,34 @@ show(0);
       // reuse the existing ghost style rather than adding a CSS class
       els.generate.classList.toggle("primary", !on);
       els.generate.classList.toggle("ghost", on);
+    }
+
+    /* ---- load interlock ----
+       Loading and converting overlap: the drop zone, the file input and paste
+       all stay live while a run is in flight, and every loader is async. Each
+       load takes a ticket, and any async work that resumes after a newer ticket
+       was issued has lost ownership of the shared state — frames, source, seek
+       range, alerts — and must not write to it.
+
+       Without this, a file dropped mid-run had its freshly loaded state
+       overwritten by the run it interrupted (both generators end with an
+       unconditional setFrames), and a video run kept sampling els.video after
+       the element had been repointed at the new clip, mixing two sources into
+       one sequence. state.loading blocks Generate/Preview for the short window
+       where a source has been accepted but not yet committed. */
+    let loadSeq = 0;
+    const stale = (ticket) => ticket !== loadSeq;
+    function beginLoad() {
+      if (state.generating) genAbort = true; // in-flight run stops; its frames are discarded below
+      stop();                                // no timer left running against frames we may replace
+      state.loading = true;
+      return ++loadSeq;
+    }
+    function endLoad(ticket) { if (!stale(ticket)) state.loading = false; }
+    function busyLoading() {
+      if (!state.loading) return false;
+      setAlert(els.error, "Still reading the file — try again in a moment.");
+      return true;
     }
 
     /* ---- trim range ----
@@ -527,7 +556,7 @@ show(0);
        it any other way would leave .txt / .ans exporting a different frame than
        the preview. */
     async function previewFrame() {
-      if (state.generating) return;
+      if (state.generating || busyLoading()) return;
       if (state.mode !== "video" && state.mode !== "gif") {
         setAlert(els.error, state.frames.length
           ? "These frames came from a text / ANSI file — there is no source to re-convert from."
@@ -538,6 +567,7 @@ show(0);
         setAlert(els.error, "Load a video or GIF first."); return;
       }
       setAlert(els.error, "");
+      const ticket = loadSeq;   // the source this preview belongs to
       // Coming from a generated sequence the slider indexes frames, not source
       // position. Carry the spot being viewed across proportionally so Preview
       // does not jump back to the start of the clip.
@@ -577,6 +607,7 @@ show(0);
       } finally {
         els.preview.disabled = false;
       }
+      if (stale(ticket)) return;   // a new file landed during the seek — it owns the state
       if (!f) {
         if (wasFrames) configureSeekForFrames();   // leave the sequence usable
         setAlert(els.error, "Could not sample a frame at this position.");
@@ -624,23 +655,36 @@ show(0);
       return false;
     }
 
+    /* Every loader validates BEFORE it commits: nothing about the current
+       source, its frames or the tab's controls changes until the new file is
+       known to be usable, so a file the browser cannot decode leaves the
+       workspace exactly as it was instead of half-switching the tab to a
+       source that does not exist. Each also re-checks its ticket after every
+       await, so a superseded load writes nothing (see beginLoad above). */
     async function handleFile(file) {
+      const ticket = beginLoad();
+      try { await routeFile(file, ticket); }
+      catch (e) {
+        // One place to land: drop, paste and the file input all call handleFile
+        // without a .catch(), so nothing below may escape as an unhandled
+        // rejection — every loader is async now, including loadVideo.
+        if (!stale(ticket)) setAlert(els.error, `Could not read “${file.name}”: ${e.message}`);
+      }
+      finally { endLoad(ticket); }
+    }
+
+    function routeFile(file, ticket) {
       setAlert(els.error, ""); setAlert(els.warn, ""); setAlert(els.info, "");
       const isVideo = /video\//i.test(file.type) || /\.(mp4|webm|mov|m4v|ogg)$/i.test(file.name);
-      if (isVideo) return loadVideo(file);
+      if (isVideo) return loadVideo(file, ticket);
       const isGif = /image\/gif/i.test(file.type) || /\.gif$/i.test(file.name);
-      if (isGif) return loadGif(file);
-      // Otherwise text / ANSI. Read and validate BEFORE touching any state, so
-      // a rejected file leaves the currently loaded clip and frames untouched.
-      // file.text() is the only rejecting call on this path (loadVideo is
-      // synchronous and loadGif guards itself), and all three callers invoke
-      // handleFile without a .catch().
-      let txt;
-      try { txt = await file.text(); }
-      catch (e) {
-        setAlert(els.error, `Could not read “${file.name}”: ${e.message}`);
-        return;
-      }
+      if (isGif) return loadGif(file, ticket);
+      return loadText(file, ticket);   // anything else: ANSI / text frames
+    }
+
+    async function loadText(file, ticket) {
+      const txt = await file.text();
+      if (stale(ticket)) return;
       if (!txt.trim() || looksBinary(txt)) {
         setAlert(els.error,
           `“${file.name}” is not a video, a GIF, or an ANSI / text frames file.`);
@@ -654,69 +698,121 @@ show(0);
       els.videoPanel.classList.add("hidden");
     }
 
-    async function loadGif(file) {
-      els.videoPanel.classList.remove("hidden");
-      els.capfpsWrap.classList.add("hidden"); // GIF frames keep their own timing
-      if (hasTrim) els.trimWrap.classList.add("hidden"); // no timeline to trim against
-      state.mode = "gif"; state.gif = null; dropVideo();
+    async function loadGif(file, ticket) {
+      setAlert(els.info, `Reading ${file.name}…`);
+      const buf = await file.arrayBuffer();
+      if (stale(ticket)) return;
+      // bound decoded frames by memory (each is a full W×H RGBA buffer)
+      const size = RVRY.gifSize(buf);
+      const frameBytes = size ? size.width * size.height * 4 : 0;
+      const memFrames = frameBytes
+        ? Math.max(1, Math.floor(MAX_GIF_BYTES / frameBytes)) : MAX_FRAMES_CEILING;
+      const maxFrames = Math.min(MAX_FRAMES_CEILING, memFrames);
+      let gif;
       try {
-        const buf = await file.arrayBuffer();
-        // bound decoded frames by memory (each is a full W×H RGBA buffer)
-        const size = RVRY.gifSize(buf);
-        const frameBytes = size ? size.width * size.height * 4 : 0;
-        const memFrames = frameBytes
-          ? Math.max(1, Math.floor(MAX_GIF_BYTES / frameBytes)) : MAX_FRAMES_CEILING;
-        const maxFrames = Math.min(MAX_FRAMES_CEILING, memFrames);
-        const gif = RVRY.decodeGif(buf, { maxFrames });
+        gif = RVRY.decodeGif(buf, { maxFrames });
         if (!gif.frames.length) throw new Error("no frames found.");
-        state.gif = gif;
-        const n = gif.frames.length;
-        els.meta.textContent = `${gif.width}×${gif.height}, ${n} frame${n === 1 ? "" : "s"} (GIF)`;
-        let warnMsg = "";
-        if (gif.truncated) warnMsg += memFrames < MAX_FRAMES_CEILING
-          ? `Large frames — only the first ${maxFrames} fit the memory limit; the rest were skipped. `
-          : `Long animation — only the first ${maxFrames} frames were decoded. `;
-        if (gif.width * gif.height > WARN_PIXELS) warnMsg += `High resolution (${gif.width}×${gif.height}) — conversion may be slow. `;
-        if (warnMsg) setAlert(els.warn, warnMsg);
-        // nothing is generated yet, so the seek slider scrubs the GIF's own frames
-        state.preview = false; state.frames = []; state.index = 0;
-        configureSeekForSource();
-        setAlert(els.info, n === 1
-          ? "Static GIF (1 frame). Set options, or preview a frame, then press “Generate frames”."
-          : `GIF ready (${n} frames). Scrub and press the preview button to check one frame, or “Generate frames” for all.`);
       } catch (e) {
-        state.mode = null;
+        // nothing has been touched yet: the previous source stays loaded
+        setAlert(els.info, "");
         setAlert(els.error, "Could not decode this GIF: " + e.message);
+        return;
       }
+      // committed (decoding is synchronous, so the ticket is still ours)
+      state.mode = "gif"; state.gif = gif; dropVideo();
+      els.videoPanel.classList.remove("hidden");
+      els.capfpsWrap.classList.add("hidden");             // GIF frames keep their own timing
+      if (hasTrim) els.trimWrap.classList.add("hidden");  // no timeline to trim against
+      const n = gif.frames.length;
+      els.meta.textContent = `${gif.width}×${gif.height}, ${n} frame${n === 1 ? "" : "s"} (GIF)`;
+      let warnMsg = "";
+      if (gif.truncated) warnMsg += memFrames < MAX_FRAMES_CEILING
+        ? `Large frames — only the first ${maxFrames} fit the memory limit; the rest were skipped. `
+        : `Long animation — only the first ${maxFrames} frames were decoded. `;
+      if (gif.width * gif.height > WARN_PIXELS) warnMsg += `High resolution (${gif.width}×${gif.height}) — conversion may be slow. `;
+      if (warnMsg) setAlert(els.warn, warnMsg);
+      // nothing is generated yet, so the seek slider scrubs the GIF's own frames
+      state.preview = false; state.frames = []; state.index = 0;
+      configureSeekForSource();
+      setAlert(els.info, n === 1
+        ? "Static GIF (1 frame). Set options, or preview a frame, then press “Generate frames”."
+        : `GIF ready (${n} frames). Scrub and press the preview button to check one frame, or “Generate frames” for all.`);
     }
 
-    function loadVideo(file) {
+    // Resolves when the element has metadata, rejects when it cannot decode.
+    function loadMetadata(video, url, name) {
+      return new Promise((resolve, reject) => {
+        const done = () => { video.onloadedmetadata = null; video.onerror = null; };
+        video.onloadedmetadata = () => { done(); resolve(); };
+        video.onerror = () => {
+          done();
+          reject(new Error(`Could not load “${name}” — the browser cannot decode this video format.`));
+        };
+        video.src = url;
+      });
+    }
+
+    /* A video can only be validated by handing it to a media element, so a
+       throwaway one probes it first. An unsupported file then leaves the loaded
+       clip, its frames and the trim range completely untouched, with no
+       rollback state machine to get wrong; only once the probe accepts it does
+       the player's own element get the same (already parsed) blob URL. */
+    async function loadVideo(file, ticket) {
+      const url = URL.createObjectURL(file);
+      const probe = document.createElement("video");
+      probe.preload = "metadata"; probe.muted = true;
+      setAlert(els.info, `Reading ${file.name}…`);
+      let bad = null;
+      try { await loadMetadata(probe, url, file.name); }
+      catch (e) { bad = e; }
+      finally { probe.removeAttribute("src"); probe.load(); } // release the probe's hold on the blob
+      if (bad) {
+        URL.revokeObjectURL(url);
+        if (!stale(ticket)) { setAlert(els.info, ""); setAlert(els.error, bad.message); }
+        return;
+      }
+      if (stale(ticket)) { URL.revokeObjectURL(url); return; }
+
+      // accepted — hand the same URL to the element the converter samples
+      state.videoReady = false;
+      try { await loadMetadata(els.video, url, file.name); }
+      catch (e) {
+        URL.revokeObjectURL(url);
+        if (stale(ticket)) return;
+        // the element has already been repointed, so there is no previous clip
+        // left to fall back to: settle on a clean "no source" state
+        state.mode = null; state.gif = null; dropVideo();
+        els.videoPanel.classList.add("hidden");
+        setAlert(els.info, ""); setAlert(els.error, e.message);
+        return;
+      }
+      if (stale(ticket)) { URL.revokeObjectURL(url); return; }
+
+      // committed
+      if (state.videoUrl) URL.revokeObjectURL(state.videoUrl); // free the previous clip
+      state.videoUrl = url;
+      state.videoReady = true;
+      state.mode = "video"; state.gif = null;
       els.videoPanel.classList.remove("hidden");
       els.capfpsWrap.classList.remove("hidden");
       if (hasTrim) els.trimWrap.classList.remove("hidden");
-      state.mode = "video"; state.gif = null;
-      if (state.videoUrl) URL.revokeObjectURL(state.videoUrl); // free the previous clip
-      const url = URL.createObjectURL(file);
-      state.videoUrl = url;
-      els.video.src = url;
-      state.videoReady = false;
-      els.video.onloadedmetadata = () => {
-        state.videoReady = true;
-        const w = els.video.videoWidth, h = els.video.videoHeight, dur = els.video.duration;
-        els.meta.textContent = `${w}×${h}, ${dur.toFixed(1)}s`;
-        resetTrim(dur);
-        // nothing is generated yet, so the seek slider scrubs the clip itself
-        state.preview = false; state.frames = []; state.index = 0;
-        configureSeekForSource();
-        const pixels = w * h;
-        let warnMsg = "";
-        if (file.size > WARN_BYTES) warnMsg = `Large file (${(file.size/1048576).toFixed(0)} MB). `;
-        if (pixels > WARN_PIXELS) warnMsg += `High resolution (${w}×${h}). Processing may be slow — a low-res clip is recommended. `;
-        if (!isFinite(dur)) warnMsg += "Unknown duration — stream may not seek reliably. ";
-        if (warnMsg) setAlert(els.warn, warnMsg + "You can still generate, but consider trimming/downscaling first.");
-        else setAlert(els.info, "Video ready. Scrub and press the preview button to check one frame, or “Generate frames” for all.");
-      };
-      els.video.onerror = () => setAlert(els.error, "Could not load this video format in the browser.");
+      const w = els.video.videoWidth, h = els.video.videoHeight, dur = els.video.duration;
+      els.meta.textContent = `${w}×${h}, ${dur.toFixed(1)}s`;
+      resetTrim(dur);
+      // nothing is generated yet, so the seek slider scrubs the clip itself
+      state.preview = false; state.frames = []; state.index = 0;
+      configureSeekForSource();
+      const pixels = w * h;
+      let warnMsg = "";
+      if (file.size > WARN_BYTES) warnMsg = `Large file (${(file.size/1048576).toFixed(0)} MB). `;
+      if (pixels > WARN_PIXELS) warnMsg += `High resolution (${w}×${h}). Processing may be slow — a low-res clip is recommended. `;
+      if (!isFinite(dur)) warnMsg += "Unknown duration — stream may not seek reliably. ";
+      if (warnMsg) {
+        setAlert(els.info, "");
+        setAlert(els.warn, warnMsg + "You can still generate, but consider trimming/downscaling first.");
+      } else {
+        setAlert(els.info, "Video ready. Scrub and press the preview button to check one frame, or “Generate frames” for all.");
+      }
     }
 
     /* ---- video -> frames ---- */
@@ -790,8 +886,10 @@ show(0);
     }
 
     async function generate() {
+      if (busyLoading()) return;
       if (state.mode === "gif") return generateFromGif();
       if (!state.videoReady) { setAlert(els.error, "Load a video or GIF first."); return; }
+      const ticket = loadSeq;   // the source this run belongs to
       stop();
       // clear last run's cap/quality notice — it describes frames that no
       // longer exist, and a stale "N seeks timed out" is worse than silence
@@ -836,6 +934,12 @@ show(0);
       }
       const stopped = genAbort;
       setGenerating(false);
+      if (stale(ticket)) {
+        // A new file was loaded while this ran; these frames belong to a source
+        // that is no longer on screen, and the loader owns the state now.
+        els.progress.textContent = "Conversion cancelled — a new file was loaded.";
+        return;
+      }
       const note = qualityNote(stalls, dropped);
       if (note) setAlert(els.warn, capWarn ? capWarn + " " + note : note);
       const range = full ? "" : ` from ${fmtTime(t0)}–${fmtTime(t1)}`;
@@ -852,8 +956,10 @@ show(0);
     }
 
     async function generateFromGif() {
+      if (busyLoading()) return;
       const gif = state.gif;
       if (!gif) { setAlert(els.error, "Load a GIF first."); return; }
+      const ticket = loadSeq;   // the source this run belongs to
       stop();
       setAlert(els.error, ""); setAlert(els.warn, "");   // as in generate()
       const { opts, useColor } = convertOpts();
@@ -889,6 +995,10 @@ show(0);
       }
       const stopped = genAbort;
       setGenerating(false);
+      if (stale(ticket)) {
+        els.progress.textContent = "Conversion cancelled — a new file was loaded.";
+        return;
+      }
       const note = qualityNote(0, dropped);
       if (note) setAlert(els.warn, capWarn ? capWarn + " " + note : note);
       // playback rate from the GIF's own frame delays (player uses a fixed fps)
