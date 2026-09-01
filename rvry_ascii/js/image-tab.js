@@ -289,10 +289,21 @@
       bg: els.lightcanvas.checked ? "#ffffff" : "#0a0b0d",
       fg: els.lightcanvas.checked ? "#0a0b0d" : "#e9eaec"
     });
-    els.copy.addEventListener("click", () => RVRY.ui.copyText(state.lastText));
-    els.txt.addEventListener("click", () => RVRY.ui.exportTxt(state.lastText, "rvry-image"));
-    els.md.addEventListener("click", () => RVRY.ui.exportMd(state.lastText, "rvry-image"));
+    // The same test exportPng applies, so all five exports agree on what
+    // counts as art. Without it Copy toasted "Copied to clipboard" over an
+    // empty string, and TXT / MD / HTML downloaded empty documents, while the
+    // empty-state message was still on screen. A truthiness test on lastText
+    // (not .trim()) keeps all-space art exportable, as exportPng now does.
+    const haveArt = () => {
+      if (!RVRY.ui.isPlaceholder(els.out) && state.lastText) return true;
+      RVRY.ui.toast("Nothing to export yet");
+      return false;
+    };
+    els.copy.addEventListener("click", () => { if (haveArt()) RVRY.ui.copyText(state.lastText); });
+    els.txt.addEventListener("click", () => { if (haveArt()) RVRY.ui.exportTxt(state.lastText, "rvry-image"); });
+    els.md.addEventListener("click", () => { if (haveArt()) RVRY.ui.exportMd(state.lastText, "rvry-image"); });
     els.html.addEventListener("click", () => {
+      if (!haveArt()) return;
       const o = paint();
       if (els.color.checked && els.out.querySelector("span")) o.html = els.out.innerHTML;
       RVRY.ui.exportHtml(state.lastText, o);

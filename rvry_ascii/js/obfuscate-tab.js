@@ -179,7 +179,20 @@ for i in range(1, 5):
     els.text.addEventListener("input", rerender);
     els.repeat.addEventListener("change", rerender);
 
-    const FREE_HINT = "Only spaces & line breaks are inserted between tokens, so whitespace-tolerant code (JS, C, Java…) keeps running. Indentation-sensitive code (Python) is not preserved.";
+    /* This mode reflows the text verbatim, so the shape is readable — but it
+       splits on whitespace and separates tokens with spaces AND LINE BREAKS,
+       and that is not safe for real source in general:
+         - JavaScript has automatic semicolon insertion, so a line break landing
+           after `return` / `throw` / `break` / `continue` / `yield` silently
+           changes the program. The old sample here reflowed to
+           "function fib(n){ return \n n < 2 ? …" and quietly returned undefined.
+         - a line comment (// or #) swallows every token placed after it on the
+           same output row;
+         - a string literal containing a space is split across two tokens and a
+           line break can land between them, leaving it unterminated.
+       Use the Python mode when the program has to RUN; this mode is for making
+       text into a shape. */
+    const FREE_HINT = "Reflows your text verbatim into the shape — spaces and line breaks are inserted between whitespace-separated tokens. Good for prose and for code you want to be readable. It does NOT guarantee the code still runs: line comments (// #), string literals containing spaces, and JavaScript's automatic semicolon insertion (a break after `return`) will change or break it. Use Python mode for code that must run.";
     const PY_HINT = "Python is wrapped as exec(bytes.fromhex(…).decode()): the program is hex-encoded and the chunks form the shape. It runs unchanged on Python 3 — as long as the whole thing fits the shape.";
     function syncLang(swapSample) {
       const python = els.lang.value === "python";
@@ -214,10 +227,20 @@ for i in range(1, 5):
       bg: els.lightcanvas.checked ? "#ffffff" : "#0a0b0d",
       fg: els.lightcanvas.checked ? "#0a0b0d" : "#e9eaec"
     });
-    els.copy.addEventListener("click", () => RVRY.ui.copyText(state.lastText));
-    els.txt.addEventListener("click", () => RVRY.ui.exportTxt(state.lastText, "rvry-codeart"));
-    els.md.addEventListener("click", () => RVRY.ui.exportMd(state.lastText, "rvry-codeart"));
-    els.html.addEventListener("click", () => RVRY.ui.exportHtml(state.lastText, paint()));
+    // The same test exportPng applies, so all five exports agree on what
+    // counts as art. Without it Copy toasted "Copied to clipboard" over an
+    // empty string, and TXT / MD / HTML downloaded empty documents, while the
+    // empty-state message was still on screen. A truthiness test on lastText
+    // (not .trim()) keeps all-space art exportable, as exportPng now does.
+    const haveArt = () => {
+      if (!RVRY.ui.isPlaceholder(els.out) && state.lastText) return true;
+      RVRY.ui.toast("Nothing to export yet");
+      return false;
+    };
+    els.copy.addEventListener("click", () => { if (haveArt()) RVRY.ui.copyText(state.lastText); });
+    els.txt.addEventListener("click", () => { if (haveArt()) RVRY.ui.exportTxt(state.lastText, "rvry-codeart"); });
+    els.md.addEventListener("click", () => { if (haveArt()) RVRY.ui.exportMd(state.lastText, "rvry-codeart"); });
+    els.html.addEventListener("click", () => { if (haveArt()) RVRY.ui.exportHtml(state.lastText, paint()); });
     els.png.addEventListener("click", () => RVRY.ui.exportPng(els.out, paint()));
 
     RVRY.wirePreview(els.font, els.fontsize, els.lightcanvas, els.out, els.stage);

@@ -113,15 +113,31 @@
      preview and in the PNG/GIF/.ans exports, while stripAnsi() removed them
      from .text. Applied once in parseAnsiFile so both views are always built
      from identical input and cannot drift apart. */
+  /* ONE pattern for both passes below, so they can never classify a sequence
+     differently. That matters more than it looks: html is built from what
+     stripNonSgr keeps and text from what stripAnsi removes, and downstream
+     frameMetrics sizes the GIF/PNG grid from `text` while drawFrame rasterises
+     `html` — any drift between the two silently misaligns every export.
+     A CSI sequence is ESC [ , parameter bytes 0x30-0x3F, intermediate bytes
+     0x20-0x2F, then one final byte 0x40-0x7E (ECMA-48). The old pattern
+     allowed only [0-9;?] as parameters, so anything carrying a private marker
+     or an intermediate did not match AT ALL and survived whole into both
+     views: ESC[>4;1m (xterm modifyOtherKeys), ESC[>c, ESC[=3h and the colon
+     sub-parameter colour form all showed up as literal ">4;1m" / "=3h" in the
+     preview and in every export. Terminal recorders emit them routinely. */
+  const CSI_RE = /\x1b\[([\x30-\x3F]*)([\x20-\x2F]*)([\x40-\x7E])/g;
+  // Real SGR only: no private marker (<=>?), no intermediates, no colon
+  // sub-parameters — ansiToHtml splits on ";" and parseInt would misread those.
+  const isSgr = (params, inter, final) =>
+    final === "m" && inter === "" && /^[0-9;]*$/.test(params);
   function stripNonSgr(text) {
     return text
-      .replace(/\x1b\[([0-9;?]*)([A-Za-z])/g,
-        (seq, params, final) => (final === "m" && params.indexOf("?") < 0 ? seq : ""))
+      .replace(CSI_RE, (seq, params, inter, final) => (isSgr(params, inter, final) ? seq : ""))
       .replace(/\x1b[()][A-Za-z0-9]/g, "");
   }
   // strip all escape sequences -> plain text
   function stripAnsi(text) {
-    return text.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "").replace(/\x1b[()][A-Za-z0-9]/g, "");
+    return text.replace(CSI_RE, "").replace(/\x1b[()][A-Za-z0-9]/g, "");
   }
   function parseAnsiFile(text) {
     // Split into frames on clear-screen / form-feed markers.

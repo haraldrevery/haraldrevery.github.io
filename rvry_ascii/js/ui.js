@@ -158,7 +158,12 @@
     const font = opts.font || "monospace";
     const bg = opts.bg || "#0a0b0d";
     const fg = opts.fg || "#e9eaec";
-    if (isPlaceholder(preEl) || !(preEl.textContent || "").trim()) {
+    // Only an empty-state message, or genuinely empty output, is "nothing".
+    // Testing .trim() here also rejected art made entirely of SPACES — a
+    // fade-to-black player frame, or any ramp whose light end is blank — which
+    // showArt() has already recorded as real art. isPlaceholder is the
+    // authoritative test; every write to a preview <pre> goes through it.
+    if (isPlaceholder(preEl) || !(preEl.textContent || "")) {
       toast("Nothing to export yet"); return;
     }
 
@@ -186,14 +191,37 @@
      exportPng. Transparent background (no bg fill) — the stage supplies it,
      exactly like the DOM preview did. Backing store is devicePixelRatio-
      scaled for crisp glyphs, stepped down if the canvas would get huge. ---- */
+  // Beyond these a browser refuses the backing store outright. The side limit
+  // is the one this function already used; the area limit is well under both
+  // Firefox's (~125M px) and Chrome's, and above any grid that renders today.
+  const CANVAS_MAX_SIDE = 10000, CANVAS_MAX_AREA = 80 * 1000 * 1000;
+  const overCanvasLimit = (m) =>
+    m.W > CANVAS_MAX_SIDE || m.H > CANVAS_MAX_SIDE || m.W * m.H > CANVAS_MAX_AREA;
+
   function paintPreview(preEl, canvas, o) {
     const { cols, rows } = textDims(preEl);
     let dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
     let m = gridMetrics(o.font, o.fontSize * dpr, cols, rows, 0);
-    while ((m.W > 10000 || m.H > 10000) && dpr > 1) {
+    while (overCanvasLimit(m) && dpr > 1) {
       dpr = Math.max(1, dpr - 0.5);
       m = gridMetrics(o.font, o.fontSize * dpr, cols, rows, 0);
     }
+    // The step-down above stops at 1:1, so on a devicePixelRatio-1 display a
+    // tall grid still asks for whatever the glyph count demands — 400 cols x
+    // 4320 rows at font size 40 is 8347x172800, reachable from the sliders
+    // alone. The browser then rejects the backing store and every draw
+    // silently no-ops; because the <pre> is display:none, the preview simply
+    // went blank with no error anywhere. Hand the job back to the <pre>: it is
+    // the text source of truth already (exports and fit-to-width read it) and
+    // it has no size ceiling. Only the fixed-grid crispness is lost, and only
+    // at sizes no canvas could have drawn at all.
+    if (overCanvasLimit(m)) {
+      canvas.style.display = "none";        // inline: .ascii-canvas sets display
+      preEl.classList.remove("has-canvas");
+      return;
+    }
+    canvas.style.display = "";
+    preEl.classList.add("has-canvas");
     canvas.width = m.W; canvas.height = m.H;
     canvas.style.width = (m.W / dpr) + "px";
     canvas.style.height = (m.H / dpr) + "px";

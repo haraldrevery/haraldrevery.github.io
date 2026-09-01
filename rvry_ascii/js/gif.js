@@ -58,7 +58,12 @@
       const inCode = code;
       let sp = 0;
       if (code >= avail) { stack[sp++] = first; code = oldCode; } // KwKwK case
-      while (code >= clear) { stack[sp++] = suffix[code]; code = prefix[code]; }
+      // A corrupt stream can make the prefix chain cyclic, and out-of-range
+      // Uint8Array writes fail silently, so nothing would ever stop it — the
+      // tab just hangs. A valid chain is always shorter than the table, so
+      // this bound can only ever trip on corrupt input.
+      while (code >= clear && sp < stack.length) { stack[sp++] = suffix[code]; code = prefix[code]; }
+      if (sp >= stack.length) break;          // corrupt — stop with what we have
       first = suffix[code];
       stack[sp++] = first;
 
