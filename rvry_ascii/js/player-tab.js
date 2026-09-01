@@ -268,6 +268,8 @@ show(0);
       width: $("ply-width"), widthV: $("ply-width-v"),
       ratio: $("ply-ratio"), ratioV: $("ply-ratio-v"), ratioFit: $("ply-ratio-fit"),
       capfps: $("ply-capfps"), capfpsV: $("ply-capfps-v"), capfpsWrap: $("ply-capfps-wrap"),
+      trimWrap: $("ply-trim-wrap"), trimIn: $("ply-trim-in"), trimOut: $("ply-trim-out"),
+      trimV: $("ply-trim-v"), trimHint: $("ply-trim-hint"),
       preset: $("ply-preset"), color: $("ply-color"), invert: $("ply-invert"),
       generate: $("ply-generate"), progress: $("ply-progress"),
       fps: $("ply-fps"), fpsV: $("ply-fps-v"),
@@ -317,6 +319,74 @@ show(0);
       els.generate.classList.toggle("primary", !on);
       els.generate.classList.toggle("ghost", on);
     }
+
+    /* ---- trim range ----
+       The point of a raised frame ceiling is usually a SECTION of a long
+       clip, not all of it. The two sliders span the video's duration; they
+       are kept at least one capture interval apart so a run always has at
+       least one frame, and they reset to the full clip on every new file. */
+    const MIN_SPAN = 0.05;
+    // largest value a range input can actually hold: min + n*step, <= max
+    function gridMax(el, fallback) {
+      const mn = +el.min || 0, st = +el.step || 1, mx = +el.max || fallback;
+      if (!(st > 0)) return mx;
+      return mn + Math.floor((mx - mn) / st + 1e-9) * st;
+    }
+    function fmtTime(t) {
+      if (!isFinite(t)) return "?";
+      const m = Math.floor(t / 60), sec = t - m * 60;
+      return `${m}:${(sec < 10 ? "0" : "")}${sec.toFixed(1)}`;
+    }
+    // the selected [in, out) window, clamped and ordered
+    function trimRange() {
+      const dur = isFinite(els.video.duration) ? els.video.duration : 0;
+      if (!dur) return { t0: 0, t1: 0, span: 0, dur: 0, full: true };
+      let t0 = Math.max(0, Math.min(dur, +els.trimIn.value || 0));
+      let t1 = Math.max(0, Math.min(dur, +els.trimOut.value || 0));
+      if (t1 < t0) { const tmp = t0; t0 = t1; t1 = tmp; }
+      // A range input clamps its VALUE to the step grid, so the handle at its
+      // far right reads back as the largest grid point at or below max — up
+      // to a whole step short of the real duration. Compare against that grid
+      // point, not max, or "untouched sliders" never registers as the whole
+      // clip and the tail is quietly dropped.
+      if (t1 >= gridMax(els.trimOut, dur) - 1e-6) t1 = dur;
+      if (t0 <= (+els.trimIn.min || 0) + 1e-6) t0 = 0;
+      if (t1 - t0 < MIN_SPAN) t1 = Math.min(dur, t0 + MIN_SPAN);
+      return { t0, t1, span: t1 - t0, dur, full: t0 <= 0 && t1 >= dur - 1e-6 };
+    }
+    function resetTrim(dur) {
+      const usable = isFinite(dur) && dur > 0;
+      els.trimWrap.classList.toggle("hidden", !usable);
+      if (!usable) return;
+      for (const el of [els.trimIn, els.trimOut]) {
+        el.min = 0; el.max = dur;
+        el.step = dur > 600 ? 0.5 : dur > 60 ? 0.1 : 0.01;
+      }
+      els.trimIn.value = 0; els.trimOut.value = dur;
+      refreshTrim();
+    }
+    function refreshTrim() {
+      const r = trimRange();
+      if (!r.dur) { els.trimV.textContent = "whole clip"; return; }
+      els.trimV.textContent = r.full
+        ? `whole clip (${fmtTime(r.dur)})`
+        : `${fmtTime(r.t0)} → ${fmtTime(r.t1)}  (${r.span.toFixed(1)}s)`;
+      const capfps = Math.max(1, +els.capfps.value);
+      const n = Math.max(1, Math.floor(r.span * capfps));
+      els.trimHint.textContent =
+        `≈${n} frame${n === 1 ? "" : "s"} at ${capfps} fps capture.` +
+        (r.full ? " Drag to convert only part of the clip." : "");
+    }
+    // keep the handles from crossing, then repaint the readout
+    els.trimIn.addEventListener("input", () => {
+      if (+els.trimIn.value > +els.trimOut.value) els.trimOut.value = els.trimIn.value;
+      refreshTrim();
+    });
+    els.trimOut.addEventListener("input", () => {
+      if (+els.trimOut.value < +els.trimIn.value) els.trimIn.value = els.trimOut.value;
+      refreshTrim();
+    });
+    els.capfps.addEventListener("input", refreshTrim);
 
     /* ---- frame display ---- */
     function showFrame(i) {
@@ -404,6 +474,7 @@ show(0);
     async function loadGif(file) {
       els.videoPanel.classList.remove("hidden");
       els.capfpsWrap.classList.add("hidden"); // GIF frames keep their own timing
+      els.trimWrap.classList.add("hidden");   // no timeline to trim against
       state.mode = "gif"; state.gif = null; dropVideo();
       try {
         const buf = await file.arrayBuffer();
@@ -436,6 +507,7 @@ show(0);
     function loadVideo(file) {
       els.videoPanel.classList.remove("hidden");
       els.capfpsWrap.classList.remove("hidden");
+      els.trimWrap.classList.remove("hidden");
       state.mode = "video"; state.gif = null;
       if (state.videoUrl) URL.revokeObjectURL(state.videoUrl); // free the previous clip
       const url = URL.createObjectURL(file);
@@ -446,6 +518,7 @@ show(0);
         state.videoReady = true;
         const w = els.video.videoWidth, h = els.video.videoHeight, dur = els.video.duration;
         els.meta.textContent = `${w}×${h}, ${dur.toFixed(1)}s`;
+        resetTrim(dur);
         const pixels = w * h;
         let warnMsg = "";
         if (file.size > WARN_BYTES) warnMsg = `Large file (${(file.size/1048576).toFixed(0)} MB). `;
@@ -458,27 +531,46 @@ show(0);
     }
 
     /* ---- video -> frames ---- */
+    /* Resolves true when the seek timed out instead of completing. The
+       timeout does not cancel the seek — generation carries on and grabs
+       whatever the element is currently showing, which is the PREVIOUS
+       frame's image. That silent duplication was invisible before; long
+       runs make it likely enough that the count has to be reported.
+       (The 3s wait is deliberately not shortened: a shorter one would not
+       make seeks finish faster, it would only produce more duplicates.) */
+    const SEEK_TIMEOUT_MS = 3000;
     function seekTo(t) {
       const v = els.video;
       return new Promise((resolve) => {
         let done = false, to = null;
-        const finish = () => {
+        const finish = (stalled) => {
           if (done) return; done = true;
           if (to) clearTimeout(to);
-          v.removeEventListener("seeked", finish);
-          resolve();
+          v.removeEventListener("seeked", onSeeked);
+          resolve(stalled === true);
         };
+        const onSeeked = () => finish(false);
         // Assigning currentTime to (almost) its existing value does not emit a
         // "seeked" event, which would hang generation on e.g. frame 0 at t=0.
         // Resolve on the next frame instead, and keep a timeout as a safety net.
         if (Math.abs(v.currentTime - t) < 1e-3 && v.readyState >= 2) {
-          requestAnimationFrame(finish);
+          requestAnimationFrame(() => finish(false));
           return;
         }
-        v.addEventListener("seeked", finish);
-        to = setTimeout(finish, 3000);
+        v.addEventListener("seeked", onSeeked);
+        to = setTimeout(() => finish(true), SEEK_TIMEOUT_MS);
         v.currentTime = t;
       });
+    }
+    /* "3 seeks timed out…" — what the user needs to know about a run whose
+       frames are not all what they asked for. */
+    function qualityNote(stalls, dropped) {
+      const n = [];
+      if (stalls) n.push(`${stalls} seek${stalls === 1 ? "" : "s"} timed out — ` +
+        `${stalls === 1 ? "that frame" : "those frames"} may repeat the previous image.`);
+      if (dropped) n.push(`${dropped} frame${dropped === 1 ? "" : "s"} could not be ` +
+        `sampled and ${dropped === 1 ? "was" : "were"} skipped.`);
+      return n.join(" ");
     }
 
     function convertOpts() {
@@ -506,35 +598,42 @@ show(0);
       if (state.mode === "gif") return generateFromGif();
       if (!state.videoReady) { setAlert(els.error, "Load a video or GIF first."); return; }
       stop();
-      setAlert(els.error, "");
+      // clear last run's cap/quality notice — it describes frames that no
+      // longer exist, and a stale "N seeks timed out" is worse than silence
+      setAlert(els.error, ""); setAlert(els.warn, "");
       const capfps = Math.max(1, +els.capfps.value);
       const dur = isFinite(els.video.duration) ? els.video.duration : 0;
       if (!dur) { setAlert(els.error, "Cannot determine duration; this video isn't seekable."); return; }
-      let count = Math.max(1, Math.floor(dur * capfps)); // ≥1 even for sub-interval clips
+      // convert only the selected section (the whole clip by default)
+      const { t0, t1, span, full } = trimRange();
+      let count = Math.max(1, Math.floor(span * capfps)); // ≥1 even for sub-interval spans
       let step = 1 / capfps;
       const { opts, useColor } = convertOpts();
       const frames = [];
+      let stalls = 0, dropped = 0;   // silently degraded frames, reported below
       setGenerating(true);
-      // Frame 0 sits at t=0 under any step, so it can be captured before the
-      // budget is known and then used to measure it. Only after that does the
-      // count get trimmed — which keeps cheap settings from paying the price
-      // of the most expensive ones.
+      // Frame 0 sits at the range's start under any step, so it can be
+      // captured before the budget is known and then used to measure it. Only
+      // after that does the count get trimmed — which keeps cheap settings
+      // from paying the price of the most expensive ones.
       els.progress.textContent = `Generating… 1 / ${count}`;
-      await seekTo(0);
+      if (await seekTo(t0)) stalls++;
       const first = frameFromSource(els.video, opts, useColor);
-      if (first) frames.push(first);
+      if (first) frames.push(first); else dropped++;
       const cap = framesThatFit(first);
+      let capWarn = "";
       if (count > cap) {
-        count = cap; step = dur / count;
-        setAlert(els.warn, `Capped to ${cap} frames to stay within memory` +
+        count = cap; step = span / count;
+        capWarn = `Capped to ${cap} frames to stay within memory` +
           `${costNote(first)}. Effective FPS reduced — a narrower width, or ` +
-          `color off, allows more frames.`);
+          `color off, allows more frames.`;
+        setAlert(els.warn, capWarn);
       }
       for (let i = 1; i < count; i++) {
         if (genAbort) break;
-        await seekTo(Math.min(dur - 0.001, i * step));
+        if (await seekTo(Math.min(t1 - 0.001, t0 + i * step))) stalls++;
         const f = frameFromSource(els.video, opts, useColor);
-        if (f) frames.push(f);
+        if (f) frames.push(f); else dropped++;
         if (i % 3 === 0 || i === count - 1) {
           els.progress.textContent = `Generating… ${i + 1} / ${count}`;
           await new Promise((r) => setTimeout(r, 0)); // yield to UI
@@ -542,9 +641,12 @@ show(0);
       }
       const stopped = genAbort;
       setGenerating(false);
+      const note = qualityNote(stalls, dropped);
+      if (note) setAlert(els.warn, capWarn ? capWarn + " " + note : note);
+      const range = full ? "" : ` from ${fmtTime(t0)}–${fmtTime(t1)}`;
       els.progress.textContent = stopped
-        ? `Stopped — kept ${frames.length} of ${count} frames.`
-        : `Done — ${frames.length} frames @ ${capfps} fps capture.`;
+        ? `Stopped — kept ${frames.length} of ${count} frames${range}.`
+        : `Done — ${frames.length} frames${range} @ ${capfps} fps capture.`;
       // real input event so the readout repaints and the value persists
       els.fps.value = Math.min(30, capfps);
       els.fps.dispatchEvent(new Event("input", { bubbles: true }));
@@ -558,30 +660,31 @@ show(0);
       const gif = state.gif;
       if (!gif) { setAlert(els.error, "Load a GIF first."); return; }
       stop();
-      setAlert(els.error, "");
+      setAlert(els.error, ""); setAlert(els.warn, "");   // as in generate()
       const { opts, useColor } = convertOpts();
       const cv = document.createElement("canvas");
       cv.width = gif.width; cv.height = gif.height;
       const ctx = cv.getContext("2d");
       const frames = [];
-      let totalMs = 0;
+      let totalMs = 0, dropped = 0;   // GIF frames never seek, but can still fail to sample
       setGenerating(true);
       // limit starts at the whole GIF and is trimmed once frame 0 has been
       // converted and its real cost is known
-      let limit = gif.frames.length;
+      let limit = gif.frames.length, capWarn = "";
       for (let i = 0; i < limit; i++) {
         if (genAbort) break;
         const gf = gif.frames[i];
         ctx.putImageData(new ImageData(gf.data, gif.width, gif.height), 0, 0);
         const f = frameFromSource(cv, opts, useColor);
-        if (f) { frames.push(f); totalMs += gf.delayMs; }
+        if (f) { frames.push(f); totalMs += gf.delayMs; } else dropped++;
         if (i === 0) {
           const cap = framesThatFit(f);
           if (limit > cap) {
             limit = cap;
-            setAlert(els.warn, `Converting the first ${cap} of ${gif.frames.length} ` +
+            capWarn = `Converting the first ${cap} of ${gif.frames.length} ` +
               `frames to stay within memory${costNote(f)}. A narrower width, or ` +
-              `color off, allows more frames.`);
+              `color off, allows more frames.`;
+            setAlert(els.warn, capWarn);
           }
         }
         if (i % 5 === 0 || i === limit - 1) {
@@ -591,6 +694,8 @@ show(0);
       }
       const stopped = genAbort;
       setGenerating(false);
+      const note = qualityNote(0, dropped);
+      if (note) setAlert(els.warn, capWarn ? capWarn + " " + note : note);
       // playback rate from the GIF's own frame delays (player uses a fixed fps)
       const avg = frames.length ? totalMs / frames.length : 100;
       const fps = Math.max(1, Math.min(30, Math.round(1000 / avg)));

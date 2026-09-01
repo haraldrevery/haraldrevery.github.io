@@ -374,6 +374,14 @@ console.log(seq.join(", "));</textarea>
               <label for="ply-capfps">Capture FPS <span class="val" id="ply-capfps-v">12</span></label>
               <input type="range" id="ply-capfps" min="2" max="30" step="1" value="12" />
             </div>
+            <div class="field hidden" id="ply-trim-wrap">
+              <label for="ply-trim-in">Trim <span class="val" id="ply-trim-v">whole clip</span></label>
+              <input type="range" id="ply-trim-in" min="0" max="100" step="0.1" value="0"
+                     title="Start of the section to convert" />
+              <input type="range" id="ply-trim-out" min="0" max="100" step="0.1" value="100"
+                     title="End of the section to convert" style="margin-top:.3rem" />
+              <div class="hint" id="ply-trim-hint">Convert only part of the clip.</div>
+            </div>
             <div class="field">
               <label for="ply-preset">Character set</label>
               <select id="ply-preset"></select>
