@@ -410,9 +410,16 @@ select, input[type="text"], input[type="number"], textarea {
 }
 input[type="number"] { width: auto; min-width: 5ch; }
 textarea { resize: vertical; min-height: 90px; line-height: 1.4; }
-select:focus, input:focus, textarea:focus {
-  outline: none; border-color: var(--ink);
-}
+select:focus, input:focus, textarea:focus { border-color: var(--ink); }
+/* Drop the UA ring for POINTER focus only. This rule (0,1,1) outranks the
+   :focus-visible outline above (0,1,0) and sits after it, so an unscoped
+   `outline: none` here won for every keyboard focus too — and the
+   border-color that was meant to compensate does nothing on a range input,
+   whose border-width is 0. The app is driven almost entirely by sliders, so
+   that left tabbing through it with no visible focus at all. */
+select:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible) { outline: none; }
 select:hover, input[type="text"]:hover, textarea:hover { border-color: var(--ink-3); }
 
 .row { display: flex; gap: 0.5rem; align-items: center; }
