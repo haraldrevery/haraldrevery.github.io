@@ -63,6 +63,21 @@ Here are some of the apps I have made:
 
 In the end of the day, you have to make the choice between trusting a group of strangers code or some LLM generated code (that was trained on these strangers work...). Judging at the state of modern software, I'm willing to trust the "AI slop" now. Just keep a bunch of backups of your work and don't "YOLO code" or "one shot prompt" too many features, make the apps import/export files rather than opening and editing them, then it should *mostly* be fine. 
 
+### Offline computers and propaganda/advertisement
+
+As mentioned, the last couple of decades there has been a massive push to store everything digitally, but in addition to that, there has also been a push towards "cloud" computing, which just mean sending of your data to be processed and stored on someone else's computer. The reason for this are many: forcing subscriptions on you (a monthly/annual "subscription" a.k.a a ransom fee) and a much easier way to monitor you (surveillance) logistically.
+
+One project I have been working on is to have an operational offline computer. This is not only due to paranoia as many might think, but simply to force yourself to not be dependent on the Internet. With the Internet, it's easy to access information, but it can also influence you in a negative way, that you become too dependent on the online consensus when doing anything. 
+
+The simplest way to avoid being exposed to such a negative effect is to not be exposed to it in the first place, you simply just go offline. 
+
+> You having access to the Internet gives you access to information for your mind, but you also risk the Internet having access to your mind.
+
+Looking at mobile interfaces, it feels like modern phone devices are more designed to have *access to your information* rather than *you having access to information*. Propaganda simply works by exposing you through visuals and audio constantly, even if you know how to spot propaganda/advertisement, it still wears you down mentally and demoralizes by just being in your presence. One such attack vector to influence you is through your computer screen.
+
+To avoid being exposed by subversive ideas (through visuals and audio) is to at least reduce it on your screen, which where the self made apps comes into the pictures. Having your own custom software with no propaganda flash-screen, distracting UI made for corporate settings busy work and only-online features, mitigates the risks of foreign influences when interacting with a computer. 
+
+Having an offline computer and custom made apps adds a some friction between the Internet noise and your own thoughts, which I believe is healthy. Having a physical device change when you want collaborations, access to alternative views and new information or to just allow your own mind to process information in assistance with a simpler computer is the best compromise currently available. LLMs makes this accessible and easier to set up such a system.
 
 ---
 
