@@ -330,6 +330,108 @@
     font-family: var(--font-brand);
   }
 
+/* ===================================
+   Justified image grid
+   ===================================
+   A run of 2+ adjacent images in a markdown post is collapsed into
+   <div class="rvry-grid"> by the rvry_image_grid rule in eleventy.config.js.
+
+   Zero JS. Each item carries only its intrinsic aspect ratio as --ar; every
+   sizing knob lives here. flex-grow IS that ratio, so all items in a row
+   resolve to the SAME height and rows justify exactly rather than
+   approximately. Nothing is cropped: aspect-ratio sets each box's height.
+
+   The split matters because the article column is resized at runtime by
+   --reading-scale (down to 18%, see javascript/reading_width.js). This grid
+   reflows on intrinsic sizing alone, where a media query - which only ever
+   sees the viewport, not the column - could not react at all.
+
+   Kept in step with the "justified" layout of the page builder's Gallery
+   block (page_builder_app_v2/src/puck/components/Gallery.tsx, justifiedStyle).
+   Change one, change both. */
+
+.prose .rvry-grid {
+  /* Packing height. Lower = more images per row. Items grow past it to fill
+     the row, so this is a target, not a fixed height. */
+  --rvry-grid-row: 180px;
+  /* Cap, so the last row's lone image can't balloon to full column width. */
+  --rvry-grid-max: 600px;
+  --rvry-grid-gap: 0.5rem;
+
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rvry-grid-gap);
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+.prose .rvry-grid-item {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background-color: var(--color-neutral-100);
+  aspect-ratio: var(--ar);
+  /* x100 because flexbox only hands out Sum(grow) of the free space when that
+     sum is < 1 - a row whose ratios total under 1 (a lone portrait) would
+     otherwise never fill its width. Scaling every factor by the same constant
+     leaves each item's share (g/Sum(g)) untouched. */
+  flex-grow: calc(var(--ar) * 100);
+  flex-shrink: 1;
+  flex-basis: calc(var(--ar) * var(--rvry-grid-row));
+  /* The cap must be on WIDTH, not height. A max-height caps the height while
+     flex-grow keeps widening the box, and CSS max-constraints override
+     aspect-ratio - so the box goes wider than the photo and object-fit crops
+     it. Capping width triggers on exactly the same condition but lets
+     aspect-ratio set the height, so nothing is ever cropped. */
+  max-width: calc(var(--ar) * var(--rvry-grid-max));
+  min-width: 0;
+  transition: filter 0.4s ease, box-shadow 0.4s ease;
+}
+
+/* Beats the generic ".prose img" above: without this its 2rem block margins
+   would push every item off its row, and height:auto would defeat the flex
+   box's aspect-ratio, collapsing the grid. */
+.prose .rvry-grid-item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+  object-fit: cover;
+}
+
+.prose .rvry-grid-item:hover,
+.prose .rvry-grid-item:focus-visible {
+  filter: brightness(1.06);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.18);
+}
+
+@media (prefers-color-scheme: dark) {
+  .prose .rvry-grid-item {
+    background-color: var(--color-neutral-800);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prose .rvry-grid-item { transition: none; }
+}
+
+/* aspect-ratio fallback (iOS < 15), matching the one in input.css. Without it
+   the flex item would have no height at all and "img { height: 100% }" would
+   render nothing, so drop the whole grid back to plain stacked images. */
+@supports not (aspect-ratio: 1) {
+  .prose .rvry-grid { display: block; }
+  .prose .rvry-grid-item {
+    max-width: 100%;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+  }
+  .prose .rvry-grid-item img { height: auto; }
+}
+
+
   /* För bildtexter (om du använder dem) */
   .prose figcaption {
     text-align: center;

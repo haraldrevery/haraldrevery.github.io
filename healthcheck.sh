@@ -224,6 +224,15 @@ while IFS=$'\t' read -r f line url; do
     clean=${clean%%\?*}        # drop ?query
     [ -z "$clean" ] && continue
 
+    # Percent-decode before comparing against the disk. markdown-it encodes every
+    # non-ASCII character in a link, so a real file named "snohetta.jpg" with an
+    # o-slash arrives here as "sn%C3%B8hetta.jpg" and reported as missing. The
+    # encoded URL is correct and stays in the HTML; only this lookup decodes it.
+    case $clean in
+        *%[0-9A-Fa-f][0-9A-Fa-f]*)
+            clean=$(printf '%b' "$(printf '%s' "$clean" | sed 's/%\([0-9A-Fa-f][0-9A-Fa-f]\)/\\x\1/g')") ;;
+    esac
+
     if [ "${clean#/}" != "$clean" ]; then
         path=".${clean}"                   # site-absolute
     else

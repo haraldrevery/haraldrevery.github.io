@@ -141,6 +141,17 @@ const readImageSize = (buf) => {
 // absolute URL plus its intrinsic size, for og:image / JSON-LD ImageObject.
 // Memoised because every post asks for the same handful of files. A missing or
 // unreadable file yields url-only, so a typo degrades instead of failing a build.
+// A URL path is not a file path: markdown-it percent-encodes every non-ASCII
+// character in a link, so "/photos/.../snøhetta.jpg" reaches us as
+// "sn%C3%B8hetta.jpg" and no fs call would ever find it. Decode before touching
+// the disk, never for the emitted href - the encoded form is the correct URL.
+// Malformed escapes decode to themselves rather than throwing.
+const fsPath = (rel) => {
+  let out = rel;
+  try { out = decodeURIComponent(rel); } catch (e) { /* keep the raw form */ }
+  return path.join(".", out.replace(/^\/+/, ""));
+};
+
 const imageMetaCache = new Map();
 const imageMeta = (src) => {
   const rel = String(src == null ? "" : src).trim();
@@ -149,7 +160,7 @@ const imageMeta = (src) => {
   const meta = { url: /^https?:\/\//.test(rel) ? rel : SITE_ORIGIN + rel };
   if (!/^https?:\/\//.test(rel)) {
     try {
-      const fd = fs.openSync(path.join(".", rel.replace(/^\/+/, "")), "r");
+      const fd = fs.openSync(fsPath(rel), "r");
       try {
         // 64 KB is well past the SOF marker of every image on this site.
         const buf = Buffer.alloc(65536);
@@ -161,6 +172,141 @@ const imageMeta = (src) => {
   }
   imageMetaCache.set(rel, meta);
   return meta;
+};
+
+// --- Justified image grids in markdown posts -----------------------------
+// A run of two or more adjacent images in a post body renders as a justified
+// (Flickr/Behance) grid instead of stacked full-width figures. The layout is the
+// algorithm from the page builder's Gallery block
+// (page_builder_app_v2/src/puck/components/Gallery.tsx, justifiedStyle): flex
+// wrapping plus a flex-grow proportional to each image's aspect ratio, so every
+// item in a row resolves to the SAME height and rows come out exactly justified,
+// with no JS and no cropping. Move one, move both, or the two galleries diverge.
+//
+// The only per-image fact in the emitted HTML is --ar, the intrinsic aspect
+// ratio; every sizing knob lives in .rvry-grid in input_prose.css. That split
+// matters because the article column is resizable at runtime (--reading-scale,
+// down to 18% - see javascript/reading_width.js): the grid reflows on intrinsic
+// sizing alone, where a media query, which only ever sees the viewport, could not.
+
+// The page builder's "_min" thumbnail convention: <a href> is the full-size
+// image, <img src> the _min file when one exists on disk. Memoised because a
+// build asks about the same handful of photos on every page that links them.
+const thumbCache = new Map();
+const thumbFor = (src) => {
+  if (thumbCache.has(src)) return thumbCache.get(src);
+  let out = src;
+  // Root-relative paths only: a remote URL has no local file to stat, and a
+  // relative one has no stable base to resolve against.
+  const m = /^(\/[^?#]*)(\.[a-z0-9]+)$/i.exec(src);
+  if (m) {
+    const min = m[1] + "_min" + m[2];
+    try {
+      if (fs.statSync(fsPath(min)).isFile()) out = min;
+    } catch (e) { /* no thumbnail - serve the full-size file */ }
+  }
+  thumbCache.set(src, out);
+  return out;
+};
+
+// Mirrors glightboxCaption() in page_builder_app_v2/src/puck/shared.ts.
+// GLightbox parses data-glightbox as a ";"-separated list of "key: value" pairs,
+// so a ";" or ":" in the text would silently split it into bogus fields.
+const glightboxCaption = (title, desc) => {
+  const clean = (s) => String(s || "").replace(/;/g, ",").replace(/:/g, " -").trim();
+  return `title: ${clean(title)}; description: ${clean(desc)}`;
+};
+
+const escAttr = (s) => String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+// Rewrites runs of adjacent images into a single grid token. Installed as the
+// LAST core rule so markdown-it-attrs, linkify and texmath have all had their
+// turn on the token stream before we collapse anything.
+const imageGridPlugin = (md) => {
+  // An inline token is "images only" when it holds nothing but images and
+  // whitespace - a softbreak (one image on the line below another) or the empty
+  // text nodes markdown-it leaves between them. Anything else (a stray word, a
+  // link) means the author wrote a sentence containing images, not a gallery.
+  const imagesOf = (inline) => {
+    const imgs = [];
+    for (const t of inline.children || []) {
+      if (t.type === "image") { imgs.push(t); continue; }
+      if (t.type === "softbreak" || t.type === "hardbreak") continue;
+      if (t.type === "text" && !t.content.trim()) continue;
+      return null;
+    }
+    return imgs.length ? imgs : null;
+  };
+
+  md.core.ruler.push("rvry_image_grid", (state) => {
+    const toks = state.tokens;
+    // Per-document counter, so the committed notebook_pages/*.html is byte-stable:
+    // a module-level counter would keep climbing across the dev server's
+    // incremental rebuilds and produce a phantom git diff on every save.
+    let gridIndex = 0;
+    for (let i = 0; i < toks.length; i++) {
+      // Top-level paragraphs only. level > 0 means the paragraph sits inside a
+      // list item, blockquote or table cell, where a flex grid has no business.
+      if (toks[i].type !== "paragraph_open" || toks[i].level !== 0) continue;
+      const imgs = [];
+      let j = i;
+      // Walk forward over consecutive image-only paragraphs, so images separated
+      // by blank lines join the same grid as images on adjacent lines.
+      while (
+        j + 2 < toks.length &&
+        toks[j].type === "paragraph_open" && toks[j].level === 0 &&
+        toks[j + 1].type === "inline" && toks[j + 2].type === "paragraph_close"
+      ) {
+        const found = imagesOf(toks[j + 1]);
+        if (!found) break;
+        imgs.push(...found);
+        j += 3;
+      }
+      if (imgs.length < 2) continue;   // a lone image stays a lone image
+      const grid = new state.Token("rvry_image_grid", "", 0);
+      grid.block = true;
+      grid.meta = { images: imgs, group: "rvry-grid-" + (++gridIndex) };
+      toks.splice(i, j - i, grid);
+    }
+    return true;
+  });
+
+  md.renderer.rules.rvry_image_grid = (tokens, idx) => {
+    const { images, group } = tokens[idx].meta;
+    const items = images.map((t) => {
+      const full = t.attrGet("src") || "";
+      const alt = t.content || "";
+      const title = t.attrGet("title") || "";
+      // The ratio is read from the FULL-size file, never the thumbnail: if a _min
+      // were ever cropped rather than scaled, sourcing it there would misjustify
+      // the whole row. An unreadable size (SVG, or a remote URL) falls back to
+      // 3/2, the same assumption Gallery.tsx makes for an unrevalidated item.
+      const fm = imageMeta(full) || {};
+      const ar = fm.width && fm.height
+        ? Math.round((fm.width / fm.height) * 10000) / 10000
+        : 1.5;
+      const src = thumbFor(full);
+      // width/height describe the file actually in the <img>, which is the _min
+      // when there is one - not the full-size file the ratio came from.
+      const sm = src === full ? fm : (imageMeta(src) || {});
+      const dim = sm.width && sm.height ? ` width="${sm.width}" height="${sm.height}"` : "";
+      // Caption: the markdown title ("Optional title") when present, else the alt
+      // text. Neither means no caption bar rather than an empty one.
+      const cap = title || alt;
+      // markdown-it-attrs may have put a class on the image; keep it rather than
+      // silently dropping what the author asked for.
+      const cls = t.attrGet("class");
+      return '<a class="rvry-grid-item glightbox" href="' + escAttr(full) + '"' +
+        ' data-gallery="' + escAttr(group) + '"' +
+        (cap ? ' data-glightbox="' + escAttr(glightboxCaption(cap, "")) + '"' : "") +
+        ' style="--ar:' + ar + '">' +
+        '<img src="' + escAttr(src) + '" alt="' + escAttr(alt) + '"' +
+        (cls ? ' class="' + escAttr(cls) + '"' : "") + dim +
+        ' loading="lazy" decoding="async"></a>';
+    });
+    return '<div class="rvry-grid">' + items.join("") + '</div>\n';
+  };
 };
 
 // Normalise anything Eleventy hands us as a date (Date, YAML date, string) to a
@@ -199,8 +345,11 @@ module.exports = function(eleventyConfig) {
       output: "mathml",
       throwOnError: false
     }
-  });
-  
+  })
+  // Last, so runs of adjacent images are collapsed into a justified grid only
+  // after every other plugin has finished with the token stream.
+  .use(imageGridPlugin);
+
   eleventyConfig.setLibrary("md", markdownLibrary);
 
   // 2. Collection: Get all posts from input_markdown folder AND input_custom_html_pages folder
