@@ -28,7 +28,7 @@ In the digital age, being under social media algorithms and being forced to pres
 
 Maybe you use other formats for document writing, but I personally have to use LaTeX due to my career field requires heavy mathematical formulas. So far in the world of mathematics and physics there is no other way of doing it in a simpler/convenient way. Since LLMs are really good at generating LaTeX syntax, it's more pleasant to write its syntax now.
 
-LLMs can easily make a nice template for writing reports, books, letters that looks so sleek and are not a structural mess! I think that whenever you write something, the text represents *you* in some way, having a default LaTeX settings or a Google Docs layout just stinks "*I don't care, here is my word salad slop*", just a nice template you can grab saves you from that bad image. 
+LLMs can easily make a nice template for writing reports, books, letters that looks so sleek and are not a structural mess! I think that whenever you write something, the text represents *you* in some way, having a default LaTeX settings or a Google Docs layout just stinks "*I don't care, here is my word salad slop*", just having a nice template you can grab saves you from that bad image. 
 
 ### Archival considerations
 
