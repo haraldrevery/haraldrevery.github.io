@@ -40,6 +40,13 @@ Required:
                   e.g. "/artcover/phrases11_min.jpg"
 
 Recommended:
+  artcoverMobile  Phone-sized cover, e.g. "/artcover/phrases11_mobile.jpg".
+                  The home page cover grid serves it to viewports <= 767px via
+                  <picture><source>. Omit it and that tile simply serves
+                  artcoverMin on mobile too - nothing breaks. Only add it when
+                  the file really exists: a <source> pointing at a missing file
+                  does NOT fall back to the <img>, it renders broken. Run
+                  ./healthcheck.sh to catch that.
   slug            URL name -> release/<slug>.html. If omitted, it is generated
                   from "name" (e.g. "Phrases" -> "phrases").
   artist          Defaults to "Harald Revery" if omitted.
@@ -69,7 +76,8 @@ Optional (a field/section is only rendered when present):
 --------------------------------------------------------------------------------
   PATH CONVENTIONS (existing asset folders)
 --------------------------------------------------------------------------------
-  Cover art   /artcover/<name>11.jpg  and  /artcover/<name>11_min.jpg
+  Cover art   /artcover/<name>11.jpg, /artcover/<name>11_min.jpg
+              and /artcover/<name>11_mobile.jpg
   Audio       /music/mp3/harald_revery_-_<name>.mp3
   Video       /video/under_25_mb/harald_revery_-_<name>.mp4
 

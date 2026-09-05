@@ -19,6 +19,12 @@
   "artcover": "/artcover/example11.jpg",        // full-size cover image
   "artcoverMin": "/artcover/example11_min.jpg", // minimized cover (hero + grid tile)
 
+  // ---- Optional but recommended --------------------------------------------
+  "artcoverMobile": "/artcover/example11_mobile.jpg", // phone-sized cover, served
+                                            // to <=767px by the home page grid.
+                                            // Omit it and the tile just serves
+                                            // artcoverMin on mobile too.
+
   // ---- Recommended ---------------------------------------------------------
   "slug": "song-name",                      // URL -> release/<slug>.html.
                                             // Omit to auto-generate from "name".
