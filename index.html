@@ -369,8 +369,9 @@
 
 
              <div class="page-container">
-                <div class="grid grid-cols-1 md:grid-cols-1 page-container extra_fade_effect">
-                  
+                
+                <div class="symbol-pair extra_fade_effect">
+
                   <!-- Decorative logo mark: draws in, fills, fades out, loops; grows on hover
                        (pure CSS, see input.css). The wrapper is the hover target. -->
                   <div class="logo-loop-wrap">
@@ -382,6 +383,12 @@
                         <path d="M386.9,717.3v317.8H253.3V607.2C292.4,649.9,337.3,687,386.9,717.3z"/>
                         <path d="M956.1,98.2v936.8H839.9V605.3H485c-19.2-36-33.5-75.1-42.1-116.2h397V98.2H956.1z"/>
                     </svg>
+                  </div>
+
+                  <!-- Decorative compass rose: sways slowly, straightens on hover (pure CSS, see input.css) -->
+                  <div class="compass-sway">
+                    <img src="/svg/compass.svg" alt="" class="compass-rose"
+                         width="957" height="957" loading="lazy" decoding="async">
                   </div>
 
                 </div>
@@ -416,20 +423,84 @@
     <div class="page-container">
         <div class="grid md:grid-cols-2 gap-16 items-center">
                       
-                    <div class="space-y-6 order-1 md:order-1">
+                    <div class="space-y-6 order-2 md:order-1">
 
 
 
                       
                           
-                            <div class="grid grid-cols-1 md:grid-cols-1 page-container extra_fade_effect">
-                                
-                                <!-- Decorative compass rose: sways slowly, straightens on hover (pure CSS, see input.css) -->
-                                <div class="compass-sway">
-                                  <img src="/svg/compass.svg" alt="" class="compass-rose"
-                                       width="957" height="957" loading="lazy" decoding="async">
-                                </div>
-
+                            
+                            <div class="extra_fade_effect">
+                              <div class="grid grid-cols-2 gap-4 md:gap-6">
+                                <article class="group">
+                                  <a href="/notebook_pages/things-to-do-with-llms.html" class="block">
+                                    <div class="aspect-video bg-neutral-200 dark:bg-neutral-800 rounded-lg overflow-hidden mb-3">
+                                      
+                                      <img src="/notebook_thumbnails/some_text_just_works_min.jpg" alt="Things to do with LLMs"
+                                           class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                           loading="lazy" decoding="async">
+                                      
+                                    </div>
+                                    <h3 class="text-base md:text-lg text-zinc-900 dark:text-white mb-2 uppercase tracking-wide leading-snug group-hover:text-neutral-500 dark:group-hover:text-neutral-400 transition-colors">
+                                      Things to do with LLMs
+                                    </h3>
+                                  </a>
+                                  <div class="text-xs text-neutral-500 dark:text-neutral-500 font-mono uppercase tracking-wider">
+                                    August 28, 2026
+                                  </div>
+                                </article>
+                                <article class="group">
+                                  <a href="/notebook_pages/rvry_ascii.html" class="block">
+                                    <div class="aspect-video bg-neutral-200 dark:bg-neutral-800 rounded-lg overflow-hidden mb-3">
+                                      
+                                      <img src="/notebook_thumbnails/rvry_ascii_thumbnail.jpg" alt="RVRY_ASCII"
+                                           class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                           loading="lazy" decoding="async">
+                                      
+                                    </div>
+                                    <h3 class="text-base md:text-lg text-zinc-900 dark:text-white mb-2 uppercase tracking-wide leading-snug group-hover:text-neutral-500 dark:group-hover:text-neutral-400 transition-colors">
+                                      RVRY_ASCII
+                                    </h3>
+                                  </a>
+                                  <div class="text-xs text-neutral-500 dark:text-neutral-500 font-mono uppercase tracking-wider">
+                                    July 17, 2026
+                                  </div>
+                                </article>
+                                <article class="group">
+                                  <a href="/notebook_pages/revery_notebook_info.html" class="block">
+                                    <div class="aspect-video bg-neutral-200 dark:bg-neutral-800 rounded-lg overflow-hidden mb-3">
+                                      
+                                      <img src="/notebook_thumbnails/revery_notebook_min.jpg" alt="Revery Notebook"
+                                           class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                           loading="lazy" decoding="async">
+                                      
+                                    </div>
+                                    <h3 class="text-base md:text-lg text-zinc-900 dark:text-white mb-2 uppercase tracking-wide leading-snug group-hover:text-neutral-500 dark:group-hover:text-neutral-400 transition-colors">
+                                      Revery Notebook
+                                    </h3>
+                                  </a>
+                                  <div class="text-xs text-neutral-500 dark:text-neutral-500 font-mono uppercase tracking-wider">
+                                    April 10, 2026
+                                  </div>
+                                </article>
+                                <article class="group">
+                                  <a href="/notebook_pages/clock_and_date.html" class="block">
+                                    <div class="aspect-video bg-neutral-200 dark:bg-neutral-800 rounded-lg overflow-hidden mb-3">
+                                      
+                                      <img src="/notebook_thumbnails/timeclock_min.jpg" alt="Time"
+                                           class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                           loading="lazy" decoding="async">
+                                      
+                                    </div>
+                                    <h3 class="text-base md:text-lg text-zinc-900 dark:text-white mb-2 uppercase tracking-wide leading-snug group-hover:text-neutral-500 dark:group-hover:text-neutral-400 transition-colors">
+                                      Time
+                                    </h3>
+                                  </a>
+                                  <div class="text-xs text-neutral-500 dark:text-neutral-500 font-mono uppercase tracking-wider">
+                                    April 2, 2026
+                                  </div>
+                                </article>
+                              </div>
                             </div>
                        
 
@@ -438,7 +509,7 @@
 
                     </div>
 
-           <div class="space-y-6 order-2 md:order-2">
+           <div class="space-y-6 order-1 md:order-2">
 
                           <h2 class="text-4xl text-black dark:text-white uppercase">Reveries</h2>
                           <p class="text-black dark:text-white text-justify text-body">

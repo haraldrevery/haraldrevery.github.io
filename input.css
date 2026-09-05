@@ -3332,3 +3332,37 @@ a.featured-card__media:hover img {
     overflow: visible;
   }
 }
+
+
+/* ===================================
+   Symbol pair — logo mark + compass rose side by side
+   ===================================
+
+   Both graphics size themselves by max-width on their own wrapper
+   (.logo-loop-wrap 22rem, .compass-rose 19rem). Side by side in half a
+   .page-container column those two maxima can never both be satisfied, so the
+   pair scopes them down rather than letting flex shrink them unevenly.
+
+   flex: 1 1 0 with min-width: 0 is what keeps them equal and stops the SVG's
+   intrinsic size from setting a floor that pushes the pair wider than its
+   column. They stay a row at every width: at phone size two ~7rem marks still
+   read as a pair, where stacking them would read as two unrelated graphics. */
+
+.symbol-pair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.symbol-pair > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.symbol-pair .logo-loop-wrap { max-width: 14rem; }  /* paired mark size */
+.symbol-pair .compass-rose   { max-width: 12rem; }  /* paired compass size */
+
+@media (max-width: 767px) {
+  .symbol-pair { gap: 1rem; }
+}
