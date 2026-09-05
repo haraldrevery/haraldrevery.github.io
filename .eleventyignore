@@ -4,9 +4,13 @@ information/
 notebook.html
 release/
 
+# GENERATED from eleventy_njk/home.njk (permalink: index.html). Listed here for
+# the same reason as notebook.html: input and output are both the repo root, so
+# Eleventy must not read its own output back in as a template.
+index.html
+
 # Ignore your static files so Eleventy doesn't try to process them
 404.html
-index.html
 music.html
 about.html
 contact.html
