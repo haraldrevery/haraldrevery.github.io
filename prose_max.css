@@ -3122,7 +3122,7 @@
   font-family: var(--font-brand);
 }
 .prose .rvry-grid {
-  --rvry-grid-row: 225px;
+  --rvry-grid-row: 180px;
   --rvry-grid-max: 600px;
   --rvry-grid-gap: 0.5rem;
   display: flex;
@@ -3335,8 +3335,8 @@
   position: fixed;
   right: 0;
   bottom: 0;
-  width: 6rem;
-  height: 8rem;
+  width: 14rem;
+  height: 12rem;
   z-index: 110;
 }
 .reading-width-btn {
