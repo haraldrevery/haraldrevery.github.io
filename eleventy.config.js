@@ -78,7 +78,10 @@ const parseJsonc = (text) => {
 const SITE_ORIGIN = "https://haraldrevery.com";
 
 // Format any date as YYYY-MM-DD (shared by the isoDate filter and JSON-LD builders).
-const isoDate = (dateObj) => new Date(dateObj).toISOString().slice(0, 10);
+const isoDate = (dateObj) => {
+  const s = isoStamp(dateObj);
+  return s ? s.slice(0, 10) : "";
+};
 
 // Format a release date string (e.g. "2018-8-17") as a calendar YYYY-MM-DD without
 // a timezone round-trip, so datePublished can't shift by a day. Falls back to isoDate.
@@ -324,6 +327,16 @@ const imageGridPlugin = (md) => {
 // Normalise anything Eleventy hands us as a date (Date, YAML date, string) to a
 // full ISO-8601 timestamp. Returns null rather than throwing on junk, so one bad
 // frontmatter date can never take out a whole page's structured data.
+// Fallback date for a notebook HTML page whose front matter has no `date:`.
+// Uses the file's mtime, never `new Date()`: a build-time date sorts the post to
+// the top of the notebook and emits a fresh value into search-index.json on
+// every rebuild (git churn). Not null/epoch either — null makes the `b.date -
+// a.date` sort comparator return NaN, and epoch silently prints as 1970-01-01.
+const fallbackPostDate = (filePath, file) => {
+  console.warn(`[notebook] ${file} has no \`date:\` in its front matter — using its file mtime.`);
+  try { return fs.statSync(filePath).mtime; } catch (e) { return new Date(0); }
+};
+
 const isoStamp = (d) => {
   if (d == null || d === "") return null;
   const dt = d instanceof Date ? d : new Date(d);
@@ -388,17 +401,21 @@ module.exports = function(eleventyConfig) {
           return null;
         }
         
+        const postDate = parsed.data.date
+          ? new Date(parsed.data.date)
+          : fallbackPostDate(filePath, file);
+
         // Create a virtual collection item that looks like a real Eleventy item
         const item = {
           url: parsed.data.permalink || `/notebook_pages/${file}`,
           data: {
             title: parsed.data.title || "Untitled",
-            date: parsed.data.date ? new Date(parsed.data.date) : new Date(),
+            date: postDate,
             tags: parsed.data.tags || [],
             image: parsed.data.image || null,
             description: parsed.data.description || null
           },
-          date: parsed.data.date ? new Date(parsed.data.date) : new Date()
+          date: postDate
         };
 
         return item;
@@ -475,16 +492,20 @@ module.exports = function(eleventyConfig) {
           return null;
         }
         
+        const postDate = parsed.data.date
+          ? new Date(parsed.data.date)
+          : fallbackPostDate(filePath, file);
+
         return {
           url: parsed.data.permalink || `/notebook_pages/${file}`,
           data: {
             title: parsed.data.title || "Untitled",
-            date: parsed.data.date ? new Date(parsed.data.date) : new Date(),
+            date: postDate,
             tags: parsed.data.tags || [],
             image: parsed.data.image || null,
             description: parsed.data.description || null
           },
-          date: parsed.data.date ? new Date(parsed.data.date) : new Date()
+          date: postDate
         };
       }).filter(item => item !== null); // Remove null items (drafts)
     }
@@ -573,9 +594,7 @@ module.exports = function(eleventyConfig) {
   });
 
   // Sitemap helpers: format any date as YYYY-MM-DD (W3C sitemap format)
-  eleventyConfig.addFilter("isoDate", (dateObj) => {
-    return new Date(dateObj).toISOString().slice(0, 10);
-  });
+  eleventyConfig.addFilter("isoDate", isoDate);
 
   // Full ISO-8601 timestamp for article:published_time / article:modified_time.
   // Yields "" (so the meta tag stays empty rather than the build dying) on a
@@ -665,7 +684,8 @@ module.exports = function(eleventyConfig) {
       "byArtist": artistRef(release.artist),
     };
     if (release.artcover) obj.image = SITE_ORIGIN + release.artcover;
-    if (release.date) obj.datePublished = calendarDate(release.date);
+    const datePublished = release.date ? calendarDate(release.date) : "";
+    if (datePublished) obj.datePublished = datePublished;
     if (Array.isArray(release.genres) && release.genres.length) obj.genre = release.genres;
 
     const links = release.streaming ? Object.values(release.streaming).filter(Boolean) : [];

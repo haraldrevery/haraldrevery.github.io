@@ -52,8 +52,8 @@ staticPages:
 {%- for post in collections.notebook_posts %}
   <url>
     <loc>{{ site_url }}{{ post.url | cleanUrl }}</loc>
-    <lastmod>{{ (post.data.updated or post.date) | isoDate }}</lastmod>
-    <changefreq>monthly</changefreq>
+{% set lm = (post.data.updated or post.date) | isoDate %}{% if lm %}    <lastmod>{{ lm }}</lastmod>
+{% endif %}    <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 {%- endfor %}
@@ -92,8 +92,8 @@ staticPages:
 {%- for r in collections.releases %}
   <url>
     <loc>{{ site_url }}{{ r.url | cleanUrl }}</loc>
-    <lastmod>{{ r.date | isoDate }}</lastmod>
-    <changefreq>monthly</changefreq>
+{% set lm = r.date | isoDate %}{% if lm %}    <lastmod>{{ lm }}</lastmod>
+{% endif %}    <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 {%- endfor %}

@@ -7,13 +7,28 @@
    scanned template). If you add new classes here, use them in markup too.
 
    To search MORE fields later: extend `hay` below and (if needed) the emitted
-   fields in eleventy_njk/search-index.njk. */
+   fields in eleventy_njk/search-index.njk.
+
+   EDIT THIS FILE ONLY. javascript/search_min.js is GENERATED from it by
+   `npm run minify:search`, which `npm start` and `npm run build` both run
+   first — pages load the _min build, so a hand-edit there would be
+   overwritten and a hand-edit here alone would never reach the site. */
 (() => {
     if (window.__searchInit) return; // idempotent if the snippet is pasted twice
     window.__searchInit = true;
 
     let index = null;
     let loading = null;
+
+    // Fold diacritics so "galdhopiggen" finds "Galdhøpiggen". NFD + strip handles
+    // the combining-accent letters (é, ü, and å, which DOES decompose), but ø, æ,
+    // ð, þ, ß and œ are atomic codepoints with no decomposition, so they need an
+    // explicit map. Applied to BOTH the haystack and the query — folding only one
+    // side would silently match nothing.
+    const FOLD = { "ø": "o", "æ": "ae", "å": "a", "ð": "d", "þ": "th", "ß": "ss", "œ": "oe", "ł": "l" };
+    const fold = (s) => String(s).toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[øæåðþßœł]/g, (c) => FOLD[c]);
     const load = () => loading ||= fetch("/search-index.json")
         .then((r) => r.json())
         .then((items) => {
@@ -21,16 +36,28 @@
             // URLs ("/...") — rules out javascript:/external hrefs even if the
             // index file were ever corrupted or tampered with.
             if (!Array.isArray(items)) items = [];
-            // Precompute one lowercase "haystack" string per item.
+            // Precompute one folded "haystack" string per item.
             index = items
                 .filter((it) => it && typeof it.title === "string" &&
                     typeof it.url === "string" && it.url.startsWith("/") && !it.url.startsWith("//"))
                 .map((it) => ({
                     ...it,
-                    hay: (it.title + " " + (it.description || "") + " " + (it.tags || []).join(" ")).toLowerCase(),
+                    // Precomputed so the sort comparator below doesn't re-fold
+                    // the same title on every comparison.
+                    titleFold: fold(it.title),
+                    hay: fold(it.title + " " + (it.description || "") + " " + (it.tags || []).join(" ")),
                 }));
         })
-        .catch(() => { index = []; });
+        .catch(() => {
+            // Do NOT cache the failure. `loading ||=` memoises the promise, so
+            // setting index = [] here left one transient error disabling search
+            // until a full page reload — and an empty array is truthy, so the
+            // `!index` guard in run() didn't even catch it: a broken index
+            // rendered as "no matches". Clearing both lets the next keystroke
+            // retry (debounced 120 ms, so no request storm).
+            loading = null;
+            index = null;
+        });
 
     document.querySelectorAll("[data-search]").forEach((box, n) => {
         const input = box.querySelector("input");
@@ -95,12 +122,12 @@
         };
 
         const run = () => {
-            const q = input.value.trim().toLowerCase();
+            const q = fold(input.value.trim());
             if (!q || !index) return close();
             const toks = q.split(/\s+/);
             results = index
                 .filter((it) => toks.every((t) => it.hay.includes(t)))
-                .sort((a, b) => b.title.toLowerCase().includes(q) - a.title.toLowerCase().includes(q))
+                .sort((a, b) => b.titleFold.includes(q) - a.titleFold.includes(q))
                 .slice(0, 8);
             render();
         };
