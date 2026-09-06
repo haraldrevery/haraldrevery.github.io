@@ -49,6 +49,7 @@ function sample(type: BlockType) {
       Icons: { items: [{ src: "/svg/test.svg", label: "L", href: "https://example.com" }], label: "Listen" },
       Faq: { items: [{ q: "Q?", a: "A." }] },
       Downloads: { items: [{ src: "/files/a.zip", label: "A", size: 1234567, sha256: "abc", sha512: "def" }] },
+      LinkButton: { label: "MORE", href: "discography.html", align: "center", reveal: "delayed" },
       Raw: { html: "<p>raw</p>" },
     } as Record<string, Record<string, unknown>>)[type] ?? {};
   return { type, props: { ...defaults, ...over, id: `${type}-1` } };

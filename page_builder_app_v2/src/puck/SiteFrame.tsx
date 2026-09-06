@@ -21,8 +21,14 @@
  */
 import { useEffect } from "react";
 import type { Overrides } from "@measured/puck";
-import { usePuck } from "@measured/puck";
+import { createUsePuck } from "@measured/puck";
 import { previewOrigin } from "../appConfig";
+
+/// Selector-aware usePuck. The bare `usePuck()` subscribes with an identity
+/// selector, so this wrapper — which sits around the ENTIRE preview subtree —
+/// re-rendered on every store write, and during a drag there is one of those
+/// per pointer move. Puck warns about exactly this in the console.
+const usePuckState = createUsePuck();
 
 /// Edit-mode neutralisation. The site's entry animations all start at
 /// opacity:0 and play once; in the editor, dangerouslySetInnerHTML regenerates
@@ -91,8 +97,7 @@ html.pb-editing .scroll-sentinel { display: none; }
 
 export function makeSiteFrame(previewPort: number): Overrides["iframe"] {
   return function SiteFrame({ children, document: doc }) {
-    // usePuck() returns the whole store; only createUsePuck() takes a selector.
-    const previewMode = usePuck().appState.ui.previewMode;
+    const previewMode = usePuckState((s) => s.appState.ui.previewMode);
 
     useEffect(() => {
       if (!doc || !previewPort) return;

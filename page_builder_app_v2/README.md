@@ -386,12 +386,27 @@ full-screen iframe pointed at `http://127.0.0.1:<port>/__pb/preview`.
 
 ## Window layout, and why it is a drag-and-drop concern
 
-Two rules, both in `src/style.css`, both about **scroll containers around the
+Three rules, all in `src/style.css`, all about **scroll containers around the
 editor iframe**:
 
 1. `body > #app` is `position: fixed; inset: 0; overflow: hidden`, so the app
    document itself can never scroll.
-2. `.pb-layout__center` is `overflow: hidden`, not `auto`.
+2. `body > #app > .Puck` carries the height down to `.pb-layout`.
+3. `.pb-layout__center` is `overflow: hidden`, not `auto`.
+
+Rule 2 exists because `<Puck>`, when given **children**, renders them inside its
+own `<div class="Puck _Puck_…">` — and that div sets no height. `DragDropContext`
+and the `puck` override emit no DOM, so `.pb-layout` is a direct child of it, and
+`height: 100%` against an auto-height parent computes to `auto`. Measured in a
+900px window, `.pb-layout` came out **2120px**: each side panel was stretched to
+exactly its own content height, so `overflow-y: auto` never had anything to
+scroll and everything past the window edge was clipped by rule 1, unreachable by
+any means. The preview iframe is a flex sibling of those panels, so it was
+stretched to that same 2120px while only the top 900px was visible — and Puck
+maps pointer coordinates through the iframe's rect, so more than half the drop
+surface sat outside the window. Flex rather than `height: 100%` on `.pb-layout`,
+because `#puck-portal-root` is a sibling inside `.Puck` and would otherwise add
+its height on top.
 
 `height: 100vh` on `.pb-layout` was not enough. Nothing resets the UA's default
 `body { margin: 8px }` — not this file, not `puck.css` (which carries no
@@ -424,7 +439,7 @@ That 16px was also a **drag** bug, which is why this is not just cosmetic:
 
 Same class of bug as the two `main.css` rules `SiteFrame`'s `FRAME_CSS`
 neutralises (`scroll-behavior: smooth` and `overflow-x: hidden`); those are
-INSIDE the frame, these two are outside it. **The rule to keep: nothing between
+INSIDE the frame, these are outside it. **The rule to keep: nothing between
 the window and the editor iframe may be a scroll container.** The frame is
 100% x 100% of its pane and scrolls internally; anything else that scrolls,
 dnd-kit will scroll instead of the page.

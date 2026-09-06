@@ -25,6 +25,7 @@ import {
   type IconsProps, type FaqProps, type DownloadsProps,
 } from "./components/Lists";
 import { Featured, type FeaturedProps } from "./components/Featured";
+import { LinkButton, type LinkButtonProps } from "./components/LinkButton";
 import { IconItemsEditor, DownloadItemsEditor } from "./fields/ListEditors";
 import { GalleryItemsEditor } from "./fields/GalleryItemsEditor";
 import { SwapColumnsField } from "./fields/SwapColumns";
@@ -44,6 +45,7 @@ export interface Components {
   Icons: IconsProps;
   Faq: FaqProps;
   Downloads: DownloadsProps;
+  LinkButton: LinkButtonProps;
   Divider: DividerProps;
   Raw: RawProps;
   Columns: ColumnsProps;
@@ -54,6 +56,7 @@ export interface Components {
 /// nesting columns in columns has no markup in the site's vocabulary.
 export const EMBEDDABLE: string[] = [
   "Text", "Heading", "Gallery", "Image", "Svg", "Video", "Audio", "Icons", "Faq", "Raw",
+  "LinkButton",
 ];
 // Deliberately NOT embeddable: Columns (nesting columns in columns has no
 // markup in the site's vocabulary), Divider (a rule inside a narrow column
@@ -420,6 +423,47 @@ export const config: Config<{ components: Components; root: RootProps }> = {
       },
       defaultProps: { items: [], spacing: "normal" },
       render: Downloads,
+    },
+
+    LinkButton: {
+      label: "Link button",
+      fields: {
+        label: { type: "text", label: "Label (the site writes these in CAPS)" },
+        href: {
+          type: "text",
+          label: "Link target (music.html, /notebook.html, https://…)",
+        },
+        arrow: onOff("Trailing arrow"),
+        align: {
+          type: "radio",
+          label: "Align",
+          options: [
+            { label: "Left", value: "left" },
+            { label: "Centre", value: "center" },
+            { label: "Right", value: "right" },
+          ],
+        },
+        reveal: {
+          type: "radio",
+          label: "Reveal",
+          options: [
+            { label: "With the page", value: "none" },
+            { label: "Delayed fade (2.8s)", value: "delayed" },
+          ],
+        },
+        spacing: spacingField,
+      },
+      // Matches the shape of the committed buttons: caps label, arrow on,
+      // left-aligned, no extra reveal (the page container already fades in).
+      defaultProps: {
+        label: "MORE",
+        href: "",
+        arrow: true,
+        align: "left",
+        reveal: "none",
+        spacing: "normal",
+      },
+      render: LinkButton,
     },
 
     Divider: {

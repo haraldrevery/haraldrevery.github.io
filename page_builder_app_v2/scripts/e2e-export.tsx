@@ -87,6 +87,13 @@ const data = {
         alt: "On the summit", caption: "On the summit", lightbox: true, widthPct: 80, spacing: "normal",
       },
     },
+    {
+      type: "LinkButton",
+      props: {
+        id: "lb1", label: "MORE", href: "discography.html",
+        arrow: true, align: "left", reveal: "delayed", spacing: "normal",
+      },
+    },
     { type: "Divider", props: { id: "d1", spacing: "normal" } },
     {
       type: "Faq",

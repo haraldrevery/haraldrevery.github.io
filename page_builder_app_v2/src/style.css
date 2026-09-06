@@ -215,7 +215,30 @@
  */
 body > #app { position: fixed; inset: 0; overflow: hidden; }
 
-.pb-layout { display: flex; flex-direction: column; height: 100%; }
+/*
+ * Propagate that height through Puck's OWN wrapper. When <Puck> is given
+ * children it renders them inside `<div class="Puck _Puck_...">`, and that div
+ * sets no height — so `.pb-layout { height: 100% }` resolved against an
+ * auto-height parent and computed to auto. The layout then grew to fit its
+ * tallest panel (measured: 2120px in a 900px window), which meant
+ *   - `overflow-y: auto` on the side panels never had anything to scroll,
+ *     because each panel was exactly as tall as its own content, and
+ *   - everything past the window edge was clipped by the `overflow: hidden`
+ *     above, unreachable by any means. That is the "can't reach the settings"
+ *     bug, and it is also why drop targeting is unreliable: the preview iframe
+ *     is a flex sibling, so it was stretched to that same 2120px while only the
+ *     top 900px was visible. Puck maps pointer coordinates through the iframe's
+ *     rect, so more than half the canvas sat outside the window.
+ *
+ * DragDropContext and the `puck` override render no DOM of their own, so
+ * .pb-layout really is a direct child of .Puck. Flex rather than a bare
+ * `height: 100%` on .pb-layout: #puck-portal-root is a sibling inside .Puck and
+ * would otherwise add its height on top of the layout's.
+ */
+body > #app > .Puck { height: 100%; display: flex; flex-direction: column; }
+body > #app > .Puck > .pb-layout { flex: 1 1 auto; min-height: 0; }
+
+.pb-layout { display: flex; flex-direction: column; }
 .pb-layout__body { display: flex; flex: 1; min-height: 0; }
 .pb-layout__left,
 .pb-layout__right {
