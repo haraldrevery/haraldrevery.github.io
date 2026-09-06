@@ -912,7 +912,7 @@ nav {
 .compass-rose {
   display: block;
   width: 100%;
-  max-width: 19rem;   /* compass size */
+  max-width: 20rem;   /* compass size */
   height: auto;
   margin-inline: auto;
   --compass-amp: 1;
@@ -961,7 +961,7 @@ nav {
    animation overriding the transition. */
 
 .logo-loop-wrap {
-  max-width: 22rem;    /* mark size */
+  max-width: 24rem;    /* mark size */
   margin-inline: auto;
 }
 

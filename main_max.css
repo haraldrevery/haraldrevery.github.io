@@ -2847,7 +2847,7 @@ nav {
 .compass-rose {
   display: block;
   width: 100%;
-  max-width: 19rem;
+  max-width: 20rem;
   height: auto;
   margin-inline: auto;
   --compass-amp: 1;
@@ -2872,7 +2872,7 @@ nav {
   }
 }
 .logo-loop-wrap {
-  max-width: 22rem;
+  max-width: 24rem;
   margin-inline: auto;
 }
 .logo-loop {
