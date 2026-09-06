@@ -230,20 +230,27 @@ eleventyExcludeFromCollections: true
 
 {#
   One table, shared by every section. SHA512 is 128 hex chars and SHA256 is 64,
-  so both cells are capped at 32ch and wrap (break-all) instead of forcing the
-  whole table into horizontal scroll. SHA512 appears at lg, SHA256 at xl; the
-  old MD5 column sat at md, but 128 chars does not fit a tablet.
+  so both wrap (break-all) instead of forcing the whole table into horizontal
+  scroll. The hash columns are sized in PERCENTAGES (2:1, matching the hash
+  lengths) instead of a fixed 32ch cap, so they grow with the viewport and the
+  leftover width stops piling up as dead space in the file-name column on a
+  wide screen. A percentage is only a hint to table layout, so it cannot cause
+  overflow: the browser shrinks it when the other columns need the room. File
+  names get lg:whitespace-nowrap so the wider hash columns cannot wrap them;
+  below lg the hash columns are hidden and long names wrap as before.
+  SHA512 appears at lg, SHA256 at xl; the old MD5 column sat at md, but 128
+  chars does not fit a tablet.
 #}
 {% macro downloadTable(section) %}
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse font-mono text-[0.85rem]">
             <thead>
                 <tr class="border-b border-zinc-200 dark:border-white/10 text-zinc-500 uppercase text-[0.9rem]">
-                    <th class="py-4 pr-2 font-medium">Download Link</th>
+                    <th class="py-4 pr-2 font-medium w-px whitespace-nowrap">Download Link</th>
                     <th class="py-4 px-2 font-medium">File name</th>
-                    <th class="py-4 px-1 font-medium">Size</th>
-                    <th class="py-4 px-2 font-medium hidden lg:table-cell">SHA512 Hash</th>
-                    <th class="py-4 pl-2 font-medium hidden xl:table-cell">SHA256 Hash</th>
+                    <th class="py-4 px-1 font-medium w-px whitespace-nowrap">Size</th>
+                    <th class="py-4 px-2 font-medium hidden lg:table-cell lg:w-[42%] xl:w-[40%]">SHA512 Hash</th>
+                    <th class="py-4 pl-2 font-medium hidden xl:table-cell xl:w-[20%]">SHA256 Hash</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-zinc-100 dark:divide-white/5">
@@ -256,16 +263,16 @@ eleventyExcludeFromCollections: true
                         </a>
                     </td>
 
-                     <td class="py-5 pr-2">
+                     <td class="py-5 pr-2 lg:whitespace-nowrap">
                         <a class="py-5 px-2 text-zinc-600 dark:text-zinc-400">{{ file.name }}</a>
                     </td>
 
                     <td class="py-5 px-1 text-zinc-600 dark:text-zinc-400 whitespace-nowrap">{{ file.size }}</td>
                     <td class="py-5 px-2 hidden lg:table-cell">
-                        <code class="inline-block max-w-[32ch] text-zinc-400 dark:text-zinc-500 break-all select-all">{{ file.sha512 }}</code>
+                        <code class="inline-block max-w-full text-zinc-400 dark:text-zinc-500 break-all select-all">{{ file.sha512 }}</code>
                     </td>
                     <td class="py-5 pl-2 hidden xl:table-cell">
-                        <code class="inline-block max-w-[32ch] text-zinc-400 dark:text-zinc-500 break-all select-all">{{ file.sha256 }}</code>
+                        <code class="inline-block max-w-full text-zinc-400 dark:text-zinc-500 break-all select-all">{{ file.sha256 }}</code>
                     </td>
                 </tr>
                 {% endfor %}
