@@ -4825,10 +4825,10 @@ a.featured-card__media:hover img {
   min-width: 0;
 }
 .symbol-pair .logo-loop-wrap {
-  max-width: 14rem;
+  max-width: 16rem;
 }
 .symbol-pair .compass-rose {
-  max-width: 12rem;
+  max-width: 24rem;
 }
 @media (max-width: 767px) {
   .symbol-pair {

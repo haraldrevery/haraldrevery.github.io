@@ -3361,8 +3361,8 @@ a.featured-card__media:hover img {
   min-width: 0;
 }
 
-.symbol-pair .logo-loop-wrap { max-width: 14rem; }  /* paired mark size */
-.symbol-pair .compass-rose   { max-width: 12rem; }  /* paired compass size */
+.symbol-pair .logo-loop-wrap { max-width: 16rem; }  /* paired mark size */
+.symbol-pair .compass-rose   { max-width: 24rem; }  /* paired compass size */
 
 @media (max-width: 767px) {
   .symbol-pair { gap: 1rem; }
