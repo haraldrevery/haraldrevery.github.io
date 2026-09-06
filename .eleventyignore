@@ -14,7 +14,15 @@ contact.html
 
 # Ignore your static files so Eleventy doesn't try to process them
 404.html
+
+# GENERATED from eleventy_njk/download.njk. Same reason as index.html above:
+# input and output are both the repo root, so without this the watcher would see
+# Eleventy's own output land in the input dir and rebuild in a loop.
 download.html
+
+# Hash cache written by eleventy_njk/download.11tydata.js. Ignored so writing it
+# can never retrigger the watcher (see the search-index.json note below).
+eleventy_njk/download_hashes.json
 
 # legal.html is GENERATED from input_legal/legal.md — listed here because the
 # input and output directories are both the repo root, so without this Eleventy
