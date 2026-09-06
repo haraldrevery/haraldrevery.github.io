@@ -34,7 +34,7 @@ bun install
 bun run build                # typecheck + vite
 bunx tauri dev               # dev app (port 5174 — v1 uses 5173)
 bunx tauri build --no-bundle # release binary
-bun test tests               # 254 tests (see Tests: v1 deps required)
+bun test tests               # 269 tests (see Tests: v1 deps required)
 ```
 
 **Use `bunx tauri build`, not `cargo build`.** Plain cargo produces a binary that
@@ -128,6 +128,9 @@ plumbing went away.
   full-screen iframe. Because the frame *navigates* rather than using `srcDoc`,
   root-absolute URLs resolve natively — so nav, footer, fonts, GLightbox, Alpine
   and the one-shot entry animations are all the real thing. See "Preview" below.
+- **Export HTML…** (toolbar) saves the page as one complete `<!DOCTYPE>`
+  document, wherever the native Save dialog is pointed. See "Standalone HTML
+  export" below. This is the side errand, not the publishing path.
 - Export writes `input_build_page/<slug>.njk`: YAML front matter plus the body
   fragment — hero, content, date block and back link, and nothing else. Eleventy
   renders it through `base.njk` to `notebook_pages/<slug>.html`.
@@ -313,7 +316,7 @@ a v1 file rather than silently mangling it.
 ```bash
 bun install                      # in THIS folder
 (cd ../page_builder && bun install)   # and in v1 — see below
-bun test tests                   # 254 tests
+bun test tests                   # 269 tests
 ```
 
 `prose-parity.test.tsx` imports v1's real renderer from `../page_builder/src/`,
@@ -381,6 +384,58 @@ full-screen iframe pointed at `http://127.0.0.1:<port>/__pb/preview`.
   would not do: `setTheme(null)` is not the same as never having called
   `setTheme`, and would leave the editor lighter than it started.
 
+## Window layout, and why it is a drag-and-drop concern
+
+Two rules, both in `src/style.css`, both about **scroll containers around the
+editor iframe**:
+
+1. `body > #app` is `position: fixed; inset: 0; overflow: hidden`, so the app
+   document itself can never scroll.
+2. `.pb-layout__center` is `overflow: hidden`, not `auto`.
+
+`height: 100vh` on `.pb-layout` was not enough. Nothing resets the UA's default
+`body { margin: 8px }` — not this file, not `puck.css` (which carries no
+html/body rule at all), not the Vite bundle — so a `100vh` child made the
+document `100vh + 16px` tall and the whole app, toolbar included, could be
+scrolled 16px inside its own window.
+
+That 16px was also a **drag** bug, which is why this is not just cosmetic:
+
+- dnd-kit's `Scroller` finds what to autoscroll with
+  `getElementFromPoint(getDocument(source.element), pointer)`. Dragging from the
+  drawer, `source.element` is in the APP document, and `elementFromPoint` does
+  not pierce iframes — so over the canvas it returns the `<iframe>` element, and
+  the scrollable ancestors it walks are the app's, not the page's.
+- `isScrollable` tests the computed `overflow` value **only**, so
+  `.pb-layout__center { overflow: auto }` counted as a scroll container whether
+  or not it had anything to scroll, and `getScrollableAncestors` adds the
+  document's `scrollingElement` unconditionally at the top.
+- `canScroll` then gated on real scroll position: the centre pane had none, but
+  `<html>` had those 16px. So dragging into the autoscroll trigger band — the
+  band near the top and bottom edges of the canvas, i.e. exactly where you aim
+  to drop at the start or end of a page — ran a `setInterval` scrolling the APP
+  document under the drag.
+- Puck maps pointer coordinates into the frame through the iframe's live
+  `getBoundingClientRect` (`GlobalPosition`), so the frame moved while the
+  pointer did not and the mapped in-frame point jumped by up to 16px.
+  `findDeepestCandidate` then matched a different drop target, or none — the
+  "it does not drop where I aimed, try again" symptom, intermittent because it
+  only bites near the edges.
+
+Same class of bug as the two `main.css` rules `SiteFrame`'s `FRAME_CSS`
+neutralises (`scroll-behavior: smooth` and `overflow-x: hidden`); those are
+INSIDE the frame, these two are outside it. **The rule to keep: nothing between
+the window and the editor iframe may be a scroll container.** The frame is
+100% x 100% of its pane and scrolls internally; anything else that scrolls,
+dnd-kit will scroll instead of the page.
+
+The reset is scoped rather than written as `html, body { margin: 0 }` because
+Puck's `CopyHostStyles` mirrors every `<style>` and `<link rel=stylesheet>` in
+this document into the preview iframe — a bare html/body rule here would land on
+the rendered page. `body > #app` matches only this app's mount point; in the
+frame, page content sits under `#frame-root` and is never a direct child of
+`<body>`.
+
 ## Split into columns
 
 The breadcrumb carries a **Split into columns** button while a block is
@@ -400,6 +455,45 @@ from Puck's history by default, so the dispatch passes `recordHistory`).
   overlapping grid would just vanish.
 - `tests/split.test.tsx` asserts the split renders byte-identical to a
   hand-built Columns block, which is what makes it a move rather than a rewrite.
+
+## Standalone HTML export
+
+**Export HTML…** writes the whole page as one `.html` document — head, nav,
+content, footer — to wherever the native Save dialog is pointed. It is for
+archive copies and for handing a page to someone; it does not publish anything.
+
+- It does NOT go into `input_build_page/` (Eleventy would try to template a
+  whole document) and deliberately not into `input_custom_html_pages/` either,
+  even though that is where v1 wrote and where the site keeps standalone
+  documents. Eleventy publishes that folder, so a page exported both ways would
+  go live twice, under two URLs, with two canonicals pointing at one of them.
+  `save_html_document` is therefore the only write this app makes outside the
+  repo; the frontend supplies a suggested file NAME, never a path.
+- The document is `assembleDocument` — the same string Preview renders — with
+  the head **retargeted** (`retargetHead`, `export/export.ts`). That step is
+  needed because `shell.html` is `base.njk` rendered for the SHELL's own
+  permalink: everything base.njk derives from `title` rides `{{TITLE}}` through
+  and is already this page's, but `canonical` and `og:url` are frozen at
+  `/page_builder_app_v2/shell` and there is no description tag at all, because
+  the shell's front matter has none to trigger base.njk's `{% if description %}`
+  blocks. Harmless in a preview that never leaves the machine; not harmless in a
+  file someone keeps. The tags are matched on their identifying attribute rather
+  than on the frozen URL string, so regenerating the shell under a different
+  permalink cannot silently turn the fix into a no-op.
+- It runs `revalidateThumbs` and `refreshDownloadHashes` like Export and unlike
+  Preview — this ends up as a file on disk, and a published SHA that does not
+  match the bytes is worse than none. Those passes mutate the project, so a
+  drifted hash marks it unsaved and says so, exactly as Open does.
+- No slug prompt and no page-check gate. The dialog is the name prompt, and the
+  check panel is on screen anyway; blocking an archive copy on a missing meta
+  description would be ceremony for a file Eleventy never sees.
+- The BODY is byte-identical to the fragment export (`tests/standalone.test.tsx`
+  asserts it), so this is not a second render path.
+
+**Caveat:** `og:image` still comes from the shell (`/opengraphimg.jpg`), not from
+the page's card image. base.njk builds it with the `imageMeta` filter, which
+reads the file to get its intrinsic size, so it cannot be reduced to a
+placeholder without an Eleventy build. The published page gets the right one.
 
 ## Crash recovery
 

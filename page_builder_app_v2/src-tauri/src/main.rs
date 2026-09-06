@@ -34,6 +34,7 @@ fn main() {
             commands::save_project,
             commands::load_project,
             commands::export_page,
+            commands::save_html_document,
             commands::set_preview_html,
             commands::read_shell,
             commands::write_recovery,

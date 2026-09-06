@@ -4,9 +4,9 @@
  *
  * The editor needs PageRoot so the preview shows blocks inside the site's
  * bg-topology-map / page-container chrome. The export must NOT include it:
- * shell.html already contains that chrome, and {{HERO}} and {{CONTENT}} are
- * separate placeholders inside it. Rendering PageRoot on export would nest a
- * second copy of the wrapper inside the first.
+ * assembleFragment emits the page-container wrapper itself and base.njk supplies
+ * bg-topology-map at build time, so rendering PageRoot here would nest a second
+ * copy of both inside the first.
  *
  * IMPORTANT: this spreads the real config, keeping every component's `fields`
  * intact. Puck needs field definitions at render time to convert slot data into

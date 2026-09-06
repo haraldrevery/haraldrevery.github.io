@@ -15,8 +15,9 @@ import { ConfirmPrompt, ListPrompt, TextPrompt } from "./app/prompts";
 import { PreviewModal } from "./app/PreviewModal";
 import { useSaveShortcut, useTextUndoShim } from "./app/keyboard";
 import {
-  PROJECT_VERSION, buildExport, buildPreview, listProjects, loadProject, readShell,
-  saveProject, setPreviewHtml, writeExport, type ProjectFileV2, type ProjectInfo,
+  PROJECT_VERSION, buildExport, buildPreview, buildStandalone, listProjects, loadProject,
+  readShell, saveHtmlDocument, saveProject, setPreviewHtml, writeExport,
+  type ProjectFileV2, type ProjectInfo,
 } from "./app/project";
 
 const EMPTY: Data = { root: { props: {} }, content: [] } as unknown as Data;
@@ -272,6 +273,47 @@ export default function App() {
     }
   };
 
+  /*
+   * Save the page as one standalone .html file, wherever the Save dialog is
+   * pointed. Deliberately NOT the front-matter fragment Export writes: this is
+   * a whole document, it goes outside input_build_page/, and it is not what
+   * publishes the page.
+   *
+   * No slug prompt and no page-check gate, unlike runExport. The dialog IS the
+   * name prompt, and the check panel is on screen the whole time — blocking an
+   * archive copy on a missing meta description would be ceremony for a file
+   * Eleventy never sees.
+   *
+   * buildStandalone reconciles against disk like buildExport does, so the SHA
+   * in a Downloads block matches the bytes in the file it names. That mutates
+   * the project, which is why a drifted hash is reported and marks it unsaved
+   * here exactly as it does on Open — otherwise the correction is silently
+   * thrown away the next time the project is loaded.
+   */
+  const doExportHtml = async () => {
+    setBusy("Rendering…");
+    try {
+      const shell = await readShell();
+      const bundle = await buildStandalone(liveData.current, shell, cfg!.siteUrl, exportSlug);
+      if (bundle.hashes.missing.length) {
+        toast(`Missing on disk: ${bundle.hashes.missing.join(", ")}`, true);
+      } else if (bundle.hashes.changed.length) {
+        toast(`Hashes updated for ${bundle.hashes.changed.join(", ")} — save to keep them.`);
+      }
+      if (bundle.hashes.dirtied) setDirty(true);
+
+      setBusy("Saving…");
+      const path = await saveHtmlDocument(bundle.fileName, bundle.contents);
+      // null = the dialog was cancelled. Silence is the right report for that;
+      // a toast would say something happened when nothing did.
+      if (path) toast(`Saved ${path}`);
+    } catch (e) {
+      toast(String(e), true);
+    } finally {
+      setBusy(null);
+    }
+  };
+
   // -------------------------------------------------------------- shortcuts
 
   useSaveShortcut(doSave);
@@ -340,6 +382,7 @@ export default function App() {
             onSaveAs={() => setDialog({ kind: "saveAs", initial: projectName ?? suggestName(liveData.current) })}
             onPreview={() => void doPreview()}
             onExport={startExport}
+            onExportHtml={() => void doExportHtml()}
           />
           <div className="pb-layout__body">
             <aside className="pb-layout__left">

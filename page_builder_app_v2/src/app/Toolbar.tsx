@@ -16,6 +16,7 @@ export interface ToolbarProps {
   onSaveAs: () => void;
   onPreview: () => void;
   onExport: () => void;
+  onExportHtml: () => void;
 }
 
 export function Toolbar(p: ToolbarProps) {
@@ -104,6 +105,20 @@ export function Toolbar(p: ToolbarProps) {
         </button>
         <button type="button" onClick={p.onPreview} disabled={!!p.busy}>
           Preview
+        </button>
+        {/*
+          Not "primary": exporting the FRAGMENT is the publishing path and the
+          one this button is for. Saving a whole document is the side errand —
+          an archive copy or a file to hand to someone — and it writes outside
+          the build, so it must not read as the obvious thing to click.
+        */}
+        <button
+          type="button"
+          onClick={p.onExportHtml}
+          disabled={!!p.busy}
+          title="Save the finished page as one standalone .html file, outside the Eleventy build"
+        >
+          Export HTML…
         </button>
         <button type="button" className="pb-toolbar__primary" onClick={p.onExport}>
           Export page

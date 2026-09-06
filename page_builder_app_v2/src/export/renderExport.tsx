@@ -5,11 +5,15 @@
  * hooks, which sets puck.isEditing = false on every component. That is the
  * right renderer for producing a string.
  *
- * Hero and content are rendered SEPARATELY because shell.html has them as two
- * placeholders — {{HERO}} sits before the page container, {{CONTENT}} inside
- * it. Content therefore goes through contentConfig, whose root render is a
- * passthrough: the bg-topology-map / page-container chrome comes from the
- * shell, and rendering PageRoot here would nest a second copy inside it.
+ * Hero and content are rendered SEPARATELY because assembleFragment interleaves
+ * them: the hero sits OUTSIDE the page container, the content inside it, with
+ * the back link and the date block between. (There is no {{HERO}} placeholder
+ * any more — the fragment export replaced it; shell.html now carries only
+ * {{TITLE}} and {{CONTENT}}, and is used for preview and the standalone HTML
+ * export.) Content therefore goes through contentConfig, whose root render is a
+ * passthrough: the bg-topology-map / page-container chrome comes from
+ * assembleFragment and base.njk, and rendering PageRoot here would nest a
+ * second copy inside it.
  */
 import { renderToStaticMarkup } from "react-dom/server";
 import { Render } from "@measured/puck/rsc";

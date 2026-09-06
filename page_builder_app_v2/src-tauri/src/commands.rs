@@ -486,6 +486,69 @@ pub fn export_page(
     })
 }
 
+/*
+ * Save the page as a COMPLETE standalone document, wherever the user points the
+ * native Save dialog. None = the dialog was cancelled.
+ *
+ * The ONLY write this app makes outside the repo, and deliberately so. The
+ * normal export writes a body fragment into input_build_page/ for Eleventy to
+ * wrap, and a whole document has no place there. It has no place in
+ * input_custom_html_pages/ either, even though that is where v1 wrote and where
+ * the site keeps standalone documents: Eleventy publishes that folder, so a page
+ * exported both ways would go live twice, under two URLs, with two canonicals
+ * pointing at one of them.
+ *
+ * The frontend never supplies a path — only a suggested file name, which is
+ * stripped to a bare stem here so it cannot smuggle a directory into the
+ * dialog. The destination is whatever the user picks, so there is nothing to
+ * jail: they are choosing it in their own file manager.
+ */
+#[tauri::command]
+pub async fn save_html_document(
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+    file_name: String,
+    contents: String,
+) -> Result<Option<String>, String> {
+    // Suggestion only; the dialog is free to be renamed. Strip any directory
+    // part rather than rejecting it — this is a hint, not a destination.
+    let stem = file_name
+        .rsplit(['/', '\\'])
+        .next()
+        .unwrap_or("")
+        .trim_end_matches(".html")
+        .trim();
+    let suggested = if stem.is_empty() { "page" } else { stem };
+
+    let mut dialog = app
+        .dialog()
+        .file()
+        .add_filter("HTML", &["html"])
+        .set_file_name(format!("{suggested}.html"));
+    // Start in the repo when we have one — the usual destination is next to the
+    // site, and a dialog that opens in $HOME every time is a papercut.
+    if let Ok(root) = repo_root(&state) {
+        dialog = dialog.set_directory(root);
+    }
+
+    let Some(picked) = dialog.blocking_save_file() else {
+        return Ok(None);
+    };
+    let path = picked
+        .into_path()
+        .map_err(|e| format!("Invalid destination: {e}"))?;
+    // GTK's save dialog returns exactly what was typed, extension or not; the
+    // filter does not append one. A file called "postcard" would open in a text
+    // editor rather than a browser, so give it the extension it is missing.
+    let path = if path.extension().is_none() {
+        path.with_extension("html")
+    } else {
+        path
+    };
+    write_atomic(&path, &contents)?;
+    Ok(Some(path.display().to_string()))
+}
+
 // ---------------------------------------------------------------- preview
 
 /// Upper bound on the in-memory preview document. A real page is tens of KB;

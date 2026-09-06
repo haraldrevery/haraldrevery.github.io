@@ -11,7 +11,9 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { Data } from "@measured/puck";
 import { config } from "../puck/config";
-import { assembleDocument, exportText, slugify, humanDate } from "../export/export";
+import {
+  assembleDocument, assembleStandalone, exportText, slugify, humanDate,
+} from "../export/export";
 import { renderExportContent, renderExportHero, renderExportHeader } from "../export/renderExport";
 import { lintPage, type LintIssue } from "../export/lint";
 import { collectSvgSrcs } from "../export/collect";
@@ -188,6 +190,61 @@ export async function buildPreview(
     ...renderParts(data),
   });
 }
+
+// -------------------------------------------------- standalone HTML document
+
+export interface StandaloneBundle {
+  /// Suggested file name for the save dialog; the user may change it there.
+  fileName: string;
+  contents: string;
+  /// Reconciliation with disk, exactly as loadProject reports it. Surfaced so
+  /// this export can say the same things Open does about drifted SHAs.
+  hashes: HashReport;
+}
+
+/*
+ * The page as a COMPLETE <!DOCTYPE> document, for saving outside the build.
+ *
+ * Sits between the other two builders on purpose:
+ *
+ *   buildExport    fragment + front matter -> input_build_page/, Eleventy wraps
+ *   buildStandalone whole document -> wherever the user points the save dialog
+ *   buildPreview   whole document -> memory, never written
+ *
+ * It runs the disk fix-ups like buildExport and unlike buildPreview: this ends
+ * up as a file the user keeps, and a published SHA that does not match the
+ * bytes is worse than no SHA at all. Those passes mutate `data` in place, which
+ * is why the report comes back — the caller has to mark the project unsaved,
+ * or the corrected hashes are lost the next time the project is opened.
+ *
+ * assembleStandalone, not assembleDocument: the shell's canonical, og:url and
+ * description belong to the shell, and this file has to describe THIS page.
+ */
+export async function buildStandalone(
+  data: Data,
+  shell: string,
+  siteUrl: string,
+  slugOverride?: string,
+): Promise<StandaloneBundle> {
+  await prefetchSvgs(collectSvgSrcs(data, config));
+  await revalidateThumbs(data, config);
+  const hashes = await refreshDownloadHashes(data, config);
+
+  const slug = pageSlug(data, slugOverride);
+  return {
+    fileName: `${slug}.html`,
+    contents: assembleStandalone({
+      shell, data, config, siteUrl, slug, ...renderParts(data),
+    }),
+    hashes,
+  };
+}
+
+/// Opens the native Save dialog and writes the document. null = cancelled.
+/// The frontend never supplies a path — only a suggested name — so this cannot
+/// be pointed anywhere the user did not choose in the dialog.
+export const saveHtmlDocument = (fileName: string, contents: string) =>
+  invoke<string | null>("save_html_document", { fileName, contents });
 
 /// Hand the rendered document to the Rust server thread. "" clears it.
 export const setPreviewHtml = (contents: string) =>

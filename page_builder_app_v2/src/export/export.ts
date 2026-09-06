@@ -1,9 +1,17 @@
 /*
- * Export pipeline. An exported page is:
- *   YAML front matter + shell.html with every {{PLACEHOLDER}} filled.
- * Eleventy's before-hook then strips the front matter and copies the body
- * VERBATIM to notebook_pages/; the front matter drives the Notebook index.
- * Nothing is injected downstream, so what this produces is the whole page.
+ * Export pipeline. Three outputs, one body:
+ *
+ *   exportText          YAML front matter + the body FRAGMENT. What Export
+ *                       writes to input_build_page/; Eleventy strips the front
+ *                       matter, wraps the body in base.njk and emits
+ *                       notebook_pages/<slug>.html.
+ *   assembleDocument    the same fragment inside shell.html. PREVIEW only.
+ *   assembleStandalone  assembleDocument with the head retargeted at this page.
+ *                       What "Export HTML…" saves.
+ *
+ * Only the first of those publishes anything. shell.html is not part of the
+ * publishing path at all — it is generated build output, and the <head>, nav
+ * and footer of a published page come from base.njk at BUILD time.
  *
  * Ported from v1's src/export.ts. The pure helpers (yamlValue, frontmatterYaml,
  * slugify, humanDate, resolveSchemaType, jsonld, assembleDocument) are
@@ -336,4 +344,94 @@ export function exportText(i: AssembleInput): string {
   const meta = (root.meta ?? {}) as PageMeta;
   const navScroll = !!root.hasHero && !!root.hero?.navReveal;
   return frontmatterYaml(meta, navScroll) + "\n" + assembleFragment(i);
+}
+
+/*
+ * PREVIEW SHELL -> a COMPLETE standalone document that describes THIS page.
+ *
+ * assembleDocument alone is not that. shell.html is base.njk rendered for the
+ * SHELL's own permalink (eleventy_njk/_builder_shell.njk), so everything
+ * base.njk derives from `title` rides {{TITLE}} through and is already correct,
+ * but everything it derives from `page.url` or `description` is frozen at the
+ * shell's values: canonical and og:url point at /page_builder_app_v2/shell, and
+ * there is no description tag at all, because the shell's front matter has no
+ * description to trigger base.njk's `{% if description %}` blocks.
+ *
+ * That is harmless for the in-app preview, which never leaves the machine. It
+ * is not harmless in a file the user saves and may hand to someone or archive,
+ * so the head is retargeted here.
+ *
+ * NB this is the ONLY place the exporter rewrites markup it did not generate.
+ * The published page never comes through here — Eleventy builds that head from
+ * base.njk with the page's real front matter, which is why the fragment export
+ * needs none of this.
+ */
+export function assembleStandalone(i: AssembleInput): string {
+  const meta = ((i.data.root?.props ?? {}) as Partial<RootProps>).meta ?? ({} as PageMeta);
+  const slug = i.slug || slugify(meta.title);
+  return retargetHead(
+    assembleDocument(i),
+    `${i.siteUrl}/notebook_pages/${slug}`,
+    meta.description ?? "",
+  );
+}
+
+/// The head tags whose value is a URL frozen at the shell's own permalink.
+/// Matched on their identifying attribute rather than on the frozen URL string,
+/// so regenerating the shell under a different permalink cannot silently turn
+/// this into a no-op that ships someone else's canonical.
+const CANONICAL_TAGS: RegExp[] = [
+  /(<link\b[^>]*\brel="canonical"[^>]*\bhref=")[^"]*(")/i,
+  /(<meta\b[^>]*\bproperty="og:url"[^>]*\bcontent=")[^"]*(")/i,
+];
+
+/// name/property, the tag to insert when the shell has none, in head order.
+const DESCRIPTION_TAGS: [RegExp, (v: string) => string][] = [
+  [
+    /(<meta\b[^>]*\bname="description"[^>]*\bcontent=")[^"]*(")/i,
+    (v) => `<meta name="description" content="${v}">`,
+  ],
+  [
+    /(<meta\b[^>]*\bproperty="og:description"[^>]*\bcontent=")[^"]*(")/i,
+    (v) => `<meta property="og:description" content="${v}" />`,
+  ],
+  [
+    /(<meta\b[^>]*\bname="twitter:description"[^>]*\bcontent=")[^"]*(")/i,
+    (v) => `<meta name="twitter:description" content="${v}" />`,
+  ],
+];
+
+/*
+ * Point the shell's canonical/og:url at this page and give it a description.
+ *
+ * Every replacement uses a FUNCTION replacer. A string replacement would let a
+ * `$&` or `$1` in a description or title splice part of the document back into
+ * the attribute — the same class of bug the single-pass placeholder
+ * substitution in assembleDocument exists to avoid.
+ *
+ * A description tag that is already present is rewritten in place; one that is
+ * absent is inserted after </title>, where base.njk puts it, so a shell
+ * regenerated WITH a description and one regenerated without produce the same
+ * head. Missing tags are inserted as a group in their declared order.
+ */
+export function retargetHead(html: string, canonical: string, description: string): string {
+  const href = escAttr(canonical);
+  let out = html;
+  for (const re of CANONICAL_TAGS) {
+    out = out.replace(re, (_m, pre: string, post: string) => pre + href + post);
+  }
+
+  const desc = (description || "").trim();
+  if (!desc) return out;
+  const v = escAttr(desc);
+
+  const missing: string[] = [];
+  for (const [re, tag] of DESCRIPTION_TAGS) {
+    if (re.test(out)) out = out.replace(re, (_m, pre: string, post: string) => pre + v + post);
+    else missing.push(tag(v));
+  }
+  if (missing.length) {
+    out = out.replace(/<\/title>/i, (m) => `${m}\n    ${missing.join("\n    ")}`);
+  }
+  return out;
 }

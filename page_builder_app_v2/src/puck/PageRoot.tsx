@@ -18,9 +18,10 @@
  * Preview fidelity is "content region accurate, page chrome omitted" — the
  * authoritative check is the Eleventy build in a real browser.
  *
- * EDITOR ONLY. On export, {{HERO}} and {{CONTENT}} are separate placeholders
- * inside shell.html, which already contains this chrome — so the export renders
- * content through contentConfig (passthrough root) and the hero separately.
+ * EDITOR ONLY. The export does not render this component at all: assembleFragment
+ * emits the page-container wrapper itself and base.njk supplies bg-topology-map
+ * at build time, so the export renders content through contentConfig
+ * (passthrough root) and the hero separately.
  */
 import type { ReactNode } from "react";
 import { Hero, staticHeader, type HeroProps } from "./components/Hero";

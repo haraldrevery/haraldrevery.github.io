@@ -186,7 +186,36 @@
    A custom <Puck> layout: Puck.Components/Outline/Preview/Fields placed by
    hand so the toolbar and the page-check panel can sit alongside them. */
 
-.pb-layout { display: flex; flex-direction: column; height: 100vh; }
+/*
+ * The app owns the whole window and the document itself NEVER scrolls.
+ *
+ * `height: 100vh` on .pb-layout was not enough: nothing resets the UA's default
+ * `body { margin: 8px }` — not this file, not puck.css (it carries no html/body
+ * rule at all), not the Vite bundle — so a 100vh child made the document
+ * 100vh + 16px tall. That is the "top bar can be scrolled down a little":
+ * the whole app, toolbar included, slid 16px inside its own window.
+ *
+ * It also fed the drag bug. dnd-kit's autoscroller walks the scrollable
+ * ancestors of whatever is under the pointer; over the preview that is the
+ * <iframe> element in THIS document, whose ancestors were .pb-layout__center
+ * (overflow: auto) and a 16px-scrollable <html>. Dragging near an edge
+ * therefore scrolled the frame's CONTAINER instead of the frame, moving the
+ * iframe under a stationary pointer — and Puck maps pointer coordinates into
+ * the frame through the iframe's live getBoundingClientRect, so the drop
+ * target jumped by however far the page had slid. Same class of bug as the two
+ * overflow/scroll rules SiteFrame neutralises INSIDE the frame; these two are
+ * outside it.
+ *
+ * Fixed positioning rather than a `html, body { margin: 0 }` reset: Puck mirrors
+ * this whole stylesheet into the preview iframe (CopyHostStyles collects every
+ * <style> and <link rel=stylesheet> in the parent document), so a bare html/body
+ * rule here would land on the rendered page. `body > #app` matches only this
+ * app's mount point — in the frame, page content sits under #frame-root and can
+ * never be a direct child of <body>.
+ */
+body > #app { position: fixed; inset: 0; overflow: hidden; }
+
+.pb-layout { display: flex; flex-direction: column; height: 100%; }
 .pb-layout__body { display: flex; flex: 1; min-height: 0; }
 .pb-layout__left,
 .pb-layout__right {
@@ -200,7 +229,12 @@
 }
 .pb-layout__left { border-right-width: 1px; }
 .pb-layout__right { border-left-width: 1px; display: flex; flex-direction: column; }
-.pb-layout__center { flex: 1; min-width: 0; background: #f4f4f5; overflow: auto; }
+/* `hidden`, not `auto`: the frame is 100% x 100% of this pane, so it never has
+   anything to scroll — but `auto` still made it a scroll container, and that is
+   the container dnd-kit autoscrolled instead of the frame (see body > #app
+   above). Puck's block overlays and action bars portal into the FRAME's body,
+   not here, so nothing that needs to overhang this box is clipped by it. */
+.pb-layout__center { flex: 1; min-width: 0; background: #f4f4f5; overflow: hidden; }
 
 /* ---- toolbar ---- */
 .pb-toolbar {
