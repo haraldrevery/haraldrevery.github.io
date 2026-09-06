@@ -1,0 +1,59 @@
+---
+permalink: /feed.xml
+eleventyExcludeFromCollections: true
+site_url: "https://haraldrevery.com"
+---
+{#-
+  RSS 2.0 feed for the Notebook, at /feed.xml.
+
+  RSS 2.0 rather than Atom purely for reach: every reader understands it.
+  <atom:link rel="self"> is the one Atom element RSS validators require.
+
+  DATES: <pubDate> is RFC-822 (rfc822Date filter in eleventy.config.js), NOT the
+  ISO format the sitemap uses. Readers dedupe on <guid>, so guid must stay the
+  page's permanent clean URL — changing a post's slug creates a NEW entry in
+  every subscriber's reader, which is why guid is the URL and not a hash.
+
+  <lastBuildDate> is the newest POST date, never the build time: a feed whose
+  channel date moves on every rebuild makes readers re-poll for nothing (same
+  reasoning as <lastmod> in sitemap.njk).
+
+  Description-only, no full text: posts from input_custom_html_pages/ are
+  complete standalone documents copied verbatim (see the eleventy.before hook),
+  so they have no templateContent to inline. A feed where half the entries carry
+  full text and half carry none is worse than one that is consistently a teaser.
+
+  DISCOVERY: eleventy_settings/base.njk emits the <link rel="alternate"> that
+  points browsers and readers here.
+-#}
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Harald Revery — Notebook</title>
+    <link>{{ site_url }}/notebook</link>
+    <description>Personal notes, essays and interactive experiments on music, mathematics, physics and photography.</description>
+    <language>en-us</language>
+    <copyright>Harald Revery</copyright>
+    <lastBuildDate>{{ collections.notebook_posts | newestDate | rfc822Date }}</lastBuildDate>
+    <atom:link href="{{ site_url }}/feed.xml" rel="self" type="application/rss+xml" />
+    <image>
+      <url>{{ site_url }}/opengraphimg.jpg</url>
+      <title>Harald Revery — Notebook</title>
+      <link>{{ site_url }}/notebook</link>
+    </image>
+{%- for post in collections.notebook_posts %}
+    <item>
+      <title>{{ post.data.title }}</title>
+      <link>{{ site_url }}{{ post.url | cleanUrl }}</link>
+      <guid isPermaLink="true">{{ site_url }}{{ post.url | cleanUrl }}</guid>
+      <pubDate>{{ post.date | rfc822Date }}</pubDate>
+      {%- if post.data.description %}
+      <description>{{ post.data.description }}</description>
+      {%- endif %}
+      {%- for tag in (post.data.tags or []) %}
+      <category>{{ tag }}</category>
+      {%- endfor %}
+    </item>
+{%- endfor %}
+  </channel>
+</rss>

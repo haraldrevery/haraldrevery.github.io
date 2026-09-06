@@ -1,6 +1,42 @@
 ---
 permalink: /search-index.json
 eleventyExcludeFromCollections: true
+# The main site pages. They are not in any collection, so like sitemap.njk's
+# staticPages they must be listed by hand. Without these, searching "contact",
+# "download" or "discography" returned nothing at all.
+staticEntries:
+  - url: "/"
+    title: "Home"
+    description: "Music, notes and interactive experiments by Harald Revery."
+    tags: ["site"]
+  - url: "/music"
+    title: "Music"
+    description: "Listen to releases, singles and albums by Harald Revery."
+    tags: ["site", "music"]
+  - url: "/discography"
+    title: "Discography"
+    description: "Every release by Harald Revery, newest first."
+    tags: ["site", "music"]
+  - url: "/notebook"
+    title: "Notebook"
+    description: "Personal notes, essays and interactive experiments on music, mathematics, physics and photography."
+    tags: ["site"]
+  - url: "/about"
+    title: "About"
+    description: "About Harald Revery."
+    tags: ["site"]
+  - url: "/contact"
+    title: "Contact"
+    description: "Get in touch with Harald Revery."
+    tags: ["site"]
+  - url: "/download"
+    title: "Download"
+    description: "Wallpapers, packs and other free downloads."
+    tags: ["site"]
+  - url: "/legal"
+    title: "Legal"
+    description: "Licensing, privacy and terms for haraldrevery.com."
+    tags: ["site"]
 ---
 {#-
   SITE SEARCH — part 1 of 3 (see eleventy_settings/search.njk for the full map).
@@ -11,15 +47,23 @@ eleventyExcludeFromCollections: true
   Every string value must go through `| dump | safe` — dump alone gets
   HTML-entity-escaped by Nunjucks autoescape and corrupts the JSON.
 
+  URLs go through `| cleanUrl` so a result links to the SAME url as the page's
+  own <link rel="canonical"> and the sitemap <loc>. Cloudflare Pages
+  308-redirects /foo.html -> /foo, so the raw collection url made every single
+  search result cost an extra round trip.
+
   To REMOVE search: delete this file (and the other files listed in search.njk),
   plus the generated /search-index.json at the repo root.
 -#}
 {%- set comma = joiner(",") -%}
 [
+{%- for p in staticEntries %}{{ comma() }}
+{"url":{{ p.url | dump | safe }},"title":{{ p.title | dump | safe }},"type":"page","date":"","description":{{ p.description | truncate(160) | dump | safe }},"tags":{{ p.tags | dump | safe }}}
+{%- endfor %}
 {%- for post in collections.notebook_posts %}{{ comma() }}
-{"url":{{ post.url | dump | safe }},"title":{{ post.data.title | dump | safe }},"type":"post","date":"{{ post.date | isoDate }}","description":{{ (post.data.description or "") | truncate(160) | dump | safe }},"tags":{{ (post.data.tags or []) | dump | safe }}}
+{"url":{{ post.url | cleanUrl | dump | safe }},"title":{{ post.data.title | dump | safe }},"type":"post","date":"{{ (post.data.updated or post.date) | isoDate }}","description":{{ (post.data.description or "") | truncate(160) | dump | safe }},"tags":{{ (post.data.tags or []) | dump | safe }}}
 {%- endfor %}
 {%- for r in collections.releases %}{{ comma() }}
-{"url":{{ r.url | dump | safe }},"title":{{ r.name | dump | safe }},"type":"release","date":"{{ r.year }}","description":{{ (r.introduction or "") | truncate(160) | dump | safe }},"tags":{{ (r.genres or []) | dump | safe }}}
+{"url":{{ r.url | cleanUrl | dump | safe }},"title":{{ r.name | dump | safe }},"type":"release","date":"{{ r.year }}","description":{{ (r.introduction or "") | truncate(160) | dump | safe }},"tags":{{ (r.genres or []) | dump | safe }}}
 {%- endfor %}
 ]

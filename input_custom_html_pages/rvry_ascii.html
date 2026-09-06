@@ -18,6 +18,42 @@ description: Ascii art generator.
        /notebook_pages/ while its assets stay in /rvry_ascii/. -->
   <link rel="stylesheet" href="/main.css" />
   <link rel="stylesheet" href="/rvry_ascii/css/rvry.css" />
+
+  <!-- Pages in input_custom_html_pages/ are copied VERBATIM by the
+       eleventy.before hook in eleventy.config.js: they never get
+       eleventy_settings/base.njk, so none of the head below is supplied for
+       them. It has to be written out here or the page ships with no canonical
+       and no share preview, while still appearing in sitemap.xml and
+       search-index.json. Keep in sync with base.njk if that changes. -->
+  <link rel="canonical" href="https://haraldrevery.com/notebook_pages/rvry_ascii" />
+  <meta name="robots" content="index, follow" />
+  <link rel="alternate" type="application/rss+xml" title="Harald Revery — Notebook" href="https://haraldrevery.com/feed.xml" />
+
+  <meta property="og:title" content="Harald Revery - RVRY_ASCII" />
+  <meta property="og:description" content="Ascii art generator." />
+  <meta property="og:url" content="https://haraldrevery.com/notebook_pages/rvry_ascii" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="Harald Revery" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:image" content="https://haraldrevery.com/notebook_thumbnails/rvry_ascii_thumbnail.jpg" />
+  <meta property="og:image:width" content="1280" />
+  <meta property="og:image:height" content="720" />
+  <meta property="og:image:alt" content="Harald Revery - RVRY_ASCII" />
+  <meta property="article:published_time" content="2026-07-17T00:00:00.000Z" />
+  <meta property="article:author" content="https://haraldrevery.com/about" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Harald Revery - RVRY_ASCII" />
+  <meta name="twitter:description" content="Ascii art generator." />
+  <meta name="twitter:image" content="https://haraldrevery.com/notebook_thumbnails/rvry_ascii_thumbnail.jpg" />
+  <meta name="twitter:image:alt" content="Harald Revery - RVRY_ASCII" />
+
+  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+  <link rel="shortcut icon" href="/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#171717" />
   <!-- Apply the saved theme before first paint (no light-theme flash) -->
   <script>try{var t=localStorage.getItem("rvry-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 </head>

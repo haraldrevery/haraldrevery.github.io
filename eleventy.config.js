@@ -599,14 +599,61 @@ module.exports = function(eleventyConfig) {
     }
   });
 
-  // Build timestamp (used as <lastmod> for generated tag pages)
+  // Newest date in a list of posts/releases, for the <lastmod> of an index page
+  // that lists them (tag pages, the discography, the paginated notebook index).
+  // Deliberately NOT buildDate: buildDate moves every day the site is rebuilt,
+  // so sitemap.xml would be rewritten with no content change (git churn) and the
+  // field would stop meaning anything to a crawler. Returns the site's own
+  // epoch-free fallback (now) only for an empty list, which never reaches a URL.
+  eleventyConfig.addFilter("newestDate", (items) => {
+    const times = (items || [])
+      .map((it) => {
+        const d = it && (it.data && it.data.updated) || (it && it.date) || (it && it.data && it.data.date);
+        const t = d == null ? NaN : new Date(d).getTime();
+        return Number.isFinite(t) ? t : NaN;
+      })
+      .filter((t) => Number.isFinite(t));
+    return times.length ? new Date(Math.max(...times)) : new Date();
+  });
+
+  // Page numbers (2, 3, ...) of the paginated Notebook index, so sitemap.njk can
+  // list them. MUST stay in step with the `size:` in eleventy_njk/blog.njk —
+  // page 1 is /notebook and is listed separately, so this yields nothing until
+  // the notebook outgrows a single page.
+  const NOTEBOOK_PAGE_SIZE = 40;
+  eleventyConfig.addFilter("notebookIndexPages", (posts) => {
+    const total = Math.ceil((posts || []).length / NOTEBOOK_PAGE_SIZE);
+    return Array.from({ length: Math.max(0, total - 1) }, (_, i) => i + 2);
+  });
+
+  // RFC-822 date, the format RSS 2.0 <pubDate>/<lastBuildDate> require.
+  // Built from UTC parts rather than toUTCString() so the output cannot drift
+  // with the build machine's locale. Invalid dates yield "" (the element is
+  // then omitted) rather than "Invalid Date", which would fail feed validation.
+  const RFC822_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const RFC822_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  eleventyConfig.addFilter("rfc822Date", (d) => {
+    const dt = d instanceof Date ? d : new Date(d);
+    if (Number.isNaN(dt.getTime())) return "";
+    const p2 = (n) => String(n).padStart(2, "0");
+    return `${RFC822_DAYS[dt.getUTCDay()]}, ${p2(dt.getUTCDate())} ` +
+           `${RFC822_MONTHS[dt.getUTCMonth()]} ${dt.getUTCFullYear()} ` +
+           `${p2(dt.getUTCHours())}:${p2(dt.getUTCMinutes())}:${p2(dt.getUTCSeconds())} GMT`;
+  });
+
+  // Build timestamp (kept for any template that genuinely wants "now")
   eleventyConfig.addGlobalData("buildDate", () => new Date());
 
   // JSON-LD for a single release page (eleventy_njk/release.njk). Returns a
   // script-safe MusicAlbum string built entirely from the input_release JSON,
   // linked to the canonical artist entity via byArtist @id. Emit with `| safe`.
   eleventyConfig.addFilter("musicAlbumLd", (release) => {
-    const url = SITE_ORIGIN + release.url;
+    // Clean URL, matching <link rel="canonical"> and the sitemap <loc>.
+    // Cloudflare Pages 308-redirects /foo.html -> /foo, so a schema.org `url`
+    // still carrying ".html" names a redirect rather than the canonical page
+    // (articleLd already strips it; these two had drifted).
+    const url = SITE_ORIGIN + String(release.url || "").replace(/\.html$/, "");
     const relTypeMap = { Single: "SingleRelease", EP: "EPRelease" };
     const obj = {
       "@context": "https://schema.org",
@@ -647,8 +694,9 @@ module.exports = function(eleventyConfig) {
   // plus a CollectionPage whose ItemList mirrors the visible release grid. Driven
   // by the same collections.releases the grid uses. Emit with `| safe`.
   eleventyConfig.addFilter("discographyLd", (releases) => {
+    const clean = (u) => SITE_ORIGIN + String(u || "").replace(/\.html$/, "");
     const items = (releases || []).map((r, i) => {
-      const rUrl = SITE_ORIGIN + r.url;
+      const rUrl = clean(r.url);
       const item = {
         "@type": "MusicAlbum",
         "@id": rUrl + "#album",
@@ -666,13 +714,13 @@ module.exports = function(eleventyConfig) {
           "@type": "BreadcrumbList",
           "itemListElement": [
             { "@type": "ListItem", "position": 1, "name": "Home", "item": SITE_ORIGIN + "/" },
-            { "@type": "ListItem", "position": 2, "name": "Discography", "item": SITE_ORIGIN + "/discography.html" },
+            { "@type": "ListItem", "position": 2, "name": "Discography", "item": SITE_ORIGIN + "/discography" },
           ],
         },
         {
           "@type": "CollectionPage",
-          "@id": SITE_ORIGIN + "/discography.html",
-          "url": SITE_ORIGIN + "/discography.html",
+          "@id": SITE_ORIGIN + "/discography",
+          "url": SITE_ORIGIN + "/discography",
           "name": "Harald Revery — Discography",
           "mainEntity": { "@type": "ItemList", "numberOfItems": items.length, "itemListElement": items },
         },
@@ -838,19 +886,26 @@ module.exports = function(eleventyConfig) {
       // each other, with the winner decided by whether the hook or the write
       // ran last. Fail loudly instead; a page vanishing on one build and
       // reappearing on the next is far worse to debug than a build error.
-      if (fs.existsSync(BUILD_PAGE_DIR)) {
-        const buildSlugs = new Set(
-          fs.readdirSync(BUILD_PAGE_DIR)
-            .filter(f => f.endsWith('.njk'))
-            .map(f => f.slice(0, -'.njk'.length))
+      // input_markdown/ is checked too: all THREE input dirs resolve to the same
+      // notebook_pages/<slug>.html. A .md vs .njk clash is caught by Eleventy's
+      // own TemplateMap guard (both are real templates), but a clash with this
+      // verbatim fs copy is invisible to it in either direction.
+      const slugsIn = (dir, ext) => {
+        if (!fs.existsSync(dir)) return new Set();
+        return new Set(
+          fs.readdirSync(dir)
+            .filter(f => f.endsWith(ext))
+            .map(f => f.slice(0, -ext.length))
         );
-        const clashes = files
-          .map(f => f.slice(0, -'.html'.length))
-          .filter(slug => buildSlugs.has(slug));
+      };
+      const htmlSlugs = files.map(f => f.slice(0, -'.html'.length));
+      for (const [dir, ext] of [[BUILD_PAGE_DIR, '.njk'], [MARKDOWN_DIR, '.md']]) {
+        const other = slugsIn(dir, ext);
+        const clashes = htmlSlugs.filter(slug => other.has(slug));
         if (clashes.length) {
           throw new Error(
             `Slug collision: ${clashes.join(', ')} exists in BOTH ` +
-            `${HTML_PAGES_DIR} and ${BUILD_PAGE_DIR}/. Both would write ` +
+            `${HTML_PAGES_DIR} and ${dir}/. Both would write ` +
             `notebook_pages/<slug>.html. Rename or delete one.`
           );
         }

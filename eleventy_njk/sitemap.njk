@@ -46,18 +46,37 @@ staticPages:
     <priority>{{ sp.priority }}</priority>
   </url>
 {%- endfor %}
+{#- A post edited after publication carries `updated` in its front matter;
+    base.njk already prefers it for article:modified_time, so <lastmod> must
+    agree or the sitemap advertises a staler date than the page itself. -#}
 {%- for post in collections.notebook_posts %}
   <url>
     <loc>{{ site_url }}{{ post.url | cleanUrl }}</loc>
-    <lastmod>{{ post.date | isoDate }}</lastmod>
+    <lastmod>{{ (post.data.updated or post.date) | isoDate }}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 {%- endfor %}
+{#- Pages 2+ of the paginated Notebook index (eleventy_njk/blog.njk, size 40).
+    Page 1 is /notebook and is listed in staticPages above. Under 40 posts this
+    loop emits nothing; without it, every page past the first would be
+    unlisted the moment the notebook outgrows one page. -#}
+{%- for p in collections.notebook_posts | notebookIndexPages %}
+  <url>
+    <loc>{{ site_url }}/notebook_pages/notebook-page-{{ p }}</loc>
+    <lastmod>{{ collections.notebook_posts | newestDate | isoDate }}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+{%- endfor %}
+{#- <lastmod> for a generated index is the newest date of what it LISTS, never
+    buildDate: buildDate changes every day the site is rebuilt, which rewrites
+    sitemap.xml with no content change (git churn) and trains crawlers to
+    distrust the field. Same rule as the staticPages `file` mtimes above. -#}
 {%- for t in collections.paginatedTagData %}
   <url>
     <loc>{{ site_url }}/notebook_pages/tag-{{ t.tag | slugify }}{% if t.pageNumber > 0 %}-page-{{ t.pageNumber + 1 }}{% endif %}</loc>
-    <lastmod>{{ buildDate | isoDate }}</lastmod>
+    <lastmod>{{ t.posts | newestDate | isoDate }}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -65,7 +84,7 @@ staticPages:
 {%- if collections.releases.length %}
   <url>
     <loc>{{ site_url }}/discography</loc>
-    <lastmod>{{ buildDate | isoDate }}</lastmod>
+    <lastmod>{{ collections.releases | newestDate | isoDate }}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>

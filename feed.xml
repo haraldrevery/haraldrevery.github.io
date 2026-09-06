@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Harald Revery — Notebook</title>
+    <link>https://haraldrevery.com/notebook</link>
+    <description>Personal notes, essays and interactive experiments on music, mathematics, physics and photography.</description>
+    <language>en-us</language>
+    <copyright>Harald Revery</copyright>
+    <lastBuildDate>Fri, 28 Aug 2026 00:00:00 GMT</lastBuildDate>
+    <atom:link href="https://haraldrevery.com/feed.xml" rel="self" type="application/rss+xml" />
+    <image>
+      <url>https://haraldrevery.com/opengraphimg.jpg</url>
+      <title>Harald Revery — Notebook</title>
+      <link>https://haraldrevery.com/notebook</link>
+    </image>
+    <item>
+      <title>Things to do with LLMs</title>
+      <link>https://haraldrevery.com/notebook_pages/things-to-do-with-llms</link>
+      <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/things-to-do-with-llms</guid>
+      <pubDate>Fri, 28 Aug 2026 00:00:00 GMT</pubDate>
+      <description>Things to do with &quot;AI&quot; (LLM) that are useful before the bubble bursts, regulations hit or gets too expensive.</description>
+      <category>thoughts</category>
+    </item>
+    <item>
+      <title>RVRY_ASCII</title>
+      <link>https://haraldrevery.com/notebook_pages/rvry_ascii</link>
+      <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/rvry_ascii</guid>
+      <pubDate>Fri, 17 Jul 2026 00:00:00 GMT</pubDate>
+      <description>Ascii art generator.</description>
+      <category>utility</category>
+    </item>
+    <item>
+      <title>Revery Notebook</title>
+      <link>https://haraldrevery.com/notebook_pages/revery_notebook_info</link>
+      <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/revery_notebook_info</guid>
+      <pubDate>Fri, 10 Apr 2026 00:00:00 GMT</pubDate>
+      <description>A markdown editor with LaTeX support for writing and exporting notes.</description>
+      <category>utility</category>
+    </item>
+    <item>
+      <title>Time</title>
+      <link>https://haraldrevery.com/notebook_pages/clock_and_date</link>
+      <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/clock_and_date</guid>
+      <pubDate>Thu, 02 Apr 2026 00:00:00 GMT</pubDate>
+      <description>Just a clock. Click the time to set a timer or an alarm. Click the date to create a 300 DPI event card.</description>
+      <category>utility</category>
+    </item>
+    <item>
+      <title>One-dimensional graph plot</title>
+      <link>https://haraldrevery.com/notebook_pages/1dgraph</link>
+      <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/1dgraph</guid>
+      <pubDate>Sun, 08 Feb 2026 00:00:00 GMT</pubDate>
+      <description>One-dimensional graph visualizer with interactive sliders for each parameter. Made to easily see and compare how different one dimensional functions behave visually.</description>
+      <category>math</category>
+      <category>education</category>
+    </item>
+    <item>
+      <title>Two-dimensional phase portrait</title>
+      <link>https://haraldrevery.com/notebook_pages/2dphaseportrait</link>
+      <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/2dphaseportrait</guid>
+      <pubDate>Sat, 07 Feb 2026 00:00:00 GMT</pubDate>
+      <description>Automated two-dimensional phase portrait generator for educational use, made for university courses involving non-linear dynamical systems.</description>
+      <category>physics</category>
+      <category>education</category>
+    </item>
+    <item>
+      <title>Galdhøpiggen</title>
+      <link>https://haraldrevery.com/notebook_pages/galdhopiggen</link>
+      <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/galdhopiggen</guid>
+      <pubDate>Sun, 17 Aug 2025 00:00:00 GMT</pubDate>
+      <description>Photos from a hike to the Galdhøpiggen mountain top.</description>
+      <category>photography</category>
+    </item>
+    <item>
+      <title>Study Techniques</title>
+      <link>https://haraldrevery.com/notebook_pages/studieteknik</link>
+      <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/studieteknik</guid>
+      <pubDate>Fri, 28 Feb 2025 00:00:00 GMT</pubDate>
+      <description>Some tips on how to study without rushing through everything  in the end.</description>
+      <category>education</category>
+    </item>
+    <item>
+      <title>Photography from 2024</title>
+      <link>https://haraldrevery.com/notebook_pages/2024photography</link>
+      <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/2024photography</guid>
+      <pubDate>Sun, 29 Dec 2024 00:00:00 GMT</pubDate>
+      <description>Photography from 2024.</description>
+      <category>photography</category>
+    </item>
+    <item>
+      <title>Photography from 2015 to 2023</title>
+      <link>https://haraldrevery.com/notebook_pages/2015to2023</link>
+      <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/2015to2023</guid>
+      <pubDate>Fri, 29 Dec 2023 00:00:00 GMT</pubDate>
+      <description>Photography from 2015 to 2023.</description>
+      <category>photography</category>
+    </item>
+    <item>
+      <title>Mouse sensitivity and keybinds for games</title>
+      <link>https://haraldrevery.com/notebook_pages/gamesettings</link>
+      <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/gamesettings</guid>
+      <pubDate>Sat, 01 Jan 2022 00:00:00 GMT</pubDate>
+      <description>Mouse sensitivity settings and keybinds for various games.</description>
+      <category>settings</category>
+    </item>
+  </channel>
+</rss>

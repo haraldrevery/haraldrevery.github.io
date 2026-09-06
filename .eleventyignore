@@ -24,6 +24,9 @@ download.html
 # can never retrigger the watcher (see the search-index.json note below).
 eleventy_njk/download_hashes.json
 
+# GENERATED from eleventy_njk/discography.njk. Same reason as index.html above.
+discography.html
+
 # legal.html is GENERATED from input_legal/legal.md — listed here because the
 # input and output directories are both the repo root, so without this Eleventy
 # would read its own output back in as a template.
@@ -37,6 +40,10 @@ input_legal/licenses/
 # Ignore assets/configs
 node_modules/
 revery_notebook/
+# A standalone browser app, not content. Without this every .md inside it is
+# rendered as a public page — .claude/skills/verify/SKILL.md was being published
+# to /rvry_ascii/.claude/skills/verify/SKILL/index.html.
+rvry_ascii/
 licence/
 package.json
 package-lock.json
