@@ -170,8 +170,15 @@ while IFS= read -r f; do
     # url(...) inside inline style attributes, e.g.
     #   style="background-image: url('/photos/audioplayer_texture1.jpg')"
     # music.html alone has four of these; without this pass they are invisible.
-    grep -noE "url\(['\"]?[^)'\"]+['\"]?\)" "$f" 2>/dev/null \
-      | sed -E "s/:url\(['\"]?/\t/; s/['\"]?\)$//" \
+    #
+    # The quote may be an HTML ENTITY, not a literal. React's renderToStaticMarkup
+    # escapes ' to &#x27; inside attribute values, so the page builder's hero
+    # backdrop emits url(&#x27;/photos/x.jpg&#x27;). Stripping only literal quotes
+    # left the entity glued to the path and reported a file that exists as
+    # missing - on every hero page, which is exactly when someone stops trusting
+    # this check.
+    grep -noE "url\((['\"]|&#x27;|&#39;|&quot;|&#34;)?[^)'\"]+(['\"]|&#x27;|&#39;|&quot;|&#34;)?\)" "$f" 2>/dev/null \
+      | sed -E "s/:url\((['\"]|&#x27;|&#39;|&quot;|&#34;)?/\t/; s/(['\"]|&#x27;|&#39;|&quot;|&#34;)?\)$//" \
       | awk -F'\t' -v F="$f" 'NF==2 {print F "\t" $1 "\t" $2}' >> "$TMP/refs"
 done < "$TMP/pages"
 
@@ -373,7 +380,7 @@ is_draft() { fm "$1" | grep -qi '^draft:[[:space:]]*true[[:space:]]*$'; }
 
 # Every slug and tag a LIVE (non-draft) source is allowed to publish.
 : > "$TMP/live_slugs"; : > "$TMP/live_tags"
-for src in input_markdown/*.md input_custom_html_pages/*.html; do
+for src in input_markdown/*.md input_custom_html_pages/*.html input_build_page/*.njk; do
     [ -f "$src" ] || continue
     is_draft "$src" && continue
     b=$(basename "$src"); printf '%s\n' "${b%.*}" >> "$TMP/live_slugs"
@@ -445,7 +452,7 @@ printf '\n%s---%s\n' "$DIM" "$RST"
 if [ "$errors" -gt 0 ] || [ "$warnings" -gt 0 ]; then
     printf '%d error(s), %d warning(s)\n' "$errors" "$warnings"
     printf '%snotebook_pages/ and release/ are build output - fix findings there in\n' "$DIM"
-    printf 'input_custom_html_pages/, input_markdown/, eleventy_njk/ or eleventy_settings/,\n'
+    printf 'input_custom_html_pages/, input_markdown/, input_build_page/, eleventy_njk/ or\neleventy_settings/,\n'
     printf 'then rebuild with ./eleventy-linux-x64%s\n' "$RST"
 else
     printf '%sAll checks passed.%s\n' "$GRN" "$RST"

@@ -68,7 +68,14 @@
        frontmatter straight into a JSON literal lets Nunjucks autoescaping put
        &quot; inside string values and lets a stray backslash produce invalid
        JSON, which makes Google discard the entire block. #}
-    {% if layout == "post.njk" or date %}
+    {# `customJsonLd` opts a page out. articleLd is hardcoded to @type Article,
+       but page-builder exports (input_build_page/) resolve their own type —
+       BlogPosting, ImageGallery or FAQPage — and an FAQ page carries a
+       mainEntity list of its questions, which drives rich results and cannot be
+       reconstructed from front matter. Those pages emit their own block in the
+       body instead; two competing Article entities would be worse than one
+       correct one. #}
+    {% if (layout == "post.njk" or date) and not customJsonLd %}
     <script type="application/ld+json">
     {{ { title: title, description: description, image: image, date: date, updated: updated, url: page.url } | articleLd | safe }}
     </script>
@@ -93,6 +100,12 @@
 
 </div>
 
+{# Pairs with nav.njk's `navScroll`, which adds .navi_mechanic to the header.
+   The two MUST travel together: navbar_scroll_min.js does
+   querySelector(".navi_mechanic") with no null guard, and without the script
+   the Firefox @supports-not fallback never runs, so the hidden nav would never
+   come back. Set `navScroll: true` in a page's front matter to opt in. #}
+{% if navScroll %}<script src="/javascript/navbar_scroll_min.js" defer></script>{% endif %}
 <script src="/javascript/glightbox.min.js" defer></script>
 <script src="/javascript/glightbox_settings_min.js" defer></script>
 

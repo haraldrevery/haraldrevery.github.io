@@ -7,13 +7,25 @@ const fs = require("fs");
 const path = require("path");
 const matter = require("gray-matter");
 
-// The three content input folders. Every path below goes through these, so
-// renaming an input folder is a one-line change here (plus the Tailwind globs
-// in dev.sh/dev.bat and a recompile of the standalone Eleventy binaries, which
-// bundle this file — see eleventy_binary/README.md).
-const HTML_PAGES_DIR = "./input_custom_html_pages";  // hand-written .html posts
+// The four content input folders. Every path below goes through these, so
+// renaming an input folder is a one-line change here (plus the Tailwind @source
+// list in input.css, the live_slugs loop in healthcheck.sh, and a recompile of
+// the standalone Eleventy binaries, which bundle this file — see
+// eleventy_binary/README.md).
+const HTML_PAGES_DIR = "./input_custom_html_pages";  // standalone .html apps + one-offs
 const MARKDOWN_DIR = "input_markdown";               // matched as a substring of inputPath
+const BUILD_PAGE_DIR = "input_build_page";           // page-builder exports (body fragments)
 const RELEASE_DIR = "./input_release";               // one .json/.jsonc per release
+
+// A notebook post whose source is a real Eleventy template — markdown in
+// input_markdown/, or a page-builder fragment in input_build_page/. Both arrive
+// through collectionApi.getAll() with their front matter already parsed, so
+// they need none of the synthetic-item machinery that HTML_PAGES_DIR does (those
+// files are not templates at all; they are copied verbatim by the
+// eleventy.before hook and read off disk with gray-matter further down).
+const isTemplatePost = (item) =>
+  (item.inputPath.includes(MARKDOWN_DIR) || item.inputPath.includes(BUILD_PAGE_DIR)) &&
+  item.data.draft !== true;
 
 // Shared slug helper (used by the "slugify" filter and the "releases" collection).
 const slugify = (str) => {
@@ -356,7 +368,7 @@ module.exports = function(eleventyConfig) {
   eleventyConfig.addCollection("notebook_posts", function(collectionApi) {
     // Get markdown posts from input_markdown directory (filter out drafts)
     const markdownPosts = collectionApi.getAll().filter(item => {
-        return item.inputPath.includes(MARKDOWN_DIR) && item.data.draft !== true;
+        return isTemplatePost(item);
     });
     
     // Get HTML files from input_custom_html_pages directory (as virtual items for the collection)
@@ -403,7 +415,7 @@ module.exports = function(eleventyConfig) {
     
     // Get all notebook posts (filter out drafts)
     const posts = collectionApi.getAll().filter(item => {
-      return item.inputPath.includes(MARKDOWN_DIR) && item.data.draft !== true;
+      return isTemplatePost(item);
     });
     
     // Also check input_custom_html_pages for tags
@@ -443,7 +455,7 @@ module.exports = function(eleventyConfig) {
     const allTags = [];
     const tagSet = new Set();
     const allPosts = collectionApi.getAll().filter(item => {
-      return item.inputPath.includes(MARKDOWN_DIR) && item.data.draft !== true;
+      return isTemplatePost(item);
     });
     
     // Also check input_custom_html_pages
@@ -818,6 +830,31 @@ module.exports = function(eleventyConfig) {
     const htmlPagesDir = HTML_PAGES_DIR;
     if (fs.existsSync(htmlPagesDir)) {
       const files = fs.readdirSync(htmlPagesDir).filter(file => file.endsWith('.html'));
+
+      // Two unrelated mechanisms now write notebook_pages/<slug>.html: this
+      // verbatim fs copy, and a real Eleventy template from input_build_page/.
+      // Eleventy's own duplicate-output guard (TemplateMap) only compares INPUT
+      // TEMPLATES, so it cannot see this copy — the two would silently clobber
+      // each other, with the winner decided by whether the hook or the write
+      // ran last. Fail loudly instead; a page vanishing on one build and
+      // reappearing on the next is far worse to debug than a build error.
+      if (fs.existsSync(BUILD_PAGE_DIR)) {
+        const buildSlugs = new Set(
+          fs.readdirSync(BUILD_PAGE_DIR)
+            .filter(f => f.endsWith('.njk'))
+            .map(f => f.slice(0, -'.njk'.length))
+        );
+        const clashes = files
+          .map(f => f.slice(0, -'.html'.length))
+          .filter(slug => buildSlugs.has(slug));
+        if (clashes.length) {
+          throw new Error(
+            `Slug collision: ${clashes.join(', ')} exists in BOTH ` +
+            `${HTML_PAGES_DIR} and ${BUILD_PAGE_DIR}/. Both would write ` +
+            `notebook_pages/<slug>.html. Rename or delete one.`
+          );
+        }
+      }
       
       files.forEach(file => {
         const inputPath = path.join(htmlPagesDir, file);
