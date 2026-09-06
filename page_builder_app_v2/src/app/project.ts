@@ -151,7 +151,9 @@ export async function buildExport(
     html: `${heroHtml}\n${headerHtml}\n${contentHtml}`,
   });
 
-  return { slug, fileName: `${slug}.html`, contents, issues };
+  // .njk, not .html: input_build_page/ files are Eleventy templates. "html" is
+  // not in templateFormats, so a .html file there would never be picked up.
+  return { slug, fileName: `${slug}.njk`, contents, issues };
 }
 
 // ------------------------------------------------------------------ preview

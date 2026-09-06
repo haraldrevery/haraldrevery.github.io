@@ -11,7 +11,6 @@ import {
 } from "./app/recovery";
 import { Toolbar } from "./app/Toolbar";
 import { PageCheck } from "./app/PageCheck";
-import { ShellCheck } from "./app/ShellCheck";
 import { ConfirmPrompt, ListPrompt, TextPrompt } from "./app/prompts";
 import { PreviewModal } from "./app/PreviewModal";
 import { useSaveShortcut, useTextUndoShim } from "./app/keyboard";
@@ -353,7 +352,6 @@ export default function App() {
             <aside className="pb-layout__right">
               <Puck.Fields />
               <PageCheck />
-              <ShellCheck />
             </aside>
           </div>
         </div>

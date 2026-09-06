@@ -39,8 +39,6 @@ fn main() {
             commands::write_recovery,
             commands::read_recovery,
             commands::clear_recovery,
-            commands::check_shell_freshness,
-            commands::adopt_shell_region,
         ])
         .run(tauri::generate_context!())
         .expect("error while running page builder");

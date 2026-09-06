@@ -55,6 +55,9 @@ describe("frontmatter", () => {
         'tags: ["photography"]\n' +
         'image: "/notebook_thumbnails/g_min.jpg"\n' +
         'description: "Photos from a hike."\n' +
+        // base.njk suppresses its own articleLd block when this is set, so the
+        // page's resolved schema type (BlogPosting/ImageGallery/FAQPage) wins.
+        'customJsonLd: true\n' +
         '---',
       );
   });
@@ -131,12 +134,12 @@ describe("assembleDocument", () => {
     expect(out).not.toMatch(/\{\{[A-Z_]+\}\}/);
   });
 
-  test("a description containing {{CONTENT}} is not expanded", () => {
+  test("a title containing {{CONTENT}} is not expanded", () => {
     // v1 bug: a sequential replace re-scanned substituted values, splicing the
-    // whole page body into the meta description.
-    const data = mk([text("t", "Body copy here.")], { meta: meta({ description: "{{CONTENT}}" }) });
+    // whole page body into the meta tags. Export no longer fills a shell at all,
+    // so the guard now lives on the preview path, where TITLE is substituted.
+    const data = mk([text("t", "Body copy here.")], { meta: meta({ title: "{{CONTENT}}" }) });
     const out = build(data);
-    expect(out).toContain('content="{{CONTENT}}"');
     expect(out.match(/Body copy here\./g)?.length).toBe(1);
   });
 
@@ -174,8 +177,17 @@ describe("assembleDocument", () => {
     const data = mk([text("t", "x")], { hasHero: true, hero: { ...DEFAULT_HERO, title: "T" } });
     const out = build(data);
     expect(out).toContain("release-hero");
-    expect(out).toContain("navi_mechanic");
-    expect(out).toContain("navbar_scroll_min.js");
+    // The nav reveal is no longer markup in the page. base.njk owns the chrome,
+    // so the fragment asks for it with `navScroll: true` in the front matter and
+    // nav.njk + base.njk add .navi_mechanic and the script at build time.
+    expect(out).not.toContain("navi_mechanic");
+    const fm = exportText({
+      shell, data, config, siteUrl: SITE, slug: "t",
+      heroHtml: renderExportHero(data),
+      headerHtml: renderExportHeader(data, humanDate),
+      contentHtml: renderExportContent(data),
+    });
+    expect(fm).toContain("navScroll: true");
     // exactly one back link — never the static one as well
     expect(out.match(/← Back to Notebook/g)?.length).toBe(1);
     expect(out).toContain("extra_fade_effect_long");
@@ -218,7 +230,14 @@ describe("exportText", () => {
     });
     expect(out.startsWith("---\n")).toBe(true);
     const end = out.indexOf("\n---\n", 4) + 5;
-    expect(out.slice(end).trimStart().startsWith("<!DOCTYPE")).toBe(true);
+    const body = out.slice(end).trimStart();
+    // A BODY FRAGMENT, never a document: base.njk supplies <!DOCTYPE>, <head>,
+    // nav and footer at build time. Emitting a document here is what let the
+    // old shell.html copy of the chrome go stale.
+    expect(body).not.toContain("<!DOCTYPE");
+    expect(body).not.toContain("<nav");
+    expect(body).not.toContain("<footer");
+    expect(body).toContain('<div  class="page-container pt-24 pb-12 extra_fade_effect">');
   });
 });
 

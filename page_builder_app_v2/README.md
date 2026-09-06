@@ -2,8 +2,17 @@
 
 Desktop app (Tauri v2) for building Notebook pages visually, rewritten on
 [Puck](https://puckeditor.com). The preview renders with the **real site CSS and
-fonts**, and finished pages export into `input_custom_html_pages/` where Eleventy
+fonts**, and finished pages export into `input_build_page/` where Eleventy
 picks them up.
+
+**Exports are body FRAGMENTS, not whole documents.** Eleventy wraps each one in
+`eleventy_settings/base.njk`, which supplies the `<head>`, `nav.njk` and
+`footer.njk` at build time — so a nav or footer change reaches every page ever
+exported, on the next build, with nothing to keep in sync. `shell.html` used to
+hold this app's own copy of that chrome and silently drifted out of date; it is
+now GENERATED build output (see "Preview") and is only used for the in-app
+preview. `input_custom_html_pages/` still exists, for complete standalone
+documents such as the browser apps — this app no longer writes there.
 
 v1 lives on untouched in `../page_builder/` and still builds. This is a separate
 app with its own binary, config dir and project folder — see "Coexistence".
@@ -119,9 +128,19 @@ plumbing went away.
   full-screen iframe. Because the frame *navigates* rather than using `srcDoc`,
   root-absolute URLs resolve natively — so nav, footer, fonts, GLightbox, Alpine
   and the one-shot entry animations are all the real thing. See "Preview" below.
-- Export writes `input_custom_html_pages/<slug>.html`: YAML front matter plus
-  `shell.html` with every `{{PLACEHOLDER}}` filled. Eleventy's before-hook then
-  copies the body **verbatim** to `notebook_pages/`. Verified byte-identical.
+- Export writes `input_build_page/<slug>.njk`: YAML front matter plus the body
+  fragment — hero, content, date block and back link, and nothing else. Eleventy
+  renders it through `base.njk` to `notebook_pages/<slug>.html`.
+  The extension is `.njk` because `html` is not in Eleventy's `templateFormats`,
+  so a `.html` file there would never be picked up as a template. The directory
+  data file sets `templateEngineOverride: false`, so the body is emitted verbatim
+  and is never parsed as a template — which is what lets a page contain `{{`,
+  `{%` or KaTeX braces such as `\frac{{a}}{{b}}` without breaking the build.
+  `input_build_page/_brace_test.njk` is the regression fixture for that.
+  Two front-matter flags are read by `base.njk`, not by this app: `navScroll`
+  (adds `.navi_mechanic` and loads `navbar_scroll_min.js` together) and
+  `customJsonLd` (suppresses base.njk's Article block so this page's own
+  resolved schema type wins).
 - The live **page check** runs the real export renderers, so what it scans is
   exactly what would be written — which also makes it cost a full page render
   (~7 ms on a 24-block page). The DATA it runs against is therefore debounced by
@@ -279,9 +298,10 @@ Everything is isolated so a v2 bug cannot damage v1:
 | dev port | 5173 | 5174 |
 | config | `~/.config/page_builder/` | `~/.config/page_builder_v2/` |
 | projects | `page_builder/projects/` | `page_builder_app_v2/projects/` |
-| `shell.html` | its own | its own |
+| `shell.html` | its own, hand-maintained | GENERATED build output, preview only |
 
-Only the export target `input_custom_html_pages/` is shared — both are front ends
+The export target is no longer shared: v1 still writes whole documents to
+`input_custom_html_pages/`, v2 writes body fragments to `input_build_page/`. Both are front ends
 for the same Eleventy input.
 
 **Project formats are incompatible.** v1 stores `{version:1, meta, blocks}`, v2
@@ -409,18 +429,30 @@ actually on disk (`src/export/fixups.ts`):
   published SHA that does not match the file is worse than no SHA at all.
   Opening a project whose hashes drifted marks it unsaved and says so.
 
-**Shell freshness.** `shell.html` is this app's private copy of the page
-boilerplate. When its `<nav>` or `<footer>` drifts from the reference page
-(`input_custom_html_pages/galdhopiggen.html`), a badge appears under the page
-check and offers to adopt each region — showing both versions first.
-Placeholders like `{{NAV_EXTRA}}` are preserved. Note that adopting copies the
-reference page's *indentation* too, so the region is re-formatted; the content
-is what matters.
+**The shell is generated; there is nothing to keep fresh.** `shell.html` is
+build output, written by `eleventy_njk/_builder_shell.njk` from the same
+`nav.njk` / `footer.njk` / `base.njk` every other page uses, so every site build
+refreshes it. It is used ONLY for the in-app preview — export does not touch it.
+Do not edit it; edit the partials.
+
+This replaces the old shell-freshness badge, which diffed `shell.html` against
+`input_custom_html_pages/galdhopiggen.html` — itself a builder-produced page
+carrying the same stale chrome. It compared a stale copy to a stale copy,
+reported "matches", and never fired, which is how every exported page ended up
+with a duplicate `.main-nav` that disables the site's view transitions.
+
+One deliberate preview difference: the shell is rendered without `navScroll`, so
+preview always shows the nav bar even for a page that will hide-and-reveal it
+once published.
 
 ## Known gaps
 
-- **No Windows binary committed yet** — v1 ships `page_builder_app.exe`, v2 does
-  not. See "Building the Windows .exe" above; it has to be built on Windows.
+- **`page_builder_v2.exe` is STALE and must be rebuilt on Windows.** It still
+  writes whole documents to `input_custom_html_pages/`. That degrades to the old
+  behaviour rather than breaking — the pages still publish, with frozen chrome —
+  but nothing from the fragment pipeline reaches them. There is no cross-compile
+  path (the MSVC linker only exists on Windows), so see "Building the Windows
+  .exe" above and rebuild it there. The Linux `page_builder_v2` is current.
 - **Preview still is not the Eleventy build.** It renders the published document
   faithfully, but front matter is omitted (Eleventy strips it anyway), so
   mistakes in `date:`/`tags:` — which drive the Notebook and tag collections —
@@ -432,5 +464,3 @@ is what matters.
 - `revalidateThumbs` runs on open and on export, not continuously. Generate a
   `_min` file mid-session and use **↻ Re-check files** in the gallery editor to
   pick it up without reopening.
-- Adopting a shell region copies the reference page's indentation too, so the
-  region is re-formatted; only its content is meaningful.

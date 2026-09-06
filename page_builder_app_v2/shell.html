@@ -5,55 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/main.css"> 
     <link rel="stylesheet" href="/prose.css">
-
-    <!-- ====================================================================== -->
-    <!-- Set title and SEO tags here -->
-    <!-- ====================================================================== -->    
-    <title>{{TITLE}}</title>
-    <meta name="description" content="{{DESCRIPTION}}">
-    <meta name="keywords" content="{{KEYWORDS}}">
+    
+    <title>Harald Revery - {{TITLE}}</title>
+    
+    
     
 
-    <!-- Preload LCP image (page load optimization) -->
-    <link rel="preload" href="/fonts/HaraldReveryTextFont.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="/fonts/HaraldReveryMonoFont.woff2" as="font" type="font/woff2" crossorigin>
-
-
-    <!-- ====================================================================== -->
-    <!-- Social media share here and the website adress -->
-    <!-- ====================================================================== -->      
-    <!--  Open Graph (social media image thing) -->
-    <meta property="og:title" content="{{OG_TITLE}}" />
-    <meta property="og:description" content="{{OG_DESC}}" />
-    <meta property="og:image" content="{{OG_IMAGE}}" />
-    <meta property="og:url" content="{{OG_URL}}" />
-    <meta property="og:type" content="article" />
-    <meta property="og:site_name" content="Harald Revery" />
-    <!--  Twitter Card (matches eleventy_settings/base.njk) -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="{{OG_TITLE}}" />
-    <meta name="twitter:description" content="{{OG_DESC}}" />
-    <meta name="twitter:image" content="{{OG_IMAGE}}" />
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="{{CANONICAL}}">
-
-
-
-
-<!-- Internet icon -->
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
     <link rel="shortcut icon" href="/favicon.ico" sizes="any">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="manifest" href="/site.webmanifest">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#171717">
+        
+    
+    <link rel="canonical" href="https://haraldrevery.com/page_builder_app_v2/shell">
+    
+    <link rel="preload" href="/fonts/HaraldReveryTextFont.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/HaraldReveryMonoFont.woff2" as="font" type="font/woff2" crossorigin>
 
+    
+    
+
+    
+    
+    <meta property="og:title" content="Harald Revery - {{TITLE}}" />
+    <meta property="og:url" content="https://haraldrevery.com/page_builder_app_v2/shell" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Harald Revery" />
+    <meta property="og:locale" content="en_US" />
+    
+    <meta property="og:image" content="https://haraldrevery.com/opengraphimg.jpg" />
+    
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    
+    <meta property="og:image:alt" content="Harald Revery - {{TITLE}}" />
+
+    
+
+    
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Harald Revery - {{TITLE}}" />
+    
+    <meta name="twitter:image" content="https://haraldrevery.com/opengraphimg.jpg" />
+    <meta name="twitter:image:alt" content="Harald Revery - {{TITLE}}" />
+
+    
+    
+    
 </head>
 
-<body class="min-h-screen text-black dark:text-white">
+<body class="min-h-screen text-zinc-900 dark:text-white">
 
 <div class="scroll-sentinel absolute top-0 h-[50vh] w-full pointer-events-none"></div>
-<nav class="main-nav{{NAV_EXTRA}} fixed top-0 inset-x-0 z-[200] backdrop-blur-xl
+<nav class="main-nav fixed top-0 inset-x-0 z-[200] backdrop-blur-xl
             border-zinc-200 bg-white/80 
             dark:border-white/10 dark:bg-neutral-950/90">
     
@@ -73,13 +79,11 @@
             <a href="/index.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Home</a>
             <a href="/music.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Music</a>
             <a href="/about.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">About</a>
-            <a href="/notebook.html" class="text-neutral-800 dark:text-neutral-100 hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Notebook</a>            
+            <a href="/notebook.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Notebook</a>
             <a href="/contact.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Contact</a>
-
         </div>
 
         <input type="checkbox" id="mobile-menu-toggle" class="hidden peer">
-        
 
         <label for="mobile-menu-toggle" class="nav-desktop:hidden z-[250] cursor-pointer p-4 -mr-4 group select-none translate-y-[6%]">
         <span class="menu-icon-text">
@@ -94,10 +98,11 @@
             transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]">
             
             <div class="page-container h-full flex flex-col justify-center">
-                <nav class="main-nav flex flex-col pt-42 py-10 text-center gap-10 text-neutral-900 dark:text-white font-mono text-xl uppercase tracking-nav-menu">
+                
+                <nav class="flex flex-col pt-42 py-10 text-center gap-10 text-neutral-900 dark:text-white font-mono text-xl uppercase tracking-nav-menu">
                     <a href="/index.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Home</a>
                     <a href="/music.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Music</a>
-                    <a href="/about.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors ">About</a>
+                    <a href="/about.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">About</a>
                     <a href="/contact.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Contact</a>
                     <a href="/notebook.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Notebook</a>  
                 </nav>
@@ -107,59 +112,19 @@
 </nav>
 
 
-<!-- svg background start -->
-<div class="bg-topology-map">
+<div class="bg-topology-map"> 
 
-{{HERO}}
-
-<!-- start margins -->
-<div  class="page-container pt-24 pb-12 extra_fade_effect">
-
-
-
-            {{BACKLINK}}
-
-
-
-<!-- ====================================================================== -->
-<!-- Content starts here -->
+    
 {{CONTENT}}
-<!-- Content stops here -->
-<!-- ====================================================================== -->
-
-
-
-<!-- ====================================================================== -->
-<!-- Date --> 
-<!-- ====================================================================== -->  
- <div class="pt-24">
-  <hr>
-  <div class="py-2">
-    <time class="text-sm font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider" datetime="{{DATE_ISO}}">
-    {{DATE_HUMAN}}
-    </time>
-  </div>
-</div>
-
-<!-- End margins -->   
-</div>
 
 
 
 
 
 
-  <!-- Go back link -->  
-  <div class="page-container pt-6">
-        <a href="/notebook.html" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">
-          ← NOTEBOOK FRONT PAGE
-        </a>
-      </div>
 
 
 
-
-<!-- Footer -->   
 <footer class="py-16">
   <div class="max-w-screen-xl mx-auto px-4">
     <div class="flex flex-col items-center text-center space-y-4">
@@ -168,7 +133,7 @@
         <p class="font-mono text-black dark:text-white leading-none text-base uppercase tracking-widest">
           Revery Division
         </p>
-        <p class="mt-2 text-3xl text-black dark:text-white"><a href="../h.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors ">½</a></p>
+        <p class="mt-2 text-3xl text-black dark:text-white"><a href="/h.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors ">½</a></p>
         <p class="text-sm text-gray-600 dark:text-gray-300">
           Gothenburg, Sweden
         </p>
@@ -253,37 +218,12 @@
 </footer>
 
 
+</div>
 
 
 
-<!-- svg background end -->
- </div>
-
-
-
-
-
-
-</body>
-
-
-
-<!-- GLightbox load -->
 <script src="/javascript/glightbox.min.js" defer></script>
-<!-- GLightbox settings -->
 <script src="/javascript/glightbox_settings_min.js" defer></script>
 
-<!-- Alpine.js load -->
-<script src="/javascript/alpine.min.js" defer></script>
-
-<!-- Nav reveal on scroll (hero pages only; scroll-timeline fallback) -->
-{{NAV_SCRIPT}}
-
-
-
-<!-- ====================================================================== -->
-<!-- Set Schema SEO here (ask promt an LLM to do it for you after you have done everything else) -->
-<!-- ====================================================================== --> 
-{{JSONLD}}
-
+</body>
 </html>

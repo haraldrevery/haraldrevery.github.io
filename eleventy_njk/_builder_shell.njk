@@ -1,0 +1,34 @@
+---
+permalink: "page_builder_app_v2/shell.html"
+eleventyExcludeFromCollections: true
+layout: base.njk
+title: "{{TITLE}}"
+customJsonLd: true
+---
+{#
+  GENERATED FILE — page_builder_app_v2/shell.html is build output, not a source.
+  Edit nav.njk / footer.njk / base.njk instead; this template just wraps a
+  placeholder body in the real chrome and every site build refreshes it.
+
+  It exists solely so the page builder's in-app PREVIEW (/__pb/preview) shows
+  the same chrome the published page will get. Export does NOT use it: the
+  builder writes a body fragment to input_build_page/ and Eleventy wraps it with
+  base.njk at build time.
+
+  Before this file, shell.html was a hand-maintained copy of the nav and footer,
+  and it silently drifted — every exported page carried a duplicate .main-nav,
+  which disables the site's view transitions. A generated shell cannot drift.
+
+  Two tokens survive for the builder to fill, wrapped in {% raw %} so Nunjucks
+  emits them literally instead of trying to resolve them:
+    {{TITLE}}   - from the front matter above, so it lands inside <title>
+    {{CONTENT}} - the whole body fragment
+
+  KNOWN, DELIBERATE PREVIEW DIFFERENCE: the shell is rendered without
+  `navScroll`, so the preview always shows the nav bar. A page that sets
+  `navScroll: true` gets the hide-then-reveal nav once published. Preview
+  already differs from the published page in other ways (see buildPreview in
+  src/app/project.ts, which skips the SHA and thumbnail revalidation), so this
+  is consistent with how preview is treated.
+#}
+{% raw %}{{CONTENT}}{% endraw %}
