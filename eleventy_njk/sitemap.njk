@@ -2,24 +2,25 @@
 permalink: /sitemap.xml
 eleventyExcludeFromCollections: true
 site_url: "https://haraldrevery.com"
-# Static, hand-written pages (excluded from Eleventy via .eleventyignore, so they
-# must be listed here). `loc` matches each page's <link rel="canonical">.
-# `file` is used to read the real last-modified time for <lastmod>.
+# Pages that are not in a collection, so they must be listed here. `loc` matches
+# each page's <link rel="canonical">. `file` is the SOURCE whose mtime gives
+# <lastmod> — for a generated page that is its .njk, never the built output:
+# Eleventy rewrites output on every build, which would churn <lastmod> forever.
 staticPages:
   - loc: "/"
     file: "eleventy_njk/home.njk"
     changefreq: weekly
     priority: "1.0"
   - loc: "/music"
-    file: "music.html"
+    file: "eleventy_njk/music.njk"
     changefreq: weekly
     priority: "0.9"
   - loc: "/about"
-    file: "about.html"
+    file: "eleventy_njk/about.njk"
     changefreq: monthly
     priority: "0.8"
   - loc: "/contact"
-    file: "contact.html"
+    file: "eleventy_njk/contact.njk"
     changefreq: monthly
     priority: "0.8"
   - loc: "/notebook"

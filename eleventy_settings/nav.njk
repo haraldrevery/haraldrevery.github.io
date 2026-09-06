@@ -1,5 +1,36 @@
+{#
+  Site navigation — the single source of truth for the header and the mobile
+  menu. Included by base.njk (notebook, legal, markdown posts) and by the
+  standalone page templates in eleventy_njk/ (home, music, about, contact).
+
+  TWO VARIANTS, selected with `navScroll` before the include:
+
+      {% set navScroll = true %}{% include "nav.njk" %}
+
+  navScroll = true    the header starts hidden and slides in as you scroll
+                      (index + release pages). The reveal is pure CSS on
+                      Chrome/Edge via `animation-timeline: scroll()`; Firefox
+                      takes the @supports-not fallback, which needs
+                      /javascript/navbar_scroll_min.js. That script does
+                      querySelector(".navi_mechanic") with NO null guard, so a
+                      page that loads it MUST set navScroll.
+  navScroll unset     header is always visible (every other page).
+
+  The active link is derived from page.url, so no page hardcodes its own
+  highlight. `match` is a URL prefix: /notebook also covers /notebook_pages/*,
+  which is why a post highlights Notebook.
+#}
+{% set navUrl = page.url or "" %}
+{% set navLinks = [
+  { href: "/index.html",    label: "Home",     match: "/index"    },
+  { href: "/music.html",    label: "Music",    match: "/music"    },
+  { href: "/about.html",    label: "About",    match: "/about"    },
+  { href: "/notebook.html", label: "Notebook", match: "/notebook" },
+  { href: "/contact.html",  label: "Contact",  match: "/contact"  }
+] %}
+
 <div class="scroll-sentinel absolute top-0 h-[50vh] w-full pointer-events-none"></div>
-<nav class="main-nav fixed top-0 inset-x-0 z-[200] backdrop-blur-xl
+<nav class="main-nav {% if navScroll %}navi_mechanic {% endif %}fixed top-0 inset-x-0 z-[200] backdrop-blur-xl
             border-zinc-200 bg-white/80 
             dark:border-white/10 dark:bg-neutral-950/90">
     
@@ -16,11 +47,12 @@
         </a>
 
         <div class="hidden nav-desktop:flex items-center gap-5 font-mono text-[1.2rem] uppercase tracking-nav text-neutral-500  dark:text-neutral-400 translate-y-[10%]">
-            <a href="/index.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Home</a>
-            <a href="/music.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Music</a>
-            <a href="/about.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">About</a>
-            <a href="/notebook.html" class="{% if page.url and page.url.startsWith('/notebook') %}text-neutral-800 dark:text-neutral-100{% else %}hover:text-neutral-800 dark:hover:text-neutral-100{% endif %} transition-colors">Notebook</a>            
-            <a href="/contact.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Contact</a>
+            {#- Home needs an exact test: Eleventy strips "index.html" from
+                page.url, so the home page is "/" — and every URL startsWith "/". #}
+            {%- for l in navLinks %}
+            {%- set isActive = (navUrl == "/" or navUrl.startsWith("/index")) if l.match == "/index" else navUrl.startsWith(l.match) %}
+            <a href="{{ l.href }}" class="{% if isActive %}text-neutral-800 dark:text-neutral-100 {% endif %}hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">{{ l.label }}</a>
+            {%- endfor %}
         </div>
 
         <input type="checkbox" id="mobile-menu-toggle" class="hidden peer">
@@ -38,7 +70,14 @@
             transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]">
             
             <div class="page-container h-full flex flex-col justify-center">
-                <nav class="main-nav flex flex-col pt-42 py-10 text-center gap-10 text-neutral-900 dark:text-white font-mono text-xl uppercase tracking-nav-menu">
+                {# Deliberately NOT .main-nav and NOT .navi_mechanic. `main-nav`
+                   carries view-transition-name, which must be unique per
+                   document — having it on both navs made the browser skip the
+                   view transition entirely. `navi_mechanic` scroll-animates the
+                   element, which on Chrome/Edge left this menu at opacity 0 and
+                   translateY(-110%) whenever it was opened near the top of the
+                   page. #}
+                <nav class="flex flex-col pt-42 py-10 text-center gap-10 text-neutral-900 dark:text-white font-mono text-xl uppercase tracking-nav-menu">
                     <a href="/index.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Home</a>
                     <a href="/music.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Music</a>
                     <a href="/about.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">About</a>
