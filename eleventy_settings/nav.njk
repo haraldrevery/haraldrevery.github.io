@@ -20,15 +20,27 @@
   highlight. `match` is a URL prefix: /notebook also covers /notebook_pages/*,
   which is why a post highlights Notebook.
 #}
-{% set navUrl = page.url or "" %}
-{% set navLinks = [
-  { href: "/index.html",    label: "Home",     match: "/index"    },
-  { href: "/music.html",    label: "Music",    match: "/music"    },
-  { href: "/about.html",    label: "About",    match: "/about"    },
-  { href: "/notebook.html", label: "Notebook", match: "/notebook" },
-  { href: "/contact.html",  label: "Contact",  match: "/contact"  }
-] %}
-
+{%- set navUrl = page.url or "" -%}
+{#- Which top-level section is this page in? Worked out once, then matched by
+    name below, because a bare prefix test cannot express the cases that matter:
+    Home is "/" (Eleventy strips "index.html" from page.url) and every URL
+    starts with "/", and the discography and release pages belong under Music.
+    A Nunjucks {% set %} inside {% if %} leaks out as intended — inside {% for %}
+    it would not, which is why this is not a loop over a list of prefixes. -#}
+{%- set navSection = "" -%}
+{%- if navUrl == "/" or navUrl.startsWith("/index") %}{%- set navSection = "home" -%}
+{%- elif navUrl.startsWith("/music") or navUrl.startsWith("/discography") or navUrl.startsWith("/release") %}{%- set navSection = "music" -%}
+{%- elif navUrl.startsWith("/about") %}{%- set navSection = "about" -%}
+{%- elif navUrl.startsWith("/notebook") %}{%- set navSection = "notebook" -%}
+{%- elif navUrl.startsWith("/contact") %}{%- set navSection = "contact" -%}
+{%- endif -%}
+{%- set navLinks = [
+  { href: "/index.html",    label: "Home",     section: "home"     },
+  { href: "/music.html",    label: "Music",    section: "music"    },
+  { href: "/about.html",    label: "About",    section: "about"    },
+  { href: "/notebook.html", label: "Notebook", section: "notebook" },
+  { href: "/contact.html",  label: "Contact",  section: "contact"  }
+] -%}
 <div class="scroll-sentinel absolute top-0 h-[50vh] w-full pointer-events-none"></div>
 <nav class="main-nav {% if navScroll %}navi_mechanic {% endif %}fixed top-0 inset-x-0 z-[200] backdrop-blur-xl
             border-zinc-200 bg-white/80 
@@ -47,11 +59,8 @@
         </a>
 
         <div class="hidden nav-desktop:flex items-center gap-5 font-mono text-[1.2rem] uppercase tracking-nav text-neutral-500  dark:text-neutral-400 translate-y-[10%]">
-            {#- Home needs an exact test: Eleventy strips "index.html" from
-                page.url, so the home page is "/" — and every URL startsWith "/". #}
             {%- for l in navLinks %}
-            {%- set isActive = (navUrl == "/" or navUrl.startsWith("/index")) if l.match == "/index" else navUrl.startsWith(l.match) %}
-            <a href="{{ l.href }}" class="{% if isActive %}text-neutral-800 dark:text-neutral-100 {% endif %}hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">{{ l.label }}</a>
+            <a href="{{ l.href }}" class="{% if l.section == navSection %}text-neutral-800 dark:text-neutral-100 {% endif %}hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">{{ l.label }}</a>
             {%- endfor %}
         </div>
 
