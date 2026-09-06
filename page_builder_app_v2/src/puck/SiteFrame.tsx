@@ -41,6 +41,31 @@ html.pb-editing #scroll-prompt {
 }
 /* Links must not navigate the editor away from itself. */
 html.pb-editing a { pointer-events: none; }
+
+/* ---- drag targeting -----------------------------------------------------
+   Two rules main.css applies to every page, which quietly break block drag and
+   drop in the editor. Both are edit-mode only; the published page keeps them.
+
+   1. scroll-behavior: smooth is set on <html> UNCONDITIONALLY by main.css
+      (not just via the .scroll-smooth class). dnd-kit autoscrolls this document
+      while you drag near an edge and measures collision rects against its
+      scroll offset — but with smooth scrolling every autoscroll step ANIMATES,
+      so scrollTop lags behind what dnd-kit just asked for. The rects it is
+      matching the pointer against are stale for the duration of the animation,
+      which is exactly the "it does not drop where I aimed" symptom, and why it
+      feels intermittent rather than broken: it only bites when the drag scrolls.
+
+   2. overflow-x: hidden on html and body. Per spec, overflow-y computes to
+      auto when the other axis is not visible, so <body> silently becomes a
+      scroll container of its own and the frame has two nested scrollers for
+      dnd-kit to pick between. The page needs the clipping; the editor does not.
+
+   Deliberately NOT neutralised: position: relative on body. It is a
+   containing block for absolutely positioned content, so changing it could move
+   real block content in the editor — a worse trade than the scroll rules. */
+html.pb-editing { scroll-behavior: auto !important; }
+html.pb-editing,
+html.pb-editing body { overflow-x: visible !important; }
 /* The frame has no <nav>, so nothing should reserve space for a fixed bar
    beyond the pt-24 the root render already carries. */
 html.pb-editing .scroll-sentinel { display: none; }
@@ -93,10 +118,12 @@ export function makeSiteFrame(previewPort: number): Overrides["iframe"] {
       });
       obs.observe(doc.head, { childList: true });
 
-      // Mirror shell.html's <html>/<body> attributes so the site's dark-mode
-      // and base text colours apply (shell.html:53).
+      // Mirror the published page's <html>/<body> attributes so the site's
+      // dark-mode and base text colours apply. The source of truth is
+      // eleventy_settings/base.njk, which every builder page now renders
+      // through; shell.html is generated from it.
       doc.documentElement.lang = "en";
-      doc.body.className = "min-h-screen text-black dark:text-white";
+      doc.body.className = "min-h-screen text-zinc-900 dark:text-white";
 
       return () => {
         obs.disconnect();

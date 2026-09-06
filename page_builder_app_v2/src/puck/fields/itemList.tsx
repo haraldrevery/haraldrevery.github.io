@@ -44,10 +44,24 @@ export function Ops({
   );
 }
 
-export function useListOps<T>(items: T[], onChange: (v: T[]) => void) {
+export function useListOps<T extends object>(items: T[], onChange: (v: T[]) => void) {
   return {
+    /*
+     * Replaces item i with a NEW object, so it must hand that object the old
+     * one's drag id. Without inheritItemId this was the "type one character and
+     * the field loses focus" bug: the id is also the React key, a new object
+     * missed the WeakMap and minted a fresh id, the key changed, and React
+     * unmounted and remounted the row — including the <input> being typed into.
+     */
     patch: (i: number, next: Partial<T>) =>
-      onChange(items.map((it, n) => (n === i ? { ...it, ...next } : it))),
+      onChange(
+        items.map((it, n) => {
+          if (n !== i) return it;
+          const replaced = { ...it, ...next };
+          inheritItemId(it, replaced);
+          return replaced;
+        }),
+      ),
     /// The ±1 buttons. Swap rather than splice — for a single step the two are
     /// equivalent and a swap reads more predictably.
     move: (i: number, d: number) => {
@@ -61,7 +75,8 @@ export function useListOps<T>(items: T[], onChange: (v: T[]) => void) {
 // ---------------------------------------------------------------- drag ids
 
 /*
- * dnd-kit needs an id that sticks to the ITEM, not to its position.
+ * dnd-kit needs an id that sticks to the ITEM, not to its position — and the
+ * same id is the React key for the row, which makes it load-bearing twice over.
  *
  * None of these item types has an id field, and the obvious candidates are not
  * unique — the same photo may legitimately appear in a gallery twice. Object
@@ -69,28 +84,46 @@ export function useListOps<T>(items: T[], onChange: (v: T[]) => void) {
  *
  * Adding a real `id` field instead would mean migrating saved {version:2}
  * project JSON, updating the parity fixtures, and writing editor bookkeeping
- * permanently into the user's data — all to serve an affordance that exists for
- * about 300ms at a time.
+ * permanently into the user's data.
  *
- * Identity loss is harmless: the only window where stability matters is between
- * drag start and drop, and in that window we deliberately never call onChange,
- * so Puck cannot re-dispatch and the array cannot be rebuilt. Outside it, a
- * fresh id costs one re-registration on an idle list.
+ * IDENTITY LOSS IS NOT HARMLESS — an earlier version of this comment claimed it
+ * was, on the grounds that stability only matters between drag start and drop.
+ * That overlooked the React key: any operation that replaces an item object
+ * changes its key, and a changed key is an unmount and remount, not a
+ * re-registration. Typing one character into a row's text field ran exactly
+ * that path and the field lost focus after every keystroke.
  *
- * Using it as the React key also fixes a real collision — the old
- * `${it.full}-${i}` key repeated when the same photo appeared twice.
+ * So the registry lives at module scope and `patch` explicitly carries an id
+ * across the replacement (inheritItemId). Every other operation — move, remove,
+ * reorder, and appending new items — reuses the existing objects, so their ids
+ * follow for free. A genuinely new object correctly gets a new id.
+ *
+ * Module scope rather than a ref is deliberate: the map is weak, so entries go
+ * when the items do, and ids then survive the editor itself remounting.
  */
+const ITEM_IDS = new WeakMap<object, string>();
+let nextItemId = 0;
+
+/// Exported as the test seam for the focus regression: the id must be stable
+/// across a patch, because it is the row's React key.
+export function itemId(it: object): string {
+  let id = ITEM_IDS.get(it);
+  if (!id) {
+    id = `it${nextItemId++}`;
+    ITEM_IDS.set(it, id);
+  }
+  return id;
+}
+
+/// Give `to` the id `from` already had, so replacing an item in place does not
+/// change its React key. No-op if `from` was never registered.
+export function inheritItemId(from: object, to: object): void {
+  const id = ITEM_IDS.get(from);
+  if (id) ITEM_IDS.set(to, id);
+}
+
 function useItemIds<T extends object>(items: T[]): string[] {
-  const ids = useRef(new WeakMap<T, string>());
-  const next = useRef(0);
-  return items.map((it) => {
-    let id = ids.current.get(it);
-    if (!id) {
-      id = `it${next.current++}`;
-      ids.current.set(it, id);
-    }
-    return id;
-  });
+  return items.map(itemId);
 }
 
 // ------------------------------------------------------------------- drag
