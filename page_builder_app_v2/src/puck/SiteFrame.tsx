@@ -55,17 +55,23 @@ html.pb-editing a { pointer-events: none; }
       which is exactly the "it does not drop where I aimed" symptom, and why it
       feels intermittent rather than broken: it only bites when the drag scrolls.
 
-   2. overflow-x: hidden on html and body. Per spec, overflow-y computes to
-      auto when the other axis is not visible, so <body> silently becomes a
-      scroll container of its own and the frame has two nested scrollers for
-      dnd-kit to pick between. The page needs the clipping; the editor does not.
+   2. overflow-x: hidden on html and body. Per spec, overflow-y then computes
+      to auto, so <body> silently becomes a scroll container of its own and the
+      frame offers dnd-kit two nested scrollers to choose between.
+
+      Replaced with overflow-x: clip rather than visible. clip does the same
+      clipping hidden does — full-bleed sections still do not spill sideways —
+      but it is NOT a scroll container, so overflow-y stays visible. Verified in
+      Firefox against the real main.css: hidden gives overflow-y auto, clip
+      gives visible. If a webview ever lacks clip the declaration is dropped and
+      main.css hidden applies again, which is todays behaviour, not a new break.
 
    Deliberately NOT neutralised: position: relative on body. It is a
    containing block for absolutely positioned content, so changing it could move
    real block content in the editor — a worse trade than the scroll rules. */
 html.pb-editing { scroll-behavior: auto !important; }
 html.pb-editing,
-html.pb-editing body { overflow-x: visible !important; }
+html.pb-editing body { overflow-x: clip !important; }
 /* The frame has no <nav>, so nothing should reserve space for a fixed bar
    beyond the pt-24 the root render already carries. */
 html.pb-editing .scroll-sentinel { display: none; }
