@@ -1,0 +1,639 @@
+---
+title: "Test build"
+date: 1999-08-21
+tags: ["test"]
+image: "/notebook_thumbnails/studyguide.jpg"
+description: "Text"
+draft: true
+---
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/main.css"> 
+    <link rel="stylesheet" href="/prose.css">
+
+    <!-- ====================================================================== -->
+    <!-- Set title and SEO tags here -->
+    <!-- ====================================================================== -->    
+    <title>Harald Revery - Test build</title>
+    <meta name="description" content="Text">
+    <meta name="keywords" content="test">
+    
+
+    <!-- Preload LCP image (page load optimization) -->
+    <link rel="preload" href="/fonts/HaraldReveryTextFont.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/HaraldReveryMonoFont.woff2" as="font" type="font/woff2" crossorigin>
+
+
+    <!-- ====================================================================== -->
+    <!-- Social media share here and the website adress -->
+    <!-- ====================================================================== -->      
+    <!--  Open Graph (social media image thing) -->
+    <meta property="og:title" content="Test build - Harald Revery" />
+    <meta property="og:description" content="Text" />
+    <meta property="og:image" content="https://haraldrevery.com/notebook_thumbnails/studyguide.jpg" />
+    <meta property="og:url" content="https://haraldrevery.com/notebook_pages/test-build" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Harald Revery" />
+    <!--  Twitter Card (matches eleventy_settings/base.njk) -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Test build - Harald Revery" />
+    <meta name="twitter:description" content="Text" />
+    <meta name="twitter:image" content="https://haraldrevery.com/notebook_thumbnails/studyguide.jpg" />
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://haraldrevery.com/notebook_pages/test-build">
+
+
+
+
+<!-- Internet icon -->
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
+    <link rel="shortcut icon" href="/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#171717">
+
+</head>
+
+<body class="min-h-screen text-black dark:text-white">
+
+<div class="scroll-sentinel absolute top-0 h-[50vh] w-full pointer-events-none"></div>
+<nav class="main-nav navi_mechanic fixed top-0 inset-x-0 z-[200] backdrop-blur-xl
+            border-zinc-200 bg-white/80 
+            dark:border-white/10 dark:bg-neutral-950/90">
+    
+    <div class="page-container nav-desktop:h-13 h-18 flex items-center justify-between relative">
+        <a href="/index.html" class="flex items-center group z-[250] translate-y-[14%]">
+            <svg class="mr-4 fill-current h-[0.96em] w-auto text-neutral-900 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors -translate-y-[24%]" 
+                viewBox="0 0 1080 1080">
+                <path d="M477.9,730c-31.9-13.7-62.4-30.2-91-49.1c-33.4-22-64.5-47.4-92.6-75.7c-32.8-32.9-61.8-69.7-86.1-109.7 C160,416.5,130.1,325,124.3,227C171.2,144.6,246,80,335.8,46c-34.2,56.8-57.7,120.8-67.8,189.2c-3.7,24.8-5.6,50.1-5.6,75.8 c0,109.4,34.1,210.9,92.3,294.3c10,14.4,20.8,28.2,32.2,41.4C413.8,678,444.4,706,477.9,730z"/>
+                <path d="M546.2,737.8c-151.9-82.1-255.1-242.9-255.1-427.7c0-43.2,5.6-85.1,16.2-124.9C366.7,121.4,447.5,78,538.4,66.4 C454.6,151.9,403,269,403,398.2c0,53.9,9,105.7,25.5,153.9c6.3,18.3,13.6,36,22,53.2C474.6,654.9,507.1,699.7,546.2,737.8z"/>
+                <path d="M386.9,717.3v317.8H253.3V607.2C292.4,649.9,337.3,687,386.9,717.3z"/>
+                <path d="M956.1,98.2v936.8H839.9V605.3H485c-19.2-36-33.5-75.1-42.1-116.2h397V98.2H956.1z"/>
+            </svg>
+            <span class="text-neutral-900 dark:text-white font-mono text-nav tracking-brand md:tracking-brand-wide uppercase leading-none group-hover:text-neutral-500 dark:group-hover:text-neutral-300">Harald Revery</span>
+        </a>
+
+        <div class="hidden nav-desktop:flex items-center gap-5 font-mono text-[1.2rem] uppercase tracking-nav text-neutral-500  dark:text-neutral-400 translate-y-[10%]">
+            <a href="/index.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Home</a>
+            <a href="/music.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Music</a>
+            <a href="/about.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">About</a>
+            <a href="/notebook.html" class="text-neutral-800 dark:text-neutral-100 hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Notebook</a>            
+            <a href="/contact.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Contact</a>
+
+        </div>
+
+        <input type="checkbox" id="mobile-menu-toggle" class="hidden peer">
+        
+
+        <label for="mobile-menu-toggle" class="nav-desktop:hidden z-[250] cursor-pointer p-4 -mr-4 group select-none translate-y-[6%]">
+        <span class="menu-icon-text">
+            <span class="icon-menu font-mono text-2xl text-neutral-900 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors">E</span>
+            <span class="icon-close font-mono text-2xl text-neutral-900 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors">X</span>
+        </span>
+        </label>
+
+        <div class="fixed inset-0 flex items-center justify-center min-h-screen w-screen z-[210] opacity-0 pointer-events-none -translate-y-full
+            bg-white/98 dark:bg-neutral-950/98 backdrop-blur-3xl 
+            peer-checked:opacity-100 peer-checked:pointer-events-auto peer-checked:translate-y-0 
+            transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]">
+            
+            <div class="page-container h-full flex flex-col justify-center">
+                <nav class="main-nav flex flex-col pt-42 py-10 text-center gap-10 text-neutral-900 dark:text-white font-mono text-xl uppercase tracking-nav-menu">
+                    <a href="/index.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Home</a>
+                    <a href="/music.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Music</a>
+                    <a href="/about.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors ">About</a>
+                    <a href="/contact.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Contact</a>
+                    <a href="/notebook.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Notebook</a>  
+                </nav>
+            </div>
+        </div>
+    </div>
+</nav>
+
+
+<!-- svg background start -->
+<div class="bg-topology-map">
+
+<section class="release-hero"><img src="/photos/2025galdhoepiggen/2025h_close_to_galdhopiggen_top5.jpg" alt="" class="absolute inset-0 w-full h-full object-cover" style="z-index:-2;-webkit-mask-image:linear-gradient(#000 72%,transparent 100%);mask-image:linear-gradient(#000 72%,transparent 100%)" fetchpriority="high">
+  <div class="absolute inset-0" style="z-index:-1;background:linear-gradient(rgba(255,255,255,.74),rgba(255,255,255,.47) 45%,rgba(255,255,255,0) 90%)"></div>
+  <div class="page-container release-hero__inner text-center text-black">
+    <div class="extra_fade_effect">
+      <p class="release-hero__kicker">Kicker TExt</p>
+      <h1 class="release-hero__title">Title Text</h1>
+      <p class="release-hero__tagline mx-auto">Some more text</p>
+    </div>
+  </div>
+  <div class="page-container" style="position:absolute;left:0;right:0;bottom:2.5rem;z-index:20"><a href="/notebook.html" class="extra_fade_effect_long inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider">← Back to Notebook</a></div><a href="#enter_site" id="scroll-prompt" class="absolute text-center bottom-10 text-black dark:text-white hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors opacity-0 cursor-pointer z-50" style="left:50%;transform:translateX(-50%)">Scroll down here.</a>
+</section>
+<div id="enter_site"></div>
+
+<!-- start margins -->
+<div  class="page-container pt-24 pb-12 extra_fade_effect">
+
+
+
+            
+
+
+
+<!-- ====================================================================== -->
+<!-- Content starts here -->
+<section class="extra_fade_effect mb-16">
+  <div class="grid md:grid-cols-2 gap-16 items-center" style="row-gap:2rem">
+    <div>
+      <div class="flex flex-wrap gap-2"><a href="/photos/2015-2023/3feb2019haraldreveryonicelake.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:5200/2229;flex-grow:233.29;flex-basis:calc(2.3329 * 106px);max-width:calc(2.3329 * 282px)">
+          <div class="overlay"></div><img src="/photos/2015-2023/3feb2019haraldreveryonicelake_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+        </a><a href="/photos/2015-2023/2022aug24grass_walk.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:3840/2400;flex-grow:160;flex-basis:calc(1.6 * 106px);max-width:calc(1.6 * 282px)">
+          <div class="overlay"></div><img src="/photos/2015-2023/2022aug24grass_walk_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+        </a><a href="/photos/2015-2023/2021march07klippor_3.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:2670/2000;flex-grow:133.5;flex-basis:calc(1.335 * 106px);max-width:calc(1.335 * 282px)">
+          <div class="overlay"></div><img src="/photos/2015-2023/2021march07klippor_3_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+        </a><a href="/photos/2015-2023/2015clouds.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:4899/2100;flex-grow:233.29;flex-basis:calc(2.3329 * 106px);max-width:calc(2.3329 * 282px)">
+          <div class="overlay"></div><img src="/photos/2015-2023/2015clouds_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+        </a><a href="/photos/2015-2023/solklippor.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:3500/1500;flex-grow:233.33;flex-basis:calc(2.3333 * 106px);max-width:calc(2.3333 * 282px)">
+          <div class="overlay"></div><img src="/photos/2015-2023/solklippor_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+        </a><a href="/photos/2015-2023/2016europaskyview.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:3000/2000;flex-grow:150;flex-basis:calc(1.5 * 106px);max-width:calc(1.5 * 282px)">
+          <div class="overlay"></div><img src="/photos/2015-2023/2016europaskyview_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+        </a><a href="/photos/2015-2023/romein2016.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:4994/2140;flex-grow:233.36;flex-basis:calc(2.3336 * 106px);max-width:calc(2.3336 * 282px)">
+          <div class="overlay"></div><img src="/photos/2015-2023/romein2016_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+        </a><a href="/photos/2015-2023/2023december23.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:2400/3840;flex-grow:62.5;flex-basis:calc(0.625 * 106px);max-width:calc(0.625 * 282px)">
+          <div class="overlay"></div><img src="/photos/2015-2023/2023december23_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+        </a><a href="/photos/2015-2023/2021march07klippor_1.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:1940/2590;flex-grow:74.9;flex-basis:calc(0.749 * 106px);max-width:calc(0.749 * 282px)">
+          <div class="overlay"></div><img src="/photos/2015-2023/2021march07klippor_1_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+        </a><a href="/photos/2015-2023/2021march07klippor_4.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:2670/2000;flex-grow:133.5;flex-basis:calc(1.335 * 106px);max-width:calc(1.335 * 282px)">
+          <div class="overlay"></div><img src="/photos/2015-2023/2021march07klippor_4_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+        </a><a href="/photos/2015-2023/2018augusti10stranden.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:4350/1820;flex-grow:239.01;flex-basis:calc(2.3901 * 106px);max-width:calc(2.3901 * 282px)">
+          <div class="overlay"></div><img src="/photos/2015-2023/2018augusti10stranden_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+        </a><a href="/photos/2015-2023/churchofsangiorgiomaggiore2016.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:5088/2180;flex-grow:233.39;flex-basis:calc(2.3339 * 106px);max-width:calc(2.3339 * 282px)">
+          <div class="overlay"></div><img src="/photos/2015-2023/churchofsangiorgiomaggiore2016_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+        </a></div>
+    </div>
+    <div>
+      <div class="prose dark:prose-invert max-w-none">
+        <p>Skipping giving images titele, alt and descriptions.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="mb-16">
+  <div class="flex flex-wrap gap-2"><a href="/photos/2024/2024februari14aerial_1.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:3200/4480;flex-grow:71.43;flex-basis:calc(0.7143 * 240px);max-width:calc(0.7143 * 640px)">
+      <div class="overlay"></div><img src="/photos/2024/2024februari14aerial_1_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+    </a><a href="/photos/2024/2024februari14aerial_2.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:3200/4480;flex-grow:71.43;flex-basis:calc(0.7143 * 240px);max-width:calc(0.7143 * 640px)">
+      <div class="overlay"></div><img src="/photos/2024/2024februari14aerial_2_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+    </a><a href="/photos/2024/2024only_white.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:2268/3400;flex-grow:66.71;flex-basis:calc(0.6671 * 240px);max-width:calc(0.6671 * 640px)">
+      <div class="overlay"></div><img src="/photos/2024/2024only_white_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+    </a><a href="/photos/2024/2024alpern_spine.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:2400/3840;flex-grow:62.5;flex-basis:calc(0.625 * 240px);max-width:calc(0.625 * 640px)">
+      <div class="overlay"></div><img src="/photos/2024/2024alpern_spine_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+    </a><a href="/photos/2024/2024white_alps.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:3400/2268;flex-grow:149.91;flex-basis:calc(1.4991 * 240px);max-width:calc(1.4991 * 640px)">
+      <div class="overlay"></div><img src="/photos/2024/2024white_alps_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+    </a><a href="/photos/2024/2024aerial_photo_over_the_alps.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:2743/3840;flex-grow:71.43;flex-basis:calc(0.7143 * 240px);max-width:calc(0.7143 * 640px)">
+      <div class="overlay"></div><img src="/photos/2024/2024aerial_photo_over_the_alps_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+    </a><a href="/photos/2024/2024cool_snow_mountains.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:2400/3840;flex-grow:62.5;flex-basis:calc(0.625 * 240px);max-width:calc(0.625 * 640px)">
+      <div class="overlay"></div><img src="/photos/2024/2024cool_snow_mountains_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+    </a><a href="/photos/2024/2024zermatt_and_matterhorn_at_night.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:3840/2400;flex-grow:160;flex-basis:calc(1.6 * 240px);max-width:calc(1.6 * 640px)">
+      <div class="overlay"></div><img src="/photos/2024/2024zermatt_and_matterhorn_at_night_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+    </a><a href="/photos/2024/2024mountain_top.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:3840/2400;flex-grow:160;flex-basis:calc(1.6 * 240px);max-width:calc(1.6 * 640px)">
+      <div class="overlay"></div><img src="/photos/2024/2024mountain_top_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+    </a><a href="/photos/2024/2024februari24udine.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:2100/3148;flex-grow:66.71;flex-basis:calc(0.6671 * 240px);max-width:calc(0.6671 * 640px)">
+      <div class="overlay"></div><img src="/photos/2024/2024februari24udine_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+    </a><a href="/photos/2024/2024cortina3.jpg" class="portfolio-item glightbox block" data-gallery="gallery" data-glightbox="title: ; description: " style="--delay:0.1s;aspect-ratio:4032/2268;flex-grow:177.78;flex-basis:calc(1.7778 * 240px);max-width:calc(1.7778 * 640px)">
+      <div class="overlay"></div><img src="/photos/2024/2024cortina3_min.jpg" alt="" class="w-full h-full object-cover" loading="lazy">
+    </a></div>
+</section>
+<section class="featured-card mb-16"><a class="glightbox featured-card__media" href="/photos/2025/2025ringedalsvatnet3.jpg" data-gallery="single" data-glightbox="title: Large text; description: "><img src="/photos/2025/2025ringedalsvatnet3_min.jpg" alt="image alt text" loading="lazy"></a>
+  <div class="preview-card featured-card__panel">
+    <p class="featured-card__eyebrow">Mini text here</p>
+    <h2 class="featured-card__title">Large text</h2>
+    <p class="featured-card__excerpt">Some text about something.</p>
+  </div>
+</section>
+<article class="prose dark:prose-invert max-w-none mb-16">
+  <hr>
+</article>
+<section class="extra_fade_effect mb-16">
+  <div class="grid md:grid-cols-2 gap-16 items-center" style="row-gap:2rem">
+    <div><audio controls="" class="w-full" src="/audio/mp3/timer_alarm_1.mp3"></audio></div>
+    <div>
+      <div class="max-w-4xl mx-auto">
+        <div class="space-y-2">
+          <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden"><input type="checkbox" id="faq-Faq-a0e314db-5617-4c2f-b146-7907a20078c7-0" class="faq-toggle hidden"><label for="faq-Faq-a0e314db-5617-4c2f-b146-7907a20078c7-0" class="faq-question block p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">Question 1</h3><span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+              </div>
+            </label>
+            <div class="faq-answer">
+              <div class="p-4 text-zinc-800 dark:text-zinc-200">
+                <p>Answer text</p>
+              </div>
+            </div>
+          </div>
+          <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden"><input type="checkbox" id="faq-Faq-a0e314db-5617-4c2f-b146-7907a20078c7-1" class="faq-toggle hidden"><label for="faq-Faq-a0e314db-5617-4c2f-b146-7907a20078c7-1" class="faq-question block p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">Question 2</h3><span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+              </div>
+            </label>
+            <div class="faq-answer">
+              <div class="p-4 text-zinc-800 dark:text-zinc-200">
+                <p>Anwser 2</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="mb-16">
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse font-mono text-[0.85rem]">
+      <thead>
+        <tr class="border-b border-zinc-200 dark:border-white/10 text-zinc-500 uppercase text-[0.9rem]">
+          <th class="py-4 pr-2 font-medium">Download Link</th>
+          <th class="py-4 px-2 font-medium">File name</th>
+          <th class="py-4 px-1 font-medium">Size</th>
+          <th class="py-4 px-2 font-medium hidden md:table-cell">SHA-256 Hash</th>
+          <th class="py-4 pl-2 font-medium hidden lg:table-cell">SHA-512 Hash</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-zinc-100 dark:divide-white/5">
+        <tr class="hover:opacity-50 transition-opacity">
+          <td class="py-5 pr-2"><a href="/download/mobile_wallpaper_2020x4364.zip" download="" class="inline-block px-2 py-1 bg-zinc-900 rounded-sm dark:bg-white text-white dark:text-zinc-900 hover:opacity-80 transition-opacity uppercase text-[0.9rem] tracking-wider">Download</a></td>
+          <td class="py-5 pr-2"><span class="py-5 px-2 text-zinc-600 dark:text-zinc-400">Wallpaper pack</span></td>
+          <td class="py-5 px-1 text-zinc-600 dark:text-zinc-400">8.7 MB</td>
+          <td class="py-5 px-2 hidden md:table-cell"><code class="text-zinc-400 dark:text-zinc-500 break-all select-all">d6c12c7dafdbff770dc8d4a9f6bdd1637fd475d72e98652e2be1f9ec3bfb3103</code></td>
+          <td class="py-5 pl-2 hidden lg:table-cell"><code class="text-zinc-400 dark:text-zinc-500 break-all select-all">35d5680884460a182abffc815dd6de76348c101c869844d9b6313cb07f2298efbca751428f77becf588f3c11aa09fb0c044e07fc3839f5f96532b518709d6c06</code></td>
+        </tr>
+        <tr class="hover:opacity-50 transition-opacity">
+          <td class="py-5 pr-2"><a href="/music/mp3/harald_revery_-_phrases_(extended_mix).mp3" download="" class="inline-block px-2 py-1 bg-zinc-900 rounded-sm dark:bg-white text-white dark:text-zinc-900 hover:opacity-80 transition-opacity uppercase text-[0.9rem] tracking-wider">Download</a></td>
+          <td class="py-5 pr-2"><span class="py-5 px-2 text-zinc-600 dark:text-zinc-400">S</span></td>
+          <td class="py-5 px-1 text-zinc-600 dark:text-zinc-400">12.4 MB</td>
+          <td class="py-5 px-2 hidden md:table-cell"><code class="text-zinc-400 dark:text-zinc-500 break-all select-all">d52a606980394e7fbee65101028abb58018c8c86733ba8ef39e4e8cd0653ded4</code></td>
+          <td class="py-5 pl-2 hidden lg:table-cell"><code class="text-zinc-400 dark:text-zinc-500 break-all select-all">42a2139a43b72ac3849d215e24ab0ad771139943fe517be675cbedbbc8c975d5c589f112309e62985b19befba743470ff40c8c5aed6d6980d879c62b31e0e3ee</code></td>
+        </tr>
+        <tr class="hover:opacity-50 transition-opacity">
+          <td class="py-5 pr-2"><a href="/music/mp3/harald_revery_-_clouds_and_roads.mp3" download="" class="inline-block px-2 py-1 bg-zinc-900 rounded-sm dark:bg-white text-white dark:text-zinc-900 hover:opacity-80 transition-opacity uppercase text-[0.9rem] tracking-wider">Download</a></td>
+          <td class="py-5 pr-2"><span class="py-5 px-2 text-zinc-600 dark:text-zinc-400">A</span></td>
+          <td class="py-5 px-1 text-zinc-600 dark:text-zinc-400">11.5 MB</td>
+          <td class="py-5 px-2 hidden md:table-cell"><code class="text-zinc-400 dark:text-zinc-500 break-all select-all">1953291bc21b23d58374c65850461773aedd742a53707719016c01a01b240780</code></td>
+          <td class="py-5 pl-2 hidden lg:table-cell"><code class="text-zinc-400 dark:text-zinc-500 break-all select-all">c80621978ab5c7c46095f5d5a2815fb962fbeec169c0c87ae9d2da61dcb454479d5ac4524f060083e3b91ffbc91c43bc25eb78532938552953b64e91b486230c</code></td>
+        </tr>
+        <tr class="hover:opacity-50 transition-opacity">
+          <td class="py-5 pr-2"><a href="/music/mp3/harald_revery_-_hollow.mp3" download="" class="inline-block px-2 py-1 bg-zinc-900 rounded-sm dark:bg-white text-white dark:text-zinc-900 hover:opacity-80 transition-opacity uppercase text-[0.9rem] tracking-wider">Download</a></td>
+          <td class="py-5 pr-2"><span class="py-5 px-2 text-zinc-600 dark:text-zinc-400">B</span></td>
+          <td class="py-5 px-1 text-zinc-600 dark:text-zinc-400">7.9 MB</td>
+          <td class="py-5 px-2 hidden md:table-cell"><code class="text-zinc-400 dark:text-zinc-500 break-all select-all">371ebe649bf6dcb1837d13142f6b22fe9856b041aa3dbdbaeac4e2ed47be1b62</code></td>
+          <td class="py-5 pl-2 hidden lg:table-cell"><code class="text-zinc-400 dark:text-zinc-500 break-all select-all">a47071722d9f1968f36069993f95f57a5084353575f4d86133aed28055943d39660bed6061ef99763565fa30011abd420fa2da467eccb32f504c3d75e83b41f6</code></td>
+        </tr>
+        <tr class="hover:opacity-50 transition-opacity">
+          <td class="py-5 pr-2"><a href="/music/mp3/harald_revery_and_light_titum_-_krakatau.mp3" download="" class="inline-block px-2 py-1 bg-zinc-900 rounded-sm dark:bg-white text-white dark:text-zinc-900 hover:opacity-80 transition-opacity uppercase text-[0.9rem] tracking-wider">Download</a></td>
+          <td class="py-5 pr-2"><span class="py-5 px-2 text-zinc-600 dark:text-zinc-400">C</span></td>
+          <td class="py-5 px-1 text-zinc-600 dark:text-zinc-400">7.7 MB</td>
+          <td class="py-5 px-2 hidden md:table-cell"><code class="text-zinc-400 dark:text-zinc-500 break-all select-all">3a9a2d9c18f680b8bcdb792ca65373e6d39ee45d7a0fe973115e325ec6f18041</code></td>
+          <td class="py-5 pl-2 hidden lg:table-cell"><code class="text-zinc-400 dark:text-zinc-500 break-all select-all">488cacc9c4250ad014bcc07cb2c8285df2ad884fb933c5f53b298d284cc69fe22d3310c78744fdf7d4f7d1b2a08dbf4dd2d5fbbe4d71eaf0fa7a086406f2e03e</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<section class="mb-16">
+  <div class="mx-auto">
+    <div class="transition-transform duration-300 hover:scale-105"><svg role="img" aria-label="svg alt text here" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1824.55 551.66" style="width:100%;height:auto">
+  <title>HaraldReveryTextLogo_Outline</title>
+  <path d="M773,286.4v230a8.25,8.25,0,1,1-16.5,0V409.75H601V516.4a8.25,8.25,0,1,1-16.5,0v-230a8.25,8.25,0,0,1,16.5,0V393.25h155.5V286.4a8.25,8.25,0,0,1,16.5,0Z" transform="translate(-71.2 -249.09)"/>
+  <path d="M997.23,513.62l-85.74-230.1a8.24,8.24,0,0,0-7.72-5.37h0A8.24,8.24,0,0,0,896,283.5L809.77,513.6a8.27,8.27,0,0,0,4.83,10.63,8.46,8.46,0,0,0,2.9.52,8.26,8.26,0,0,0,7.73-5.35l41.11-109.66,74.55-.08,40.88,109.72a8.25,8.25,0,1,0,15.46-5.76ZM872.52,393.24,903.74,310l31,83.2Z" transform="translate(-71.2 -249.09)"/>
+  <path d="M1213.51,524.75a8.23,8.23,0,0,1-6.62-3.31l-86-115a8.25,8.25,0,0,1,6.61-13.19c53.59,0,78-25.53,78-49.25s-24.41-49.25-78-49.25h-77.75V516.5a8.25,8.25,0,0,1-16.5,0v-230a8.25,8.25,0,0,1,8.25-8.25h86c28.44,0,52.52,6.78,69.64,19.62,15.8,11.85,24.86,28.66,24.86,46.13s-9.06,34.28-24.86,46.13c-13.82,10.37-32.19,16.79-53.73,18.87l76.7,102.56a8.25,8.25,0,0,1-6.6,13.19Z" transform="translate(-71.2 -249.09)"/>
+  <path d="M1446.23,513.62l-85.74-230.1a8.24,8.24,0,0,0-7.72-5.37h0a8.25,8.25,0,0,0-7.72,5.35l-86.26,230.1a8.26,8.26,0,0,0,4.82,10.63,8.46,8.46,0,0,0,2.9.52,8.24,8.24,0,0,0,7.72-5.35l41.11-109.66,74.56-.08,40.88,109.72a8.25,8.25,0,0,0,15.46-5.76ZM1321.52,393.24,1352.74,310l31,83.2Z" transform="translate(-71.2 -249.09)"/>
+  <path d="M1662.8,524.65H1491.2a8.25,8.25,0,0,1-8.25-8.25v-230a8.25,8.25,0,1,1,16.5,0V508.15H1662.8a8.25,8.25,0,0,1,0,16.5Z" transform="translate(-71.2 -249.09)"/>
+  <path d="M1715.75,524.65a8.25,8.25,0,0,1-8.25-8.25v-230a8.25,8.25,0,0,1,8.25-8.25c54.86,0,101.12,13,133.78,37.6,29.8,22.45,46.22,52.87,46.22,85.65s-16.42,63.2-46.22,85.65C1816.87,511.65,1770.61,524.65,1715.75,524.65Zm8.25-229.9v213.3c47.6-1.21,87.44-13,115.6-34.18,25.57-19.26,39.65-45,39.65-72.47s-14.08-53.21-39.65-72.47C1811.44,307.72,1771.6,296,1724,294.75Z" transform="translate(-71.2 -249.09)"/>
+  <path d="M764.51,800.75a8.23,8.23,0,0,1-6.62-3.31l-86-115a8.25,8.25,0,0,1,6.61-13.19c53.59,0,78-25.53,78-49.25s-24.41-49.25-78-49.25H600.75V792.5a8.25,8.25,0,0,1-16.5,0v-230a8.25,8.25,0,0,1,8.25-8.25h86c28.44,0,52.52,6.78,69.64,19.62C763.94,585.72,773,602.53,773,620s-9.06,34.28-24.86,46.13C734.32,676.5,716,682.92,694.41,685l76.7,102.56a8.25,8.25,0,0,1-6.6,13.19Z" transform="translate(-71.2 -249.09)"/>
+  <g>
+    <path d="M989.1,800.65h-172a8.25,8.25,0,0,1,0-16.5h172a8.25,8.25,0,0,1,0,16.5Z" transform="translate(-71.2 -249.09)"/>
+    <path d="M989.1,570.65h-172a8.25,8.25,0,0,1,0-16.5h172a8.25,8.25,0,0,1,0,16.5Z" transform="translate(-71.2 -249.09)"/>
+    <path d="M966.1,685.65h-126a8.25,8.25,0,0,1,0-16.5h126a8.25,8.25,0,0,1,0,16.5Z" transform="translate(-71.2 -249.09)"/>
+  </g>
+  <path d="M1127.45,800.65a8.26,8.26,0,0,1-7.73-5.36l-86-230a8.25,8.25,0,1,1,15.46-5.78l78.27,209.33,78.27-209.33a8.25,8.25,0,0,1,15.46,5.78l-86,230A8.26,8.26,0,0,1,1127.45,800.65Z" transform="translate(-71.2 -249.09)"/>
+  <g>
+    <path d="M1438.3,800.65h-172a8.25,8.25,0,0,1,0-16.5h172a8.25,8.25,0,0,1,0,16.5Z" transform="translate(-71.2 -249.09)"/>
+    <path d="M1438.3,570.65h-172a8.25,8.25,0,0,1,0-16.5h172a8.25,8.25,0,0,1,0,16.5Z" transform="translate(-71.2 -249.09)"/>
+    <path d="M1415.3,685.65h-126a8.25,8.25,0,0,1,0-16.5h126a8.25,8.25,0,0,1,0,16.5Z" transform="translate(-71.2 -249.09)"/>
+  </g>
+  <path d="M1663.18,800.75a8.22,8.22,0,0,1-6.61-3.31l-86-115a8.25,8.25,0,0,1,6.6-13.19c53.6,0,78-25.53,78-49.25s-24.4-49.25-78-49.25h-77.75V792.5a8.25,8.25,0,0,1-16.5,0v-230a8.25,8.25,0,0,1,8.25-8.25h86c28.45,0,52.53,6.78,69.64,19.62,15.8,11.85,24.86,28.66,24.86,46.13s-9.06,34.28-24.86,46.13c-13.82,10.37-32.18,16.79-53.72,18.87l76.69,102.56a8.24,8.24,0,0,1-6.6,13.19Z" transform="translate(-71.2 -249.09)"/>
+  <path d="M1894.11,567.44l-84.36,112.8V792.5a8.25,8.25,0,0,1-16.5,0V680.25l-84.36-112.81a8.25,8.25,0,1,1,13.22-9.88l79.39,106.16,79.39-106.16a8.25,8.25,0,1,1,13.22,9.88Z" transform="translate(-71.2 -249.09)"/>
+  <g>
+    <path d="M268.44,630.61A326.57,326.57,0,0,1,71.2,350.06a229.35,229.35,0,0,1,118-101,285,285,0,0,0-37.82,105.52,289.32,289.32,0,0,0-3.1,42.31A285.82,285.82,0,0,0,199.73,561a288.53,288.53,0,0,0,68.71,69.57Z" transform="translate(-71.2 -249.09)"/>
+    <path d="M306.5,634.93A271.4,271.4,0,0,1,173.27,326.71a212.88,212.88,0,0,1,128.87-66.26,264.35,264.35,0,0,0,4.36,374.48Z" transform="translate(-71.2 -249.09)"/>
+    <path d="M217.66,623.52V800.74h-74.5V562.09A344.87,344.87,0,0,0,217.66,623.52Z" transform="translate(-71.2 -249.09)"/>
+    <path d="M535.1,278.23V800.74H470.32V561H272.39a245.48,245.48,0,0,1-23.5-64.78H470.32v-218Z" transform="translate(-71.2 -249.09)"/>
+  </g>
+</svg></div>
+  </div>
+</section>
+<article class="prose dark:prose-invert max-w-none mb-16">
+  <hr>
+</article>
+<section class="extra_fade_effect mb-16">
+  <div class="grid md:grid-cols-2 gap-16 items-center" style="row-gap:2rem">
+    <div>
+      <div class="flex flex-wrap justify-center items-center gap-6 text-gray-600 dark:text-gray-300"><a class="transition-opacity duration-300 hover:opacity-50" href="#"><span class="sr-only"></span>
+          <div class=" flex items-center justify-center" style="width:2.5rem;height:2.5rem"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="429.1 61.5 957 957" style="width:100%;height:auto"><style>.st0{stroke-width:.5;stroke-linecap:round;fill:none;stroke:currentColor;stroke-linejoin:round;stroke-miterlimit:10}</style><g id="Layer_7"><path d="M939.7 467.7h-.1l-15.7 35.5-.1.3-16.2 36.5V61.5z"/><path d="M1090.9 356.7 942.6 505h0l-35 35 16.2-36.5h0l.1-.3 15.7-35.5h.1zM907.6 61.5V540m16.2-36.5.1-.3m462.2 36.8H907.6l36.5-16.2.3-.1 35.5-15.7h0zm-478.5 0h478.5" class="st0"/><path d="M1090.9 356.7 979.9 508l-35.5 15.7-.3.1-36.5 16.2 35-35z"/><path d="M979.9 572.1v-.1l-35.5-15.7-.3-.1-36.5-16.2h478.5z"/><path d="M1090.9 723.3 942.6 575h0l-35-35 36.5 16.2h0l.3.1 35.5 15.7v.1zM1386.1 540H907.6m36.5 16.2.3.1m-36.8 462.2V540l16.2 36.5.1.3 15.7 35.5h0zm0-478.5v478.5" class="st0"/><path d="m1090.9 723.3-151.3-111-15.7-35.5-.1-.3-16.2-36.5 35 35zm-215.4-111 15.8-35.5.1-.3 16.2-36.5v478.5z"/><path d="M724.3 723.3 872.6 575h0l35-35-16.2 36.5h0l-.1.3-15.8 35.5h0zm183.3 295.2V540m-16.2 36.5-.1.3M429.1 540h478.5l-36.5 16.2-.3.1-35.5 15.7h0zm478.5 0H429.1" class="st0"/><path d="m724.3 723.3 111-151.3 35.5-15.7.3-.1 36.5-16.2-35 35z"/><path d="M835.3 507.9v.1l35.5 15.7.3.1 36.5 16.2H429.1z"/><path d="M724.3 356.7 872.6 505h0l35 35-36.5-16.2h0l-.3-.1-35.5-15.7v-.1zM429.1 540h478.5m-36.5-16.2-.3-.1m36.8-462.2V540l-16.2-36.5-.1-.3-15.8-35.5h0zm0 478.5V61.5" class="st0"/><path d="m724.3 356.7 151.2 111 15.8 35.5.1.3 16.2 36.5-35-35z"/></g><path id="Layer_8" d="m878.3 649.4-79.1 295M1016 135.6l-79.1 295m-78.2 194-160.5 278m418.7-725.2-160.5 278M724.3 723.3 611.5 836.1m592.1-592.2-112.7 112.8M823 588.9 545 749.3m725.2-418.6-278 160.4m-193.5 78.1-295.5 79.2M1312 431.6l-295.6 79.2m-217.8 0-295.4-79.2M1312 648.4l-295.5-79.2M823 491.1 545 330.7m725.2 418.6-278-160.4M724.3 356.7 611.5 243.9m592.1 592.2-112.7-112.8M858.7 455.4l-160.5-278m418.7 725.2-160.5-278m-78-193.4-79.2-295.6M1016 944.4l-79.1-295" class="st0"/><g id="Layer_9"><path d="M907.6 913.5a373.5 373.5 0 0 1-373.4-365.2m746.9-8.3c0 203.5-162.8 369-365.2 373.4m-8.3-746.9c203.5 0 369 162.8 373.4 365.2M534.1 540c0-203.5 162.8-369 365.2-373.4" style="fill:none;stroke:currentColor;stroke-linejoin:round;stroke-miterlimit:10"/><path d="m926.5 110.8-.2 6.3-.1.2-.2.1-.2-.1-.1-.2.1-2.9-4.2-.2-.1 2.9-.1.2-.2.1q-.2 0-.2-.3l.2-6.3q0-.3.3-.3l.2.1.1.2-.1 2.9 4.2.2.1-2.9.1-.2.2-.1.2.1zm8.5 6.7q0 .1 0 0 0 .3-.2.3h-.1l-.2-.2-1-3.1-2-.1-1.3 2.9q0 .2-.3.2t-.2-.3v-.1l1.4-3.1 1.3-3.1q0-.2.3-.2t.2.2l1 3.2zm-3.3-3.5 1.6.1-.7-2.2zm11.7 4.5-.2-.1-2.1-3.4v-.2l.1-.2.2-.1q1 0 1.6-.3.5-.3.5-.8t-.5-1q-.7-.5-1.5-.5l-2-.2-.5 6.1-.1.2-.2.1q-.3 0-.2-.3l.5-6.3q0-.3.3-.2l2.3.2q1.2.1 1.9.7t.6 1.4q0 .6-.6 1.1t-1.6.5l1.8 2.9v.2l-.1.2zm8.9.5q.1 0 0 0 0 .3-.2.3h-.1l-.2-.2-.8-3.1-2-.2-1.4 2.9q0 .2-.3.1-.2 0-.2-.3v-.1l1.5-3 1.5-3q0-.2.3-.1l.2.2.9 3.3zm-3-3.7 1.6.2-.6-2.2zm11.4 5-4.7-.6q-.3 0-.2-.3l.8-6.3q0-.3.3-.2l.2.1.1.2-.7 6 4.4.5q.3 0 .2.3-.1.5-.4.3m4 .6-.2-.1-.1-.2.9-6.3.1-.2h.2q2.1.3 3.3 1.5a3 3 0 0 1 1.1 2.6q-.2 1.4-1.8 2.2-1.5.8-3.5.5m1.1-6.3-.8 5.7q1.8.2 3.1-.5t1.5-1.8q.1-1.2-.9-2.2-1.2-.8-2.9-1.2m25.1 10.7-.2-.1-1.7-3.6v-.2l.1-.2h.2q1 .2 1.7-.1.6-.2.6-.8.2-.6-.4-1-.4-.5-1.5-.7l-2-.4-1.2 6-.1.2h-.2q-.3 0-.2-.3l1.2-6.2q0-.2.3-.2l2.3.4q1.2.3 1.8.9t.4 1.4q-.1.6-.8 1.1-.6.5-1.7.3l1.5 3.1v.2zq.1 0 0 0m8.5 1.8-4.6-1q-.2 0-.2-.3t.3-.2l4.6 1 .2.1q.1 0 0 .2l-.1.2zm.1-3.3-3.3-.7-.2-.1v-.2l.1-.2h.2l3.3.7q.3 0 .2.3t-.3.2m1.3-3-4.6-1q-.3 0-.2-.3t.3-.2l4.6 1 .2.1v.2l-.1.2zm5 7.7h-.2l-.2-.2-.8-6.7v-.1q0-.2.3-.2l.2.2.7 6 3.4-5 .3-.1.2.1v.2l-3.8 5.6zm10.6 2.7-4.6-1.2q-.2 0-.2-.3t.3-.2l4.6 1.2.2.1v.2l-.1.2zm.1-3.3-3.3-.9-.2-.1v-.2l.1-.2h.2l3.3.9q.3 0 .2.3t-.3.2m1.5-2.9-4.6-1.2q-.2 0-.2-.3t.3-.2l4.6 1.2.2.1v.2l-.1.2zm6.8 8.5-.2-.2-1.4-3.7v-.2l.1-.2h.2q1 .3 1.7 0t.7-.7q.2-.5-.3-1.1t-1.4-.8l-2-.6-1.7 5.9-.1.2h-.2q-.3 0-.2-.3l1.7-6.1q0-.3.3-.2l2.2.6q1.2.3 1.7 1.1.6.6.3 1.5-.2.6-.8 1a3 3 0 0 1-1.7.2l1.2 3.2v.2zm10.4-3.6-3.1 2.3-.9 3-.1.2h-.2q-.2 0-.2-.3l.9-3-1.3-3.6v-.1l.3-.2.2.2 1.2 3.4 2.9-2.1h.2l.2.1v.2q0-.3-.1-.1m21.2 7-2.2 6-.1.1h-.2l-.2-.1v-.2l1-2.7-3.9-1.4-1 2.7-.1.1h-.2q-.3-.2-.1-.3l2.2-6q.1-.2.3-.2l.2.1v.2l-1 2.7 3.9 1.4 1-2.7.1-.1h.2l.2.1zm6 9q0 .3-.3.3h-.1l-.2-.2v-3.2l-1.9-.7-2.1 2.4-.3.1q-.3-.2-.1-.3v-.1l2.2-2.5 2.2-2.5.3-.1.2.2v3.4zm-2-4.4 1.5.6v-2.3zm9.7 7.9-.2-.2-1-3.8v-.2l.1-.1h.2q1 .4 1.7.2.5-.2.8-.6.2-.5-.1-1.1t-1.3-1l-1.9-.8-2.3 5.6-.1.1h-.2q-.3-.1-.1-.3l2.4-5.9q.1-.3.3-.1l2.1.9q1.1.4 1.6 1.3t.1 1.5a2 2 0 0 1-.9.9q-.7.3-1.7 0l.9 3.4v.2l-.1.1zm8.4 3.2-.3.3h-.1q-.2 0-.2-.3l.2-3.2-1.8-.8-2.2 2.3h-.3q-.3-.2-.1-.3v-.1l2.3-2.4 2.3-2.5.3-.1q.2 0 .2.3l-.2 3.4zm-1.8-4.4 1.5.6.1-2.3zm9.3 8.2-4.3-2q-.2-.2-.1-.3l2.6-5.8q.1-.3.3-.1l.1.1v.2l-2.5 5.5 4 1.9q.3.1.1.3.1.3-.2.2m3.6 1.7-.1-.2v-.2l2.8-5.7.2-.1h.2q1.8.9 2.7 2.4t.3 2.8-2.4 1.6-3.7-.6m3-5.6-2.5 5.2q1.6.7 3.1.5c1.5-.2 1.6-.6 2-1.3q.5-1-.2-2.3a6 6 0 0 0-2.4-2.1m20.7 17.8-.1-.2-.5-3.9v-.2l.2-.1h.2q.9.5 1.6.4.6-.1.8-.5t0-1.1-1.2-1.1l-1.8-1-2.9 5.3-.2.1h-.2q-.2-.1-.1-.4l3.1-5.6q.2-.3.3-.1l2 1.1a4 4 0 0 1 1.5 1.4q.3.7 0 1.5-.3.5-1 .8-.7.2-1.7-.2l.5 3.4v.2l-.2.1zm7.6 4.3-4.1-2.4q-.3-.1-.1-.4t.4-.1l4.1 2.4.1.2v.2l-.2.1q-.2.2-.2 0m1-3-2.9-1.7-.1-.2v-.2l.2-.1h.2l2.9 1.7q.3.1.1.4-.2.2-.4.1m2.1-2.5-4.1-2.4q-.3-.1-.1-.4t.4-.1l4.1 2.4.1.2v.2l-.2.1q0 .2-.2 0m2.5 8.9-.1-.3 1.3-6.7v-.1q.1-.2.3-.1l.1.3-1.2 6 4.8-3.8h.3l.1.2v.2l-5.3 4.2zm9.2 5.7-4-2.5q-.2-.1-.1-.4.1-.2.4-.1l4 2.5.1.2v.2l-.2.1zm1.2-3-2.9-1.8-.1-.2v-.2l.2-.1h.2l2.9 1.8q.2.1.1.4-.3.3-.4.1m2.2-2.3-4-2.5q-.2-.1-.1-.4.1-.2.4-.1l4 2.5.1.2v.2l-.2.1zm3.9 10.1-.1-.2-.2-4v-.2l.2-.1h.2q.9.6 1.6.5.6 0 .9-.5t.1-1.1a3 3 0 0 0-1.1-1.2l-1.7-1.1-3.4 5.1-.2.1h-.2q-.2-.1-.1-.4l3.5-5.3q.1-.2.4-.1l1.9 1.3a3 3 0 0 1 1.3 1.5q.3.7-.2 1.5-.3.6-1.1.7-.7.2-1.7-.3l.2 3.5v.2l-.2.1q0 .1-.1 0m11-.2-3.7 1.2-1.8 2.5-.2.1h-.2q-.2-.1-.1-.4l1.8-2.5-.1-3.9.1-.1q.1-.3.4-.1l.1.2.1 3.6 3.4-1.2h.2l.1.2v.2zm18 13.1-3.9 5-.2.1-.2-.1-.1-.2v-.2l1.8-2.3-3.3-2.6-1.8 2.3-.2.1-.2-.1q-.1-.1 0-.4l3.9-5q.1-.2.4-.1l.1.2v.2l-1.8 2.3 3.3 2.6 1.8-2.3.2-.1.2.1.1.2zm3 10.4q-.2.3-.3.2h-.1l-.1-.3 1-3.1-1.5-1.2-2.7 1.7h-.3q-.1-.1 0-.4l.1-.1 2.9-1.7 2.9-1.7h.3l.1.3-1.1 3.2zm-.6-4.7 1.2 1 .7-2.2zm6.9 10.4-.1-.2.3-4 .1-.2.2-.1.2.1q.8.7 1.5.7t.9-.4.2-1.1-1-1.3l-1.6-1.3-3.9 4.7-.2.1-.2-.1q-.1-.1 0-.4l4.1-4.9q.1-.2.4 0l1.8 1.5a3 3 0 0 1 1.1 1.7q.2.8-.3 1.4t-1.2.6-1.6-.5l-.2 3.5-.1.2-.2.1zm7 5.6q-.1.3-.4.2h-.1l-.1-.3 1.1-3-1.5-1.3-2.8 1.5h-.3q-.1-.1 0-.4l.1-.1 3-1.6 3-1.6h.3l.1.3-1.2 3.2zm-.4-4.7 1.2 1.1.8-2.1zm6.4 10.6-3.5-3.1q-.1-.1 0-.4l4.2-4.8q.1-.2.4 0l.1.2-.1.2-4 4.6 3.3 2.9q.1.1 0 .4-.1.2-.4 0m3 2.8-.1-.2.1-.2 4.4-4.6.2-.1.2.1q1.5 1.4 1.9 3.2t-.6 2.8-2.7.8a7 7 0 0 1-3.4-1.8m4.5-4.4-4 4.2q1.3 1.2 2.8 1.4 1.5.3 2.3-.6t.5-2.3q-.4-1.5-1.6-2.7m14.3 23.2-.1-.2.7-3.9.1-.1.2-.1.2.1q.7.8 1.4.9.6.2 1-.3.5-.3.3-1a3 3 0 0 0-.8-1.4l-1.4-1.5-4.4 4.2-.2.1-.2-.1q-.1-.1 0-.4l4.6-4.4q.1-.2.4 0l1.6 1.7q.9.9 1 1.8t-.5 1.4-1.2.4q-.9 0-1.5-.7l-.6 3.4-.1.2-.2.1zm5.9 6.4-3.2-3.5v-.4q.2-.2.4 0l3.2 3.5.1.2-.1.2-.2.1zm1.9-2.6-2.3-2.5-.1-.2.1-.2.2-.1.2.1 2.3 2.5q.1.2 0 .4-.3.2-.4 0m2.8-1.7-3.2-3.5v-.4q.2-.2.4 0l3.2 3.5.1.2-.1.2-.2.1zm-.4 9.2v-.3l3.2-6h.1q.2-.2.4 0v.3l-2.9 5.3 5.7-2.1.3.1.1.2-.1.2-6.3 2.4zm7.1 8.3-3-3.6v-.4q.2-.2.4 0l3 3.6.1.2-.1.2-.2.1zm2-2.6-2.2-2.6-.1-.2.1-.2.2-.1.2.1 2.2 2.6q.1.2 0 .4-.3.3-.4 0m2.8-1.5-3-3.6v-.4q.2-.2.4 0l3 3.6.1.2-.1.2-.2.1zm.7 10.9-.1-.2 1-3.8.1-.1.2-.1.2.1q.6.7 1.4 1 .6.1 1-.2t.4-1-.7-1.5l-1.3-1.6-4.7 3.8-.2.1-.2-.1q-.1-.1 0-.4l4.9-4q.2-.2.4 0l1.5 1.8q.8 1 .8 1.9t-.6 1.4q-.5.4-1.3.3t-1.5-.8l-.9 3.4-.1.1-.2.1zm10.6 3-3.9.1-2.5 1.9h-.2l-.2-.1q-.2-.2.1-.4l2.5-1.9 1-3.7.1-.1q.2-.2.4 0l.1.2-1 3.5 3.6-.1.2.1.1.2-.1.2zm13.2 18-5.2 3.6h-.2l-.2-.1v-.2l.1-.2 2.4-1.7-2.4-3.4-2.4 1.7h-.2l-.2-.1q-.2-.2.1-.4l5.2-3.6q.2-.2.4.1v.2l-.1.2-2.4 1.7 2.4 3.4 2.4-1.7h.2l.2.1v.2zm-.3 10.9q-.1 0 0 0l-.4.1-.1-.1v-.3l1.9-2.6-1.1-1.7-3.1.8-.3-.1q-.2-.2.1-.4l.1-.1 3.3-.8 3.3-.8.3.1v.3l-2 2.7zm.9-4.7.9 1.3 1.4-1.9zm3.3 12q-.1-.2 0-.2l1.4-3.7.1-.1h.2l.2.1q.6.8 1.2 1.1.6.2 1-.1t.5-1-.5-1.6l-1.1-1.7-5.1 3.3h-.2l-.2-.1q-.2-.2.1-.4l5.4-3.4q.2-.2.4.1l1.2 2q.6 1 .6 2t-.7 1.3q-.6.3-1.3.2t-1.4-1l-1.2 3.2-.1.1h-.2zm5 7.5q-.3.2-.4 0l-.1-.1v-.3l2-2.5-1-1.7-3.1.6-.3-.1q-.2-.2.1-.3h.1l3.3-.6 3.3-.6.3.1v.3l-2.1 2.7zm1.1-4.7.8 1.4 1.4-1.8zm2.8 12.2-2.4-4.1q-.1-.2.1-.3l5.5-3.2q.3-.2.4.1v.2l-.1.2-5.3 3 2.2 3.9q.1.2-.1.3zm2 3.4v-.2l.1-.2 5.6-3.1h.2l.2.1a6 6 0 0 1 .8 3.6q-.2 1.8-1.4 2.4-1.2.7-2.8-.1a5 5 0 0 1-2.7-2.5m5.6-2.8-5.1 2.8q.9 1.5 2.2 2.2 1.4.6 2.3.1 1-.6 1.2-2 .3-1.6-.6-3.1m6.6 26.5v-.2l1.9-3.5.1-.1h.2l.2.1q.5.9 1.1 1.3.5.3 1 0t.6-.9-.3-1.6l-.9-1.8-5.5 2.6h-.2l-.2-.1q-.1-.2.1-.3l5.7-2.8q.3-.1.3.1l1 2.1q.6 1 .4 2t-.9 1.2q-.6.3-1.3 0-.9-.3-1.3-1.1l-1.6 3.1-.1.1h-.2zm3.6 7.9-2-4.3q-.1-.3.1-.3.3-.1.3.1l2 4.3v.2l-.1.2h-.2zm2.6-1.9-1.4-3.1v-.2l.1-.2h.2l.1.1 1.4 3.1q.1.3-.1.3zm3.2-.8-2-4.3q-.1-.3.1-.3.3-.1.3.1l2 4.3v.2l-.1.2h-.2zm-3.2 8.7-.1-.2.1-.3 4.9-4.7h.1q.3-.1.3.1v.3l-4.4 4.2 6.1-.3.2.1v.2l-.1.1-6.8.4zm4.2 10-1.8-4.4q-.1-.3.1-.3.3-.1.3.1l1.8 4.4v.2l-.1.1h-.2zm2.7-1.8-1.3-3.1v-.2l.1-.1h.2l.1.1 1.3 3.1q.1.3-.1.3-.2.1-.3-.1m3.2-.6-1.8-4.4q-.1-.3.1-.3.3-.1.3.1l1.8 4.4v.2l-.1.1zm-2.7 10.5v-.2l2.1-3.3.1-.1h.2l.1.2q.3 1 1 1.3.5.3 1 .1t.7-.8q.3-.8-.2-1.6l-.7-1.9-5.7 2.2h-.2l-.1-.2q-.1-.3.2-.3l5.9-2.3q.3-.1.3.1l.8 2.2q.5 1.1.2 2t-1 1.1q-.6.3-1.3-.1c-.7-.4-.8-.6-1.2-1.2l-1.8 2.9-.1.1h-.2zm9.1 6.2-3.7-1.1-2.9 1h-.2l-.1-.2q-.1-.3.2-.3l2.9-1 2.1-3.2.1-.1q.3-.1.3.1v.2l-2 3 3.5 1 .2.1v.2l-.2.1q-.1.4-.2.2m7.1 21.2-6.1 1.8h-.2l-.1-.2v-.2l.2-.1 2.8-.8-1.2-4-2.8.8h-.2l-.1-.2q0-.3.2-.3l6.1-1.8q.3-.1.3.2v.2l-.2.1-2.8.8 1.2 4 2.8-.8h.2l.1.2v.2zm-3.6 10.2q-.1 0 0 0-.3.1-.4-.1v-.1l.1-.3 2.6-1.9-.5-1.9-3.2-.2-.2-.2q0-.3.2-.3h.1l3.4.3 3.4.3.2.2-.1.3-2.7 2zm2.3-4.2.4 1.5 1.9-1.4zm-.5 12.5v-.2l2.5-3.1.1-.1h.2l.1.2q.3 1 .8 1.4t1 .2.8-.8 0-1.6l-.5-2-5.9 1.5h-.2l-.1-.2q0-.3.2-.3l6.2-1.6q.3 0 .3.2l.6 2.2q.3 1.2 0 2t-1.1 1q-.6.1-1.3-.2t-1-1.4l-2.2 2.7-.1.1zm2.4 8.6q-.3.1-.4-.1v-.1l.1-.3 2.7-1.8-.5-1.9-3.2-.4-.2-.2q0-.3.2-.3h.1l3.4.4 3.4.4.2.2-.1.3-2.8 1.9zm2.5-4.1.4 1.6 1.9-1.3zm-1 12.4-1-4.6q0-.3.2-.3l6.2-1.3q.3 0 .3.2v.2l-.2.1-6 1.3.9 4.3q0 .3-.2.3-.2.1-.2-.2m.8 4v-.2l.2-.1 6.2-1.2h.2l.1.2q.5 2-.3 3.6c-.8 1.6-1.2 1.7-2.1 1.9q-1.3.3-2.7-1a6 6 0 0 1-1.6-3.2m6.2-1-5.7 1.1q.5 1.7 1.5 2.8t2.2.8q1.2-.2 1.7-1.6.6-1.3.3-3.1m-1.8 27.2.1-.2 2.8-2.8.1-.1.2.1.1.2q.1 1 .7 1.5.4.4.9.3t.9-.7q.3-.6.2-1.6l-.3-2-6 .8-.2-.1-.1-.2q0-.3.2-.3l6.3-.9q.3 0 .3.2l.3 2.3q.1 1.2-.3 2t-1.2.9q-.6.1-1.2-.4-.8-.6-.8-1.5l-2.5 2.4-.2.1-.2-.1q-.1.3-.1.1m1 8.7-.6-4.7q0-.3.2-.3t.3.2l.6 4.7-.1.2-.2.1zv-.1m3.1-1-.4-3.4.1-.2.2-.1.2.1.1.2.4 3.4q0 .3-.2.3zm3.2.2-.6-4.7q0-.3.2-.3t.3.2l.6 4.7-.1.2-.2.1zv-.1m-5.6 7.4v-.2q0-.2.2-.3l6.1-3h.1q.3 0 .3.2l-.1.3-5.5 2.6 5.9 1.6.2.2-.1.2-.2.1-6.6-1.7zm.9 10.9-.4-4.7q0-.3.2-.3t.3.2l.4 4.7-.1.2-.2.1zv-.1m3.2-.9-.3-3.4.1-.2.2-.1.2.1.1.2.3 3.4q0 .3-.2.3-.4 0-.4-.3m3.2.4-.4-4.7q0-.3.2-.3t.3.2l.4 4.7-.1.2-.2.1zv-.1m-5.8 9.4.1-.2 3.1-2.5.1-.1.2.1.1.2q0 1 .5 1.6.3.4.9.4t.9-.6.3-1.6l-.1-2-6.1.3-.2-.1-.1-.2q0-.3.2-.3l6.3-.4q.3 0 .3.2l.1 2.3a4 4 0 0 1-.4 2q-.4.7-1.3.8-.6 0-1.2-.5t-.7-1.5l-2.7 2.2-.2.1zq.1.1.1-.1m6.8 8.7-3.2-2.2-3.1.1-.2-.1-.1-.2q0-.3.3-.3l3.1-.1 3-2.4h.1q.3 0 .3.2l-.1.2-2.8 2.2 3 2 .1.2-.1.2zm0 32.3-6.4-.2-.2-.1-.1-.2.1-.2.2-.1 2.9.1.2-4.2-2.9-.1-.2-.1-.1-.2q0-.2.3-.2l6.3.2q.3 0 .3.3l-.1.2-.2.1-2.9-.1-.2 4.2 2.9.1.2.1.1.2zm-6.7 8.4q-.3 0-.3-.2v-.1l.2-.2 3.1-1 .1-2-2.9-1.3q-.2 0-.2-.3t.3-.2h.1l3.1 1.4 3.1 1.3q.2 0 .2.3l-.2.2-3.2 1zm3.6-3.2-.1 1.6 2.2-.7zm-4.5 11.6.1-.2 3.4-2.1h.2l.2.1.1.2q0 1 .3 1.6.3.5.8.5t1-.5.5-1.5l.2-2-6.1-.5-.2-.1-.1-.2q0-.2.3-.2l6.3.5q.3 0 .2.3l-.2 2.3q-.1 1.2-.7 1.9t-1.4.6q-.6 0-1.1-.6t-.5-1.6l-2.9 1.8h-.2l-.2-.1zm-.5 9q-.3 0-.3-.2v-.1l.2-.2 3.1-.8.2-2-2.9-1.4q-.2 0-.1-.3 0-.2.3-.2h.1l3 1.5 3 1.5q.2 0 .1.3l-.2.2-3.3.9zm3.6-3.1-.2 1.6 2.2-.6zm-5 11.5.6-4.7q0-.2.3-.2l6.3.8q.3 0 .2.3l-.1.2-.2.1-6-.7-.5 4.4q0 .3-.3.2-.3-.2-.3-.4m-.5 4 .1-.2.2-.1 6.3.9.2.1v.2a6 6 0 0 1-1.5 3.3 3 3 0 0 1-2.6 1.1q-1.4-.2-2.2-1.8-.8-1.5-.5-3.5m6.3 1.1-5.7-.8q-.2 1.8.5 3.1c.7 1.3 1 1.4 1.8 1.5q1.2.1 2.2-.9.8-1.2 1.2-2.9m-10.7 25.1.1-.2 3.6-1.7h.2l.2.1v.2q-.2 1 .1 1.7t.8.6q.6.1 1-.4.6-.6.7-1.5l.4-2-6-1.2-.2-.1v-.2q0-.3.3-.2l6.2 1.2q.3 0 .2.3l-.4 2.3q-.3 1.2-.9 1.8t-1.4.4-1-.8q-.5-.6-.3-1.7l-3.1 1.5h-.2zm-1.8 8.5 1-4.6q0-.2.3-.2t.2.3l-1 4.6-.1.2h-.2l-.2-.1zm3.3.1.7-3.3.1-.2h.2l.2.1v.2l-.7 3.3q0 .3-.3.2t-.2-.3m2.9 1.3 1-4.6q0-.3.3-.2t.2.3l-1 4.6-.1.2q0 .2-.2 0l-.2-.1zm-7.6 5v-.2l.2-.2 6.7-.8h.1q.3 0 .2.3l-.2.2-6 .7 5 3.4.1.3-.1.2h-.2l-5.6-3.8zm-2.7 10.5 1.2-4.6q0-.3.3-.2t.2.3l-1.2 4.6-.1.2h-.2l-.2-.1zm3.3.2.9-3.3.1-.2h.2l.2.1v.2l-.9 3.3q0 .3-.3.2t-.2-.3m2.9 1.4 1.2-4.6q0-.2.3-.2t.2.3l-1.2 4.6-.1.2h-.2l-.2-.1zm-8.5 6.9.2-.2 3.7-1.4h.2l.2.1v.2q-.3 1 0 1.7t.7.7q.5.2 1.1-.3.5-.4.8-1.4l.6-2-5.9-1.6-.2-.1v-.2q0-.2.3-.2l6.1 1.7q.3 0 .2.3l-.6 2.2q-.3 1.2-1.1 1.7-.6.6-1.5.3-.6-.2-1-.8a3 3 0 0 1-.2-1.7l-3.2 1.2h-.2zm3.6 10.4-2.3-3.1-3-.9-.2-.1v-.2q0-.2.3-.2l3 .9 3.6-1.3h.1q.3.2.2.3l-.2.2-3.4 1.2 2.1 2.9v.2zh-.2zm-7 21.1-6-2.2-.1-.1v-.2l.1-.2h.2l2.7 1 1.4-3.9-2.7-1-.1-.1v-.2q.2-.3.3-.1l6 2.2q.3.2.2.3l-.1.2h-.2l-2.7-1-1.4 3.9 2.7 1 .1.1v.2l-.1.2zm-9 6.1q-.3 0-.3-.3v-.1l.2-.2h3.2l.7-1.9-2.4-2.1-.1-.3q.1-.3.3-.1h.1l2.5 2.2 2.5 2.2.1.3-.2.2h-3.4zm4.4-2-.6 1.5h2.3zm-7.9 9.6.2-.2 3.8-1h.2l.1.1v.2q-.4 1-.2 1.7.1.6.6.8t1.1-.1q.6-.4 1-1.3l.8-1.9-5.6-2.3-.1-.1v-.2q.2-.3.3-.1l5.9 2.4q.3.2.1.3l-.9 2.1q-.4 1.2-1.3 1.6-.7.4-1.5.1a2 2 0 0 1-.9-.9q-.3-.7 0-1.7l-3.4.9h-.2l-.1-.1zm-3.2 8.5-.3-.3v-.1q0-.2.3-.2l3.2.2.8-1.8-2.3-2.2v-.3q.1-.3.3-.1h.1l2.4 2.3 2.5 2.3.1.3q0 .2-.3.2l-3.4-.2zm4.4-1.9-.6 1.5 2.3.1zm-8.2 9.4 2-4.3q.1-.2.3-.1l5.8 2.6q.3.2.1.3l-.2.1h-.2l-5.5-2.5-1.9 4q-.1.3-.3.1-.2.1-.1-.2m-1.7 3.6.2-.1h.2l5.7 2.8.1.2v.2a6 6 0 0 1-2.4 2.7q-1.6.9-2.8.3c-1.2-.6-1.4-1.2-1.6-2.4a6 6 0 0 1 .6-3.7m5.6 3-5.2-2.5a6 6 0 0 0-.5 3.1q.2 1.5 1.3 2 1 .5 2.3-.2a7 7 0 0 0 2.1-2.4m-17.8 20.7.2-.1 3.9-.5h.2l.1.2v.2q-.5.9-.4 1.6.1.6.5.8t1.1 0q.6-.3 1.1-1.2l1-1.8-5.3-2.9-.1-.2v-.2q.1-.2.4-.1l5.6 3.1q.3.1.1.3l-1.1 2a4 4 0 0 1-1.4 1.5 2 2 0 0 1-1.5 0q-.6-.4-.8-1t.2-1.7l-3.4.5h-.2l-.1-.2q-.3-.3-.1-.3m-4.4 7.5 2.4-4.1q.1-.3.4-.1t.1.4l-2.4 4.1-.2.1h-.2l-.1-.2zm3.1 1.1 1.7-2.9.2-.1h.2l.1.2v.2l-1.7 2.9q-.1.3-.4.1-.3-.3-.1-.4m2.4 2.1 2.4-4.1q.1-.3.4-.1t.1.4l-2.4 4.1-.2.1h-.2l-.1-.2zm-8.8 2.4.1-.1.3-.1 6.7 1.3h.1q.3.2.1.3l-.3.1-6-1.2 3.8 4.8v.3l-.2.1h-.2l-4.2-5.3zm-5.8 9.3 2.5-4q.1-.2.4-.1.2.1.1.4l-2.5 4-.2.1h-.2l-.1-.2zm3.1 1.1 1.8-2.9.2-.1h.2l.1.2v.2l-1.8 2.9q-.1.2-.4.1t-.1-.4m2.3 2.3 2.5-4q.1-.2.4-.1.2.1.1.4l-2.5 4-.2.1h-.2l-.1-.2zm-10.1 3.9.2-.1 4-.2h.2l.1.2v.2q-.6.9-.5 1.6 0 .6.5.9t1.1.1a3 3 0 0 0 1.2-1.1l1.1-1.7-5.1-3.4-.1-.2v-.2q.1-.2.4-.1l5.3 3.5q.2.1.1.4l-1.3 1.9a3 3 0 0 1-1.5 1.3q-.8.3-1.5-.2-.6-.3-.7-1.1-.2-.7.3-1.7l-3.5.2h-.2zq-.1 0 0-.1m.2 11.1-1.2-3.7-2.5-1.8-.1-.2v-.2q.1-.2.4-.1l2.5 1.8 3.9-.1.1.1q.3.1.1.4l-.2.1-3.6.1 1.2 3.4v.2l-.2.1h-.2zm-13.2 18-5-3.9-.1-.2.1-.2.2-.1h.2l2.3 1.8 2.6-3.3-2.3-1.8-.1-.2.1-.2q.1-.1.4 0l5 3.9q.2.1.1.4l-.2.1h-.2l-2.3-1.8-2.6 3.3 2.3 1.8.1.2-.1.2-.2.1zm-10.3 3-.2-.3v-.1l.3-.1 3.1 1 1.2-1.5-1.7-2.7v-.3q.1-.2.4 0l.1.1 1.7 2.9 1.7 2.9v.3l-.3.1-3.2-1.1zm4.7-.6-1 1.2 2.2.7zm-10.4 6.9.2-.1 4 .3.2.1.1.2-.1.2q-.7.8-.7 1.5t.4.9q.4.3 1.1.2t1.3-1l1.3-1.6-4.7-3.9-.1-.2.1-.2q.1-.1.4 0l4.9 4.1q.1.1 0 .4l-1.5 1.8a3 3 0 0 1-1.7 1.1q-.8.2-1.4-.3t-.6-1.2.5-1.6l-3.5-.2-.2-.1-.1-.2zm-5.6 7q-.1 0 0 0-.3-.1-.2-.4v-.1l.3-.1 3 1.1 1.3-1.5-1.5-2.8v-.3q.1-.1.4 0l.1.1 1.6 3 1.6 3v.3l-.3.1-3.2-1.2zm4.7-.4-1.1 1.2 2.1.8zm-10.6 6.4 3.1-3.5q.1-.1.4 0l4.8 4.2q.1.1 0 .4l-.2.1-.2-.1-4.6-4-2.9 3.3q-.1.1-.4 0-.2-.2 0-.4m-2.8 2.9.2-.1.2.1 4.6 4.4.1.2-.1.2q-1.4 1.5-3.2 1.9t-2.8-.6-.8-2.7q.4-2 1.8-3.4m4.4 4.6-4.2-4q-1.2 1.3-1.4 2.8-.3 1.5.6 2.3t2.3.5q1.5-.4 2.7-1.6m-23.2 14.2.2-.1 3.9.7.1.1.1.2-.1.2q-.7.7-.9 1.4-.1.6.3 1 .3.4 1 .3.8-.1 1.4-.8l1.5-1.4-4.2-4.4-.1-.2.1-.2q.1-.1.4 0l4.4 4.6q.1.1 0 .4l-1.7 1.6q-.9.9-1.8 1t-1.4-.5q-.4-.5-.4-1.2t.7-1.5l-3.4-.6-.2-.1-.1-.2zm-6.5 6 3.5-3.2q.2-.1.4 0 .1.2 0 .4l-3.5 3.2-.2.1-.2-.1-.1-.2zm2.7 1.9 2.5-2.3.2-.1.2.1.1.2-.1.2-2.5 2.3q-.2.1-.4 0-.3-.2 0-.4m1.6 2.8 3.5-3.2q.2-.2.4 0 .1.2 0 .4l-3.5 3.2-.2.1-.2-.1-.1-.2zm-9.1-.4.1-.1h.3l6 3.2v.1q.1.2 0 .4h-.3l-5.3-2.9 2.1 5.7-.1.3-.2.1-.2-.1-2.4-6.3zm-8.3 7.1 3.6-3q.2-.2.4 0 .1.2 0 .4l-3.6 3-.2.1-.2-.1-.1-.2zm2.5 2 2.6-2.2.2-.1.2.1.1.2-.1.2-2.6 2.2q-.2.1-.4 0-.1-.3 0-.4m1.6 2.8 3.6-3q.2-.1.4 0 .2.2 0 .4l-3.6 3-.2.1-.2-.1-.1-.2zm-10.9.7.2-.1 3.8 1 .1.1.1.2-.1.2q-.7.7-1 1.3-.1.6.2 1t1 .4 1.5-.7l1.6-1.3-3.8-4.7-.1-.2.1-.2q.1-.1.4 0l4 4.9q.1.2 0 .4l-1.8 1.5q-1 .8-1.9.8t-1.4-.6q-.5-.5-.3-1.3.1-.8.8-1.5l-3.4-.9-.1-.1-.1-.2zm-3 10.6-.1-3.9-1.9-2.4v-.2l.1-.2q.2-.2.4.1l1.9 2.4 3.7 1 .1.1q.1.2 0 .4l-.2.1-3.5-1 .1 3.6-.1.2-.2.1-.2-.1zm-18.1 13.1-3.6-5.2v-.2l.1-.2h.2l.2.1 1.7 2.4 3.4-2.4-1.7-2.4v-.2l.1-.2q.2-.2.4.1l3.6 5.2q.2.2-.1.4h-.2l-.2-.1-1.7-2.4-3.4 2.4 1.7 2.4v.2l-.1.2h-.2zm-10.8-.3-.1-.4.1-.1h.3l2.6 1.9 1.7-1.1-.8-3.1.1-.3q.2-.2.4.1l.1.1.8 3.3.8 3.3-.1.3h-.3l-2.7-2zm4.7.9-1.3.9 1.9 1.4zm-12 3.4q.2-.1.2 0l3.7 1.4.1.1v.2l-.1.2a3 3 0 0 0-1.1 1.2q-.2.6.1 1t1 .5q.7 0 1.6-.5l1.7-1.1-3.3-5.1v-.2l.1-.2q.2-.2.3.1l3.4 5.4q.2.2-.1.4l-2 1.2q-1 .6-2 .6t-1.3-.7q-.3-.6-.2-1.3t1-1.4l-3.2-1.2-.1-.1v-.2zm-7.5 5q0-.1 0 0-.1-.3 0-.4l.1-.1h.3l2.5 2 1.7-1-.6-3.1.1-.3q.2-.2.3.1v.1l.6 3.3.6 3.3-.1.3h-.3l-2.7-2.1zm4.7 1-1.4.8 1.8 1.4zm-12.2 2.9 4.1-2.4q.2-.1.3.1l3.2 5.5q.2.3-.1.4h-.2l-.2-.1-3-5.3-3.9 2.2q-.2.1-.3-.1zm-3.4 1.9h.2l.2.1 3.1 5.6v.2l-.1.2a6 6 0 0 1-3.6.8q-1.8-.2-2.4-1.4-.7-1.2.1-2.8.7-1.7 2.5-2.7m2.8 5.7-2.8-5.1q-1.5.9-2.2 2.2t-.1 2.3 2 1.2q1.5.3 3.1-.6m-26.5 6.5h.2l3.5 1.9.1.1v.2l-.1.2q-.9.5-1.3 1.1a1 1 0 0 0 0 1q.3.4.9.6t1.6-.3l1.8-.9-2.6-5.5v-.2l.1-.2q.2-.1.3.1l2.8 5.7q.1.3-.1.3l-2.1 1a3 3 0 0 1-2 .4q-.9-.2-1.2-.9t0-1.3q.3-.7 1.1-1.3l-3.1-1.6-.1-.1v-.2zm-7.9 3.7 4.3-2q.3-.1.3.1.1.3-.1.3l-4.3 2h-.2l-.2-.1v-.2zm1.9 2.6 3.1-1.4h.2l.2.1v.2l-.1.1-3.1 1.4q-.3.1-.3-.1-.3-.2 0-.3m.7 3.2 4.3-2q.3-.1.3.1.1.3-.1.3l-4.3 2h-.2l-.2-.1v-.2zm-8.6-3.2.2-.1.3.1 4.7 4.9v.1q.1.3-.1.3h-.3l-4.2-4.4.3 6.1-.1.2h-.2l-.2-.1-.4-6.8zm-10 4.2 4.4-1.8q.3-.1.3.1.1.3-.1.3l-4.4 1.8h-.2l-.1-.1zm1.8 2.7 3.1-1.3h.2l.1.1v.2l-.2.1-3.1 1.3q-.3.1-.3-.1-.1-.2.2-.3m.6 3.2 4.4-1.8q.3-.1.3.1.1.3-.1.3l-4.4 1.8h-.2l-.1-.1zm-10.5-2.7h.2l3.3 2.1.1.1v.2l-.2.1q-1 .4-1.3 1t-.1 1q.2.5.8.7t1.6-.2l1.9-.7-2.2-5.7v-.2l.2-.1q.3-.1.3.2l2.3 5.9q.1.3-.1.3l-2.2.8q-1.2.5-2 .2t-1.1-1q-.2-.6.1-1.3t1.2-1.2l-2.9-1.9-.1-.1v-.2zm-6.2 9.1 1.1-3.7-1-2.9v-.2l.2-.1q.3-.1.3.2l1 2.9 3.2 2.1.1.1q.1.3-.1.3h-.2l-3-2-1 3.5-.1.2h-.2l-.1-.2q-.4-.1-.2-.2m-21.2 7-1.8-6.1v-.2l.2-.1h.2l.1.2.8 2.8 4-1.2-.8-2.8v-.2l.2-.1q.3 0 .3.2l1.8 6.1q0 .3-.2.3h-.2l-.1-.2-.8-2.8-4 1.2.8 2.8v.2l-.2.1h-.2zm-10.2-3.6q-.1-.3.1-.4h.1l.3.1 1.9 2.6 1.9-.5.2-3.2.2-.2q.3 0 .3.2v.1l-.3 3.4-.3 3.4-.2.2-.3-.1-2-2.7zm4.2 2.3-1.5.4 1.4 1.9zm-12.5-.5h.2l3.1 2.5.1.1v.2l-.2.1q-1 .3-1.4.8t-.2 1 .8.8 1.6 0l2-.5-1.5-5.9v-.2l.2-.1q.3 0 .3.2l1.6 6.2q0 .3-.2.3l-2.2.6q-1.2.3-2 0t-1-1.1q-.1-.6.2-1.3.4-.6 1.4-1l-2.7-2.2-.1-.1v-.2q-.1-.1 0-.2m-8.6 2.5q-.1-.3.1-.4h.1l.3.1 1.8 2.7 1.9-.5.4-3.2.2-.2q.3 0 .3.2v.1l-.4 3.4-.4 3.4-.2.2-.3-.1-1.9-2.8zm4.1 2.5-1.6.4 1.3 1.9zm-12.5-1 4.6-1q.3 0 .3.2l1.3 6.2q0 .3-.2.3h-.2l-.1-.2-1.3-6-4.4.9q-.3 0-.3-.2zm-3.9.7h.2l.1.2 1.2 6.2v.2l-.2.1q-2 .4-3.6-.3-1.6-.8-1.9-2.1t1-2.7q1.2-1.1 3.2-1.6m1 6.3-1.1-5.7q-1.7.4-2.8 1.5c-1.1 1.1-1 1.4-.8 2.2q.2 1.1 1.6 1.7 1.3.6 3.1.3m-27.2-1.9.2.1 2.8 2.8.1.1-.1.2-.2.1q-1 .1-1.5.7-.5.4-.3.9 0 .5.7.9.6.3 1.6.2l2-.3-.8-6 .1-.2.2-.1q.3 0 .3.2l.9 6.3q0 .3-.2.3l-2.3.3q-1.2.2-2-.3-.7-.5-.9-1.2-.1-.6.4-1.2t1.5-.8l-2.4-2.5-.1-.2.1-.2zm-8.7 1.1 4.7-.6q.3 0 .3.2t-.2.3l-4.7.6-.2-.1-.1-.2.1-.2zm.8 6.3 4.7-.6q.3 0 .3.2t-.2.3l-4.7.6-.2-.1-.1-.2.1-.2zm.2-3.2 3.4-.4.2.1.1.2-.1.2-.2.1-3.4.4q-.3 0-.3-.2zm-7.4-2.4h.2q.2 0 .3.2l3 6.1v.1q0 .3-.2.3l-.3-.1-2.7-5.5-1.6 5.9-.2.2-.2-.1-.1-.2 1.7-6.6zm-10.9.9 4.7-.4q.3 0 .3.2t-.2.3l-4.7.4-.2-.1-.1-.2.1-.2zm.5 6.4 4.7-.4q.3 0 .3.2t-.2.3l-4.7.4-.2-.1-.1-.2.1-.2zm.4-3.3 3.4-.3.2.1.1.2-.1.2-.2.1-3.4.3q-.3 0-.3-.2 0-.4.3-.4m-9.6-2.5.2.1 2.5 3 .1.1-.1.2-.2.1q-1 0-1.6.5-.4.3-.4.9t.6.9 1.6.3l2-.1-.3-6.1.1-.2.2-.1q.3 0 .3.2l.4 6.3q0 .3-.2.3l-2.3.1a4 4 0 0 1-2-.4q-.7-.4-.8-1.3 0-.6.5-1.2t1.5-.7l-2.2-2.7-.1-.2.1-.2q-.1.3.1.2m-8.7 6.8 2.2-3.2-.1-3.1.1-.2.2-.1q.3 0 .3.3l.1 3.1 2.4 3v.1q0 .3-.2.3l-.2-.1-2.2-2.8-2 3-.2.1-.2-.1zm-32.3-.1.2-6.3.1-.2.2-.1.2.1.1.2-.1 2.9 4.2.2.1-2.9.1-.2.2-.1q.3 0 .2.3l-.2 6.3q0 .3-.3.3l-.2-.1-.1-.2.1-2.9-4.2-.2-.1 2.9-.1.2-.2.1-.2-.1zm-8.5-6.7q0-.3.2-.3h.1l.2.2 1 3.1 2 .1 1.3-2.9q0-.2.3-.2t.2.3v.1L884 966l-1.3 3.1q0 .2-.3.2t-.2-.2l-1-3.2zm3.3 3.6-1.6-.1.7 2.2zm-11.6-4.6.2.1 2.1 3.4v.2l-.1.2-.2.1q-1 0-1.6.3-.5.3-.5.8t.5 1 1.5.5l2 .2.5-6.1.1-.2.2-.1q.3 0 .2.3l-.5 6.3q0 .3-.3.2l-2.3-.2q-1.2-.1-1.9-.7t-.6-1.4q0-.6.6-1.1t1.6-.5l-1.8-2.9v-.2l.1-.2zm-9-.5q0-.3.2-.3h.1l.2.2.8 3.1 2 .2 1.4-2.9q0-.2.3-.1.3 0 .2.3v.1l-1.5 3-1.5 3q0 .2-.3.1l-.2-.2-.9-3.3zm3 3.7-1.6-.2.6 2.2zm-11.4-5 4.7.6q.3 0 .2.3l-.8 6.3q0 .3-.3.2l-.2-.1-.1-.2.7-6-4.4-.5q-.2 0-.2-.3.1-.3.4-.3m-4-.5.2.1.1.2-.9 6.3-.1.2q-.1.1-.2 0a6 6 0 0 1-3.3-1.5 3 3 0 0 1-1.1-2.6q.2-1.4 1.8-2.2 1.5-.8 3.5-.5m-1.1 6.2.8-5.7q-1.8-.2-3.1.5t-1.5 1.8q-.1 1.2.9 2.2c1 1 1.8 1 2.9 1.2m-25.1-10.6.2.1 1.7 3.6v.2l-.1.2h-.2q-1-.2-1.7.1t-.6.8q-.1.6.4 1t1.5.7l2 .4 1.2-6 .1-.2h.2q.3 0 .2.3l-1.2 6.2q0 .3-.3.2l-2.3-.4q-1.2-.3-1.8-.9t-.4-1.4q.1-.6.8-1 .6-.4 1.7-.3l-1.5-3.1v-.2l.1-.2q-.2-.1 0-.1m-9.9 4.4 4.6 1q.3 0 .2.3t-.3.2l-4.6-1-.2-.1v-.2l.1-.2zm1.3-3 3.3.7.2.1v.2l-.1.2h-.2l-3.3-.7q-.3 0-.2-.3zm.1-3.2 4.6 1q.3 0 .2.3t-.3.2l-4.6-1-.2-.1v-.2l.1-.2zm-6.4-1.5h.2l.2.2.8 6.7v.1q0 .3-.3.2l-.2-.2-.7-6-3.4 5-.3.1-.2-.1v-.2l3.8-5.6zm-12.1 3.5 4.6 1.2q.3 0 .2.3t-.3.2l-4.6-1.2-.2-.1v-.2l.1-.2zm1.4-2.9 3.3.9.2.1v.2l-.1.2h-.2l-3.3-.9q-.3 0-.2-.3t.3-.2m.1-3.2 4.6 1.2q.3 0 .2.3t-.3.2l-4.6-1.2-.2-.1v-.2l.1-.2zm-8.4-2.3.2.2 1.4 3.7v.2l-.1.2h-.2q-1-.3-1.7 0t-.7.7q-.2.5.3 1.1.4.5 1.4.8l2 .6 1.7-5.9.1-.2h.2q.3 0 .2.3l-1.7 6.1q0 .3-.3.2l-2.2-.6q-1.2-.3-1.7-1.1-.6-.6-.3-1.5.2-.6.8-1a3 3 0 0 1 1.7-.2l-1.2-3.2v-.2zm-10.4 3.6 3.1-2.3.9-3 .1-.2h.2q.3 0 .2.3l-.9 3 1.3 3.6v.1q-.1.3-.3.2l-.2-.2-1.2-3.4-2.9 2.1h-.2l-.2-.1zq0 .2.1.1m-21.1-7 2.2-6 .1-.1h.2l.2.1v.2l-1 2.7 3.9 1.4 1-2.7.1-.1h.2q.3.2.1.3l-2.2 6q-.2.3-.3.2l-.2-.1v-.2l1-2.7-3.9-1.4-1 2.7-.1.1h-.2l-.2-.1zm-6.1-9q0-.3.3-.3h.1l.2.2v3.2l1.9.7 2.1-2.4.3-.1q.3.2.1.3v.1l-2.2 2.5-2.2 2.5-.3.1-.2-.2v-3.4zm2 4.3-1.5-.6v2.3zm-9.7-7.8.2.2 1 3.8v.2l-.1.1h-.2q-1-.4-1.7-.2-.6.1-.8.6t.1 1.1q.4.6 1.3 1l1.9.8 2.3-5.6.1-.1h.2q.3.2.1.3l-2.4 5.9q-.2.3-.3.1l-2.1-.9q-1.1-.4-1.6-1.3-.4-.7-.1-1.5.3-.6.9-.9t1.7 0l-.9-3.4v-.2l.1-.1zm-8.4-3.2.3-.3h.1q.2 0 .2.3l-.2 3.2 1.8.8 2.2-2.3h.3q.3.2.1.3v.1l-2.3 2.4-2.3 2.5-.3.1q-.2 0-.2-.3l.2-3.4zm1.8 4.4-1.5-.6-.1 2.3zm-9.3-8.2 4.3 2q.3.2.1.3l-2.6 5.8q-.2.3-.3.1l-.1-.1v-.2l2.5-5.5-4-1.9q-.3-.2-.1-.3-.1-.4.2-.2m-3.6-1.7.1.2v.2L723 928l-.2.1h-.2a6 6 0 0 1-2.7-2.4q-.9-1.5-.3-2.8t2.4-1.6 3.7.6m-3 5.6 2.5-5.2a6 6 0 0 0-3.1-.5q-1.5.2-2 1.3-.5 1 .2 2.3.9 1.2 2.4 2.1M702 909.6l.1.2.5 3.9v.2l-.2.1h-.2q-.9-.5-1.6-.4-.6 0-.8.5t0 1.1q.3.6 1.2 1.1l1.8 1 2.9-5.3.2-.1h.2q.2.2.1.3l-3.1 5.6q-.2.3-.3.1l-2-1.1a4 4 0 0 1-1.5-1.4 2 2 0 0 1 0-1.5q.4-.5 1-.8.7-.2 1.7.2l-.5-3.4v-.2l.2-.1zm-10.7 1.2 4.1 2.4q.3.1.1.4t-.4.1l-4.1-2.4-.1-.2v-.2l.2-.1zm2.1-2.4 2.9 1.7.1.2v.2l-.2.1h-.2l-3-1.6q-.3-.1-.1-.4t.4-.1m1-3.1 4.1 2.4q.3.1.1.4t-.4.1l-4.1-2.4-.1-.2v-.2l.2-.1zm-5.6-3.3.1.1.1.3-1.3 6.7v.1q-.2.2-.3.1l-.1-.3 1.2-6-4.8 3.8h-.3l-.1-.2v-.2l5.3-4.2zm-12.6-.4 4 2.5q.2.1.1.4t-.4.1l-4-2.5-.1-.2v-.2l.2-.1zm2.3-2.4 2.9 1.8.1.2v.2l-.2.1h-.2l-2.9-1.8q-.2-.1-.1-.4.1-.2.4-.1m1.1-3 4 2.5q.2.1.1.4-.1.2-.4.1l-4-2.5-.1-.2v-.2l.2-.1zm-7.3-4.8.1.2.2 4v.2l-.2.1h-.2q-.9-.5-1.6-.5a1 1 0 0 0-.9.5q-.3.5-.1 1.1.3.8 1.1 1.2l1.7 1.1 3.4-5.1.2-.1h.2q.2.1.1.4l-3.5 5.3q-.1.2-.4.1l-1.9-1.3a3 3 0 0 1-1.3-1.5q-.2-.8.1-1.5t1.1-.7c.8-.1 1 0 1.7.3l-.2-3.5v-.2l.2-.1zm-11 .3 3.7-1.2 1.8-2.5.2-.1h.2q.2.1.1.4l-1.8 2.5.1 3.9-.1.1q-.1.3-.4.1l-.1-.2-.1-3.6-3.4 1.2h-.2l-.1-.2v-.2zm-18-13.2 3.9-5 .2-.1.2.1.1.2v.2l-1.8 2.3 3.3 2.6 1.8-2.3.2-.1.2.1q.1.1 0 .4l-3.9 5q-.1.2-.4.1l-.1-.2v-.2l1.8-2.3-3.3-2.6-1.8 2.3-.2.1-.2-.1-.1-.2zm-3-10.4q.1-.2.3-.2h.1l.1.3-1 3.1 1.5 1.2 2.7-1.7h.3q.1.1 0 .4l-.1.1-2.9 1.7-2.9 1.7h-.3l-.1-.3 1.1-3.2zm.6 4.8-1.2-1-.7 2.2zm-6.9-10.5.1.2-.3 4-.1.2-.2.1-.2-.1q-.7-.6-1.5-.7-.6 0-.9.4t-.2 1.1 1 1.3l1.6 1.3 3.9-4.7.2-.1.2.1q.1.1 0 .4l-4.1 4.9q-.1.1-.4 0l-1.8-1.5a3 3 0 0 1-1.1-1.7q-.2-.8.3-1.4.5-.4 1.2-.6.7 0 1.6.5l.2-3.5.1-.2.2-.1zm-7-5.6q.1-.2.4-.2h.1l.1.3-1.1 3 1.5 1.3 2.8-1.5h.3q.1.1 0 .4l-.1.1-3 1.6-3 1.6h-.3l-.1-.3 1.2-3.2zm.4 4.8-1.2-1.1-.8 2.1zm-6.4-10.7 3.5 3.1q.1.1 0 .4l-4.2 4.8q-.1.1-.4 0l-.1-.2.1-.2 4-4.6-3.3-2.9q-.1-.1 0-.4.2-.1.4 0m-2.9-2.7.1.2-.1.2-4.4 4.6-.2.1-.2-.1q-1.5-1.4-1.9-3.2t.6-2.8 2.7-.8q2 .4 3.4 1.8m-4.6 4.4 4-4.2a6 6 0 0 0-2.8-1.4q-1.5-.3-2.3.6c-.8.9-.7 1.3-.5 2.3q.4 1.5 1.6 2.7M599 829.5l.1.2-.7 3.9-.1.1-.2.1-.2-.1q-.7-.7-1.4-.9-.6-.1-1 .3t-.3 1 .8 1.4l1.4 1.5 4.4-4.2.2-.1.2.1q.1.1 0 .4l-4.6 4.4q-.1.2-.4 0l-1.6-1.7q-.9-.9-1-1.8t.5-1.4q.5-.4 1.2-.4.8 0 1.5.7l.6-3.4.1-.2.2-.1zm-10.6-2.2 3.2 3.5q.1.2 0 .4-.2.1-.4 0l-3.2-3.5-.1-.2.1-.2.2-.1zm2.8-1.6 2.3 2.5.1.2-.1.2-.2.1-.2-.1-2.3-2.5v-.4q.3-.3.4 0m1.9-2.7 3.2 3.5q.1.2 0 .4-.2.1-.4 0l-3.2-3.5-.1-.2.1-.2.2-.1zm-4.3-4.8.1.1v.3l-3.2 6h-.1q-.2.2-.4 0v-.3l2.9-5.3-5.7 2.1-.3-.1-.1-.2.1-.2 6.3-2.4zm-11.9-4.2 3 3.6q.1.2 0 .4-.2.2-.4 0l-3-3.6-.1-.2.1-.2.2-.1zm2.8-1.6 2.2 2.6.1.2-.1.2-.2.1-.2-.1-2.2-2.6q-.1-.2 0-.4.2-.2.4 0m2-2.5 3 3.6q.1.2 0 .4-.2.1-.4 0l-3-3.6-.1-.2.1-.2.2-.1zm-5.5-6.8.1.2-1 3.8-.1.1-.2.1-.2-.1q-.7-.7-1.3-1-.6-.1-1 .2t-.4 1 .7 1.5l1.3 1.6 4.7-3.8.2-.1.2.1q.1.1 0 .4l-4.9 4q-.2.1-.4 0l-1.5-1.8q-.8-1-.8-1.9t.6-1.4q.5-.5 1.3-.3.8.1 1.5.8l.9-3.4.1-.1.2-.1zm-10.6-3.1 3.9-.1 2.5-1.9h.2l.2.1q.2.2-.1.4l-2.5 1.9-1 3.7-.1.1q-.2.1-.4 0l-.1-.2 1-3.5-3.6.1-.2-.1-.1-.2.1-.2zm-13.1-18 5.2-3.6h.2l.2.1v.2l-.1.2-2.4 1.7 2.4 3.4 2.4-1.7h.2l.2.1q.2.2-.1.4l-5.2 3.6q-.2.2-.4-.1v-.2l.1-.2 2.4-1.7-2.4-3.4-2.4 1.7h-.2l-.2-.1v-.2zm.3-10.8.4-.1.1.1v.3l-1.9 2.6 1.1 1.7 3.1-.8.3.1q.2.2-.1.4l-.1.1-3.3.8-3.3.8-.3-.1v-.3l2-2.7zm-.9 4.7-.9-1.3-1.4 1.9zm-3.4-12q.2.2 0 .2l-1.4 3.7-.1.1h-.2l-.2-.1a3 3 0 0 0-1.2-1.1q-.6-.2-1 .1t-.5 1q0 .7.5 1.6l1.1 1.7 5.1-3.3h.2l.2.1q.2.2-.1.4l-5.4 3.4q-.2.2-.4-.1l-1.2-2q-.6-1-.6-2t.7-1.3q.6-.3 1.3-.2t1.4 1l1.2-3.2.1-.1h.2zm-5-7.5q.3-.2.4 0l.1.1v.3l-2 2.5 1 1.7 3.1-.6.3.1q.2.2-.1.3h-.1l-3.3.6-3.3.6-.3-.1v-.3l2.1-2.7zm-1.1 4.7-.8-1.4-1.4 1.8zm-2.8-12.2 2.4 4.1q.1.2-.1.3l-5.5 3.2q-.3.2-.4-.1v-.2l.1-.2 5.3-3-2.2-3.9q-.1-.2.1-.3t.3.1m-2-3.5v.2l-.1.2-5.6 3.1h-.2l-.2-.1a6 6 0 0 1-.8-3.6q.2-1.8 1.4-2.4 1.3-.7 2.8.1a5 5 0 0 1 2.7 2.5m-5.6 2.9 5.1-2.8q-.9-1.5-2.2-2.2t-2.3-.1-1.2 2q-.3 1.5.6 3.1m-6.5-26.5v.2l-1.9 3.5-.1.1h-.2l-.2-.1q-.5-.9-1.1-1.3a1 1 0 0 0-1 0q-.4.3-.6.9t.3 1.6l.9 1.8 5.5-2.6h.2l.2.1q.1.2-.1.3l-5.7 2.8q-.3.1-.3-.1l-1-2.1a3 3 0 0 1-.4-2q.1-.9.9-1.2.6-.3 1.3 0 .9.3 1.2 1.1l1.6-3.1.1-.1h.2zm-9.5-5.3 2 4.3q.1.3-.1.3-.3.1-.3-.1l-2-4.3v-.2l.1-.2h.2zm3.2-.7 1.4 3.1v.2l-.1.2h-.2l-.1-.1-1.4-3.1q-.1-.3.1-.3.2-.3.3 0m2.6-1.9 2 4.3q.1.3-.1.3-.3.1-.3-.1l-2-4.3v-.2l.1-.2h.2zm-2.6-6 .1.2-.1.3-4.9 4.7h-.1q-.3.1-.3-.1v-.3l4.4-4.2-6.1.3-.2-.1v-.2l.1-.2 6.8-.4zm-10.1-7.7 1.8 4.4q.1.3-.1.3-.3.1-.3-.1l-1.8-4.4v-.2l.1-.1h.2zm3.2-.6 1.3 3.1v.2l-.1.1h-.2l-.1-.2-1.3-3.1q-.1-.3.1-.3zm2.7-1.8 1.8 4.4q.1.3-.1.3-.3.1-.3-.1l-1.8-4.4v-.2l.1-.1h.2zm-3.2-8.1v.2l-2.1 3.3-.1.1h-.2l-.1-.2q-.3-1-1-1.3-.5-.4-1-.1-.5.2-.7.8t.2 1.6l.7 1.9 5.7-2.2h.2l.1.2q.1.3-.2.3l-5.9 2.3q-.3.1-.3-.1l-.8-2.2q-.5-1.1-.2-2t1-1.1 1.3.1 1.2 1.2l1.8-2.9.1-.1h.2zm-9.1-6.2 3.7 1.1 2.9-1h.2l.1.2q.1.3-.2.3l-2.9 1-2.1 3.2-.1.1q-.3.1-.3-.1v-.2l2-3-3.5-1-.2-.1v-.2l.2-.1zm-7-21.2 6.1-1.8h.2l.1.2v.2l-.2.1-2.8.8 1.2 4 2.8-.8h.2l.1.2q0 .3-.2.3l-6.1 1.8q-.3 0-.3-.2v-.2l.2-.1 2.8-.8-1.2-4-2.8.8h-.2l-.1-.2v-.2zm3.6-10.1q.3-.1.4.1v.1l-.1.3-2.6 1.9.5 1.9 3.2.2.2.2q0 .3-.2.3h-.1l-3.4-.3-3.4-.3-.2-.2.1-.3 2.7-2zm-2.3 4.2-.4-1.5-1.9 1.4zm.5-12.5v.2l-2.5 3.1-.1.1h-.2l-.1-.2q-.2-1-.8-1.4-.4-.3-1-.2t-.8.8q-.3.7 0 1.6l.5 2 5.9-1.5h.2l.1.2q0 .3-.2.3l-6.2 1.6q-.3 0-.3-.2l-.6-2.2q-.3-1.2 0-2t1.1-1q.6-.1 1.3.2t1 1.4l2.2-2.7.1-.1h.2q.1-.1.2 0m-2.5-8.7q.3-.1.4.1v.1l-.1.3-2.7 1.8.5 1.9 3.2.4.2.2q0 .3-.2.3h-.1l-3.4-.4-3.4-.4-.2-.2.1-.3 2.8-1.9zm-2.5 4.2-.4-1.6-1.9 1.3zm1-12.5 1 4.6q0 .3-.2.3l-6.2 1.3q-.3 0-.3-.2v-.2l.2-.1 6-1.3-1-4.3q0-.3.2-.3t.3.2m-.8-3.9v.2l-.2.1-6.2 1.2h-.2l-.1-.2q-.4-2 .3-3.6c.7-1.6 1.2-1.7 2.1-1.9q1.3-.3 2.7 1 1.3 1.1 1.6 3.2m-6.2.9 5.7-1.1a6 6 0 0 0-1.5-2.8q-1-1-2.2-.8t-1.7 1.6q-.6 1.5-.3 3.1m1.9-27.2-.1.2-2.8 2.8-.1.1-.2-.1-.1-.2q-.1-1-.7-1.5t-.9-.3q-.5.1-.9.7-.3.6-.2 1.6l.3 2 6-.8.2.1.1.2q0 .3-.2.3l-6.3.9q-.3 0-.3-.2l-.3-2.3q-.2-1.2.3-2 .4-.7 1.2-.9.6-.1 1.2.4t.8 1.5l2.5-2.4.2-.1.2.1q0-.2.1-.1m-7.4-7.9.6 4.7q0 .3-.2.3t-.3-.2l-.6-4.7.1-.2.2-.1zm3.2.3.4 3.4-.1.2-.2.1-.2-.1-.1-.2-.4-3.4q0-.3.2-.3.4 0 .4.3m3.1-1 .6 4.7q0 .3-.2.3t-.3-.2l-.6-4.7.1-.2.2-.1zm-.7-6.5v.2q0 .2-.2.3l-6.1 3h-.1q-.3 0-.3-.2l.1-.3 5.5-2.6-5.9-1.6-.2-.2.1-.2.2-.1 6.6 1.7zm-7.3-10.4.4 4.7q0 .3-.2.3t-.3-.2l-.4-4.7.1-.2.2-.1zm3.3.4.3 3.4-.1.2-.2.1-.2-.1-.1-.2-.3-3.4q0-.3.2-.3zm3.1-.9.4 4.7q0 .3-.2.3t-.3-.2l-.4-4.7.1-.2.2-.1zm-.6-8.7-.1.2-3 2.5-.1.1-.2-.1-.1-.2q0-1-.5-1.6-.3-.4-.9-.4t-.9.6-.3 1.6l.1 2 6.1-.4.2.1.1.2q0 .3-.2.3l-6.3.4q-.3 0-.3-.2l-.1-2.3q0-1.2.4-2 .4-.7 1.3-.8.6 0 1.2.5t.7 1.5l2.7-2.2.2-.1.2.1zm-6.8-8.6 3.2 2.2 3.1-.1.2.1.1.2q0 .3-.3.3l-3.1.1-3 2.4h-.1q-.3 0-.3-.2l.1-.2 2.8-2.2-3-2-.1-.2.1-.2.2-.1zm0-32.3 6.3.2.2.1.1.2-.1.2-.2.1-2.9-.1-.2 4.2 2.9.1.2.1.1.2q0 .3-.3.2l-6.3-.2q-.3 0-.3-.3l.1-.2.2-.1 2.9.1.2-4.2-2.9-.1-.2-.1-.1-.2.1-.2zm6.8-8.5q.3 0 .3.2v.1l-.2.2-3.1 1-.1 2 2.9 1.3q.2 0 .1.3 0 .3-.3.2h-.1l-3.1-1.4-3.1-1.3q-.2 0-.2-.3l.2-.2 3.2-1zm-3.6 3.2.1-1.6-2.2.7zm4.6-11.6-.1.2-3.4 2.1h-.2l-.2-.1-.1-.2q0-1-.3-1.6-.3-.5-.8-.5t-1 .5-.5 1.5l-.2 2 6.1.5.2.1.1.2q0 .3-.3.2l-6.3-.5q-.3 0-.2-.3l.2-2.3q.1-1.2.7-1.9t1.4-.6q.6 0 1.1.6t.5 1.6l2.9-1.8h.2l.2.1zm.4-9q.2 0 0 0 .3 0 .3.2v.1l-.2.2-3.1.8-.2 2 2.9 1.4q.2 0 .1.3 0 .2-.3.2h-.1l-3-1.5-3-1.5q-.2 0-.1-.3l.2-.2 3.3-.9zm-3.6 3.1.2-1.6-2.2.6zm5-11.4-.6 4.7q0 .3-.3.2l-6.3-.8q-.3 0-.2-.3l.1-.2.2-.1 6 .7.5-4.4q0-.2.3-.2.3.1.3.4m.5-4-.1.2-.2.1-6.3-.9-.2-.1v-.2q.3-2.1 1.5-3.3a3 3 0 0 1 2.6-1.1q1.4.2 2.2 1.8.8 1.4.5 3.5m-6.3-1.1 5.7.8q.2-1.8-.5-3.1t-1.8-1.5-2.2.9q-.8 1.1-1.2 2.9m10.7-25.1-.1.2-3.6 1.7h-.2l-.2-.1v-.2q.2-1-.1-1.7-.2-.6-.8-.6-.6-.1-1 .4t-.7 1.5l-.4 2 6 1.2.2.1v.2q0 .3-.3.2l-6.2-1.2q-.2 0-.2-.3l.4-2.3q.3-1.2.9-1.8t1.4-.4q.6.1 1.1.8.4.6.3 1.7l3.1-1.5h.2zq0-.2 0 0m-4.4-9.9-1 4.6q0 .3-.3.2t-.2-.3l1-4.6.1-.2h.2l.2.1zm2.9 1.3-.7 3.3-.1.2h-.2l-.2-.1v-.2l.7-3.3q0-.2.3-.2t.2.3m3.3 0-1 4.6q0 .2-.3.2t-.2-.3l1-4.6.1-.2h.2l.2.1zm1.4-6.3v.2l-.2.2-6.7.8h-.1q-.2 0-.2-.3l.2-.2 6-.7-5-3.4-.1-.3.1-.2h.2l5.6 3.8zm-3.4-12.2-1.2 4.6q0 .2-.3.2t-.2-.3l1.2-4.6.1-.2h.2l.2.1zm2.9 1.5-.9 3.3-.1.2h-.2l-.2-.1v-.2l.9-3.3q0-.2.3-.2t.2.3m3.2.1-1.2 4.6q0 .3-.3.2-.3-.2-.2-.3l1.2-4.6.1-.2h.2l.2.1zm2.3-8.4-.2.2-3.7 1.4h-.2l-.2-.1v-.2q.3-1 0-1.7t-.7-.7q-.5-.2-1.1.3t-.8 1.4l-.6 2 5.9 1.7.2.1v.2q0 .3-.3.2l-6.1-1.7q-.2 0-.2-.3l.6-2.2q.3-1.2 1.1-1.7.6-.6 1.5-.3.6.2 1 .8.3.6.2 1.7l3.2-1.2h.2zq0-.2 0 0m-3.6-10.4 2.3 3.1 3 .9.2.1v.2q0 .2-.3.2l-3-.9-3.6 1.3h-.1q-.2-.1-.2-.3l.2-.2 3.4-1.2-2.1-2.9v-.2l.1-.2zq-.3 0-.1.1m7.1-21.3 6 2.2.1.1v.2l-.1.2h-.2l-2.7-1-1.4 3.9 2.7 1 .1.1v.2q-.2.3-.3.1l-6-2.2-.2-.3.1-.2h.2l2.7 1 1.4-3.9-2.7-1-.1-.1v-.2l.1-.2zm9-6q.3 0 .3.3v.1l-.2.2h-3.2l-.7 1.9 2.4 2.1.1.3q-.2.3-.3.1h-.1l-2.5-2.2-2.5-2.2-.1-.3.2-.2h3.4zm-4.4 2 .6-1.5h-2.3zm7.9-9.7-.2.2-3.8 1h-.2l-.1-.1v-.2q.4-1 .2-1.6-.1-.6-.6-.8t-1.1.1-1 1.3l-.8 1.9 5.6 2.3.1.1v.2q-.1.3-.3.1l-5.9-2.4q-.3-.1-.1-.3l.9-2.1q.4-1.2 1.3-1.6t1.5-.1.9.9q.3.7 0 1.7l3.4-.9h.2l.1.1zm3.2-8.4.3.3v.1q0 .2-.3.2l-3.2-.2-.8 1.8 2.3 2.2v.3q-.1.3-.3.1h-.1l-2.4-2.3-2.5-2.3-.1-.3q0-.2.3-.2l3.4.2zm-4.4 1.8.6-1.5-2.3-.1zm8.2-9.3-2 4.3q-.1.3-.3.1l-5.8-2.6q-.3-.2-.1-.3l.1-.1h.2l5.5 2.5 1.9-4q.2-.3.3-.1.3-.1.2.2m1.7-3.6-.2.1h-.2l-5.7-2.8-.1-.2v-.2a6 6 0 0 1 2.4-2.7q1.6-.9 2.8-.3 1.3.6 1.6 2.4t-.6 3.7m-5.6-3 5.2 2.5q.7-1.6.5-3.1t-1.3-2-2.3.2q-1.2.8-2.1 2.4m17.8-20.7-.2.1-3.9.5h-.2l-.1-.2v-.2q.5-.9.4-1.6-.1-.6-.5-.8t-1.1 0q-.6.3-1.1 1.2l-1 1.8 5.3 2.9.1.2v.2q-.2.2-.3.1l-5.6-3.1q-.3-.1-.1-.3l1.1-2a4 4 0 0 1 1.4-1.5 2 2 0 0 1 1.5 0q.5.4.8 1 .2.7-.2 1.7l3.4-.5h.2l.1.2zm-1.1-10.8-2.4 4.1q-.1.3-.4.1t-.1-.4l2.4-4.1.2-.1h.2l.1.2zm2.4 2.2-1.7 2.9-.2.1h-.2l-.1-.2v-.2l1.7-2.9q.1-.3.4-.1t.1.4m3.1 1-2.4 4.1q-.1.3-.4.1t-.1-.4l2.4-4.1.2-.1h.2l.1.2zm3.3-5.6-.1.1-.3.1-6.7-1.3h-.1q-.2-.2-.1-.3l.3-.1 6 1.2-3.8-4.8v-.3l.2-.1h.2l4.2 5.3zm.4-12.6-2.5 4q-.1.2-.4.1-.2-.1-.1-.4l2.5-4 .2-.1h.2l.1.2zm2.3 2.2-1.8 2.9-.2.1h-.2l-.1-.2v-.2l1.8-2.9q.1-.2.4-.1.3.3.1.4m3.1 1.2-2.5 4q-.1.2-.4.1-.2-.1-.1-.4l2.5-4 .2-.1h.2l.1.2zm4.8-7.3-.2.1-4 .2h-.2l-.1-.2v-.2q.5-.9.5-1.6a1 1 0 0 0-.5-.9q-.5-.3-1.1-.1a3 3 0 0 0-1.2 1.1l-1.1 1.7 5.1 3.4.1.2v.2q-.1.2-.4.1l-5.3-3.5q-.2-.1-.1-.4l1.3-1.9a3 3 0 0 1 1.5-1.3q.8-.3 1.5.1.6.3.7 1.1.2.7-.3 1.7l3.5-.2h.2l.1.2zm-.3-11 1.2 3.7 2.5 1.8.1.2v.2q-.1.2-.4.1l-2.5-1.8-3.9.1-.1-.1q-.3-.1-.1-.4l.2-.1 3.6-.1-1.2-3.4v-.2l.2-.1h.2zm13.2-18.1 5 3.9.1.2-.1.2-.2.1h-.2l-2.3-1.8-2.6 3.3 2.3 1.8.1.2-.1.2q-.1.2-.4 0l-5-3.9q-.2-.1-.1-.4l.2-.1h.2l2.3 1.8 2.6-3.3-2.3-1.8-.1-.2.1-.2.2-.1zm10.3-2.9q.1 0 0 0 .3.1.2.3v.1l-.3.1-3.1-1-1.2 1.5 1.7 2.7v.3q-.1.2-.4 0l-.1-.1-1.7-2.9-1.7-2.9v-.3l.3-.1 3.2 1.1zm-4.7.6 1-1.2-2.2-.7zm10.5-6.9-.2.1-4-.3-.2-.1-.1-.2.1-.2q.6-.7.7-1.5 0-.6-.4-.9t-1.1-.2q-.6.1-1.3 1l-1.3 1.6 4.7 3.9.1.2-.1.2q-.1.2-.4 0l-4.9-4.1q-.1-.1 0-.4l1.5-1.8a3 3 0 0 1 1.7-1.1q.9-.1 1.4.3t.6 1.2q0 .7-.5 1.6l3.5.2.2.1.1.2zm5.6-7q.3.1.1.4v.1l-.3.1-3-1.1-1.3 1.5 1.5 2.8v.3q-.1.2-.4 0l-.1-.1-1.6-3-1.6-3v-.3l.3-.1 3.2 1.2zm-4.8.4 1.1-1.2-2.1-.8zm10.7-6.4-3.1 3.5q-.1.2-.4 0l-4.8-4.2q-.1-.1 0-.4l.2-.1.2.1 4.6 4 2.9-3.3q.1-.2.4 0 .1.1 0 .4m2.7-3-.2.1-.2-.1-4.6-4.4-.1-.2.1-.2q1.4-1.5 3.2-1.9t2.8.6.8 2.7c-.2 1.7-.8 2.4-1.8 3.4m-4.4-4.5 4.2 4q1.1-1.3 1.4-2.8t-.6-2.3q-.8-.8-2.3-.5t-2.7 1.6m23.2-14.3-.2.1-3.9-.7-.1-.1-.1-.2.1-.2q.7-.7.9-1.4.1-.6-.3-1t-1-.3a3 3 0 0 0-1.4.8l-1.5 1.4 4.2 4.4.1.2-.1.2q-.1.2-.4 0l-4.4-4.6q-.1-.1 0-.4l1.7-1.6q.9-.9 1.8-1t1.4.5q.4.4.4 1.2t-.7 1.5l3.4.6.2.1.1.2zm2.2-10.6-3.5 3.2q-.2.1-.4 0v-.4l3.5-3.2.2-.1.2.1.1.2zm1.6 2.8-2.5 2.3-.2.1-.2-.1-.1-.2.1-.2 2.5-2.3q.2-.2.4 0t0 .4m2.7 1.9-3.5 3.2q-.2.2-.4 0v-.4l3.5-3.2.2-.1.2.1.1.2zm4.8-4.3-.1.1h-.3l-6-3.2v-.5h.3l5.3 2.9-2.1-5.7.1-.3.2-.1.2.1 2.4 6.3zm4.2-12-3.6 3q-.2.2-.4 0v-.4l3.6-3 .2-.1.2.1.1.2zm1.6 2.9-2.6 2.2-.2.1-.2-.1-.1-.2.1-.2 2.6-2.2q.2-.2.4 0 .1.3 0 .4m2.5 2-3.6 3q-.2.2-.4 0v-.4l3.6-3 .2-.1.2.1.1.2zm6.8-5.5-.2.1-3.8-1-.1-.1-.1-.2.1-.2q.7-.6 1-1.4.1-.6-.2-1t-1-.4-1.5.7l-1.6 1.3 3.8 4.7.1.2-.1.2q-.1.2-.4 0l-4-4.9v-.4l1.8-1.5q1-.8 1.9-.8t1.4.6q.4.5.3 1.3-.1.7-.8 1.5l3.4.9.1.1.1.2zm3.1-10.6.1 3.9 1.9 2.4v.2l-.1.2q-.2.2-.4-.1l-1.9-2.4-3.7-1-.1-.1v-.4l.2-.1 3.5 1-.1-3.6.1-.2.2-.1.2.1zm18-13.2 3.6 5.2v.2l-.1.2h-.2l-.2-.1-1.7-2.4-3.4 2.4 1.7 2.4v.2l-.1.2q-.2.2-.4-.1l-3.6-5.2q-.2-.2.1-.4h.2l.2.1 1.7 2.4 3.4-2.4-1.7-2.4v-.2l.1-.2h.2zm10.8.3.1.4-.1.1h-.3l-2.6-1.9-1.7 1.1.8 3.1-.1.3q-.2.2-.4-.1l-.1-.1-.8-3.3-.8-3.3.1-.3h.3l2.7 2zm-4.7-.9 1.3-.9-1.9-1.4zm12-3.3q-.2.1-.2 0l-3.7-1.4-.1-.1v-.2l.1-.2a3 3 0 0 0 1.1-1.2q.2-.6-.1-1t-1-.5-1.6.5l-1.7 1.1 3.3 5.1v.2l-.1.2q-.2.2-.4-.1l-3.4-5.4q-.2-.2.1-.4l2-1.2q1-.6 2-.6t1.3.7.2 1.3-1 1.4l3.2 1.2.1.1v.2zm7.5-5q.1.3 0 .4l-.1.1h-.3l-2.5-2-1.7 1 .6 3.1-.1.3q-.2.2-.3-.1v-.1l-.6-3.3-.6-3.3.1-.3h.3l2.7 2.1zm-4.7-1.1 1.4-.8-1.8-1.4zm12.2-2.8-4.1 2.4q-.2.1-.3-.1l-3.2-5.5q-.2-.3.1-.4h.2l.2.1 3 5.3 3.9-2.2q.2-.1.3.1.1.1-.1.3m3.4-2h-.2l-.2-.1-3.1-5.6v-.2l.1-.2a6 6 0 0 1 3.6-.8q1.8.2 2.4 1.4.7 1.3-.1 2.8a5 5 0 0 1-2.5 2.7m-2.8-5.7 2.8 5.1q1.5-.9 2.2-2.2.6-1.4.1-2.3-.6-1-2-1.2a6 6 0 0 0-3.1.6m26.5-6.5h-.2l-3.5-1.9-.1-.1v-.2l.1-.2q.9-.5 1.3-1.1a1 1 0 0 0 0-1q-.3-.4-.9-.6t-1.6.3l-1.8.9 2.6 5.5v.2l-.1.2q-.3.1-.3-.1l-2.8-5.7q-.1-.3.1-.3l2.1-1a3 3 0 0 1 2-.4q.9.1 1.2.9.3.6 0 1.3t-1.1 1.3l3.1 1.6.1.1v.2zm5.3-9.4-4.3 2q-.3.1-.3-.1-.1-.3.1-.3l4.3-2h.2l.2.1v.2zm.7 3.2-3.1 1.4h-.2l-.2-.1v-.2l.1-.1 3.1-1.4q.3-.1.3.1.3.1 0 .3m1.9 2.6-4.3 2q-.3.1-.3-.1-.1-.3.1-.3l4.3-2h.2l.2.1v.2zm6-2.6-.2.1-.3-.1-4.7-4.9v-.1q-.1-.3.1-.3h.3l4.2 4.4-.3-6.1.1-.2h.2l.1.1.4 6.8zm7.7-10.1-4.4 1.8q-.3.1-.3-.1-.1-.3.1-.3l4.4-1.8h.2l.1.1zm.6 3.2-3.1 1.3h-.2l-.1-.1v-.2l.2-.1 3.1-1.3q.3-.1.3.1zm1.8 2.7-4.4 1.8q-.3.1-.3-.1-.1-.3.1-.3l4.4-1.8h.2l.1.1zm8.1-3.2h-.2l-3.3-2.1-.1-.1v-.2l.2-.1q1-.3 1.3-1 .3-.5.1-1t-.8-.7-1.6.2l-1.9.7 2.2 5.7v.2l-.2.1q-.3.1-.3-.2l-2.3-5.9q-.1-.3.1-.3l2.2-.8q1.1-.5 2-.2t1.1 1-.1 1.3-1.2 1.2l2.9 1.9.1.1v.2zm6.2-9.1-1.1 3.7 1 2.9v.2l-.2.1q-.3.1-.3-.2l-1-2.9-3.2-2.1-.1-.1q-.1-.3.1-.3h.2l3 2 1-3.5.1-.2h.2l.1.2q.3 0 .2.2m21.1-7.1 1.8 6.1v.2l-.2.1h-.2l-.1-.2-.8-2.8-4 1.2.8 2.8v.2l-.2.1q-.3 0-.3-.2l-1.8-6.1q0-.3.2-.3h.2l.1.2.8 2.8 4-1.2-.8-2.8v-.2l.2-.1h.2zm10.2 3.6q.1.3-.1.4h-.1l-.3-.1-1.9-2.6-1.9.5-.2 3.2-.2.2q-.3 0-.3-.2v-.1l.3-3.4.3-3.4.2-.2.3.1 2 2.7zm-4.2-2.3 1.5-.4-1.4-1.9zm12.5.5h-.2l-3.1-2.5-.1-.1v-.2l.2-.1q1-.3 1.4-.8t.2-1-.8-.8-1.6 0l-2 .5 1.5 5.9v.2l-.2.1q-.3 0-.3-.2l-1.6-6.2q0-.3.2-.3l2.2-.6q1.2-.3 2 0t1 1.1q.1.6-.2 1.3t-1.4 1l2.7 2.2.1.1v.2q.1.3 0 .2m8.6-2.4q.1 0 0 0 .1.3-.1.4h-.1l-.3-.1-1.8-2.7-1.9.5-.4 3.2-.2.2q-.3 0-.3-.2v-.1l.4-3.4.4-3.4.2-.2.3.1 1.9 2.8zm-4.1-2.5 1.6-.4-1.3-1.9zm12.5 1-4.6 1q-.3 0-.3-.2l-1.3-6.2q0-.3.2-.3h.2l.1.2 1.3 6 4.3-.9q.3 0 .3.2t-.2.2m3.9-.8h-.2l-.1-.2-1.2-6.2v-.2l.2-.1q2-.5 3.6.3c1.6.8 1.7 1.2 1.9 2.1q.3 1.4-1 2.7-1.1 1.3-3.2 1.6m-1-6.3 1.1 5.7q1.7-.5 2.8-1.5t.8-2.2-1.6-1.7-3.1-.3m27.2 1.9-.2-.1-2.8-2.8-.1-.1.1-.2.2-.1q1-.1 1.5-.7.4-.4.3-.9 0-.5-.7-.9-.6-.3-1.6-.2l-2 .3.8 6-.1.2-.2.1q-.3 0-.3-.2l-.7-6.2q0-.3.2-.3l2.3-.3q1.2-.1 2 .3.7.5.9 1.2.1.6-.4 1.2t-1.5.8l2.4 2.5.1.2zm8-7.3-4.7.6q-.3 0-.3-.2t.2-.3l4.7-.6.2.1.1.2zq0-.1-.1 0m.7 6.3-4.7.6q-.3 0-.3-.2t.2-.3l4.7-.6.2.1.1.2zm-1-3.1-3.4.4-.2-.1-.1-.2.1-.2.2-.1 3.4-.4q.3 0 .3.2 0 .4-.3.4m7.5 2.4h-.2q-.2 0-.3-.2l-3-6.1v-.1q0-.3.2-.3l.3.1 2.6 5.5 1.6-5.9.2-.2.2.1.1.2-1.7 6.6zm10.3-7.3-4.7.4q-.3 0-.3-.2t.2-.3l4.7-.4.2.1.1.2zm.5 6.3-4.7.4q-.3 0-.3-.2t.2-.3l4.7-.4.2.1.1.2zm-.9-3.1-3.4.3-.2-.1-.1-.2.1-.2.2-.1 3.4-.3q.3 0 .3.2 0 .4-.3.4m9.6 2.6-.2-.1-2.5-3-.1-.1.1-.2.2-.1q1 0 1.6-.5.4-.3.4-.9t-.6-.9-1.6-.3l-2 .1.3 6.1-.1.2-.2.1q-.3 0-.3-.2l-.4-6.3q0-.3.2-.3l2.3-.1a4 4 0 0 1 2 .4q.7.4.8 1.3 0 .6-.5 1.2t-1.5.7l2.2 2.7.1.2-.1.2q.1-.3-.1-.2m8.7-6.8L892 114l.1 3.1-.1.2-.2.1q-.3 0-.3-.3l-.1-3.1-2.4-3v-.1q0-.3.2-.3l.2.1 2.2 2.8 2-3 .2-.1.2.1z"/></g><path id="Layer_11" d="M667.1 229.7q-2.9.8-5.7.3-1.4-.2-3.4-.9a14 14 0 0 1-6-4.1q-.6-3.8 1.5-7 .4 3.7 2.6 6.6 2.6 3.3 6.5 4.5l1.3.4zm1.6-.9a13 13 0 0 1-11.9-4.7q-1.1-1.5-1.6-2.8a9 9 0 0 1 2.8-6q-.6 4.9 2.5 8.9 1.2 1.7 2.9 2.7l1.3.7q1.8.9 4 1.2m-3.6 2.1 5 6.4-2.7 2.1-6.7-8.7q2.3.3 4.4.2m1.9-21.6 14.7 19-2.4 1.8-6.7-8.7-7.2 5.6q-1.3-.6-2.7-1.7l8.1-6.2-6.1-7.9zM854.3 151q-2.8-.8-5.1-2.6-1.2-.9-2.5-2.5a15 15 0 0 1-3.1-6.5q1.5-3.5 4.8-5.3a13 13 0 0 0 2.4 14.2l.9.9q1.2 1 2.6 1.8m1.8 0a12.4 12.4 0 0 1-7.9-13.2q2.1-3 5.4-3.8-3 4-2.3 8.9a13 13 0 0 0 1.2 3.8l.7 1.3q1.2 1.7 2.9 3m-4.1 0 1.1 8.1-3.3.4-1.4-10.9q1.7 1.5 3.6 2.4m12.4-17.6 3.1 23.8-3 .4-1.4-10.9-9.1 1.2q-.9-1.2-1.4-2.8l10.1-1.3-1.3-9.9zm189.4 41.8-3.1 7.5-3.1-1.3 4.2-10.1q.8 2.3 2 3.9m2 1.2a15 15 0 0 1-3.4-15.4 10 10 0 0 1 6.9-2.2 13 13 0 0 0-5.1 13.4l.3 1.3q.4 1.5 1.3 2.9m1.6.9a14 14 0 0 1-2.7-6q-.6-3.4.8-6.6.7-1.7 1.6-2.8 3.3-1.5 6.6-.6a12 12 0 0 0-7.4 10.5v1.5a16 16 0 0 0 1.1 4m16-11.2-9.2 22.2-2.8-1.1 4.2-10.2-8.5-3.5q-.1-1.4.2-3.2l9.4 3.9 3.8-9.3zm143.1 131-6.4 5-2.1-2.7 8.7-6.7q-.5 2.4-.2 4.4m21.5 1.9-19 14.7-1.8-2.4 8.7-6.7-5.6-7.2q.6-1.3 1.7-2.7l6.2 8.1 7.9-6.1zm-20.4.2q-.7-2.8-.3-5.7.2-1.4.9-3.4a14 14 0 0 1 4.1-6q3.8-.6 7 1.5-3.7.5-6.6 2.6a13 13 0 0 0-4.5 6.5l-.4 1.3zm1 1.5a13 13 0 0 1 4.7-11.9q1.5-1.1 2.8-1.6 3.6.4 6 2.8-4.9-.6-8.9 2.5-1.7 1.2-2.7 2.9l-.7 1.3a9 9 0 0 0-1.2 4m77.9 183.2-8.1 1.1-.4-3.3 10.9-1.4q-1.5 1.7-2.4 3.6m17.7 12.5-23.8 3.2-.4-3 10.9-1.4-1.2-9.1q1.2-.9 2.8-1.4l1.3 10.1 9.9-1.3zm-17.7-10.1q.8-2.9 2.6-5.1.9-1.2 2.5-2.5a14 14 0 0 1 6.5-3.1q3.5 1.4 5.4 4.8a13 13 0 0 0-14.2 2.4l-.9.9q-1.2 1.1-1.9 2.6m0 1.8a12.4 12.4 0 0 1 13.2-7.9q3 2.1 3.8 5.4a12 12 0 0 0-12.7-1.1l-1.3.8q-1.6 1-3 2.8m-14.8 217.3-22.2-9.1 1.1-2.8 10.2 4.2 3.5-8.5q1.4-.1 3.2.2l-3.9 9.4 9.3 3.8zm-9.1-19.6-7.5-3.1 1.3-3.1 10.1 4.2q-2.2.8-3.9 2m-2.1 3.7q2.7-2.1 6-2.7 3.4-.6 6.6.8 1.7.7 2.8 1.6 1.5 3.3.6 6.6a12 12 0 0 0-10.5-7.4h-1.5a10 10 0 0 0-4 1.1m.9-1.7a15 15 0 0 1 15.4-3.4 10 10 0 0 1 2.2 6.9q-2.2-3-5.5-4.4a13 13 0 0 0-7.9-.7l-1.3.3q-1.5.5-2.9 1.3m-122.5 182.3-14.7-19 2.4-1.8 6.7 8.7 7.2-5.6q1.4.6 2.7 1.7l-8.1 6.2 6.1 7.9zm1.9-21.5-5-6.4 2.7-2.1 6.7 8.7q-2.3-.4-4.4-.2m-3.6 2.1a12.5 12.5 0 0 1 13.5 7.4 9 9 0 0 1-2.8 6q.6-4.9-2.5-8.9-1.2-1.7-2.9-2.7l-1.3-.7q-1.8-.8-4-1.1m1.6-.9q2.9-.7 5.7-.3 1.4.1 3.4.9a14 14 0 0 1 6 4.1 10 10 0 0 1-1.5 7.1q-.5-3.7-2.6-6.5a13 13 0 0 0-6.5-4.5l-1.3-.4q-1.6-.4-3.2-.4m-197.1 96.8-3.2-23.8 3-.4 1.5 10.9 9.1-1.2q.9 1.2 1.4 2.8l-10.1 1.4 1.3 9.9zm8.2-17.7a12.4 12.4 0 0 1 7.9 13.2 9 9 0 0 1-5.4 3.8 12 12 0 0 0 1.1-12.7l-.8-1.3a9 9 0 0 0-2.8-3m1.8-.1q2.8.8 5.1 2.6 1.2.9 2.5 2.5a14 14 0 0 1 3.1 6.5q-1.4 3.5-4.8 5.4a13 13 0 0 0-2.4-14.2l-.9-.9q-1.1-1-2.6-1.9m2.4.1-1.1-8.1 3.3-.4 1.5 10.9a12 12 0 0 0-3.7-2.4m-221.5-14.6 9.1-22.2 2.8 1.1-4.2 10.2 8.5 3.5q.1 1.4-.2 3.2l-9.4-3.9-3.8 9.3zm15.9-11.2q2.1 2.7 2.7 6 .6 3.4-.8 6.6-.7 1.7-1.6 2.8a10 10 0 0 1-6.6.6q4.6-2 6.4-6.6.8-1.8.9-3.9v-1.5q0-2-1-4m1.7.8a15 15 0 0 1 3.4 15.4 10 10 0 0 1-6.9 2.2q3-2.2 4.4-5.5 1.6-3.9.6-7.9l-.3-1.3q-.4-1.5-1.2-2.9m2 1.2 3.1-7.5 3.1 1.3-4.2 10.2q-.8-2.2-2-4M577.7 781.7l19-14.7 1.8 2.4-8.7 6.8 5.6 7.2q-.6 1.3-1.7 2.7l-6.3-8.1-7.9 6.1zm19.4-1.7a12.5 12.5 0 0 1-7.4 13.5 9 9 0 0 1-6-2.8 12 12 0 0 0 11.6-5.5l.7-1.3q1-1.7 1.1-3.9m1 1.5q.8 2.8.3 5.7-.1 1.4-.9 3.4a14 14 0 0 1-4.1 6 10 10 0 0 1-7.1-1.5q3.7-.5 6.5-2.6 3.3-2.6 4.5-6.5l.4-1.3q.4-1.6.4-3.2m1.1 2.1 6.4-5 2.1 2.7-8.7 6.7q.5-2.4.2-4.4m-98.1-199.1 23.8-3.2.4 3-10.9 1.5 1.2 9.1q-1.2.9-2.8 1.4l-1.4-10.1-9.9 1.3zm17.7 8.2a12.4 12.4 0 0 1-13.2 7.9 9 9 0 0 1-3.8-5.4 12 12 0 0 0 12.7 1.1l1.3-.8a10 10 0 0 0 3-2.8m0 1.9q-.8 2.9-2.6 5.1-.9 1.2-2.5 2.5a14 14 0 0 1-6.5 3.1q-3.5-1.4-5.4-4.8a13 13 0 0 0 14.2-2.4l.9-.9q1.2-1.2 1.9-2.6m0 2.3 8.1-1.1.5 3.3-10.9 1.5q1.4-1.8 2.3-3.7M543.5 393a15 15 0 0 1-15.4 3.4 10 10 0 0 1-2.2-6.8q2.2 3 5.6 4.4 3.9 1.6 7.9.6l1.3-.3q1.4-.5 2.8-1.3m.9-1.6a14 14 0 0 1-6 2.7q-3.4.6-6.6-.8-1.7-.7-2.8-1.6a10 10 0 0 1-.6-6.6q2 4.5 6.6 6.4 1.9.8 3.9.9h1.5q2-.1 4-1m-11.2-16 22.2 9.1-1.1 2.8-10.2-4.2-3.5 8.5q-1.4.1-3.2-.2l3.9-9.4-9.3-3.8zm9.1 19.6 7.5 3.1-1.3 3.1-10.2-4.2q2.4-.8 4-2"/></svg></div>
+        </a><a class="transition-opacity duration-300 hover:opacity-50" href="#"><span class="sr-only"></span>
+          <div class=" flex items-center justify-center" style="width:2.5rem;height:2.5rem"><svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1824.55 551.66" style="width:100%;height:auto">
+  <title>HaraldReveryTextLogo_Outline</title>
+  <path d="M773,286.4v230a8.25,8.25,0,1,1-16.5,0V409.75H601V516.4a8.25,8.25,0,1,1-16.5,0v-230a8.25,8.25,0,0,1,16.5,0V393.25h155.5V286.4a8.25,8.25,0,0,1,16.5,0Z" transform="translate(-71.2 -249.09)"/>
+  <path d="M997.23,513.62l-85.74-230.1a8.24,8.24,0,0,0-7.72-5.37h0A8.24,8.24,0,0,0,896,283.5L809.77,513.6a8.27,8.27,0,0,0,4.83,10.63,8.46,8.46,0,0,0,2.9.52,8.26,8.26,0,0,0,7.73-5.35l41.11-109.66,74.55-.08,40.88,109.72a8.25,8.25,0,1,0,15.46-5.76ZM872.52,393.24,903.74,310l31,83.2Z" transform="translate(-71.2 -249.09)"/>
+  <path d="M1213.51,524.75a8.23,8.23,0,0,1-6.62-3.31l-86-115a8.25,8.25,0,0,1,6.61-13.19c53.59,0,78-25.53,78-49.25s-24.41-49.25-78-49.25h-77.75V516.5a8.25,8.25,0,0,1-16.5,0v-230a8.25,8.25,0,0,1,8.25-8.25h86c28.44,0,52.52,6.78,69.64,19.62,15.8,11.85,24.86,28.66,24.86,46.13s-9.06,34.28-24.86,46.13c-13.82,10.37-32.19,16.79-53.73,18.87l76.7,102.56a8.25,8.25,0,0,1-6.6,13.19Z" transform="translate(-71.2 -249.09)"/>
+  <path d="M1446.23,513.62l-85.74-230.1a8.24,8.24,0,0,0-7.72-5.37h0a8.25,8.25,0,0,0-7.72,5.35l-86.26,230.1a8.26,8.26,0,0,0,4.82,10.63,8.46,8.46,0,0,0,2.9.52,8.24,8.24,0,0,0,7.72-5.35l41.11-109.66,74.56-.08,40.88,109.72a8.25,8.25,0,0,0,15.46-5.76ZM1321.52,393.24,1352.74,310l31,83.2Z" transform="translate(-71.2 -249.09)"/>
+  <path d="M1662.8,524.65H1491.2a8.25,8.25,0,0,1-8.25-8.25v-230a8.25,8.25,0,1,1,16.5,0V508.15H1662.8a8.25,8.25,0,0,1,0,16.5Z" transform="translate(-71.2 -249.09)"/>
+  <path d="M1715.75,524.65a8.25,8.25,0,0,1-8.25-8.25v-230a8.25,8.25,0,0,1,8.25-8.25c54.86,0,101.12,13,133.78,37.6,29.8,22.45,46.22,52.87,46.22,85.65s-16.42,63.2-46.22,85.65C1816.87,511.65,1770.61,524.65,1715.75,524.65Zm8.25-229.9v213.3c47.6-1.21,87.44-13,115.6-34.18,25.57-19.26,39.65-45,39.65-72.47s-14.08-53.21-39.65-72.47C1811.44,307.72,1771.6,296,1724,294.75Z" transform="translate(-71.2 -249.09)"/>
+  <path d="M764.51,800.75a8.23,8.23,0,0,1-6.62-3.31l-86-115a8.25,8.25,0,0,1,6.61-13.19c53.59,0,78-25.53,78-49.25s-24.41-49.25-78-49.25H600.75V792.5a8.25,8.25,0,0,1-16.5,0v-230a8.25,8.25,0,0,1,8.25-8.25h86c28.44,0,52.52,6.78,69.64,19.62C763.94,585.72,773,602.53,773,620s-9.06,34.28-24.86,46.13C734.32,676.5,716,682.92,694.41,685l76.7,102.56a8.25,8.25,0,0,1-6.6,13.19Z" transform="translate(-71.2 -249.09)"/>
+  <g>
+    <path d="M989.1,800.65h-172a8.25,8.25,0,0,1,0-16.5h172a8.25,8.25,0,0,1,0,16.5Z" transform="translate(-71.2 -249.09)"/>
+    <path d="M989.1,570.65h-172a8.25,8.25,0,0,1,0-16.5h172a8.25,8.25,0,0,1,0,16.5Z" transform="translate(-71.2 -249.09)"/>
+    <path d="M966.1,685.65h-126a8.25,8.25,0,0,1,0-16.5h126a8.25,8.25,0,0,1,0,16.5Z" transform="translate(-71.2 -249.09)"/>
+  </g>
+  <path d="M1127.45,800.65a8.26,8.26,0,0,1-7.73-5.36l-86-230a8.25,8.25,0,1,1,15.46-5.78l78.27,209.33,78.27-209.33a8.25,8.25,0,0,1,15.46,5.78l-86,230A8.26,8.26,0,0,1,1127.45,800.65Z" transform="translate(-71.2 -249.09)"/>
+  <g>
+    <path d="M1438.3,800.65h-172a8.25,8.25,0,0,1,0-16.5h172a8.25,8.25,0,0,1,0,16.5Z" transform="translate(-71.2 -249.09)"/>
+    <path d="M1438.3,570.65h-172a8.25,8.25,0,0,1,0-16.5h172a8.25,8.25,0,0,1,0,16.5Z" transform="translate(-71.2 -249.09)"/>
+    <path d="M1415.3,685.65h-126a8.25,8.25,0,0,1,0-16.5h126a8.25,8.25,0,0,1,0,16.5Z" transform="translate(-71.2 -249.09)"/>
+  </g>
+  <path d="M1663.18,800.75a8.22,8.22,0,0,1-6.61-3.31l-86-115a8.25,8.25,0,0,1,6.6-13.19c53.6,0,78-25.53,78-49.25s-24.4-49.25-78-49.25h-77.75V792.5a8.25,8.25,0,0,1-16.5,0v-230a8.25,8.25,0,0,1,8.25-8.25h86c28.45,0,52.53,6.78,69.64,19.62,15.8,11.85,24.86,28.66,24.86,46.13s-9.06,34.28-24.86,46.13c-13.82,10.37-32.18,16.79-53.72,18.87l76.69,102.56a8.24,8.24,0,0,1-6.6,13.19Z" transform="translate(-71.2 -249.09)"/>
+  <path d="M1894.11,567.44l-84.36,112.8V792.5a8.25,8.25,0,0,1-16.5,0V680.25l-84.36-112.81a8.25,8.25,0,1,1,13.22-9.88l79.39,106.16,79.39-106.16a8.25,8.25,0,1,1,13.22,9.88Z" transform="translate(-71.2 -249.09)"/>
+  <g>
+    <path d="M268.44,630.61A326.57,326.57,0,0,1,71.2,350.06a229.35,229.35,0,0,1,118-101,285,285,0,0,0-37.82,105.52,289.32,289.32,0,0,0-3.1,42.31A285.82,285.82,0,0,0,199.73,561a288.53,288.53,0,0,0,68.71,69.57Z" transform="translate(-71.2 -249.09)"/>
+    <path d="M306.5,634.93A271.4,271.4,0,0,1,173.27,326.71a212.88,212.88,0,0,1,128.87-66.26,264.35,264.35,0,0,0,4.36,374.48Z" transform="translate(-71.2 -249.09)"/>
+    <path d="M217.66,623.52V800.74h-74.5V562.09A344.87,344.87,0,0,0,217.66,623.52Z" transform="translate(-71.2 -249.09)"/>
+    <path d="M535.1,278.23V800.74H470.32V561H272.39a245.48,245.48,0,0,1-23.5-64.78H470.32v-218Z" transform="translate(-71.2 -249.09)"/>
+  </g>
+</svg></div>
+        </a><a class="transition-opacity duration-300 hover:opacity-50" href="#"><span class="sr-only"></span>
+          <div class=" flex items-center justify-center" style="width:2.5rem;height:2.5rem"><!-- Generator: Adobe Illustrator 22.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+            <svg fill="currentColor" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1080 1080" style="enable-background:new 0 0 1080 1080;;width:100%;height:auto" xml:space="preserve">
+<path d="M477.9,730c-31.9-13.7-62.4-30.2-91-49.1c-33.4-22-64.5-47.4-92.6-75.7c-32.8-32.9-61.8-69.7-86.1-109.7
+	C160,416.5,130.1,325,124.3,227C171.2,144.6,246,80,335.8,46c-34.2,56.8-57.7,120.8-67.8,189.2c-3.7,24.8-5.6,50.1-5.6,75.8
+	c0,109.4,34.1,210.9,92.3,294.3c10,14.4,20.8,28.2,32.2,41.4C413.8,678,444.4,706,477.9,730z"/>
+<path d="M546.2,737.8c-151.9-82.1-255.1-242.9-255.1-427.7c0-43.2,5.6-85.1,16.2-124.9C366.7,121.4,447.5,78,538.4,66.4
+	C454.6,151.9,403,269,403,398.2c0,53.9,9,105.7,25.5,153.9c6.3,18.3,13.6,36,22,53.2C474.6,654.9,507.1,699.7,546.2,737.8z"/>
+<path d="M386.9,717.3v317.8H253.3V607.2C292.4,649.9,337.3,687,386.9,717.3z"/>
+<path d="M956.1,98.2v936.8H839.9V605.3H485c-19.2-36-33.5-75.1-42.1-116.2h397V98.2H956.1z"/>
+</svg>
+          </div>
+        </a></div>
+    </div>
+    <div>
+      <figure><video controls="" class="w-full rounded-lg" poster="/video/thumbnail/mirth_thumbnail.jpg">
+          <source src="/video/under_25_mb/harald_revery_-_mirth.mp4" type="video/mp4">Your browser does not support the video tag.
+        </video>
+        <figcaption>Video title</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+<article class="prose dark:prose-invert max-w-none mb-16">
+  <hr>
+</article>
+<!-- Content stops here -->
+<!-- ====================================================================== -->
+
+
+
+<!-- ====================================================================== -->
+<!-- Date --> 
+<!-- ====================================================================== -->  
+ <div class="pt-24">
+  <hr>
+  <div class="py-2">
+    <time class="text-sm font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider" datetime="1999-08-21">
+    August 21, 1999
+    </time>
+  </div>
+</div>
+
+<!-- End margins -->   
+</div>
+
+
+
+
+
+
+  <!-- Go back link -->  
+  <div class="page-container pt-6">
+        <a href="/notebook.html" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">
+          ← NOTEBOOK FRONT PAGE
+        </a>
+      </div>
+
+
+
+
+<!-- Footer -->   
+<footer class="py-16">
+  <div class="max-w-screen-xl mx-auto px-4">
+    <div class="flex flex-col items-center text-center space-y-4">
+      
+      <div>
+        <p class="font-mono text-black dark:text-white leading-none text-base uppercase tracking-widest">
+          Revery Division
+        </p>
+        <p class="mt-2 text-3xl text-black dark:text-white"><a href="../h.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors ">½</a></p>
+        <p class="text-sm text-gray-600 dark:text-gray-300">
+          Gothenburg, Sweden
+        </p>
+      </div>
+
+      <div class="flex text-gray-600 dark:text-gray-300 flex-wrap justify-center items-center gap-2 text-sm uppercase tracking-widest font-mono opacity-70">
+        <a href="#top" class="hover:opacity-50 transition-opacity">↑ Back to top</a>
+        <span class="text-gray-400">|</span>
+        <a href="/contact.html" class="hover:opacity-50 transition-opacity">Contact</a>
+        <span class="text-gray-400">|</span>
+        <a href="/download.html" class="hover:opacity-50 transition-opacity">Download</a>        
+        <span class="text-gray-400">|</span>
+        <a href="/legal.html" class="hover:opacity-50 transition-opacity">Legal</a>
+
+      </div>
+
+      <div class="mt-2 flex justify-center items-center gap-6 text-gray-600 dark:text-gray-300">
+        
+        <a class="transition-opacity duration-300 hover:opacity-50" href="https://www.facebook.com/HaraldRevery" target="_blank" rel="noopener noreferrer">
+          <span class="sr-only">Facebook</span>
+          <div class="w-6 h-6 flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 16 16" class="w-full h-full" aria-hidden="true">
+              <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z" />
+            </svg>
+          </div>
+        </a>
+
+        <a class="transition-opacity duration-300 hover:opacity-50" href="https://www.instagram.com/HaraldRevery" target="_blank" rel="noopener noreferrer">
+          <span class="sr-only">Instagram</span>
+          <div class="w-6 h-6 flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 16 16" class="w-full h-full" aria-hidden="true">
+              <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.478 2.478 0 0 1-.92-.598 2.48 2.48 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233 0-2.136.008-2.388.046-3.231.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z" />
+            </svg>
+          </div>
+        </a>
+        
+        <a class="transition-opacity duration-300 hover:opacity-50" href="https://twitter.com/haraldrevery" target="_blank" rel="noopener noreferrer">
+          <span class="sr-only">Twitter</span>
+          <div class="w-6 h-6 flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 1200 1227" class="w-full h-full">
+              <path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z" />
+            </svg>
+          </div>
+        </a>
+
+        <a class="transition-opacity duration-300 hover:opacity-50" href="https://open.spotify.com/artist/3e27f6Y3wBFJ1YYLNkrjNu" target="_blank" rel="noopener noreferrer">
+          <span class="sr-only">Spotify</span>
+          <div class="w-6 h-6 flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 64 64" class="w-full h-full" aria-hidden="true">
+              <path d="M32 0C14.3 0 0 14.337 0 32c0 17.7 14.337 32 32 32 17.7 0 32-14.337 32-32S49.663 0 32 0zm14.68 46.184c-.573.956-1.797 1.223-2.753.65-7.532-4.588-16.975-5.62-28.14-3.097-1.07.23-2.14-.42-2.37-1.49s.42-2.14 1.49-2.37c12.196-2.79 22.67-1.606 31.082 3.556a2 2 0 0 1 .688 2.753zm3.9-8.717c-.726 1.185-2.256 1.53-3.44.84-8.602-5.276-21.716-6.805-31.885-3.747-1.338.382-2.714-.344-3.097-1.644-.382-1.338.344-2.714 1.682-3.097 11.622-3.517 26.074-1.835 35.976 4.244 1.147.688 1.49 2.217.765 3.403zm.344-9.1c-10.323-6.117-27.336-6.69-37.2-3.708-1.568.497-3.25-.42-3.747-1.988s.42-3.25 1.988-3.747c11.317-3.44 30.127-2.753 41.98 4.282 1.415.84 1.873 2.676 1.032 4.09-.765 1.453-2.638 1.912-4.053 1.07z" />
+            </svg>
+          </div>
+        </a>
+
+        <a class="transition-opacity duration-300 hover:opacity-50" href="https://music.apple.com/se/artist/harald-revery/1275991562" target="_blank" rel="noopener noreferrer">
+          <span class="sr-only">Apple Music</span>
+          <div class="w-6 h-6 flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 24 24" class="w-full h-full">
+              <path d="M19.467 1.482a2.38 2.38 0 0 0-1.897-.89c-.198 0-.411.024-.627.078l-7.464 1.831a2.4 2.4 0 0 0-1.84 2.33v11.722a3.86 3.86 0 0 0-1.192-.201c-1.92 0-3.477 1.34-3.477 2.991s1.557 2.991 3.477 2.991c1.88 0 3.409-1.285 3.473-2.883l.004-10.744 8.016-1.936v6.983c-.443-.131-.914-.202-1.404-.202-2.333 0-4.225 1.626-4.225 3.633 0 2.006 1.892 3.632 4.225 3.632 2.333 0 4.226-1.626 4.226-3.632V3.535a2.38 2.38 0 0 0-1.296-2.053z"/>
+            </svg>
+          </div>
+        </a>
+
+        <a class="transition-opacity duration-300 hover:opacity-50" href="https://www.behance.net/haraldrevery" target="_blank" rel="noopener noreferrer">
+          <span class="sr-only">Behance</span>
+          <div class="w-6 h-6 flex items-center justify-center">
+            <svg fill="currentColor" viewBox="0 0 16 16" class="w-full h-full" aria-hidden="true">
+              <path d="M4.654 3c.461 0 .887.035 1.278.14.39.07.711.216.996.391.286.176.497.426.641.747.14.32.216.711.216 1.137 0 .496-.106.922-.356 1.242-.215.32-.566.606-.997.817.606.176 1.067.496 1.348.922.281.426.461.957.461 1.563 0 .496-.105.922-.285 1.278a2.317 2.317 0 0 1-.782.887c-.32.215-.711.39-1.137.496a5.329 5.329 0 0 1-1.278.176L0 12.803V3h4.654zm-.285 3.978c.39 0 .71-.105.957-.285.246-.18.355-.497.355-.887 0-.216-.035-.426-.105-.567a.981.981 0 0 0-.32-.355 1.84 1.84 0 0 0-.461-.176c-.176-.035-.356-.035-.567-.035H2.17v2.31c0-.005 2.2-.005 2.2-.005zm.105 4.193c.215 0 .426-.035.606-.07.176-.035.356-.106.496-.216s.25-.215.356-.39c.07-.176.14-.391.14-.641 0-.496-.14-.852-.426-1.102-.285-.215-.676-.32-1.137-.32H2.17v2.734h2.305v.005zm6.858-.035c.286.285.711.426 1.278.426.39 0 .746-.106 1.032-.286.285-.215.46-.426.53-.64h1.74c-.286.851-.712 1.457-1.278 1.848-.566.355-1.243.566-2.06.566a4.135 4.135 0 0 1-1.527-.285 2.827 2.827 0 0 1-1.137-.782 2.851 2.851 0 0 1-.712-1.172c-.175-.461-.25-.957-.25-1.528 0-.531.07-1.032.25-1.493.18-.46.426-.852.747-1.207.32-.32.711-.606 1.137-.782a4.018 4.018 0 0 1 1.493-.285c.606 0 1.137.105 1.598.355.46.25.817.532 1.102.958.285.39.496.851.641 1.348.07.496.105.996.07 1.563h-5.15c0 .58.21 1.11.496 1.396zm2.24-3.732c-.25-.25-.642-.391-1.103-.391-.32 0-.566.07-.781.176-.215.105-.356.25-.496.39a.957.957 0 0 0-.25.497c-.036.175-.07.32-.07.46h3.196c-.07-.526-.25-.882-.497-1.132zm-3.127-3.728h3.978v.957h-3.978v-.957z" />
+            </svg>
+          </div>
+        </a>
+      </div>
+
+      <div class="pt-4 border-gray-200 dark:border-gray-800 w-full max-w-md mx-auto">
+        <p class="text-sm text-gray-600 dark:text-gray-300 opacity-50">
+          © 2026 Harald Revery™. All Rights Reserved <br>
+        </p>
+      </div>
+
+    </div>
+  </div>
+</footer>
+
+
+
+
+
+<!-- svg background end -->
+ </div>
+
+
+
+
+
+
+</body>
+
+
+
+<!-- GLightbox load -->
+<script src="/javascript/glightbox.min.js" defer></script>
+<!-- GLightbox settings -->
+<script src="/javascript/glightbox_settings_min.js" defer></script>
+
+<!-- Alpine.js load -->
+<script src="/javascript/alpine.min.js" defer></script>
+
+<!-- Nav reveal on scroll (hero pages only; scroll-timeline fallback) -->
+<script src="/javascript/navbar_scroll_min.js" defer></script>
+
+
+
+<!-- ====================================================================== -->
+<!-- Set Schema SEO here (ask promt an LLM to do it for you after you have done everything else) -->
+<!-- ====================================================================== --> 
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "ImageGallery",
+      "headline": "Test build",
+      "description": "Text",
+      "datePublished": "1999-08-21",
+      "dateModified": "1999-08-21",
+      "author": {
+        "@type": "Person",
+        "name": "Harald Revery",
+        "url": "https://haraldrevery.com/about"
+      },
+      "publisher": {
+        "@type": "Person",
+        "name": "Harald Revery"
+      },
+      "mainEntityOfPage": "https://haraldrevery.com/notebook_pages/test-build",
+      "inLanguage": "en",
+      "keywords": "test",
+      "image": [
+        "https://haraldrevery.com/notebook_thumbnails/studyguide.jpg",
+        {
+          "@type": "ImageObject",
+          "url": "https://haraldrevery.com/photos/2015-2023/3feb2019haraldreveryonicelake.jpg",
+          "width": 5200,
+          "height": 2229
+        },
+        {
+          "@type": "ImageObject",
+          "url": "https://haraldrevery.com/photos/2015-2023/2022aug24grass_walk.jpg",
+          "width": 3840,
+          "height": 2400
+        },
+        {
+          "@type": "ImageObject",
+          "url": "https://haraldrevery.com/photos/2015-2023/2021march07klippor_3.jpg",
+          "width": 2670,
+          "height": 2000
+        },
+        {
+          "@type": "ImageObject",
+          "url": "https://haraldrevery.com/photos/2015-2023/2015clouds.jpg",
+          "width": 4899,
+          "height": 2100
+        },
+        {
+          "@type": "ImageObject",
+          "url": "https://haraldrevery.com/photos/2015-2023/solklippor.jpg",
+          "width": 3500,
+          "height": 1500
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Question 1",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "\u003cp>Answer text\u003c/p>"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Question 2",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "\u003cp>Anwser 2\u003c/p>"
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+
+</html>
