@@ -580,10 +580,22 @@ module.exports = function(eleventyConfig) {
         const d = parseJsonc(fs.readFileSync(path.join(dir, f), "utf8"));
         d.slug = d.slug || slugify(d.name);
         d.url = `/release/${d.slug}.html`;
-        d.year = d.date ? new Date(d.date).getFullYear() : "";
+        // Release JSON carries unpadded calendar dates ("2019-5-14", "2015-01-1").
+        // `new Date()` reads those as LOCAL midnight, so any UTC formatting of
+        // them (isoDate, rfc822Date) lands on the previous day west of GMT --
+        // the sitemap used to publish forest_shine as 2019-05-13 and remixes as
+        // 2014-12-31. dateISO is the padded calendar string; dateUTC is that
+        // same day pinned to UTC midnight, so it survives both formatters.
+        // Use these two, never the raw d.date, anywhere a date is FORMATTED.
+        // d.date stays untouched for readableDate, which wants local parsing.
+        d.dateISO = d.date ? calendarDate(d.date) : "";
+        d.dateUTC = d.dateISO ? new Date(d.dateISO + "T00:00:00Z") : null;
+        d.year = d.dateISO ? Number(d.dateISO.slice(0, 4)) : "";
         return d;
       })
-      .sort((a, b) => new Date(b.date) - new Date(a.date));  // newest first
+      // Sorted on dateUTC for the same reason: a local-parsed "2015-01-1" and a
+      // local-parsed "2015-1-1" are the same instant, but only after padding.
+      .sort((a, b) => (b.dateUTC || 0) - (a.dateUTC || 0));  // newest first
   });
 
   // NEW: Filter to truncate text to a specific length
@@ -627,7 +639,10 @@ module.exports = function(eleventyConfig) {
   eleventyConfig.addFilter("newestDate", (items) => {
     const times = (items || [])
       .map((it) => {
-        const d = it && (it.data && it.data.updated) || (it && it.date) || (it && it.data && it.data.date);
+        // dateUTC first: a release object also carries a raw `date` string that
+        // parses as local midnight, which would shift this by a day (see the
+        // releases collection). Posts have no dateUTC and fall straight through.
+        const d = (it && it.dateUTC) || (it && it.data && it.data.updated) || (it && it.date) || (it && it.data && it.data.date);
         const t = d == null ? NaN : new Date(d).getTime();
         return Number.isFinite(t) ? t : NaN;
       })
@@ -659,6 +674,76 @@ module.exports = function(eleventyConfig) {
     return `${RFC822_DAYS[dt.getUTCDay()]}, ${p2(dt.getUTCDate())} ` +
            `${RFC822_MONTHS[dt.getUTCMonth()]} ${dt.getUTCFullYear()} ` +
            `${p2(dt.getUTCHours())}:${p2(dt.getUTCMinutes())}:${p2(dt.getUTCSeconds())} GMT`;
+  });
+
+  // Merge the Notebook and the discography into one chronological list for
+  // eleventy_njk/feed.njk. Done here rather than in the template because
+  // Nunjucks cannot concatenate two collections and re-sort them, and because
+  // the two shapes are genuinely different: a post is an Eleventy item
+  // (post.data.title, post.date), a release is a plain object off the
+  // input_release JSON (r.name, r.dateUTC).
+  //
+  // The normalized item is deliberately minimal -- exactly the fields an <item>
+  // needs. `kind` becomes the extra <category> that lets a subscriber tell a
+  // release from an essay at a glance; `image` becomes <enclosure> for releases,
+  // which is how readers show cover art.
+  //
+  // guid/link is the CLEAN url for both, matching each page's own
+  // <link rel="canonical">. Readers dedupe on guid, so this must never change
+  // for an item that already shipped.
+  eleventyConfig.addFilter("feedItems", (posts, releases) => {
+    const fromPost = (p) => ({
+      kind: "notebook",
+      title: (p.data && p.data.title) || "Untitled",
+      url: String(p.url || "").replace(/\.html$/, ""),
+      date: (p.data && p.data.updated) || p.date || (p.data && p.data.date) || null,
+      description: (p.data && p.data.description) || "",
+      categories: (p.data && p.data.tags) || [],
+      image: null,
+    });
+    const fromRelease = (r) => ({
+      kind: "release",
+      // The type ("Single", "Collection") is part of the title because a feed
+      // entry has no other room to say what it is, and "Krakatau" alone in a
+      // river of essay headlines does not read as a piece of music.
+      title: r.type ? `${r.name} (${r.type})` : r.name,
+      url: String(r.url || "").replace(/\.html$/, ""),
+      date: r.dateUTC || null,
+      description: r.introduction || "",
+      // Genres are the release's natural tags; they already index the site
+      // search the same way (see search-index.njk).
+      categories: r.genres || [],
+      image: r.artcoverMin || r.artcover || null,
+    });
+
+    return [
+      ...(posts || []).map(fromPost),
+      ...(releases || []).map(fromRelease),
+    ]
+      .filter((it) => it.date && Number.isFinite(new Date(it.date).getTime()))
+      .sort((a, b) => new Date(b.date) - new Date(a.date));  // newest first
+  });
+
+  // Byte size of a file in the built site, for <enclosure length="">. RSS wants
+  // the attribute present; 0 is the conventional "unknown" and is what an
+  // unreadable path yields rather than dropping the enclosure entirely.
+  eleventyConfig.addFilter("fileSize", (sitePath) => {
+    try {
+      // Site-absolute path -> repo-relative, same convention as fileModDate:
+      // Eleventy runs with the project root as cwd.
+      return fs.statSync(String(sitePath).replace(/^\//, "")).size;
+    } catch (e) {
+      return 0;
+    }
+  });
+
+  // MIME type for an <enclosure>, from the file extension. Cover art is the
+  // only thing enclosed today, so the map is deliberately small.
+  const MIME_BY_EXT = { ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+                        ".png": "image/png", ".gif": "image/gif",
+                        ".webp": "image/webp", ".avif": "image/avif" };
+  eleventyConfig.addFilter("mimeType", (sitePath) => {
+    return MIME_BY_EXT[path.extname(String(sitePath || "")).toLowerCase()] || "application/octet-stream";
   });
 
   // Build timestamp (kept for any template that genuinely wants "now")

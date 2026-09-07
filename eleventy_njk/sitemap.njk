@@ -89,10 +89,14 @@ staticPages:
     <priority>0.8</priority>
   </url>
 {%- endif %}
+{#- `r.dateISO`, not `r.date | isoDate`: the raw JSON dates are unpadded
+    ("2019-5-14"), which parse as LOCAL midnight and then format one day early
+    in UTC -- this listed forest_shine as 2019-05-13 and remixes as 2014-12-31,
+    disagreeing with the datePublished the release page's own JSON-LD emits. -#}
 {%- for r in collections.releases %}
   <url>
     <loc>{{ site_url }}{{ r.url | cleanUrl }}</loc>
-{% set lm = r.date | isoDate %}{% if lm %}    <lastmod>{{ lm }}</lastmod>
+{% set lm = r.dateISO %}{% if lm %}    <lastmod>{{ lm }}</lastmod>
 {% endif %}    <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

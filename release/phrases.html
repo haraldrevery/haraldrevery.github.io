@@ -33,6 +33,11 @@
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://haraldrevery.com/release/phrases">
 
+    <!-- Feed autodiscovery. This page does not use eleventy_settings/base.njk,
+         so it carries its own copy of base.njk's tag -- keep the two in step. -->
+    <link rel="alternate" type="application/rss+xml" title="Harald Revery" href="https://haraldrevery.com/feed.xml">
+
+
     <!-- Structured data (MusicAlbum) generated from input_release/*.json -->
     <script type="application/ld+json">{
   "@context": "https://schema.org",

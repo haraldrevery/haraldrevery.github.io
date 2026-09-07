@@ -1,17 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Harald Revery — Notebook</title>
-    <link>https://haraldrevery.com/notebook</link>
-    <description>Personal notes, essays and interactive experiments on music, mathematics, physics and photography.</description>
+    <title>Harald Revery</title>
+    <link>https://haraldrevery.com/</link>
+    <description>Music releases, personal notes, essays and interactive experiments on music, mathematics, physics and photography.</description>
     <language>en-us</language>
     <copyright>Harald Revery</copyright>
     <lastBuildDate>Fri, 28 Aug 2026 00:00:00 GMT</lastBuildDate>
     <atom:link href="https://haraldrevery.com/feed.xml" rel="self" type="application/rss+xml" />
+    
     <image>
-      <url>https://haraldrevery.com/opengraphimg.jpg</url>
-      <title>Harald Revery — Notebook</title>
-      <link>https://haraldrevery.com/notebook</link>
+      <url>https://haraldrevery.com/favicon-96x96.png</url>
+      <title>Harald Revery</title>
+      <link>https://haraldrevery.com/</link>
+      <width>96</width>
+      <height>96</height>
     </image>
     <item>
       <title>Things to do with LLMs</title>
@@ -19,6 +22,7 @@
       <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/things-to-do-with-llms</guid>
       <pubDate>Fri, 28 Aug 2026 00:00:00 GMT</pubDate>
       <description>Things to do with &quot;AI&quot; (LLM) that are useful before the bubble bursts, regulations hit or gets too expensive.</description>
+      <category>notebook</category>
       <category>thoughts</category>
     </item>
     <item>
@@ -27,6 +31,7 @@
       <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/rvry_ascii</guid>
       <pubDate>Fri, 17 Jul 2026 00:00:00 GMT</pubDate>
       <description>Ascii art generator.</description>
+      <category>notebook</category>
       <category>utility</category>
     </item>
     <item>
@@ -35,6 +40,7 @@
       <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/revery_notebook_info</guid>
       <pubDate>Fri, 10 Apr 2026 00:00:00 GMT</pubDate>
       <description>A markdown editor with LaTeX support for writing and exporting notes.</description>
+      <category>notebook</category>
       <category>utility</category>
     </item>
     <item>
@@ -43,6 +49,7 @@
       <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/clock_and_date</guid>
       <pubDate>Thu, 02 Apr 2026 00:00:00 GMT</pubDate>
       <description>Just a clock. Click the time to set a timer or an alarm. Click the date to create a 300 DPI event card.</description>
+      <category>notebook</category>
       <category>utility</category>
     </item>
     <item>
@@ -51,6 +58,7 @@
       <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/1dgraph</guid>
       <pubDate>Sun, 08 Feb 2026 00:00:00 GMT</pubDate>
       <description>One-dimensional graph visualizer with interactive sliders for each parameter. Made to easily see and compare how different one dimensional functions behave visually.</description>
+      <category>notebook</category>
       <category>math</category>
       <category>education</category>
     </item>
@@ -60,6 +68,7 @@
       <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/2dphaseportrait</guid>
       <pubDate>Sat, 07 Feb 2026 00:00:00 GMT</pubDate>
       <description>Automated two-dimensional phase portrait generator for educational use, made for university courses involving non-linear dynamical systems.</description>
+      <category>notebook</category>
       <category>physics</category>
       <category>education</category>
     </item>
@@ -69,6 +78,7 @@
       <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/galdhopiggen</guid>
       <pubDate>Sun, 17 Aug 2025 00:00:00 GMT</pubDate>
       <description>Photos from a hike to the Galdhøpiggen mountain top.</description>
+      <category>notebook</category>
       <category>photography</category>
     </item>
     <item>
@@ -77,6 +87,7 @@
       <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/studieteknik</guid>
       <pubDate>Fri, 28 Feb 2025 00:00:00 GMT</pubDate>
       <description>Some tips on how to study without rushing through everything  in the end.</description>
+      <category>notebook</category>
       <category>education</category>
     </item>
     <item>
@@ -85,7 +96,43 @@
       <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/2024photography</guid>
       <pubDate>Sun, 29 Dec 2024 00:00:00 GMT</pubDate>
       <description>Photography from 2024.</description>
+      <category>notebook</category>
       <category>photography</category>
+    </item>
+    <item>
+      <title>Phrases (Single)</title>
+      <link>https://haraldrevery.com/release/phrases</link>
+      <guid isPermaLink="true">https://haraldrevery.com/release/phrases</guid>
+      <pubDate>Sat, 26 Oct 2024 00:00:00 GMT</pubDate>
+      <description>Words have more weights than you think.</description>
+      <category>release</category>
+      <category>Melodic House</category>
+      <category>Festival</category>
+      <category>Epic</category>
+      <enclosure url="https://haraldrevery.com/artcover/phrases11_min.jpg" length="51451" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Looking For Snow (Single)</title>
+      <link>https://haraldrevery.com/release/looking_for_snow</link>
+      <guid isPermaLink="true">https://haraldrevery.com/release/looking_for_snow</guid>
+      <pubDate>Fri, 27 Sep 2024 00:00:00 GMT</pubDate>
+      <description>Trap beats for those sweet carving lines.</description>
+      <category>release</category>
+      <category>Trap</category>
+      <category>808s</category>
+      <category>Beats</category>
+      <enclosure url="https://haraldrevery.com/artcover/lookingforsnow11_min.jpg" length="39199" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Uninhabited Island (Single)</title>
+      <link>https://haraldrevery.com/release/uninhabited_island</link>
+      <guid isPermaLink="true">https://haraldrevery.com/release/uninhabited_island</guid>
+      <pubDate>Wed, 14 Aug 2024 00:00:00 GMT</pubDate>
+      <description>An escape to an unknown land.</description>
+      <category>release</category>
+      <category>Soundtrack</category>
+      <category>Nature</category>
+      <enclosure url="https://haraldrevery.com/artcover/uninhabitedisland11_min.jpg" length="25938" type="image/jpeg" />
     </item>
     <item>
       <title>Photography from 2015 to 2023</title>
@@ -93,7 +140,32 @@
       <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/2015to2023</guid>
       <pubDate>Fri, 29 Dec 2023 00:00:00 GMT</pubDate>
       <description>Photography from 2015 to 2023.</description>
+      <category>notebook</category>
       <category>photography</category>
+    </item>
+    <item>
+      <title>The North (Single)</title>
+      <link>https://haraldrevery.com/release/the_north</link>
+      <guid isPermaLink="true">https://haraldrevery.com/release/the_north</guid>
+      <pubDate>Fri, 25 Nov 2022 00:00:00 GMT</pubDate>
+      <description>Bass from the mountains up north</description>
+      <category>release</category>
+      <category>Bounce</category>
+      <category>Big Room</category>
+      <category>Rave</category>
+      <enclosure url="https://haraldrevery.com/artcover/thenorth11_min.jpg" length="29758" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Krakatau (Single)</title>
+      <link>https://haraldrevery.com/release/krakatau</link>
+      <guid isPermaLink="true">https://haraldrevery.com/release/krakatau</guid>
+      <pubDate>Sun, 07 Aug 2022 00:00:00 GMT</pubDate>
+      <description>Erupting track that makes any club shake.</description>
+      <category>release</category>
+      <category>Big Room</category>
+      <category>Rave</category>
+      <category>Heat</category>
+      <enclosure url="https://haraldrevery.com/artcover/krakatau11_min.jpg" length="15037" type="image/jpeg" />
     </item>
     <item>
       <title>Mouse sensitivity and keybinds for games</title>
@@ -101,7 +173,140 @@
       <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/gamesettings</guid>
       <pubDate>Sat, 01 Jan 2022 00:00:00 GMT</pubDate>
       <description>Mouse sensitivity settings and keybinds for various games.</description>
+      <category>notebook</category>
       <category>settings</category>
+    </item>
+    <item>
+      <title>Clouds and Roads (Single)</title>
+      <link>https://haraldrevery.com/release/clouds_and_roads</link>
+      <guid isPermaLink="true">https://haraldrevery.com/release/clouds_and_roads</guid>
+      <pubDate>Fri, 12 Jun 2020 00:00:00 GMT</pubDate>
+      <description>A track for sunny days.</description>
+      <category>release</category>
+      <category>Melodic House</category>
+      <category>Festival</category>
+      <enclosure url="https://haraldrevery.com/artcover/cloudsandroads11_min.jpg" length="20730" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Forest Shine (Single)</title>
+      <link>https://haraldrevery.com/release/forest_shine</link>
+      <guid isPermaLink="true">https://haraldrevery.com/release/forest_shine</guid>
+      <pubDate>Tue, 14 May 2019 00:00:00 GMT</pubDate>
+      <description>The magic of a forest.</description>
+      <category>release</category>
+      <category>Melodic House</category>
+      <category>Festival</category>
+      <category>House</category>
+      <enclosure url="https://haraldrevery.com/artcover/forestrain11_min.jpg" length="27575" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Isolated (Single)</title>
+      <link>https://haraldrevery.com/release/isolated</link>
+      <guid isPermaLink="true">https://haraldrevery.com/release/isolated</guid>
+      <pubDate>Tue, 25 Dec 2018 00:00:00 GMT</pubDate>
+      <description>For those night drives.</description>
+      <category>release</category>
+      <category>Synthwave</category>
+      <category>Retro</category>
+      <category>Wave</category>
+      <enclosure url="https://haraldrevery.com/artcover/isolated11_min.jpg" length="16205" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Mirth (Single)</title>
+      <link>https://haraldrevery.com/release/mirth</link>
+      <guid isPermaLink="true">https://haraldrevery.com/release/mirth</guid>
+      <pubDate>Fri, 17 Aug 2018 00:00:00 GMT</pubDate>
+      <description>Rave under the stars.</description>
+      <category>release</category>
+      <category>Melodic House</category>
+      <category>Festival</category>
+      <category>Stars</category>
+      <enclosure url="https://haraldrevery.com/artcover/mirth11_min.jpg" length="22547" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Hollow (Single)</title>
+      <link>https://haraldrevery.com/release/hollow</link>
+      <guid isPermaLink="true">https://haraldrevery.com/release/hollow</guid>
+      <pubDate>Fri, 26 Jan 2018 00:00:00 GMT</pubDate>
+      <description>For those night drives.</description>
+      <category>release</category>
+      <category>Synthwave</category>
+      <category>Retro</category>
+      <category>Wave</category>
+      <enclosure url="https://haraldrevery.com/artcover/hollow11_min.jpg" length="36716" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Beautiful Places (Single)</title>
+      <link>https://haraldrevery.com/release/beautiful_places</link>
+      <guid isPermaLink="true">https://haraldrevery.com/release/beautiful_places</guid>
+      <pubDate>Sat, 11 Nov 2017 00:00:00 GMT</pubDate>
+      <description>A track for amazing views.</description>
+      <category>release</category>
+      <category>Melodic House</category>
+      <category>Festival</category>
+      <category>Epic</category>
+      <enclosure url="https://haraldrevery.com/artcover/beautifulplaces11_min.jpg" length="24436" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Spiritless (Single)</title>
+      <link>https://haraldrevery.com/release/spiritless</link>
+      <guid isPermaLink="true">https://haraldrevery.com/release/spiritless</guid>
+      <pubDate>Sat, 11 Nov 2017 00:00:00 GMT</pubDate>
+      <description>Sunset vibes.</description>
+      <category>release</category>
+      <category>Synthwave</category>
+      <category>Retro</category>
+      <category>Wave</category>
+      <enclosure url="https://haraldrevery.com/artcover/spiritless11_min.jpg" length="26826" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Mystery Card (Single)</title>
+      <link>https://haraldrevery.com/release/mystery_card</link>
+      <guid isPermaLink="true">https://haraldrevery.com/release/mystery_card</guid>
+      <pubDate>Tue, 12 Sep 2017 00:00:00 GMT</pubDate>
+      <description>Heavy hitter trap beats to make the sub speakers shake.</description>
+      <category>release</category>
+      <category>Trap</category>
+      <category>808s</category>
+      <category>Beats</category>
+      <enclosure url="https://haraldrevery.com/artcover/mysterycard11_min.jpg" length="35162" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Geiger Counter (Single)</title>
+      <link>https://haraldrevery.com/release/geiger_counter</link>
+      <guid isPermaLink="true">https://haraldrevery.com/release/geiger_counter</guid>
+      <pubDate>Sun, 27 Aug 2017 00:00:00 GMT</pubDate>
+      <description>For those night drives.</description>
+      <category>release</category>
+      <category>Synthwave</category>
+      <category>Retro</category>
+      <category>Wave</category>
+      <enclosure url="https://haraldrevery.com/artcover/geigercounter11_min.jpg" length="22513" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Eventful Sunset (Single)</title>
+      <link>https://haraldrevery.com/release/eventful_sunset</link>
+      <guid isPermaLink="true">https://haraldrevery.com/release/eventful_sunset</guid>
+      <pubDate>Sat, 27 Aug 2016 00:00:00 GMT</pubDate>
+      <description>Rave during magic sunsets.</description>
+      <category>release</category>
+      <category>Melodic House</category>
+      <category>Festival</category>
+      <category>Epic</category>
+      <category>Sunsets</category>
+      <enclosure url="https://haraldrevery.com/artcover/eventfulsunset11_min.jpg" length="23329" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Remixes (Collection)</title>
+      <link>https://haraldrevery.com/release/remixes</link>
+      <guid isPermaLink="true">https://haraldrevery.com/release/remixes</guid>
+      <pubDate>Thu, 01 Jan 2015 00:00:00 GMT</pubDate>
+      <description>Occurring remixes in sets.</description>
+      <category>release</category>
+      <category>Melodic House</category>
+      <category>Festival</category>
+      <category>Night Club</category>
+      <enclosure url="https://haraldrevery.com/haraldrevery_website_animation.jpg" length="562029" type="image/jpeg" />
     </item>
   </channel>
 </rss>

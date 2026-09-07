@@ -98,3 +98,11 @@
   Cache-Control: public, max-age=0, must-revalidate
 /search-index.json
   Cache-Control: public, max-age=0, must-revalidate
+
+# The RSS feed, same reasoning: a reader that caches it cannot see a new post or
+# release until the cache expires. The explicit Content-Type matters too --
+# Pages serves .xml as application/xml, and with the global nosniff above, a
+# handful of readers refuse to treat that as a feed.
+/feed.xml
+  Cache-Control: public, max-age=0, must-revalidate
+  Content-Type: application/rss+xml; charset=utf-8
