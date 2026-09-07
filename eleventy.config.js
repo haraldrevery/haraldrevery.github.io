@@ -699,7 +699,10 @@ module.exports = function(eleventyConfig) {
       date: (p.data && p.data.updated) || p.date || (p.data && p.data.date) || null,
       description: (p.data && p.data.description) || "",
       categories: (p.data && p.data.tags) || [],
-      image: null,
+      // Same share image the post's own og:image uses (base.njk falls back to
+      // opengraphimg.jpg the same way), so a reader shows the artwork a reader
+      // would see if the link were pasted into a chat.
+      image: (p.data && p.data.image) || "/opengraphimg.jpg",
     });
     const fromRelease = (r) => ({
       kind: "release",

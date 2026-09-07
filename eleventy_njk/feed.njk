@@ -72,9 +72,10 @@ site_url: "https://haraldrevery.com"
       {%- for category in item.categories %}
       <category>{{ category }}</category>
       {%- endfor %}
-      {#- Cover art as an <enclosure> (releases only): the one element RSS 2.0
-          gives for attaching media, and what readers use to show artwork. RSS
-          allows at most one enclosure per item, so this stays a single image. -#}
+      {#- Artwork as an <enclosure>: the one element RSS 2.0 gives for attaching
+          media, and what readers use to show a thumbnail next to an entry.
+          Cover art for a release, the post's own og:image for a notebook entry.
+          RSS allows at most one enclosure per item, so this stays one image. -#}
       {%- if item.image %}
       <enclosure url="{{ site_url }}{{ item.image }}" length="{{ item.image | fileSize }}" type="{{ item.image | mimeType }}" />
       {%- endif %}

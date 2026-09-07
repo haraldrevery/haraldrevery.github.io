@@ -68,7 +68,7 @@ eleventyExcludeFromCollections: true
         {% if collections.releases.length %}
         <div class="grid grid-cols-3 md:grid-cols-6 gap-4 md:gap-6 relative z-10">
             {% for r in collections.releases %}
-            <a href="{{ r.url }}" class="disc-tile group" aria-label="{{ r.name }} — {{ r.type }}">
+            <a href="{{ r.url | cleanUrl }}" class="disc-tile group" aria-label="{{ r.name }} — {{ r.type }}">
                 <img src="{{ r.artcoverMin }}" alt="{{ r.name }} cover art" loading="lazy">
                 <span class="disc-tile__overlay">
                     <span class="disc-tile__type">{{ r.type }}</span>
