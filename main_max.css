@@ -397,6 +397,9 @@
   .my-12 {
     margin-block: calc(var(--spacing) * 12);
   }
+  .my-16 {
+    margin-block: calc(var(--spacing) * 16);
+  }
   .\!mt-0 {
     margin-top: 0 !important;
   }
@@ -685,6 +688,9 @@
   .flex-grow {
     flex-grow: 1;
   }
+  .grow {
+    flex-grow: 1;
+  }
   .border-collapse {
     border-collapse: collapse;
   }
@@ -789,6 +795,9 @@
   }
   .justify-center {
     justify-content: center;
+  }
+  .justify-end {
+    justify-content: flex-end;
   }
   .gap-1 {
     gap: var(--spacing);
@@ -1787,6 +1796,11 @@
       grid-row: span 2 / span 2;
     }
   }
+  .md\:table-cell {
+    @media (width >= 768px) {
+      display: table-cell;
+    }
+  }
   .md\:aspect-auto {
     @media (width >= 768px) {
       aspect-ratio: auto;
@@ -1855,6 +1869,11 @@
   .md\:gap-6 {
     @media (width >= 768px) {
       gap: calc(var(--spacing) * 6);
+    }
+  }
+  .md\:gap-12 {
+    @media (width >= 768px) {
+      gap: calc(var(--spacing) * 12);
     }
   }
   .md\:p-12 {

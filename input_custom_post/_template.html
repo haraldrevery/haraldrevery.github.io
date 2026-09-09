@@ -3,69 +3,64 @@ title: Block template
 date: 2026-09-09
 tags: [test]
 image: /photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top_min.jpg
-description: Copy-paste blocks for hand-written notebook posts. Kept as a draft.
+description: Fenced, copy-paste-ready blocks for hand-written notebook posts. Kept as a draft.
 draft: true
 ---
 
 <!--
   ============================================================================
-  input_custom_post/_template.html
+  input_custom_post/_template.html — the block clipboard
   ============================================================================
 
-  A catalogue of blocks to copy out of. Every block below is fenced:
+  The everyday blocks, each fenced between a pair of comment lines reading
+  "===== COPY FROM HERE: <name> =====" and "===== COPY TO HERE =====".
 
-      <!-- ===== COPY FROM HERE: <name> ===== -->
-      ...
-      <!-- ===== COPY TO HERE ===== -->
+  (Those two lines are not reproduced literally here, because an HTML comment
+  CANNOT NEST. The first close-comment sequence inside this block would end it,
+  and every line after that would render on the page as visible text. This file
+  shipped that bug once, and then shipped it a second time in the sentence
+  explaining it. If you quote a comment inside a comment, do not type the
+  closing sequence.)
 
-  Take what is between the fences, paste it into your own .html file in this
-  folder, change the words and the image paths. Read the comment above a block
-  first — it says which of its parts are load bearing.
+  Copy what is between the fences and paste it INSIDE the
+  <div class="post-container"> in _new_post.html. Read the comment above a
+  block first — it says which parts are load bearing.
 
-  This file is `draft: true`, so it publishes nothing. Set it to false, build,
-  and look at /notebook_pages/_template.html to see every block rendered; then
-  set it back. It is also the REGRESSION FIXTURE for brace handling (last block)
-  — do not delete it.
+  THREE FILES, THREE JOBS
+    _new_post.html    copy this to START a post. The skeleton and the rules.
+    _template.html    this file. Blocks to paste into that skeleton.
+    stress_test.html  every block that exists, rendered on one page, with the
+                      reasoning. The reference when this file has not got it.
 
-  WHAT THIS FILE IS NOT
-  It is not a whole page. There is no <!DOCTYPE>, no <head>, no nav and no
-  footer here, and there must not be. Those come from
-  eleventy_settings/post_body.njk and base.njk at build time, which is the whole
-  reason this folder exists. See README.txt.
+  EVERY BLOCK HERE IS CONTAINER-FREE, on purpose. The column comes from
+  _new_post.html's single .post-container; a second one nested inside it would
+  narrow the text to about 56%, because it is a percentage width. The one
+  exception is the full-bleed block, which goes OUTSIDE that container and says
+  so.
 
-  THE TWO CONTAINERS
-  Content is emitted at FULL WIDTH, so each block brings its own container:
+  Each block carries mb-16 — its own 64px gap underneath. Never a top margin
+  and never padding: padding cannot margin-collapse, so a block with both would
+  double-count against its neighbour and make gaps depend on block order.
 
-    <div class="post-container">   the reading column: 88% wide, 75% over 900px,
-                                   and it honours the reading-width button.
-                                   Use it for anything that should not run to
-                                   the screen edges.
-
-    (no container)                 full bleed. Use it for a cover image or a
-                                   band of colour that should touch both edges.
-
-  .prose is the typography (input_prose.css) and goes INSIDE .post-container.
-  It is also the scope for the image grid — `.prose .rvry-grid` — so a grid
-  outside .prose gets no styling at all.
+  This file is draft: true, so it publishes nothing. It is also the brace
+  regression fixture (last block) — do not delete it.
 -->
 
 
 <!--
-  TEXT — the default block. Nearly every post is mostly this.
+  TEXT — the block nearly every post is mostly made of.
 
-  .prose styles h2/h3/p/ul/blockquote/code the same way it styles a markdown
-  post, so a text block here is indistinguishable from one in input_markdown/.
-  Do not use <h1>: post_body.njk already emitted the page's only h1 from the
-  front-matter title.
+  Keep a heading and the copy under it in the SAME <article>. Split them into
+  two blocks and the gap between them becomes a 64px block gap instead of a
+  typographic one. No <h1>: the front-matter title already produced the page's
+  only one.
 -->
-<!-- ===== COPY FROM HERE: text column ===== -->
-<div class="post-container extra_fade_effect">
-  <div class="prose prose-lg max-w-none text-zinc-900 dark:text-white">
+<!-- ===== COPY FROM HERE: text ===== -->
+  <article class="prose dark:prose-invert max-w-none mb-16">
     <h2>A heading</h2>
     <p>
-      An ordinary paragraph. Links look like
-      <a href="/notebook.html">this</a>, and <code>inline code</code> and
-      <strong>bold</strong> both come from .prose.
+      Body copy, with <strong>bold</strong>, <em>italic</em>,
+      <a href="/notebook.html">a link</a> and <code>inline code</code>.
     </p>
     <ul>
       <li>A list item</li>
@@ -74,144 +69,144 @@ draft: true
     <blockquote>
       <p>A pulled quote, if the page wants one.</p>
     </blockquote>
-  </div>
-</div>
+  </article>
 <!-- ===== COPY TO HERE ===== -->
 
 
 <!--
-  FULL-BLEED IMAGE — no container, so it runs to both screen edges.
+  ONE PHOTOGRAPH.
 
-  Three things are load bearing:
+  href = the full-size file, src = the _min thumbnail beside it. width/height
+  must be the REAL pixel size of the file in the <img>, or the page jumps as it
+  loads. Delete the figure's style="" for full column width.
 
-  1. width and height are the file's REAL pixel size. Without them the page
-     reflows as the image arrives, which is the single worst layout-shift
-     source on this site. Read them off the file, do not guess.
-  2. loading="lazy" everywhere EXCEPT an image in the first screenful, which
-     wants loading="eager" fetchpriority="high" instead — the largest thing
-     above the fold should not be deprioritised.
-  3. A landscape file. object-cover crops to the box, so a portrait photo comes
-     out as a narrow vertical strip of itself on a desktop screen.
+  Generate this block filled in:  node input_custom_post/imgblock.mjs photos/x.jpg
 
-  The height below is a clamp, not a fixed value, so the block stays sane on a
-  phone.
+  In caption text write "3 - 4", never "3:4" — data-glightbox is parsed as
+  ";"-separated "key: value" pairs, so a ":" or ";" splits it into nonsense.
 -->
-<!-- ===== COPY FROM HERE: full-bleed image ===== -->
-<figure class="my-16">
-  <img src="/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top.jpg"
-       alt="Describe the picture here — this text is read aloud and shown if the file 404s"
-       width="3840" height="2400"
-       class="w-full object-cover"
-       style="height:clamp(18rem,60vh,40rem);"
-       loading="lazy" decoding="async">
-  <figcaption class="post-container mt-3 text-sm font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
-    A caption, if the picture needs one.
-  </figcaption>
-</figure>
-<!-- ===== COPY TO HERE ===== -->
-
-
-<!--
-  IMAGE GRID — the justified (Flickr/Behance) grid.
-
-  This is the SAME grid a markdown post gets when it puts two images on
-  adjacent lines; the rule that builds it is imageGridPlugin in
-  eleventy.config.js and the styling is `.prose .rvry-grid` in input_prose.css.
-  Writing it by hand means matching what that plugin emits:
-
-  1. It must sit inside .prose. The CSS is scoped there and a grid outside it
-     is unstyled — this is the mistake to expect.
-  2. --ar on each item is the image's aspect ratio, width DIVIDED BY height,
-     as a number. It is what makes every item in a row resolve to the same
-     height, so a wrong value misjustifies the whole row. 3840x2400 -> 1.6.
-  3. href is the FULL-SIZE file, src is the _min thumbnail when one exists
-     beside it. That is the site's convention everywhere.
-  4. data-gallery groups the items into one lightbox. Give each grid on the
-     page its own value, or clicking one opens the wrong set.
-  5. data-glightbox is parsed as a ";"-separated list of "key: value" pairs, so
-     a ";" or ":" INSIDE your caption text silently splits it into bogus
-     fields. Write "3 - 4" rather than "3:4".
--->
-<!-- ===== COPY FROM HERE: justified image grid ===== -->
-<div class="post-container">
-  <div class="prose prose-lg max-w-none">
-    <div class="rvry-grid">
-      <a class="rvry-grid-item glightbox"
-         href="/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top.jpg"
-         data-gallery="template-grid-1"
-         data-glightbox="title: Near the top; description: "
-         style="--ar:1.6">
+<!-- ===== COPY FROM HERE: one photograph ===== -->
+  <section class="mb-16">
+    <figure style="width:80%;margin-inline:auto">
+      <a href="/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top.jpg"
+         class="glightbox block" data-gallery="single"
+         data-glightbox="title: Your caption; description: ">
         <img src="/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top_min.jpg"
-             alt="Describe this picture" loading="lazy" decoding="async">
+             alt="Describe the picture" width="1152" height="720"
+             class="w-full rounded-lg" loading="lazy" decoding="async">
       </a>
-      <a class="rvry-grid-item glightbox"
-         href="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen1.jpg"
-         data-gallery="template-grid-1"
-         data-glightbox="title: On the ridge; description: "
-         style="--ar:1.6">
+      <figcaption>Your caption.</figcaption>
+    </figure>
+  </section>
+<!-- ===== COPY TO HERE ===== -->
+
+
+<!--
+  SEVERAL PHOTOGRAPHS — the justified grid.
+
+  Every picture in a row resolves to the same height and the row fills the
+  width exactly, with no cropping. Mix landscape and portrait freely; that is
+  what it is for. Each picture needs its true ratio in three places, so do not
+  type this one by hand:
+
+      node input_custom_post/imgblock.mjs --gallery=name photos/a.jpg photos/b.jpg
+
+  Give each gallery on the page its own data-gallery, or clicking one opens
+  the wrong set.
+-->
+<!-- ===== COPY FROM HERE: several photographs ===== -->
+  <section class="mb-16">
+    <div class="flex flex-wrap gap-2">
+
+      <a href="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen1.jpg"
+         class="portfolio-item glightbox block" data-gallery="my-gallery"
+         data-glightbox="title: First picture; description: "
+         style="aspect-ratio:3840/2400;flex-grow:160;flex-basis:calc(1.6 * 240px);max-width:calc(1.6 * 640px);--delay:0.1s">
+        <div class="overlay"></div>
         <img src="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen1_min.jpg"
-             alt="Describe this picture" loading="lazy" decoding="async">
+             alt="Describe this picture" class="w-full h-full object-cover" loading="lazy">
       </a>
+
+      <a href="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen2.jpg"
+         class="portfolio-item glightbox block" data-gallery="my-gallery"
+         data-glightbox="title: Second picture; description: "
+         style="aspect-ratio:2561/3840;flex-grow:66.69;flex-basis:calc(0.6669 * 240px);max-width:calc(0.6669 * 640px);--delay:0.1s">
+        <div class="overlay"></div>
+        <img src="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen2_min.jpg"
+             alt="Describe this picture" class="w-full h-full object-cover" loading="lazy">
+      </a>
+
     </div>
-  </div>
-</div>
+  </section>
 <!-- ===== COPY TO HERE ===== -->
 
 
 <!--
-  TWO COLUMNS — picture beside text.
+  PICTURE BESIDE TEXT.
 
-  Stacks on a phone and splits at the md breakpoint; that is what md:grid-cols-2
-  does. items-center vertically centres the shorter column against the taller.
-  Swap the order of the two children to put the picture on the right.
+  Stacks on a phone, splits at the md breakpoint. items-center vertically
+  centres the shorter column. Swap the two children to move the picture.
+  Keep the copy short — a long column grows past the picture and the pairing
+  stops reading as a pair.
 -->
-<!-- ===== COPY FROM HERE: two columns ===== -->
-<div class="post-container my-16">
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-    <img src="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen1_min.jpg"
-         alt="Describe this picture"
-         width="1152" height="720"
-         class="w-full" loading="lazy" decoding="async">
-    <div class="prose prose-lg max-w-none text-zinc-900 dark:text-white">
-      <h2>Beside a picture</h2>
-      <p>
-        Text in the other column. Keep it short — a long column here grows the
-        block past the height of the picture and the pairing stops reading as
-        a pair.
-      </p>
+<!-- ===== COPY FROM HERE: picture beside text ===== -->
+  <section class="mb-16">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
+      <img src="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen1_min.jpg"
+           alt="Describe this picture" width="1152" height="720"
+           class="w-full rounded-lg" loading="lazy" decoding="async">
+      <div class="prose dark:prose-invert max-w-none">
+        <h2>Beside a picture</h2>
+        <p>Text in the other column.</p>
+      </div>
     </div>
-  </div>
-</div>
+  </section>
+<!-- ===== COPY TO HERE ===== -->
+
+
+<!-- A RULE between two blocks. Inside a text block, write <hr> directly. -->
+<!-- ===== COPY FROM HERE: rule ===== -->
+  <article class="prose dark:prose-invert max-w-none mb-16">
+    <hr>
+  </article>
 <!-- ===== COPY TO HERE ===== -->
 
 
 <!--
-  RULE AND SECTION BREAK — for separating parts of a long page.
--->
-<!-- ===== COPY FROM HERE: section break ===== -->
-<div class="post-container my-16">
-  <hr class="border-neutral-200 dark:border-neutral-800">
-</div>
-<!-- ===== COPY TO HERE ===== -->
-
-
-<!--
-  LINK BUTTONS — the same underlined style the back link uses, so nothing new
-  has to be added to the stylesheet for it.
+  LINK BUTTONS — the site's underlined text link, character for character the
+  one on index.html and music.html. The anchor is inline-block, so text-align
+  on the WRAPPER positions it: drop the wrapper class for left, text-center or
+  text-right otherwise. Add extra_fade_effect_long to the wrapper to delay the
+  reveal by 2.8s.
 -->
 <!-- ===== COPY FROM HERE: link buttons ===== -->
-<div class="post-container my-12">
-  <div class="flex flex-wrap gap-6">
-    <a href="/notebook.html"
-       class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">
-      A LINK
-    </a>
-    <a href="/about.html"
-       class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">
-      ANOTHER LINK
-    </a>
-  </div>
-</div>
+  <section class="mb-16">
+    <div class="flex flex-wrap gap-6">
+      <a href="/notebook.html"
+         class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">
+        A LINK →
+      </a>
+    </div>
+  </section>
+<!-- ===== COPY TO HERE ===== -->
+
+
+<!--
+  FULL-BLEED PICTURE — the one block that goes OUTSIDE the .post-container,
+  after its closing </div>. That is what lets it reach both screen edges.
+  Lead with a landscape frame: object-cover crops to the box, so a portrait
+  file becomes a narrow vertical strip on a desktop screen.
+-->
+<!-- ===== COPY FROM HERE: full-bleed picture (goes outside the container) ===== -->
+<figure class="mb-16">
+  <img src="/photos/2025galdhoepiggen/2025galdhopiggen1.jpg"
+       alt="Describe the picture" width="3840" height="1280"
+       class="w-full object-cover" style="height:clamp(18rem,60vh,40rem)"
+       loading="lazy" decoding="async">
+  <figcaption class="post-container mt-3 text-sm font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+    Your caption.
+  </figcaption>
+</figure>
 <!-- ===== COPY TO HERE ===== -->
 
 
@@ -219,17 +214,17 @@ draft: true
   ==========================================================================
   BRACE REGRESSION FIXTURE — not a block to copy. Leave it here.
   ==========================================================================
-
-  These sequences would all be eaten, or would fail the build outright, if
+  These would be eaten, or would fail the build outright, if
   templateEngineOverride ever stopped being false for this folder (it is set in
-  the addTemplate call in eleventy.config.js). To verify: set draft: false at
-  the top of this file, build, open /notebook_pages/_template.html, confirm the
-  three lines below appear LITERALLY, then set draft back to true.
+  the addTemplate call in eleventy.config.js). To verify: set draft: false
+  above, build, open /notebook_pages/_template.html, confirm the four lines
+  below appear LITERALLY, then set draft back to true.
 -->
 <div class="post-container">
-  <div class="prose prose-lg max-w-none text-zinc-900 dark:text-white">
-    <p>Nunjucks output, must survive: {{ not_a_variable }}</p>
-    <p>Nunjucks tag, must survive: {% not_a_tag %}</p>
-    <p>KaTeX braces, must survive: \frac{{a}}{{b}}</p>
-  </div>
+  <article class="prose dark:prose-invert max-w-none mb-16">
+    <p>Nunjucks output: {{ not_a_variable }}</p>
+    <p>Nunjucks tag: {% not_a_tag %}</p>
+    <p>Nunjucks comment: {# not_a_comment #}</p>
+    <p>KaTeX braces: \frac{{a}}{{b}}</p>
+  </article>
 </div>

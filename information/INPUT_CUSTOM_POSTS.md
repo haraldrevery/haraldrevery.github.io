@@ -145,6 +145,103 @@ reviewed rather than trusted.
 
 ---
 
+## 4b. What the stress test found
+
+`input_custom_post/stress_test.html` and `stress_test_hero.html` carry every
+block the page builder can emit, with the markup transcribed from
+`page_builder_app_v2/src/puck/components/`. Both were rendered in headless
+Firefox, light and dark, and checked class-by-class against the compiled CSS
+using the same method as the builder's own `render.test.tsx` "class coverage"
+test. Four things came out of it.
+
+### Fixed: `input_prose.css` was missing two `@source` folders
+
+This is the significant one, and it was a **live bug before this work**, not one
+the new folder introduced.
+
+Every page links two stylesheets, in this order:
+
+```html
+<link rel="stylesheet" href="/main.css">
+<link rel="stylesheet" href="/prose.css">
+```
+
+Both are **complete Tailwind builds**, each with its own `@source` list. So
+`prose.css`, arriving second, can override `main.css` — and it does whenever it
+emits a plain utility whose responsive variant only `main.css` has.
+
+`input_prose.css` listed neither `input_build_page/` nor `input_custom_post/`.
+The concrete symptom: the page builder's Downloads block emits
+`hidden md:table-cell` on its SHA-256 column. `main.css` had `.md\:table-cell`;
+`prose.css` had `.hidden` but not `.md\:table-cell`, so the later `.hidden` won
+and **the SHA-256 column never rendered, at any width**. Confirmed by having the
+page report its own computed style: `SHA-256 Hash -> display:none` with
+`matchMedia("(min-width:768px)")` returning `true`.
+
+Both folders are now in `input_prose.css`, with a comment saying why. All four
+stylesheets were rebuilt; growth was +167 bytes on `main.css` and +138 on
+`prose.css`, purely additive.
+
+**If you add another input folder, add it to BOTH `@source` lists.** One is not
+enough, and the failure is silent.
+
+### Not fixed — your call: a stray `</div>` in `post.njk`
+
+[eleventy_settings/post.njk](../eleventy_settings/post.njk) line 69 has an
+unmatched `</div>`. Every markdown post therefore emits malformed HTML: it
+closes `base.njk`'s `<div class="bg-topology-map">` early, so the footer ends up
+**outside** the textured background wrapper.
+
+Measured across the site — footer nesting relative to `bg-topology-map`:
+
+| page | |
+|---|---|
+| `notebook.html`, `about.html`, `galdhopiggen.html` | INSIDE (correct) |
+| `stress_test.html`, `stress_test_hero.html` | INSIDE (correct) |
+| `gamesettings.html`, `studieteknik.html` (markdown) | **OUTSIDE** |
+
+So markdown posts are the odd ones out, and the new folder's pages match
+everything else. The fix is deleting that one line, but it is a **visible
+change** to the three existing markdown posts — their footer would gain the
+topology texture every other page's footer has. Left alone deliberately, since
+you asked not to risk the old pages. Delete it when you want them consistent.
+
+### The builder and `download.html` disagree on breakpoints
+
+`Lists.tsx` uses `md:table-cell` / `lg:table-cell`; the real `download.html`
+uses `lg:table-cell` / `xl:table-cell`. Only the latter pair was ever compiled,
+which is what made the bug above invisible for so long. It works now because the
+stress test forces `md:table-cell` into both stylesheets, but the two ought to
+agree. Changing `Lists.tsx` means rebuilding the Tauri app, so it is left as a
+note rather than an edit.
+
+### Three authoring gotchas, all now in `input_custom_post/README.txt`
+
+- **No markdown pipeline.** No KaTeX, no linkify, no automatic image grid. Write
+  MathML directly for maths — the site emits MathML from markdown anyway, so it
+  renders identically.
+- **A linked SVG cannot follow the colour scheme.** `<img src="/svg/logo.svg">`
+  is invisible in dark mode for a black-on-transparent logo. Only an inlined
+  `currentColor` svg flips. Both are in the stress test, one after the other.
+- **`outline: true` reads every heading**, including FAQ questions and Featured
+  card titles. Off by default for that reason.
+
+### What rendered correctly
+
+Everything else, in both colour schemes: the full prose set, all three gallery
+layouts (justified packing verified with mixed portrait/landscape/panorama), the
+markdown-style `.rvry-grid`, two-column, Featured (both orientations), video,
+both audio variants, inlined and linked SVG, icons, FAQ (both blocks, ids
+correctly namespaced), Downloads, all three link-button alignments, the spacing
+scale, raw HTML, MathML, full-bleed, and all four hero backgrounds. The brace
+fixture (`{{ }}`, `{% %}`, `{# #}`, `\frac{{a}}{{b}}`) survived literally, and
+both pages are tag-balanced with exactly one `<h1>`.
+
+One judgement call, not a bug: a cover hero over a bright photograph loses its
+tagline to the fading scrim. Visible in `stress_test_hero.html`.
+
+---
+
 ## 5. Deliberately not done
 
 **Post folders with co-located assets** — the `input_custom_post/post_i/` shape

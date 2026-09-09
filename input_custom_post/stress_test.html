@@ -1,0 +1,604 @@
+---
+title: Stress test — every block
+date: 2026-09-09
+tags: [test]
+image: /photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top_min.jpg
+description: One page carrying every block the page builder can emit, hand-written, to prove the input_custom_post pipeline renders them all.
+outline: true
+draft: true
+---
+
+<!--
+  ============================================================================
+  STRESS TEST 1 of 2 — content blocks
+  ============================================================================
+
+  Every block type page_builder_app_v2 can emit, hand-written, with the markup
+  transcribed from the components themselves so the two authoring routes
+  produce the same HTML:
+
+    Text .......... components/Text.tsx        (ProseShell, nesting.tsx)
+    Heading ....... components/Heading.tsx
+    Divider ....... components/Media.tsx
+    Image ......... components/Media.tsx
+    Svg ........... components/Media.tsx
+    Video ......... components/Media.tsx
+    Audio ......... components/Media.tsx
+    Raw ........... components/Media.tsx
+    Gallery ....... components/Gallery.tsx     (justified / uniform / feature)
+    Columns ....... components/Columns.tsx
+    Featured ...... components/Featured.tsx
+    Icons ......... components/Lists.tsx
+    Faq ........... components/Lists.tsx
+    Downloads ..... components/Lists.tsx
+    LinkButton .... components/LinkButton.tsx
+
+  plus the markdown-only image grid (.rvry-grid, imageGridPlugin in
+  eleventy.config.js), MathML, and the brace fixture.
+
+  Hero blocks are in stress_test_hero.html — they need `header: false`, which
+  is a per-page setting.
+
+  THE SHAPE OF THE PAGE
+  One container wraps the content; each block inside it is a <section> or
+  <article> carrying its own bottom margin (mb-16 = 64px, the builder's
+  "Normal" spacing). Full-bleed blocks go OUTSIDE the container, at the end.
+  That is exactly what the builder emits (export.ts assembleFragment), except
+  that it uses .page-container and this uses .post-container — identical
+  widths, but .post-container also honours the reading-width control.
+
+  SET draft: true BEFORE PUSHING, or this ships to the live site.
+-->
+
+<div class="post-container extra_fade_effect">
+
+  <!-- ===== Text — the workhorse prose block =====
+       ONE <article class="prose"> holding headings, copy and rules together.
+       The builder folds them into a single markdown field for this reason: a
+       heading and its paragraph must share one .prose wrapper, or the gap
+       between them becomes a 64px block gap instead of a typographic one. -->
+  <article class="prose dark:prose-invert max-w-none mb-16">
+    <h2>Text block</h2>
+    <p>
+      Body copy, with <strong>bold</strong>, <em>italic</em>,
+      <a href="/notebook.html">an internal link</a>,
+      <a href="https://example.com" target="_blank" rel="noopener noreferrer">an external one</a>
+      and <code>inline_code()</code>.
+    </p>
+    <h3>A sub-heading</h3>
+    <ul>
+      <li>An unordered item</li>
+      <li>Another, with <code>code</code> in it</li>
+    </ul>
+    <ol>
+      <li>First</li>
+      <li>Second</li>
+    </ol>
+    <blockquote>
+      <p>A block quote, to check the left rule and the indent.</p>
+    </blockquote>
+    <pre><code>const x = 1;
+if (x) console.log("fenced code block");</code></pre>
+    <table>
+      <thead><tr><th>Column</th><th>Other column</th></tr></thead>
+      <tbody>
+        <tr><td>a</td><td>b</td></tr>
+        <tr><td>c</td><td>d</td></tr>
+      </tbody>
+    </table>
+    <hr>
+    <p>Text after a rule.</p>
+  </article>
+
+  <!-- ===== Heading — standalone, centred =====
+       Only for what markdown cannot express: centre alignment (and, in the
+       builder, the per-word fade). An ordinary heading belongs in a Text
+       block above. -->
+  <article class="prose dark:prose-invert max-w-none mb-16">
+    <h2 class="text-center">A centred heading</h2>
+  </article>
+
+  <!-- ===== Divider — a rule BETWEEN non-prose blocks =====
+       Inside a Text block, write <hr> directly. This exists for a rule
+       between, say, a gallery and a heading, where there is no prose to
+       put it in. -->
+  <article class="prose dark:prose-invert max-w-none mb-16">
+    <hr>
+  </article>
+
+  <!-- ===== Image — 70% width, lightbox, caption =====
+       href is the FULL-SIZE file, src the _min thumbnail. width below 100%
+       becomes an inline width + auto margins (pctStyle in puck/shared.ts);
+       at 100% the builder emits no style attribute at all.
+       data-glightbox is ";"-separated "key: value" pairs, so a ";" or ":"
+       inside caption text would split it into bogus fields. -->
+  <section class="mb-16">
+    <figure style="width:70%;margin-inline:auto">
+      <a href="/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top.jpg" class="glightbox block" data-gallery="single"
+         data-glightbox="title: A single image with a caption; description: ">
+        <img src="/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top_min.jpg" alt="Snow and rock near the summit of Galdhopiggen"
+             class="w-full rounded-lg" loading="lazy">
+      </a>
+      <figcaption>A caption, rendered by prose.css.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ===== Gallery — JUSTIFIED (the default, and the signature look) =====
+       Zero JS. Each item's flex-grow equals its aspect ratio x 100, so every
+       item in a row resolves to the SAME height and rows come out exactly
+       justified with no cropping. Three things are load bearing:
+         - aspect-ratio must be the TRUE pixel ratio of the full-size file
+         - the cap is on max-WIDTH, not height: a max-height would let
+           flex-grow widen the box past the photo and object-cover would crop it
+         - grow factors are ratio x 100, because flexbox only distributes
+           Sum(grow) of the free space when that sum is under 1
+       A landscape, two portraits and a panorama below, on purpose — that is
+       what makes the packing visible. -->
+  <section class="mb-16">
+    <div class="flex flex-wrap gap-2">
+      <a href="/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top.jpg" class="portfolio-item glightbox block" data-gallery="stress-justified"
+         data-glightbox="title: A photograph; description: From the Galdhopiggen hike" style="aspect-ratio:3840/2400;flex-grow:160.0;flex-basis:calc(1.6 * 240px);max-width:calc(1.6 * 640px);--delay:0.1s">
+        <div class="overlay"></div>
+        <img src="/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top_min.jpg" alt="A photograph" class="w-full h-full object-cover" loading="lazy">
+      </a>
+      <a href="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen2.jpg" class="portfolio-item glightbox block" data-gallery="stress-justified"
+         data-glightbox="title: A photograph; description: From the Galdhopiggen hike" style="aspect-ratio:2561/3840;flex-grow:66.69;flex-basis:calc(0.6669 * 240px);max-width:calc(0.6669 * 640px);--delay:0.1s">
+        <div class="overlay"></div>
+        <img src="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen2_min.jpg" alt="A photograph" class="w-full h-full object-cover" loading="lazy">
+      </a>
+      <a href="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen4.jpg" class="portfolio-item glightbox block" data-gallery="stress-justified"
+         data-glightbox="title: A photograph; description: From the Galdhopiggen hike" style="aspect-ratio:2743/3840;flex-grow:71.43;flex-basis:calc(0.7143 * 240px);max-width:calc(0.7143 * 640px);--delay:0.1s">
+        <div class="overlay"></div>
+        <img src="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen4_min.jpg" alt="A photograph" class="w-full h-full object-cover" loading="lazy">
+      </a>
+      <a href="/photos/2025galdhoepiggen/2025galdhopiggen1.jpg" class="portfolio-item glightbox block" data-gallery="stress-justified"
+         data-glightbox="title: A photograph; description: From the Galdhopiggen hike" style="aspect-ratio:3840/1280;flex-grow:300.0;flex-basis:calc(3.0 * 240px);max-width:calc(3.0 * 640px);--delay:0.1s">
+        <div class="overlay"></div>
+        <img src="/photos/2025galdhoepiggen/2025galdhopiggen1_min.jpg" alt="A photograph" class="w-full h-full object-cover" loading="lazy">
+      </a>
+      <a href="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen1.jpg" class="portfolio-item glightbox block" data-gallery="stress-justified"
+         data-glightbox="title: A photograph; description: From the Galdhopiggen hike" style="aspect-ratio:3840/2400;flex-grow:160.0;flex-basis:calc(1.6 * 240px);max-width:calc(1.6 * 640px);--delay:0.1s">
+        <div class="overlay"></div>
+        <img src="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen1_min.jpg" alt="A photograph" class="w-full h-full object-cover" loading="lazy">
+      </a>
+    </div>
+  </section>
+
+  <!-- ===== Gallery — UNIFORM grid, fixed aspect =====
+       2 columns on a phone, N from md. The aspect class is dynamic in the
+       builder (aspect-[4/5], aspect-square, aspect-video, ...), which is why
+       its test greps the compiled CSS for each one: a class Tailwind never
+       saw publishes as an invisible no-op. -->
+  <section class="mb-16">
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+      <a href="/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top.jpg" class="portfolio-item glightbox block aspect-[4/5]" data-gallery="stress-uniform"
+         data-glightbox="title: A photograph; description: From the Galdhopiggen hike" style="--delay:0.1s">
+        <div class="overlay"></div>
+        <img src="/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top_min.jpg" alt="A photograph" class="w-full h-full object-cover" loading="lazy">
+      </a>
+      <a href="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen2.jpg" class="portfolio-item glightbox block aspect-[4/5]" data-gallery="stress-uniform"
+         data-glightbox="title: A photograph; description: From the Galdhopiggen hike" style="--delay:0.1s">
+        <div class="overlay"></div>
+        <img src="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen2_min.jpg" alt="A photograph" class="w-full h-full object-cover" loading="lazy">
+      </a>
+      <a href="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen1.jpg" class="portfolio-item glightbox block aspect-[4/5]" data-gallery="stress-uniform"
+         data-glightbox="title: A photograph; description: From the Galdhopiggen hike" style="--delay:0.1s">
+        <div class="overlay"></div>
+        <img src="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen1_min.jpg" alt="A photograph" class="w-full h-full object-cover" loading="lazy">
+      </a>
+      <a href="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen4.jpg" class="portfolio-item glightbox block aspect-[4/5]" data-gallery="stress-uniform"
+         data-glightbox="title: A photograph; description: From the Galdhopiggen hike" style="--delay:0.1s">
+        <div class="overlay"></div>
+        <img src="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen4_min.jpg" alt="A photograph" class="w-full h-full object-cover" loading="lazy">
+      </a>
+      <a href="/photos/2025galdhoepiggen/2025galdhopiggen1.jpg" class="portfolio-item glightbox block aspect-[4/5]" data-gallery="stress-uniform"
+         data-glightbox="title: A photograph; description: From the Galdhopiggen hike" style="--delay:0.1s">
+        <div class="overlay"></div>
+        <img src="/photos/2025galdhoepiggen/2025galdhopiggen1_min.jpg" alt="A photograph" class="w-full h-full object-cover" loading="lazy">
+      </a>
+      <a href="/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top.jpg" class="portfolio-item glightbox block aspect-[4/5]" data-gallery="stress-uniform"
+         data-glightbox="title: A photograph; description: From the Galdhopiggen hike" style="--delay:0.1s">
+        <div class="overlay"></div>
+        <img src="/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top_min.jpg" alt="A photograph" class="w-full h-full object-cover" loading="lazy">
+      </a>
+    </div>
+  </section>
+
+  <!-- ===== Gallery — FEATURE grid =====
+       The about.html / galdhopiggen.html look: 3x3 of squares where the FIRST
+       image spans 2x2 and the rest flow in rows of three. -->
+  <section class="mb-16">
+    <div class="grid grid-cols-3 md:grid-cols-3 gap-4">
+      <a href="/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top.jpg" class="portfolio-item glightbox block col-span-2 row-span-2 aspect-square" data-gallery="stress-feature"
+         data-glightbox="title: A photograph; description: From the Galdhopiggen hike" style="--delay:0.1s">
+        <div class="overlay"></div>
+        <img src="/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top_min.jpg" alt="A photograph" class="w-full h-full object-cover" loading="lazy">
+      </a>
+      <a href="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen2.jpg" class="portfolio-item glightbox block aspect-square" data-gallery="stress-feature"
+         data-glightbox="title: A photograph; description: From the Galdhopiggen hike" style="--delay:0.1s">
+        <div class="overlay"></div>
+        <img src="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen2_min.jpg" alt="A photograph" class="w-full h-full object-cover" loading="lazy">
+      </a>
+      <a href="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen4.jpg" class="portfolio-item glightbox block aspect-square" data-gallery="stress-feature"
+         data-glightbox="title: A photograph; description: From the Galdhopiggen hike" style="--delay:0.1s">
+        <div class="overlay"></div>
+        <img src="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen4_min.jpg" alt="A photograph" class="w-full h-full object-cover" loading="lazy">
+      </a>
+      <a href="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen1.jpg" class="portfolio-item glightbox block aspect-square" data-gallery="stress-feature"
+         data-glightbox="title: A photograph; description: From the Galdhopiggen hike" style="--delay:0.1s">
+        <div class="overlay"></div>
+        <img src="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen1_min.jpg" alt="A photograph" class="w-full h-full object-cover" loading="lazy">
+      </a>
+      <a href="/photos/2025galdhoepiggen/2025galdhopiggen1.jpg" class="portfolio-item glightbox block aspect-square" data-gallery="stress-feature"
+         data-glightbox="title: A photograph; description: From the Galdhopiggen hike" style="--delay:0.1s">
+        <div class="overlay"></div>
+        <img src="/photos/2025galdhoepiggen/2025galdhopiggen1_min.jpg" alt="A photograph" class="w-full h-full object-cover" loading="lazy">
+      </a>
+      <a href="/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top.jpg" class="portfolio-item glightbox block aspect-square" data-gallery="stress-feature"
+         data-glightbox="title: A photograph; description: From the Galdhopiggen hike" style="--delay:0.1s">
+        <div class="overlay"></div>
+        <img src="/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top_min.jpg" alt="A photograph" class="w-full h-full object-cover" loading="lazy">
+      </a>
+    </div>
+  </section>
+
+  <!-- ===== The MARKDOWN image grid (.rvry-grid) =====
+       Not a page-builder block. This is what imageGridPlugin in
+       eleventy.config.js builds when a markdown post puts two images on
+       adjacent lines. Same justified algorithm as the gallery above, different
+       markup and different CSS — and its CSS is scoped to `.prose .rvry-grid`,
+       so it MUST sit inside a .prose wrapper or it is completely unstyled.
+       That is the mistake to expect when hand-writing one.
+       --ar is the aspect ratio as a plain number. -->
+  <section class="mb-16">
+    <div class="prose dark:prose-invert max-w-none">
+      <div class="rvry-grid">
+        <a class="rvry-grid-item glightbox" href="/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top.jpg"
+           data-gallery="stress-rvry-grid"
+           data-glightbox="title: Near the summit; description: " style="--ar:1.6">
+          <img src="/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top_min.jpg" alt="Near the summit" loading="lazy" decoding="async">
+        </a>
+        <a class="rvry-grid-item glightbox" href="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen2.jpg"
+           data-gallery="stress-rvry-grid"
+           data-glightbox="title: On the ridge; description: " style="--ar:0.6669">
+          <img src="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen2_min.jpg" alt="On the ridge" loading="lazy" decoding="async">
+        </a>
+        <a class="rvry-grid-item glightbox" href="/photos/2025galdhoepiggen/2025galdhopiggen1.jpg"
+           data-gallery="stress-rvry-grid"
+           data-glightbox="title: The long view; description: " style="--ar:3.0">
+          <img src="/photos/2025galdhoepiggen/2025galdhopiggen1_min.jpg" alt="The long view" loading="lazy" decoding="async">
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Columns — two columns of embedded blocks =====
+       gap-16 is the COLUMN gap; below md the grid collapses to one column and
+       that 64px would leak in as a row gap wider than the gap between whole
+       blocks, so the row gap is pinned tighter inline (md:gap-* is not in the
+       compiled CSS). Children carry NO spacing class of their own — the
+       section owns the gap — and nested prose is a <div>, not an <article>. -->
+  <section class="extra_fade_effect mb-16">
+    <div class="grid md:grid-cols-2 gap-16 items-center" style="row-gap:2rem">
+      <div>
+        <div class="prose dark:prose-invert max-w-none">
+          <h3>A column of prose</h3>
+          <p>
+            Nested prose is a &lt;div&gt; carrying the prose classes and no margin
+            class &mdash; an &lt;article&gt; with mb-16 is what a TOP-LEVEL prose block gets.
+            Swap the two children to put the picture on the left.
+          </p>
+        </div>
+      </div>
+      <div>
+        <figure>
+          <a href="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen2.jpg" class="glightbox block" data-gallery="single"
+             data-glightbox="title: Beside a column of text; description: ">
+            <img src="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen2_min.jpg" alt="A walker on the ridge" class="w-full rounded-lg" loading="lazy">
+          </a>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Featured dispatch — photo with the frosted panel overlapping it =====
+       The .featured-card class rides on the <section> itself: that section IS
+       the grid. Wrapping it in another div would break the layout, and this is
+       also why the block cannot go inside a Columns slot (there the wrapper,
+       and therefore the class, is not emitted at all).
+       .featured-card-flip puts the photo on the right. -->
+  <section class="featured-card mb-16">
+    <a class="glightbox featured-card__media" href="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen1.jpg" data-gallery="single"
+       data-glightbox="title: A featured dispatch; description: ">
+      <img src="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen1_min.jpg" alt="Two walkers below the summit" loading="lazy">
+    </a>
+    <div class="preview-card featured-card__panel">
+      <p class="featured-card__eyebrow">Dispatch</p>
+      <h2 class="featured-card__title">A featured dispatch</h2>
+      <p class="featured-card__excerpt">
+        One paragraph of standfirst copy, sitting in the site's frosted panel
+        where it overlaps the inner edge of the photograph.
+      </p>
+    </div>
+  </section>
+
+  <!-- Same block, photo on the right -->
+  <section class="featured-card featured-card-flip mb-16">
+    <a class="glightbox featured-card__media" href="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen1.jpg" data-gallery="single"
+       data-glightbox="title: A featured dispatch, flipped; description: ">
+      <img src="/photos/2025galdhoepiggen/2025christian_on_galdhopiggen1_min.jpg" alt="Two walkers below the summit" loading="lazy">
+    </a>
+    <div class="preview-card featured-card__panel">
+      <p class="featured-card__eyebrow">Dispatch</p>
+      <h2 class="featured-card__title">Flipped</h2>
+      <p class="featured-card__excerpt">
+        The same markup with one extra class. Check that the panel's mobile
+        pull-up still behaves at a narrow width.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===== Video =====
+       A poster is worth setting: without it the player is a black rectangle
+       until the first frame decodes. -->
+  <section class="mb-16">
+    <figure>
+      <video controls class="w-full rounded-lg" poster="/video/thumbnail/isolated_thumbnail.jpg">
+        <source src="/video/under_25_mb/harald_revery_-_isolated.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+      <figcaption>A video with a caption.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ===== Audio — plain ===== -->
+  <section class="mb-16">
+    <p class="font-mono text-sm uppercase tracking-widest mb-2 text-neutral-600 dark:text-neutral-400">
+      A plain audio block
+    </p>
+    <audio controls class="w-full" src="/audio/mp3/timer_alarm_1.mp3"></audio>
+  </section>
+
+  <!-- ===== Audio — release-page "preview card" panel =====
+       letter-spacing is inline on purpose: tracking-eyebrow only ships if a
+       scanned file happens to use it, so it may not be in the compiled CSS. -->
+  <section class="mb-16">
+    <div class="preview-card">
+      <p class="font-mono text-xs uppercase opacity-50 mb-3" style="letter-spacing:0.3em">Preview</p>
+      <audio controls preload="none" class="w-full">
+        <source src="/audio/mp3/timer_alarm_1.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+      </audio>
+    </div>
+  </section>
+
+  <!-- ===== SVG — plain, linked as an image ===== -->
+  <section class="mb-16">
+    <div class="mx-auto" style="width:40%;margin-inline:auto">
+      <img src="/svg/haraldreverylogo.svg" alt="Harald Revery logo" class="w-full" loading="lazy">
+    </div>
+  </section>
+
+  <!-- ===== SVG — INLINED and themed =====
+       The builder rewrites the file's colours to currentColor and inlines it,
+       so it inherits the page's text colour and follows the light/dark scheme.
+       A linked <img> cannot do that. Hand-written, that means pasting the svg
+       with currentColor in place of its fills, as below. Check this one in
+       both schemes: it should flip with the page. -->
+  <section class="mb-16">
+    <div class="mx-auto" style="width:20%;margin-inline:auto">
+      <svg role="img" aria-label="A themed triangle" viewBox="0 0 100 100" class="w-full">
+        <path d="M50 8 L92 88 L8 88 Z" fill="none" stroke="currentColor" stroke-width="4"></path>
+        <circle cx="50" cy="62" r="10" fill="currentColor"></circle>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ===== Icons — labelled panel (release-page "Listen everywhere") =====
+       Unlabelled, the row is centred instead. Each link carries an sr-only
+       label because the svg alone gives a screen reader nothing. -->
+  <section class="mb-16">
+    <p class="font-mono text-xs uppercase opacity-50 mb-4" style="letter-spacing:0.3em">Listen everywhere</p>
+    <div class="flex flex-wrap items-center gap-6 text-gray-600 dark:text-gray-300">
+      <a class="transition-opacity duration-300 hover:opacity-50" href="https://example.com" target="_blank" rel="noopener noreferrer">
+        <span class="sr-only">Example one</span>
+        <div class="w-8 h-8 flex items-center justify-center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v10M7 12h10"></path></svg></div>
+      </a>
+      <a class="transition-opacity duration-300 hover:opacity-50" href="https://example.org" target="_blank" rel="noopener noreferrer">
+        <span class="sr-only">Example two</span>
+        <div class="w-8 h-8 flex items-center justify-center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v10M7 12h10"></path></svg></div>
+      </a>
+      <a class="transition-opacity duration-300 hover:opacity-50" href="/music.html">
+        <span class="sr-only">Music</span>
+        <div class="w-8 h-8 flex items-center justify-center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v10M7 12h10"></path></svg></div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ===== FAQ — CSS-only accordion (about.html) =====
+       Hidden checkbox + label + :checked sibling selector. No JS. The ids are
+       prefixed per block so two FAQ blocks on one page cannot collide — there
+       is a second one further down to prove it. -->
+  <section class="mb-16">
+    <div class="max-w-4xl mx-auto">
+      <div class="space-y-2">
+        <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden">
+          <input type="checkbox" id="faq-stress-a-0" class="faq-toggle hidden">
+          <label for="faq-stress-a-0" class="faq-question block p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">Does this need JavaScript?</h3>
+              <span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+            </div>
+          </label>
+          <div class="faq-answer">
+            <div class="p-4 text-zinc-800 dark:text-zinc-200"><p>No. The toggle is a hidden checkbox and a sibling selector; the answer's max-height is animated by CSS alone.</p></div>
+          </div>
+        </div>
+        <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden">
+          <input type="checkbox" id="faq-stress-a-1" class="faq-toggle hidden">
+          <label for="faq-stress-a-1" class="faq-question block p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">Why is every id prefixed?</h3>
+              <span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+            </div>
+          </label>
+          <div class="faq-answer">
+            <div class="p-4 text-zinc-800 dark:text-zinc-200"><p>So two FAQ blocks on one page cannot collide. Without the prefix, clicking one question would open the other block's answer.</p></div>
+          </div>
+        </div>
+        <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden">
+          <input type="checkbox" id="faq-stress-a-2" class="faq-toggle hidden">
+          <label for="faq-stress-a-2" class="faq-question block p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">What happens without the prefix?</h3>
+              <span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+            </div>
+          </label>
+          <div class="faq-answer">
+            <div class="p-4 text-zinc-800 dark:text-zinc-200"><p>Exactly that bug, and it only shows up on a page with two FAQ blocks, which is why it is worth testing here.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Second FAQ block — different id prefix. Opening a question here must
+       NOT open one above. -->
+  <section class="mb-16">
+    <div class="max-w-4xl mx-auto">
+      <div class="space-y-2">
+        <div class="faq-item border border-zinc-200 dark:border-white/10 rounded-lg overflow-hidden">
+          <input type="checkbox" id="faq-stress-b-0" class="faq-toggle hidden">
+          <label for="faq-stress-b-0" class="faq-question block p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xl font-medium text-zinc-900 dark:text-white pr-8">A second block's question</h3>
+              <span class="faq-icon text-3xl text-zinc-500 dark:text-zinc-400 flex-shrink-0">+</span>
+            </div>
+          </label>
+          <div class="faq-answer">
+            <div class="p-4 text-zinc-800 dark:text-zinc-200"><p>If the block above stayed shut when this opened, the prefixing works.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Downloads — download.html's verification table =====
+       SHA-256 appears from md, SHA-512 from lg; both are hidden on a phone,
+       which is what the hidden md:table-cell / lg:table-cell pairs do. The
+       hashes below are illustrative, not real — the builder computes them from
+       the file on export. -->
+  <section class="mb-16">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse font-mono text-[0.85rem]">
+        <thead>
+          <tr class="border-b border-zinc-200 dark:border-white/10 text-zinc-500 uppercase text-[0.9rem]">
+            <th class="py-4 pr-2 font-medium">Download Link</th>
+            <th class="py-4 px-2 font-medium">File name</th>
+            <th class="py-4 px-1 font-medium">Size</th>
+            <th class="py-4 px-2 font-medium hidden md:table-cell">SHA-256 Hash</th>
+            <th class="py-4 pl-2 font-medium hidden lg:table-cell">SHA-512 Hash</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-zinc-100 dark:divide-white/5">
+          <tr class="hover:opacity-50 transition-opacity">
+            <td class="py-5 pr-2">
+              <a href="/download/wallpaper_packs/mobile_wallpaper_2020x4364.zip" download
+                 class="inline-block px-2 py-1 bg-zinc-900 rounded-sm dark:bg-white text-white dark:text-zinc-900 hover:opacity-80 transition-opacity uppercase text-[0.9rem] tracking-wider">Download</a>
+            </td>
+            <td class="py-5 pr-2"><span class="py-5 px-2 text-zinc-600 dark:text-zinc-400">mobile_wallpaper_2020x4364.zip</span></td>
+            <td class="py-5 px-1 text-zinc-600 dark:text-zinc-400">8.7 MB</td>
+            <td class="py-5 px-2 hidden md:table-cell"><code class="text-zinc-400 dark:text-zinc-500 break-all select-all">0000000000000000000000000000000000000000000000000000000000000000</code></td>
+            <td class="py-5 pl-2 hidden lg:table-cell"><code class="text-zinc-400 dark:text-zinc-500 break-all select-all">00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== Link buttons — the site's underlined text link =====
+       Character for character the anchor on index.html and music.html. The
+       anchor is inline-block, so text-align on the WRAPPER positions it —
+       there is no flex row, because justify-end is not in the compiled CSS
+       and text-right is. extra_fade_effect_long delays the reveal by 2.8s. -->
+  <section class="mb-16">
+    <div><a href="/music.html" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">LEFT →</a></div>
+  </section>
+  <section class="mb-16">
+    <div class="text-center"><a href="/about.html" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">CENTRED →</a></div>
+  </section>
+  <section class="mb-16">
+    <div class="text-right extra_fade_effect_long"><a href="/discography.html" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">RIGHT, DELAYED →</a></div>
+  </section>
+
+  <!-- ===== The spacing scale =====
+       Every top-level block owns exactly ONE gap: the margin BELOW it. Never a
+       top margin and never padding, because padding cannot margin-collapse, so
+       a block with both would double-count against its neighbours and make
+       gaps depend on block order. The five steps: none / mb-2 / mb-8 / mb-16 /
+       mb-20. Three of them below, back to back. -->
+  <article class="prose dark:prose-invert max-w-none mb-2"><p>Gallery gap below this (8px).</p></article>
+  <article class="prose dark:prose-invert max-w-none mb-8"><p>Tight gap below this (32px).</p></article>
+  <article class="prose dark:prose-invert max-w-none mb-20"><p>Loose gap below this (80px).</p></article>
+
+  <!-- ===== Raw HTML =====
+       Verbatim markup in a wrapper that only supplies the block gap. In a
+       hand-written page every block is already raw HTML, so this is what the
+       whole file is — it is here for parity with the builder's block list. -->
+  <section class="mb-16">
+    <p style="border-left:3px solid currentColor;padding-left:1rem;opacity:.7">
+      A raw HTML block, styled inline.
+    </p>
+  </section>
+
+  <!-- ===== MATHS — and a real limitation =====
+       A markdown post gets KaTeX: $x^2$ is compiled to MathML at build time by
+       markdown-it-texmath. THIS FOLDER HAS NO MARKDOWN PIPELINE. Nothing here
+       is parsed as markdown, so KaTeX, linkify, markdown-it-attrs and the
+       automatic image grid are all unavailable — you write the final HTML.
+       For maths that means writing MathML directly, as below. The site emits
+       MathML rather than KaTeX HTML anyway (output: "mathml" in
+       eleventy.config.js), so this renders identically to a markdown post's.
+       The dollar signs on the next line must stay LITERAL. -->
+  <section class="mb-16">
+    <div class="prose dark:prose-invert max-w-none">
+      <p>Not compiled, on purpose — this must appear verbatim: $x^2 + y^2 = z^2$</p>
+      <p>
+        Written as MathML instead:
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <mrow><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo>
+          <msup><mi>y</mi><mn>2</mn></msup><mo>=</mo>
+          <msup><mi>z</mi><mn>2</mn></msup></mrow>
+        </math>
+      </p>
+    </div>
+  </section>
+
+  <!-- ===== BRACE FIXTURE — must survive literally =====
+       These would fail the build, or be silently eaten, if
+       templateEngineOverride ever stopped being false for this folder. -->
+  <section class="mb-16">
+    <div class="prose dark:prose-invert max-w-none">
+      <p>Nunjucks output: {{ not_a_variable }}</p>
+      <p>Nunjucks tag: {% not_a_tag %}</p>
+      <p>Nunjucks comment: {# not_a_comment #}</p>
+      <p>KaTeX braces: \frac{{a}}{{b}}</p>
+    </div>
+  </section>
+
+</div>
+
+<!-- ===== FULL BLEED — outside the container =====
+     No .post-container, so it runs to both screen edges. This is why
+     post_body.njk emits content at full width rather than wrapping it: a
+     block like this cannot escape a max-width column.
+     width/height are the file's real pixel size — without them the page
+     reflows as the image arrives. -->
+<figure class="mb-16">
+  <img src="/photos/2025galdhoepiggen/2025galdhopiggen1.jpg" alt="A panorama from the summit ridge"
+       width="3840" height="1280" class="w-full object-cover"
+       style="height:clamp(18rem,60vh,40rem)" loading="lazy" decoding="async">
+  <figcaption class="post-container mt-3 text-sm font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+    A full-bleed panorama, cropped by object-cover to the clamped height.
+  </figcaption>
+</figure>

@@ -7,6 +7,15 @@
 
 @source "./*.html";
 @source "./input_custom_html_pages/**/*.{html,md}";
+/* Both post-fragment folders. These MUST be listed here as well as in
+   input.css, not just there: prose.css is a SECOND full Tailwind build and
+   the page links it AFTER main.css, so a utility prose.css emits (say
+   .hidden) overrides a responsive variant that only main.css emits (say
+   .md\:table-cell). The column simply never appears, with nothing in the
+   markup or in main.css to suggest why. input_build_page/ was missing here
+   for the same reason and had the same latent bug. */
+@source "./input_build_page/**/*.njk";
+@source "./input_custom_post/**/*.html";
 @source "./notebook_templates/**/*.{html,md}";
 @source "./eleventy_njk/**/*.njk";
 @source "./eleventy_settings/**/*.njk";

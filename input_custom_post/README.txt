@@ -15,7 +15,42 @@ eleventy_settings/footer.njk.
 THAT IS THE WHOLE POINT OF THIS FOLDER. Change the nav or the footer once and
 every page here picks it up on the next build, with nothing to keep in sync.
 
-Start by copying blocks out of _template.html.
+WRITING A POST, START TO FINISH
+
+    cp input_custom_post/_new_post.html input_custom_post/my-post.html
+
+The FILE NAME is the URL: my-post.html publishes to /notebook_pages/my-post.html.
+Fill in the front matter, write the body, set draft: false, then build with
+./eleventy-linux-x64 and check with ./healthcheck.sh.
+
+THE FOUR WORKING FILES
+
+  _new_post.html    COPY THIS TO START. The skeleton, the front matter with
+                    every field explained, and the structural rules.
+  _template.html    The block clipboard: the everyday blocks, fenced, ready to
+                    paste into the skeleton's container.
+  stress_test.html  Every block that exists, rendered on one page, with the
+                    reasoning attached. The reference when the clipboard has
+                    not got what you need.
+  imgblock.mjs      Prints image markup with the numbers already right:
+
+                        node input_custom_post/imgblock.mjs photos/a.jpg
+                        node input_custom_post/imgblock.mjs --gallery=hike photos/a.jpg photos/b.jpg
+
+                    One file gives a figure; two or more give a justified
+                    gallery. It reads each picture's real pixel size out of the
+                    file header, finds the _min thumbnail, and fills in the
+                    aspect-ratio, flex-grow, flex-basis and max-width the
+                    justified grid needs in three places per picture. Those are
+                    the only numbers in a post that are wrong silently - a bad
+                    ratio misjustifies the whole row - so do not type them by
+                    hand. No npm packages; plain node.
+
+ONE STRUCTURAL RULE. Everything goes inside the single
+<div class="post-container"> in the skeleton, and each block carries mb-16.
+Never nest a second .post-container inside it: it is a percentage width, so
+nesting narrows the column to about 56%. Full-bleed blocks go after that
+div's closing tag.
 
 --------------------------------------------------------------------------------
   WHAT GOES HERE, AND WHAT DOES NOT
@@ -98,6 +133,58 @@ addTemplate call is ever touched, publish that file once (draft: false) and
 confirm those sequences appear literally.
 
 --------------------------------------------------------------------------------
+  THE STRESS TEST PAGES
+--------------------------------------------------------------------------------
+stress_test.html        every content block the page builder can emit
+stress_test_hero.html   the hero block in all four background modes
+
+The markup in both is transcribed from
+page_builder_app_v2/src/puck/components/, so a hand-written block and a
+builder-generated one are the same HTML. They are the reference for "what does
+this block actually look like", and they are a regression fixture: build them,
+open them in both colour schemes, and anything broken shows up on one page.
+
+They also act as a TAILWIND SAFELIST. This folder is in input.css's and
+input_prose.css's @source lists, so every class the blocks use is compiled and
+stays compiled - even while the pages are drafts, because Tailwind scans the
+SOURCE files, not the output. That is not incidental: it is what keeps a
+builder-exported block from shipping a class that was never compiled.
+
+--------------------------------------------------------------------------------
+  THINGS THE STRESS TEST TURNED UP - READ BEFORE WRITING A PAGE
+--------------------------------------------------------------------------------
+NO MARKDOWN PIPELINE. Nothing in this folder is parsed as markdown. KaTeX
+($x^2$), linkify, markdown-it-attrs and the automatic image grid are all
+markdown-only features and none of them runs here - you write final HTML. For
+maths, write MathML directly; the site emits MathML from markdown too
+(output: "mathml"), so it renders identically. stress_test.html has an example.
+
+A LINKED SVG DOES NOT FOLLOW THE COLOUR SCHEME. <img src="/svg/logo.svg"> is
+an image like any other, so a black-on-transparent logo is INVISIBLE in dark
+mode. Only an INLINED svg with its colours replaced by currentColor follows the
+theme. Both are in stress_test.html, one after the other, and in dark mode the
+linked one is simply not there. Check every svg in both schemes.
+
+`outline: true` READS EVERY HEADING. addAnchors rewrites all h2/h3 in the
+fragment, so a FAQ question and a Featured card's title land in the "On this
+page" panel next to your real section headings. Fine on a page that is mostly
+prose; noisy on a page of blocks. It is off by default for that reason.
+
+A COVER HERO OVER A BRIGHT PHOTOGRAPH LOSES ITS TAGLINE. The scrim is strongest
+at the top and fades out by 90%, so type sitting low over a bright area (snow,
+sky) goes white-on-white. Visible in stress_test_hero.html. Either move the
+photo, use the light-scrim variant, or keep the copy short and high.
+
+HTML COMMENTS CANNOT NEST. The first close-comment sequence inside a comment
+ends it, and everything after that renders on the page as visible text. This
+bites when you paste an example of a commented block INTO an explanatory
+comment - _template.html shipped exactly that bug. If you must quote one inside
+another, do not type the closing sequence.
+
+THE .prose SCOPE. `.prose .rvry-grid` is scoped, so a hand-written markdown-style
+image grid outside a .prose wrapper is completely unstyled.
+
+--------------------------------------------------------------------------------
   TWO THINGS THAT WILL CATCH YOU OUT
 --------------------------------------------------------------------------------
 1. `npm start` DOES NOT SEE A NEW FILE.
@@ -136,7 +223,11 @@ Five places, in this order:
 
   1. CUSTOM_POST_DIR in eleventy.config.js
   2. recompile BOTH binaries — eleventy_binary/compile.sh (see the note above)
-  3. the @source line in input.css, or classes used only here get purged
+  3. the @source line in input.css AND the one in input_prose.css - BOTH, see
+     the note beside them. Miss input.css and classes used only here are
+     purged; miss input_prose.css and prose.css (linked SECOND) overrides
+     main.css's responsive variants with its own plain ones, so a class like
+     md:table-cell silently never applies
   4. the live_slugs loop AND the source-published-nothing loop in healthcheck.sh
   5. this file
 
