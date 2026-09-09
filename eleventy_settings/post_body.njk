@@ -1,0 +1,93 @@
+---
+layout: base.njk
+---
+{#
+  Layout for input_custom_post/ — hand-written HTML block posts.
+
+  Sits between base.njk and a raw body fragment. base.njk supplies <!DOCTYPE>,
+  the <head>, nav.njk and footer.njk; this file adds the furniture every notebook
+  post carries — the date, the <h1>, and the back links — so a hand-author writes
+  the BODY ONLY and still gets a page that matches the rest of the Notebook.
+
+  WHY THIS IS NOT post.njk
+  post.njk wraps everything in `.post-container > .prose`, which is correct for
+  markdown and wrong for blocks: a full-bleed hero cannot escape a max-width
+  column. Here {{ content }} is emitted at FULL WIDTH and each block brings its
+  own container. That is the one real difference; the header and footer blocks
+  below are copied from post.njk deliberately so the two page kinds look
+  identical. Change one, change the other.
+
+  A third copy of that header block lives in the page builder, at
+  page_builder_app_v2/src/puck/components/Hero.tsx (staticHeader). Builder pages
+  go to input_build_page/ and use base.njk directly, so they emit it themselves.
+  If those pages ever move to this layout, delete staticHeader rather than
+  keeping two.
+
+  FRONT MATTER THIS LAYOUT READS
+    header: false   omit the date/title/back-link block entirely, for a page
+                    that opens on its own hero and carries its own title.
+    outline: true   add the "On this page" panel, built from the h2/h3 in the
+                    body. Off by default: addAnchors rewrites every heading in
+                    the fragment, including ones inside a hero, which is rarely
+                    what a block page wants.
+  Everything else (title, date, tags, image, description, navScroll,
+  customJsonLd) is read by base.njk, not here.
+#}
+
+{% if outline %}
+{% set body = content | addAnchors %}
+{% set toclist = body | toc %}
+{% else %}
+{% set body = content %}
+{% set toclist = "" %}
+{% endif %}
+
+{% if toclist %}
+{# No-JS article outline: hidden checkbox drives the toggle. Same markup as post.njk. #}
+<input type="checkbox" id="article-outline-toggle" class="article-outline-toggle">
+<aside class="article-outline-panel">
+    <p class="article-outline-heading">On this page</p>
+    {{ toclist | safe }}
+</aside>
+<label for="article-outline-toggle" class="article-outline-btn" title="Toggle outline" aria-label="Toggle outline">
+    <span class="article-outline-icon-open" aria-hidden="true">E</span>
+    <span class="article-outline-icon-close" aria-hidden="true">X</span>
+</label>
+{% endif %}
+
+{% if header != false %}
+{# Date, title, then the back link — the link sits UNDER the title so the first
+   thing on the page is the page's own name. Identical to post.njk. #}
+<div class="post-container pt-24 extra_fade_effect">
+    <div class="mb-8 pb-8 border-b border-neutral-200 dark:border-neutral-800">
+        <time class="text-sm font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider" datetime="{{ date | isoStamp }}">
+            {{ date | readableDate }}
+        </time>
+        <h1 class="text-5xl md:text-6xl text-zinc-900 dark:text-white mt-4 mb-4 uppercase tracking-wider">
+            {{ title }}
+        </h1>
+        <a href="/notebook.html" class="inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider">
+           ← Back to Notebook
+        </a>
+    </div>
+</div>
+{% endif %}
+
+{# FULL WIDTH on purpose — see the note at the top. Each block supplies its own
+   container: .post-container for a text column, nothing for a full-bleed one. #}
+{{ body | safe }}
+
+<div class="post-container pt-24">
+  <hr>
+  <div class="py-2">
+    <time class="text-sm font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider" datetime="{{ date | isoStamp }}">
+        {{ date | readableDate }}
+    </time>
+  </div>
+</div>
+
+<div class="post-container pt-6 pb-12">
+    <a href="/notebook.html" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">
+      ← NOTEBOOK FRONT PAGE
+    </a>
+</div>

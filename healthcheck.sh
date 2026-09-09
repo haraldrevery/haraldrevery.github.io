@@ -380,7 +380,7 @@ is_draft() { fm "$1" | grep -qi '^draft:[[:space:]]*true[[:space:]]*$'; }
 
 # Every slug and tag a LIVE (non-draft) source is allowed to publish.
 : > "$TMP/live_slugs"; : > "$TMP/live_tags"
-for src in input_markdown/*.md input_custom_html_pages/*.html input_build_page/*.njk; do
+for src in input_markdown/*.md input_custom_html_pages/*.html input_build_page/*.njk input_custom_post/*.html; do
     [ -f "$src" ] || continue
     is_draft "$src" && continue
     b=$(basename "$src"); printf '%s\n' "${b%.*}" >> "$TMP/live_slugs"
@@ -407,6 +407,23 @@ for f in notebook_pages/*.html; do
             grep -qxF "$b" "$TMP/live_slugs" \
                 || printf '%s   source is draft, renamed or deleted\n' "$f" >> "$TMP/orphan" ;;
     esac
+done
+
+# The reverse of the orphan check: a LIVE source that published no page at all.
+#
+# Nothing else catches this, and it has one likely cause: the standalone
+# binaries bundle eleventy.config.js, so a binary compiled before an input
+# folder existed silently publishes none of that folder's pages. No error, no
+# output, just a missing post. Recompile with eleventy_binary/compile.sh.
+#
+# Only folders whose slug maps 1:1 onto notebook_pages/<slug>.html are listed.
+: > "$TMP/unpublished"
+for src in input_markdown/*.md input_custom_html_pages/*.html input_build_page/*.njk input_custom_post/*.html; do
+    [ -f "$src" ] || continue
+    is_draft "$src" && continue
+    b=$(basename "$src"); b=${b%.*}
+    [ -f "notebook_pages/$b.html" ] \
+        || printf '%s   published no page - rebuild, and if that does not fix it, recompile the binary\n' "$src" >> "$TMP/unpublished"
 done
 
 # release/<slug>.html <- input_release/*.json ("_" prefix = draft, as in the config)
@@ -441,6 +458,7 @@ section "$TMP/missing" "broken references (missing file)"            error
 section "$TMP/case"    "case-only mismatch (breaks on GitHub Pages)" error
 
 section "$TMP/orphan"  "orphaned build output (still live, no live source)" error
+section "$TMP/unpublished" "live source that published no page (stale binary?)"  error
 
 printf '\n%sSize budgets%s\n' "$BLD" "$RST"
 section "$TMP/big_used"   "images over ${IMG_MAX_KB} kB, used on a live page" warn
@@ -452,7 +470,7 @@ printf '\n%s---%s\n' "$DIM" "$RST"
 if [ "$errors" -gt 0 ] || [ "$warnings" -gt 0 ]; then
     printf '%d error(s), %d warning(s)\n' "$errors" "$warnings"
     printf '%snotebook_pages/ and release/ are build output - fix findings there in\n' "$DIM"
-    printf 'input_custom_html_pages/, input_markdown/, input_build_page/, eleventy_njk/ or\neleventy_settings/,\n'
+    printf 'input_custom_html_pages/, input_markdown/, input_build_page/, input_custom_post/,\neleventy_njk/ or eleventy_settings/,\n'
     printf 'then rebuild with ./eleventy-linux-x64%s\n' "$RST"
 else
     printf '%sAll checks passed.%s\n' "$GRN" "$RST"

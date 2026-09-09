@@ -24,6 +24,35 @@ To get the blog ("notebook") have a nice structure and so on, I used Eleventy to
 * Math.js [Website](https://mathjs.org/), [Github](https://github.com/josdejong/mathjs)
 * jsPDF [Website](https://parall.ax/products/jspdf), [Github](https://github.com/parallax/jsPDF)
 
+### Where notebook posts come from
+
+Four input folders, all publishing to `notebook_pages/<slug>.html`. A slug may
+live in exactly one of them; the build stops if two claim the same name.
+
+| Folder | Source file | Use it for |
+| --- | --- | --- |
+| `input_markdown/` | `.md` | articles that are mostly words |
+| `input_custom_post/` | `.html` body fragment | hand-written block posts |
+| `input_build_page/` | `.njk` body fragment | page-builder exports |
+| `input_custom_html_pages/` | complete `.html` document | the browser apps and rare one-offs |
+
+The first three are **fragments**: the `<head>`, the nav and the footer are added
+by the layouts in `eleventy_settings/` at build time, so changing the nav once
+reaches every one of those pages on the next build. Only
+`input_custom_html_pages/` carries its own copy of that chrome, which is correct
+for a standalone app and is why that folder still exists — but it does mean those
+pages have to be edited by hand when the nav changes. Prefer `input_custom_post/`
+for anything that is an article rather than an application.
+
+To write one, copy blocks out of `input_custom_post/_template.html` and read
+`input_custom_post/README.txt`. Longer background, and the reasoning behind the
+formats, is in `information/INPUT_CUSTOM_POSTS.md`.
+
+Note that `eleventy.config.js` is compiled INTO the standalone binaries. If you
+change it, recompile with `eleventy_binary/compile.sh` — otherwise the binary
+keeps building from its own stale copy, and new pages silently do not appear.
+`./healthcheck.sh` reports that case as "live source that published no page".
+
 ## Revery Notebook (markdown editor)
 For the text editor I used CodeMirror, markdown-it and KaTeX to get the markdown and latex syntax to render and work correctly. I used highlight.js to make code blocks have colors for different programming languages. DOMPurify is used to some safety precautions.
 

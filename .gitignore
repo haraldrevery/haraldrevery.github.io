@@ -36,3 +36,6 @@ eleventy-win-x64.exe
 # NOTE: intentionally NOT ignored (must stay committed):
 #   - Built output: main.css, main_max.css, prose.css, prose_max.css, notebook_pages/
 #     (GitHub Pages serves this folder as-is; there is no CI build step)
+
+# delete later
+website_hrldthrslnd/

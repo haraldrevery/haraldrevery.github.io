@@ -66,3 +66,10 @@ eleventy_binary/
 # an endless loop (~19 rebuilds/5s, measured). The file is still generated
 # normally; ignoring it only keeps Eleventy from reading its own output back in.
 search-index.json
+
+# The reference site checkout, kept temporarily for comparison. It is a WHOLE
+# OTHER Eleventy project: its eleventy_njk/*.njk use filters that only its own
+# config defines, so without this line the build dies with "filter not found:
+# absolute" on website_hrldthrslnd/eleventy_njk/feed.njk. Delete this entry
+# together with the folder.
+website_hrldthrslnd/
