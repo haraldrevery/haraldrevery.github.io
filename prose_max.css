@@ -391,9 +391,6 @@
   .my-12 {
     margin-block: calc(var(--spacing) * 12);
   }
-  .my-16 {
-    margin-block: calc(var(--spacing) * 16);
-  }
   .prose {
     color: var(--tw-prose-body);
     max-width: 65ch;

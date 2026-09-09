@@ -16,7 +16,6 @@
 
 @source "./*.html";
 @source "./input_custom_html_pages/**/*.{html,md}";
-@source "./input_build_page/**/*.njk";
 @source "./input_custom_post/**/*.html";
 @source "./notebook_templates/**/*.{html,md}";
 @source "./eleventy_njk/**/*.njk";

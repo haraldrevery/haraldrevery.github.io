@@ -55,6 +55,10 @@ describe("frontmatter", () => {
         'tags: ["photography"]\n' +
         'image: "/notebook_thumbnails/g_min.jpg"\n' +
         'description: "Photos from a hike."\n' +
+        // post_body.njk skips its own date/<h1>/back-link block when this is
+        // set. The page emits that block itself (staticHeader), or carries a
+        // hero that does; without the flag the published page gets two.
+        'header: false\n' +
         // base.njk suppresses its own articleLd block when this is set, so the
         // page's resolved schema type (BlogPosting/ImageGallery/FAQPage) wins.
         'customJsonLd: true\n' +

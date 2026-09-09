@@ -57,16 +57,17 @@ div's closing tag.
 --------------------------------------------------------------------------------
 HERE          Notebook posts written by hand out of HTML blocks.
 
+HERE ALSO     Page-builder exports. page_builder_app_v2 writes .html fragments
+              into this folder. They carry `header: false`, because the app
+              emits its own date/<h1>/back-link block; everything else is the
+              same file shape you would write by hand.
+
 NOT HERE      Complete standalone <html> documents — the browser apps
               (rvry_ascii, clock_and_date, 1dgraph, 2dphaseportrait,
               event_card, color_theme). Those genuinely need their own <head>
               and their own scripts. They stay in input_custom_html_pages/ and
               are copied verbatim, exactly as before. Nothing about that folder
               changed, and it is not going away.
-
-NOT HERE      Page-builder exports. Those go to input_build_page/ as .njk
-              fragments and use base.njk directly. Same idea, different
-              producer.
 
 NOT HERE      Prose-first posts. Markdown in input_markdown/ is less work for
               an article that is mostly words, and it gets the image grid,
@@ -75,8 +76,7 @@ NOT HERE      Prose-first posts. Markdown in input_markdown/ is less work for
 --------------------------------------------------------------------------------
   ONE SLUG, ONE FOLDER
 --------------------------------------------------------------------------------
-input_markdown/, input_custom_html_pages/, input_build_page/ and this folder
-ALL publish to notebook_pages/<slug>.html. A slug may exist in exactly one of
+input_markdown/, input_custom_html_pages/ and this folder ALL publish to notebook_pages/<slug>.html. A slug may exist in exactly one of
 them. Two would each write the same file, so the build stops with a "Slug
 collision" error naming both — that check is in eleventy.config.js and it is
 there because the failure it prevents (a page silently overwritten, differently
@@ -106,15 +106,16 @@ customJsonLd  true = base.njk does not emit its own Article JSON-LD, because
               the page carries its own. Leave it off unless you wrote one.
 
 --------------------------------------------------------------------------------
-  WHY .html HERE WORKS, WHEN IT DOES NOT IN input_build_page/
+  WHY .html WORKS HERE AT ALL
 --------------------------------------------------------------------------------
 Worth knowing before changing anything, because it looks like an inconsistency.
 
 "html" is NOT in Eleventy's templateFormats, so a .html file is never picked up
 as a template. It cannot be added either: dir.input and dir.output are both the
 repo root, so every HTML file in the project would become a template and
-Eleventy would start reading its own output back in. input_build_page/ works
-around that by naming its files .njk.
+Eleventy would start reading its own output back in. (The folder this one
+replaced, input_build_page/, worked around that by naming its files .njk — which
+is most of why it is gone.)
 
 This folder takes the other route. eleventy.config.js reads these .html files
 from disk itself and registers each one with eleventyConfig.addTemplate() under

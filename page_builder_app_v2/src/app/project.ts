@@ -153,9 +153,11 @@ export async function buildExport(
     html: `${heroHtml}\n${headerHtml}\n${contentHtml}`,
   });
 
-  // .njk, not .html: input_build_page/ files are Eleventy templates. "html" is
-  // not in templateFormats, so a .html file there would never be picked up.
-  return { slug, fileName: `${slug}.njk`, contents, issues };
+  // .html: input_custom_post/ files are read from disk by eleventy.config.js and
+  // registered with addTemplate(), so the extension is free. (It was .njk while
+  // exports went to input_build_page/, where the file had to be a real Eleventy
+  // template and "html" is not in templateFormats.)
+  return { slug, fileName: `${slug}.html`, contents, issues };
 }
 
 // ------------------------------------------------------------------ preview
@@ -207,7 +209,7 @@ export interface StandaloneBundle {
  *
  * Sits between the other two builders on purpose:
  *
- *   buildExport    fragment + front matter -> input_build_page/, Eleventy wraps
+ *   buildExport    fragment + front matter -> input_custom_post/, Eleventy wraps
  *   buildStandalone whole document -> wherever the user points the save dialog
  *   buildPreview   whole document -> memory, never written
  *

@@ -276,7 +276,7 @@ export default function App() {
   /*
    * Save the page as one standalone .html file, wherever the Save dialog is
    * pointed. Deliberately NOT the front-matter fragment Export writes: this is
-   * a whole document, it goes outside input_build_page/, and it is not what
+   * a whole document, it goes outside input_custom_post/, and it is not what
    * publishes the page.
    *
    * No slug prompt and no page-check gate, unlike runExport. The dialog IS the

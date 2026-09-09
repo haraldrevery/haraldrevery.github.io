@@ -73,3 +73,13 @@ search-index.json
 # absolute" on website_hrldthrslnd/eleventy_njk/feed.njk. Delete this entry
 # together with the folder.
 website_hrldthrslnd/
+
+# TOMBSTONE. input_build_page/ was removed — input_custom_post/ does the same
+# job with .html files. The page builder app still writes .njk exports here
+# until page_builder_app_v2 is pointed at the new folder, and a .njk under the
+# input root IS a template: without the directory data file that used to sit
+# beside it, "{% ... %}" fails the build outright ("unknown block tag") and
+# "{{ ... }}" is silently rendered as empty, so a KaTeX \frac{{a}}{{b}} would
+# publish as "\frac". This line makes a stray export inert instead. Delete it
+# once the builder writes to input_custom_post/.
+input_build_page/

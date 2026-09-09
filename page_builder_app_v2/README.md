@@ -2,7 +2,7 @@
 
 Desktop app (Tauri v2) for building Notebook pages visually, rewritten on
 [Puck](https://puckeditor.com). The preview renders with the **real site CSS and
-fonts**, and finished pages export into `input_build_page/` where Eleventy
+fonts**, and finished pages export into `input_custom_post/` where Eleventy
 picks them up.
 
 **Exports are body FRAGMENTS, not whole documents.** Eleventy wraps each one in
@@ -131,15 +131,21 @@ plumbing went away.
 - **Export HTML…** (toolbar) saves the page as one complete `<!DOCTYPE>`
   document, wherever the native Save dialog is pointed. See "Standalone HTML
   export" below. This is the side errand, not the publishing path.
-- Export writes `input_build_page/<slug>.njk`: YAML front matter plus the body
+- Export writes `input_custom_post/<slug>.html`: YAML front matter plus the body
   fragment — hero, content, date block and back link, and nothing else. Eleventy
-  renders it through `base.njk` to `notebook_pages/<slug>.html`.
-  The extension is `.njk` because `html` is not in Eleventy's `templateFormats`,
-  so a `.html` file there would never be picked up as a template. The directory
-  data file sets `templateEngineOverride: false`, so the body is emitted verbatim
-  and is never parsed as a template — which is what lets a page contain `{{`,
-  `{%` or KaTeX braces such as `\frac{{a}}{{b}}` without breaking the build.
-  `input_build_page/_brace_test.njk` is the regression fixture for that.
+  renders it through `post_body.njk` and `base.njk` to
+  `notebook_pages/<slug>.html`.
+  The extension is `.html` even though `html` is not in Eleventy's
+  `templateFormats`: `eleventy.config.js` reads the folder itself and registers
+  each file with `addTemplate()` under a virtual `.njk` input path, passing
+  `templateEngineOverride: false`. So the body is emitted verbatim and is never
+  parsed as a template — which is what lets a page contain `{{`, `{%` or KaTeX
+  braces such as `\frac{{a}}{{b}}` without breaking the build.
+  `input_custom_post/_template.html` is the regression fixture for that.
+  Export also writes `header: false`, because this app emits its own
+  date/`<h1>`/back-link block and `post_body.njk` would otherwise emit a second
+  one. This folder used to be `input_build_page/`, whose files had to be `.njk`;
+  the two folders were redundant and it was removed.
   Two front-matter flags are read by `base.njk`, not by this app: `navScroll`
   (adds `.navi_mechanic` and loads `navbar_scroll_min.js` together) and
   `customJsonLd` (suppresses base.njk's Article block so this page's own
@@ -304,8 +310,8 @@ Everything is isolated so a v2 bug cannot damage v1:
 | `shell.html` | its own, hand-maintained | GENERATED build output, preview only |
 
 The export target is no longer shared: v1 still writes whole documents to
-`input_custom_html_pages/`, v2 writes body fragments to `input_build_page/`. Both are front ends
-for the same Eleventy input.
+`input_custom_html_pages/`, v2 writes body fragments to `input_custom_post/`. Both
+are front ends for the same Eleventy input.
 
 **Project formats are incompatible.** v1 stores `{version:1, meta, blocks}`, v2
 stores `{version:2, exportSlug, data}` where `data` is Puck's. v2 refuses to open
@@ -477,8 +483,8 @@ from Puck's history by default, so the dispatch passes `recordHistory`).
 content, footer — to wherever the native Save dialog is pointed. It is for
 archive copies and for handing a page to someone; it does not publish anything.
 
-- It does NOT go into `input_build_page/` (Eleventy would try to template a
-  whole document) and deliberately not into `input_custom_html_pages/` either,
+- It does NOT go into `input_custom_post/` (Eleventy would wrap a whole document
+  in the site layout a second time) and deliberately not into `input_custom_html_pages/` either,
   even though that is where v1 wrote and where the site keeps standalone
   documents. Eleventy publishes that folder, so a page exported both ways would
   go live twice, under two URLs, with two canonicals pointing at one of them.

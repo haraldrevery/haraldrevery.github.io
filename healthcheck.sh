@@ -380,7 +380,7 @@ is_draft() { fm "$1" | grep -qi '^draft:[[:space:]]*true[[:space:]]*$'; }
 
 # Every slug and tag a LIVE (non-draft) source is allowed to publish.
 : > "$TMP/live_slugs"; : > "$TMP/live_tags"
-for src in input_markdown/*.md input_custom_html_pages/*.html input_build_page/*.njk input_custom_post/*.html; do
+for src in input_markdown/*.md input_custom_html_pages/*.html input_custom_post/*.html; do
     [ -f "$src" ] || continue
     is_draft "$src" && continue
     b=$(basename "$src"); printf '%s\n' "${b%.*}" >> "$TMP/live_slugs"
@@ -418,7 +418,7 @@ done
 #
 # Only folders whose slug maps 1:1 onto notebook_pages/<slug>.html are listed.
 : > "$TMP/unpublished"
-for src in input_markdown/*.md input_custom_html_pages/*.html input_build_page/*.njk input_custom_post/*.html; do
+for src in input_markdown/*.md input_custom_html_pages/*.html input_custom_post/*.html; do
     [ -f "$src" ] || continue
     is_draft "$src" && continue
     b=$(basename "$src"); b=${b%.*}
@@ -470,7 +470,7 @@ printf '\n%s---%s\n' "$DIM" "$RST"
 if [ "$errors" -gt 0 ] || [ "$warnings" -gt 0 ]; then
     printf '%d error(s), %d warning(s)\n' "$errors" "$warnings"
     printf '%snotebook_pages/ and release/ are build output - fix findings there in\n' "$DIM"
-    printf 'input_custom_html_pages/, input_markdown/, input_build_page/, input_custom_post/,\neleventy_njk/ or eleventy_settings/,\n'
+    printf 'input_custom_html_pages/, input_markdown/, input_custom_post/, eleventy_njk/\nor eleventy_settings/,\n'
     printf 'then rebuild with ./eleventy-linux-x64%s\n' "$RST"
 else
     printf '%sAll checks passed.%s\n' "$GRN" "$RST"

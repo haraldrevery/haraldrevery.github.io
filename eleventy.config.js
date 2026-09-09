@@ -7,32 +7,35 @@ const fs = require("fs");
 const path = require("path");
 const matter = require("gray-matter");
 
-// The five content input folders. Every path below goes through these, so
+// The four content input folders. Every path below goes through these, so
 // renaming an input folder is a one-line change here (plus the Tailwind @source
-// list in input.css, the live_slugs loop in healthcheck.sh, and a recompile of
-// the standalone Eleventy binaries, which bundle this file — see
+// lists in input.css AND input_prose.css, the two loops in healthcheck.sh, and
+// a recompile of the standalone Eleventy binaries, which bundle this file — see
 // eleventy_binary/README.md).
+//
+// There used to be a fifth, input_build_page/, holding page-builder exports as
+// .njk body fragments. input_custom_post/ does the same job with .html files
+// and a nicer layout, so the two were redundant and it was removed. The page
+// builder still has to be pointed here; until it is, .eleventyignore carries a
+// tombstone entry so a stale build of that app cannot break this one.
 const HTML_PAGES_DIR = "./input_custom_html_pages";  // standalone .html apps + one-offs
 const MARKDOWN_DIR = "input_markdown";               // matched as a substring of inputPath
-const BUILD_PAGE_DIR = "input_build_page";           // page-builder exports (body fragments)
-const CUSTOM_POST_DIR = "input_custom_post";         // hand-written .html block posts
+const CUSTOM_POST_DIR = "input_custom_post";         // .html block posts, hand-written or exported
 const RELEASE_DIR = "./input_release";               // one .json/.jsonc per release
 
 // A notebook post whose source is a real Eleventy template — markdown in
-// input_markdown/, a page-builder fragment in input_build_page/, or a
-// hand-written block post in input_custom_post/ (registered as a virtual
-// template further down). All three arrive through collectionApi.getAll() with
-// their front matter already parsed, so they need none of the synthetic-item
-// machinery that HTML_PAGES_DIR does (those files are not templates at all;
-// they are copied verbatim by the eleventy.before hook and read off disk with
-// gray-matter further down).
+// input_markdown/, or a block post in input_custom_post/ (registered as a
+// virtual template further down). Both arrive through collectionApi.getAll()
+// with their front matter already parsed, so they need none of the
+// synthetic-item machinery that HTML_PAGES_DIR does (those files are not
+// templates at all; they are copied verbatim by the eleventy.before hook and
+// read off disk with gray-matter further down).
 //
-// Substring match, so the three names must stay mutually non-overlapping.
+// Substring match, so the two names must stay mutually non-overlapping.
 // "input_custom_post" is NOT a substring of "input_custom_html_pages" — check
 // that again before renaming either one.
 const isTemplatePost = (item) =>
   (item.inputPath.includes(MARKDOWN_DIR) ||
-   item.inputPath.includes(BUILD_PAGE_DIR) ||
    item.inputPath.includes(CUSTOM_POST_DIR)) &&
   item.data.draft !== true;
 
@@ -370,8 +373,9 @@ module.exports = function(eleventyConfig) {
   // a .html here: "html" is not in templateFormats, and it CANNOT be added,
   // because dir.input and dir.output are both the repo root — every HTML file
   // in the project would become a template and Eleventy would read its own
-  // output back in. input_build_page/ works around that by naming its files
-  // .njk. addTemplate() is the way to keep the .html extension: the file is
+  // output back in. (The old input_build_page/ worked around that by naming
+  // its files .njk, which is exactly the awkwardness this replaces.)
+  // addTemplate() is the way to keep the .html extension: the file is
   // read from disk here and handed to Eleventy under a virtual .njk inputPath
   // that no real file occupies.
   //
@@ -1068,8 +1072,9 @@ module.exports = function(eleventyConfig) {
     if (fs.existsSync(htmlPagesDir)) {
       const files = fs.readdirSync(htmlPagesDir).filter(file => file.endsWith('.html'));
 
-      // Two unrelated mechanisms now write notebook_pages/<slug>.html: this
-      // verbatim fs copy, and a real Eleventy template from input_build_page/.
+      // Two unrelated mechanisms write notebook_pages/<slug>.html: this
+      // verbatim fs copy, and the real templates from input_markdown/ and
+      // input_custom_post/.
       // Eleventy's own duplicate-output guard (TemplateMap) only compares INPUT
       // TEMPLATES, so it cannot see this copy — the two would silently clobber
       // each other, with the winner decided by whether the hook or the write
@@ -1088,11 +1093,11 @@ module.exports = function(eleventyConfig) {
         );
       };
       const htmlSlugs = files.map(f => f.slice(0, -'.html'.length));
-      // CUSTOM_POST_DIR is in this list for the same reason BUILD_PAGE_DIR is:
-      // its pages are virtual templates, so Eleventy's TemplateMap guard covers
-      // a clash with input_markdown/ or input_build_page/, but it cannot see the
-      // verbatim fs copy below and would let the two silently overwrite.
-      for (const [dir, ext] of [[BUILD_PAGE_DIR, '.njk'], [MARKDOWN_DIR, '.md'], [CUSTOM_POST_DIR, '.html']]) {
+      // CUSTOM_POST_DIR is in this list because its pages are virtual
+      // templates: Eleventy's own TemplateMap guard catches a clash with
+      // input_markdown/, but it cannot see the verbatim fs copy below and would
+      // let this folder and that one silently overwrite each other.
+      for (const [dir, ext] of [[MARKDOWN_DIR, '.md'], [CUSTOM_POST_DIR, '.html']]) {
         const other = slugsIn(dir, ext);
         const clashes = htmlSlugs.filter(slug => other.has(slug));
         if (clashes.length) {

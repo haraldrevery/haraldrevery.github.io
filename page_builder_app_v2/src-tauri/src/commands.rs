@@ -10,20 +10,32 @@ use crate::{repo, AppState};
 const SITE_URL: &str = "https://haraldrevery.com";
 
 /// Repo folder that exported pages are written to (Eleventy reads it as
-/// BUILD_PAGE_DIR in eleventy.config.js). Renaming that folder = change this
+/// CUSTOM_POST_DIR in eleventy.config.js). Renaming that folder = change this
 /// one line and rebuild.
 ///
 /// Pages here are BODY FRAGMENTS with YAML front matter, not whole documents.
-/// Eleventy wraps each one in eleventy_settings/base.njk, which supplies the
-/// <head>, nav.njk and footer.njk at build time. The extension is .njk because
-/// "html" is not in Eleventy's templateFormats, so a .html file here would never
-/// be picked up as a template — and the directory data file sets
-/// templateEngineOverride: false so the body is emitted verbatim and never
-/// parsed as a template.
+/// Eleventy wraps each one in eleventy_settings/post_body.njk and base.njk,
+/// which supply the <head>, nav.njk and footer.njk at build time.
+///
+/// The extension is .html. eleventy.config.js reads these files from disk
+/// itself and registers each with addTemplate() under a virtual .njk input
+/// path, passing templateEngineOverride: false — so the body is emitted
+/// verbatim, never parsed as a template, and the file on disk keeps the
+/// extension a human would expect.
+///
+/// This folder used to be input_build_page/ and the files had to be .njk,
+/// because "html" is not in Eleventy's templateFormats and a .html there would
+/// never have been picked up. The virtual-template route removed that
+/// constraint, the two folders became redundant, and input_build_page/ was
+/// deleted.
+///
+/// Exports MUST carry `header: false` in their front matter (export.ts sets
+/// it): this app emits its own date/<h1>/back-link block, and post_body.njk
+/// emits one too unless told not to.
 ///
 /// input_custom_html_pages/ still exists for complete standalone documents (the
 /// browser apps and rare one-offs); this app no longer writes there.
-const BUILD_PAGE_DIR: &str = "input_build_page";
+const CUSTOM_POST_DIR: &str = "input_custom_post";
 
 /// This app's own folder inside the repo — holds `projects/` and `shell.html`.
 /// Deliberately NOT shared with v1's `page_builder/`: the project formats are
@@ -464,10 +476,10 @@ pub fn export_page(
     contents: String,
     overwrite: bool,
 ) -> Result<ExportResult, String> {
-    if file_name.contains('/') || file_name.contains('\\') || !file_name.ends_with(".njk") {
-        return Err("Export file name must be a plain *.njk name".to_string());
+    if file_name.contains('/') || file_name.contains('\\') || !file_name.ends_with(".html") {
+        return Err("Export file name must be a plain *.html name".to_string());
     }
-    let dir = repo_root(&state)?.join(BUILD_PAGE_DIR);
+    let dir = repo_root(&state)?.join(CUSTOM_POST_DIR);
     fs::create_dir_all(&dir).map_err(|e| format!("Cannot create {}: {e}", dir.display()))?;
     let file = dir.join(&file_name);
     let existed = file.exists();
@@ -491,7 +503,7 @@ pub fn export_page(
  * native Save dialog. None = the dialog was cancelled.
  *
  * The ONLY write this app makes outside the repo, and deliberately so. The
- * normal export writes a body fragment into input_build_page/ for Eleventy to
+ * normal export writes a body fragment into input_custom_post/ for Eleventy to
  * wrap, and a whole document has no place there. It has no place in
  * input_custom_html_pages/ either, even though that is where v1 wrote and where
  * the site keeps standalone documents: Eleventy publishes that folder, so a page

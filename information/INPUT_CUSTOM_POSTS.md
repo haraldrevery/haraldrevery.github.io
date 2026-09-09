@@ -18,8 +18,7 @@ file contains and how much of the page it owns.
 | Folder | Source file | Chrome comes from | Use it for |
 |---|---|---|---|
 | `input_markdown/` | `.md` | `post.njk` → `base.njk` | prose-first articles |
-| `input_custom_post/` | `.html` fragment | `post_body.njk` → `base.njk` | **hand-written block posts** |
-| `input_build_page/` | `.njk` fragment | `base.njk` | page-builder exports |
+| `input_custom_post/` | `.html` fragment | `post_body.njk` → `base.njk` | **block posts — hand-written or page-builder** |
 | `input_custom_html_pages/` | `.html` **whole document** | itself | browser apps, one-offs |
 
 Only the last one freezes its own nav and footer, and it does so on purpose:
@@ -59,13 +58,12 @@ Write blocks by copying them out of `_template.html`. Read
 
 ### Why the files can be `.html` here
 
-This looks inconsistent with `input_build_page/`, which had to use `.njk`, so it
-is worth writing down.
+Worth writing down, because the folder this one replaced could not.
 
 `"html"` is not in Eleventy's `templateFormats`, and it cannot be added:
 `dir.input` and `dir.output` are both the repo root, so every HTML file in the
 project would become a template and Eleventy would read its own output back in.
-`input_build_page/` works around that by naming its files `.njk`.
+The old `input_build_page/` worked around that by naming its files `.njk`.
 
 This folder takes the other route. `eleventy.config.js` reads the `.html` files
 itself and registers each with `eleventyConfig.addTemplate()` under a **virtual**
@@ -170,7 +168,7 @@ Both are **complete Tailwind builds**, each with its own `@source` list. So
 `prose.css`, arriving second, can override `main.css` — and it does whenever it
 emits a plain utility whose responsive variant only `main.css` has.
 
-`input_prose.css` listed neither `input_build_page/` nor `input_custom_post/`.
+`input_prose.css` listed neither the old `input_build_page/` nor `input_custom_post/`.
 The concrete symptom: the page builder's Downloads block emits
 `hidden md:table-cell` on its SHA-256 column. `main.css` had `.md\:table-cell`;
 `prose.css` had `.hidden` but not `.md\:table-cell`, so the later `.hidden` won
@@ -270,19 +268,23 @@ before deleting the original.
 
 ## 6. Two loose ends found on the way
 
-**`input_build_page/` is deleted in the working tree.** Uncommitted:
+**`input_build_page/` is gone.** It held page-builder exports as `.njk`
+fragments and did the same job this folder does, so the two were redundant. It
+has been removed from `eleventy.config.js`, both Tailwind `@source` lists,
+`healthcheck.sh` and the docs; the page builder (`commands.rs`, `project.ts`,
+`export.ts`) now writes `.html` into `input_custom_post/` and sets
+`header: false`, because it emits its own date/`<h1>`/back-link block and
+`post_body.njk` would otherwise emit a second one. Its 270 tests pass and
+`cargo check` is clean, but **the app binary still has to be rebuilt** — see
+that project's README.
 
-```
- D input_build_page/README.txt
- D input_build_page/_brace_test.njk
- D input_build_page/input_build_page.11tydata.js
-```
-
-Nothing published came from it, so the site builds — but the page builder still
-writes there (`page_builder_app_v2/src-tauri/src/commands.rs`), and `input.css`
-and `healthcheck.sh` still reference it. Either `git restore input_build_page/`,
-or decide the builder should target `input_custom_post/` instead and change it
-deliberately. Right now it is neither.
+`.eleventyignore` carries a tombstone entry for `input_build_page/`. That is
+deliberate: an old build of the page builder still writes `.njk` there, and a
+`.njk` under the input root IS a template — `{% ... %}` fails the build with
+`unknown block tag`, and `{{ ... }}` renders as empty, so a KaTeX
+`\frac{{a}}{{b}}` would publish as `\frac`. Verified both. The ignore line makes
+a stray export inert instead. Delete it once every machine is running a rebuilt
+app.
 
 **`website_hrldthrslnd/` broke the build.** It is a whole other Eleventy project;
 its `eleventy_njk/*.njk` use filters only its own config defines, so Eleventy

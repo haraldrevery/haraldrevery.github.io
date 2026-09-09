@@ -2,7 +2,7 @@
  * Export pipeline. Three outputs, one body:
  *
  *   exportText          YAML front matter + the body FRAGMENT. What Export
- *                       writes to input_build_page/; Eleventy strips the front
+ *                       writes to input_custom_post/; Eleventy strips the front
  *                       matter, wraps the body in base.njk and emits
  *                       notebook_pages/<slug>.html.
  *   assembleDocument    the same fragment inside shell.html. PREVIEW only.
@@ -123,6 +123,13 @@ export function frontmatterYaml(meta: PageMeta, navScroll = false): string {
    *              matter. Two competing Article entities would be worse than one.
    */
   if (navScroll) lines.push("navScroll: true");
+  /*
+   * header: false - this page supplies its own date/<h1>/back-link block, from
+   * staticHeader() below (or from its hero, which carries both). Without this
+   * flag eleventy_settings/post_body.njk emits that block too and the published
+   * page gets two of each. Not optional: every export needs it.
+   */
+  lines.push("header: false");
   lines.push("customJsonLd: true");
   lines.push("---");
   return lines.join("\n");
@@ -255,7 +262,7 @@ export interface AssembleInput {
  * The published BODY FRAGMENT: everything that used to sit between the nav and
  * the footer in shell.html, and nothing else.
  *
- * This is what export writes to input_build_page/. The document around it —
+ * This is what export writes to input_custom_post/. The document around it —
  * <!DOCTYPE>, <head>, nav, footer — comes from eleventy_settings/base.njk at
  * BUILD time, so a nav or footer change reaches every exported page on the next
  * build. The old exporter filled shell.html, which carried its own frozen copy

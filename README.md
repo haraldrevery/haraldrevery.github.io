@@ -26,17 +26,16 @@ To get the blog ("notebook") have a nice structure and so on, I used Eleventy to
 
 ### Where notebook posts come from
 
-Four input folders, all publishing to `notebook_pages/<slug>.html`. A slug may
+Three input folders, all publishing to `notebook_pages/<slug>.html`. A slug may
 live in exactly one of them; the build stops if two claim the same name.
 
 | Folder | Source file | Use it for |
 | --- | --- | --- |
 | `input_markdown/` | `.md` | articles that are mostly words |
-| `input_custom_post/` | `.html` body fragment | hand-written block posts |
-| `input_build_page/` | `.njk` body fragment | page-builder exports |
+| `input_custom_post/` | `.html` body fragment | block posts, hand-written or page-builder exports |
 | `input_custom_html_pages/` | complete `.html` document | the browser apps and rare one-offs |
 
-The first three are **fragments**: the `<head>`, the nav and the footer are added
+The first two are **fragments**: the `<head>`, the nav and the footer are added
 by the layouts in `eleventy_settings/` at build time, so changing the nav once
 reaches every one of those pages on the next build. Only
 `input_custom_html_pages/` carries its own copy of that chrome, which is correct
