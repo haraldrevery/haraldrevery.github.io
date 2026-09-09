@@ -31,7 +31,9 @@ const eleventyPkgShim = {
 
 for (const [target, outfile] of [
   ["bun-linux-x64", "../eleventy-linux-x64"],
+  ["bun-linux-arm64", "../eleventy-linux-arm64"],
   ["bun-windows-x64", "../eleventy-win-x64.exe"],
+  ["bun-windows-arm64", "../eleventy-win-arm64.exe"],
 ]) {
   const result = await Bun.build({
     entrypoints: [path.join(here, "runner.mjs")],

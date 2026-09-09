@@ -32,6 +32,8 @@ tw.exe
 # eleventy_binary/compile.sh — see eleventy_binary/README.md.
 eleventy-linux-x64
 eleventy-win-x64.exe
+eleventy-linux-arm64
+eleventy-win-arm64.exe
 
 # NOTE: intentionally NOT ignored (must stay committed):
 #   - Built output: main.css, main_max.css, prose.css, prose_max.css, notebook_pages/
