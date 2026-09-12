@@ -3262,6 +3262,63 @@ a.featured-card__media:hover img {
   .featured-card__panel { box-shadow: 0 26px 55px -26px rgba(0, 0, 0, 0.8); }
 }
 
+
+/* ---- Video card (page-builder "Video" block, glass panel on) ----------
+   The player inside the site's frosted panel, with a title and a line of
+   description under it:
+
+     <figure class="preview-card video-card">
+       <video class="w-full rounded-lg">…</video>
+       <figcaption class="video-card__caption">
+         <h2 class="video-card__title">…</h2>
+         <p class="video-card__text">…</p>
+       </figcaption>
+     </figure>
+
+   A CO-CLASS on .preview-card, like .featured-card__panel: padding, radius,
+   border, background, blur and the dark override all come from there. Only
+   the lift shadow and the type are set here. The player keeps rounded-lg
+   (0.5rem) inside the panel's 1rem, so the corners read as nested.
+
+   Either caption line may be missing, so the gap between them hangs off the
+   adjacent-sibling rule rather than a top margin on the paragraph.
+   ---------------------------------------------------------------------- */
+.video-card {
+  box-shadow: 0 22px 45px -22px rgba(0, 0, 0, 0.45);
+}
+
+.video-card__caption {
+  margin-top: 1.25rem;
+}
+
+/* .featured-card__title's recipe, one register down: this labels the video
+   above it rather than headlining the page. */
+.video-card__title {
+  margin: 0;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.05;
+  font-size: clamp(1.35rem, 3.6vw, 1.85rem);
+  overflow-wrap: break-word;
+}
+
+.video-card__text {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: var(--leading-body, 1.5);
+  opacity: 0.7;
+  max-width: 42rem;
+}
+
+.video-card__title + .video-card__text {
+  margin-top: 0.6rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .video-card { box-shadow: 0 26px 55px -26px rgba(0, 0, 0, 0.8); }
+}
+
 /* ======================================================================
    Legal page — third-party license cards (Section 10)
    Emitted by eleventy_settings/license_blocks.njk. The card chrome is

@@ -4807,6 +4807,36 @@ a.featured-card__media:hover img {
     box-shadow: 0 26px 55px -26px rgba(0, 0, 0, 0.8);
   }
 }
+.video-card {
+  box-shadow: 0 22px 45px -22px rgba(0, 0, 0, 0.45);
+}
+.video-card__caption {
+  margin-top: 1.25rem;
+}
+.video-card__title {
+  margin: 0;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.05;
+  font-size: clamp(1.35rem, 3.6vw, 1.85rem);
+  overflow-wrap: break-word;
+}
+.video-card__text {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: var(--leading-body, 1.5);
+  opacity: 0.7;
+  max-width: 42rem;
+}
+.video-card__title + .video-card__text {
+  margin-top: 0.6rem;
+}
+@media (prefers-color-scheme: dark) {
+  .video-card {
+    box-shadow: 0 26px 55px -26px rgba(0, 0, 0, 0.8);
+  }
+}
 .license-badge {
   display: inline-block;
   margin-left: 0.4rem;

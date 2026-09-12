@@ -84,6 +84,10 @@ const onOff = (label: string) => ({
   ],
 });
 
+/// The Video block's caption field in its two guises — see its resolveFields.
+const VIDEO_CAPTION = { type: "text" as const, label: "Caption" };
+const VIDEO_DESCRIPTION = { type: "textarea" as const, label: "Description" };
+
 export const config: Config<{ components: Components; root: RootProps }> = {
   root: {
     render: PageRoot,
@@ -350,10 +354,26 @@ export const config: Config<{ components: Components; root: RootProps }> = {
       fields: {
         src: pathField("video", "video", "Video file"),
         poster: pathField("image", "photos", "Poster image"),
-        caption: { type: "text", label: "Caption" },
+        panel: onOff("Glass panel"),
+        title: { type: "text", label: "Title" },
+        caption: VIDEO_CAPTION,
         spacing: spacingField,
       },
-      defaultProps: { src: "", poster: "", caption: "", spacing: "normal" },
+      // With the panel on, the caption is the description paragraph under the
+      // title, so it becomes a textarea labelled as such. Same prop either way,
+      // which is what keeps the text when the panel is toggled. `!== false`
+      // matches the component: a missing prop means the panel.
+      resolveFields: (data, { fields }) => {
+        const panel = data.props.panel !== false;
+        return {
+          ...fields,
+          title: { ...fields.title, visible: panel },
+          caption: panel ? VIDEO_DESCRIPTION : VIDEO_CAPTION,
+        };
+      },
+      defaultProps: {
+        src: "", poster: "", panel: true, title: "", caption: "", spacing: "normal",
+      },
       render: Video,
     },
 

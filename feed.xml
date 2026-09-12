@@ -6,7 +6,7 @@
     <description>Music releases, personal notes, essays and interactive experiments on music, mathematics, physics and photography.</description>
     <language>en-us</language>
     <copyright>Harald Revery</copyright>
-    <lastBuildDate>Fri, 28 Aug 2026 00:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 09 Sep 2026 00:00:00 GMT</lastBuildDate>
     <atom:link href="https://haraldrevery.com/feed.xml" rel="self" type="application/rss+xml" />
     
     <image>
@@ -16,6 +16,16 @@
       <width>96</width>
       <height>96</height>
     </image>
+    <item>
+      <title>Stress test — every block</title>
+      <link>https://haraldrevery.com/notebook_pages/stress_test</link>
+      <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/stress_test</guid>
+      <pubDate>Wed, 09 Sep 2026 00:00:00 GMT</pubDate>
+      <description>One page carrying every block the page builder can emit, hand-written, to prove the input_custom_post pipeline renders them all.</description>
+      <category>notebook</category>
+      <category>test</category>
+      <enclosure url="https://haraldrevery.com/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top_min.jpg" length="51507" type="image/jpeg" />
+    </item>
     <item>
       <title>Things to do with LLMs</title>
       <link>https://haraldrevery.com/notebook_pages/things-to-do-with-llms</link>
@@ -77,6 +87,16 @@
       <category>physics</category>
       <category>education</category>
       <enclosure url="https://haraldrevery.com/notebook_thumbnails/2dphaseportrait_min.jpg" length="28357" type="image/jpeg" />
+    </item>
+    <item>
+      <title>Your post title</title>
+      <link>https://haraldrevery.com/notebook_pages/_new_post</link>
+      <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/_new_post</guid>
+      <pubDate>Thu, 01 Jan 2026 00:00:00 GMT</pubDate>
+      <description>One sentence. It becomes the meta description, the share text and the excerpt on the Notebook card.</description>
+      <category>notebook</category>
+      <category>photography</category>
+      <enclosure url="https://haraldrevery.com/photos/2025galdhoepiggen/2025c_close_to_galdhopiggen_top_min.jpg" length="51507" type="image/jpeg" />
     </item>
     <item>
       <title>Galdhøpiggen</title>

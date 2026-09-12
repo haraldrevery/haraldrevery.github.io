@@ -164,12 +164,25 @@ export function Svg({ spacing, puck, ...f }: SvgProps) {
 export interface VideoProps {
   src: string;
   poster: string;
+  /// The site's frosted .preview-card behind the player, with `title` and the
+  /// caption set as a description underneath (input.css "Video card"). Off =
+  /// v1's bare figure.
+  panel: boolean;
+  /// Panel only — the bare figure has a caption line and no title.
+  title: string;
+  /// The <figcaption> line on the bare figure; the description paragraph under
+  /// the title in the panel. One prop for both, so toggling the panel never
+  /// loses what was written.
   caption: string;
   spacing: Spacing;
   puck?: PuckContext;
 }
 
-export function Video({ src, poster, caption, spacing, puck }: VideoProps) {
+// `panel = true` so a block saved before the prop existed (no `panel` key at
+// all) comes out as glass on every render path. Puck's editor fills missing
+// props from defaultProps; this makes the export agree without depending on
+// whether its renderer does the same.
+export function Video({ src, poster, panel = true, title, caption, spacing, puck }: VideoProps) {
   if (!src) {
     // Emit NOTHING rather than an empty player. v1 shipped
     // `<source src="">` here, which makes the browser re-request the whole
@@ -177,13 +190,36 @@ export function Video({ src, poster, caption, spacing, puck }: VideoProps) {
     return puck?.isEditing ? <EmptyHint label="No video — pick a file in the sidebar" /> : <></>;
   }
   const cap = (caption || "").trim();
+  const player = (
+    <video controls className="w-full rounded-lg" poster={poster || undefined}>
+      <source src={src} type="video/mp4" />
+      Your browser does not support the video tag.
+    </video>
+  );
+
+  if (panel) {
+    const heading = (title || "").trim();
+    return (
+      <BlockShell spacing={spacing}>
+        {/* The panel rides on the <figure>, not on BlockShell's `extra`, so it
+            survives inside a Columns slot, where the shell emits no wrapper. */}
+        <figure className="preview-card video-card">
+          {player}
+          {heading || cap ? (
+            <figcaption className="video-card__caption">
+              {heading && <h2 className="video-card__title">{heading}</h2>}
+              {cap && <p className="video-card__text">{cap}</p>}
+            </figcaption>
+          ) : null}
+        </figure>
+      </BlockShell>
+    );
+  }
+
   return (
     <BlockShell spacing={spacing}>
       <figure>
-        <video controls className="w-full rounded-lg" poster={poster || undefined}>
-          <source src={src} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
+        {player}
         {cap && <figcaption>{cap}</figcaption>}
       </figure>
     </BlockShell>
