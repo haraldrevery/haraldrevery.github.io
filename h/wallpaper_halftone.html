@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="main.css">
-    <title>Harald Revery Physarum Animation</title>
+    <link rel="stylesheet" href="/main.css">
+    <title>Harald Revery Halftone Animation</title>
 
     <!-- Preload LCP image (page load optimization) -->
-    <link rel="preload" href="fonts/HaraldReveryTextFont.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="fonts/HaraldReveryMonoFont.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/HaraldReveryTextFont.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/HaraldReveryMonoFont.woff2" as="font" type="font/woff2" crossorigin>
 
      <!-- test CSP -->
     <meta http-equiv="Content-Security-Policy"
@@ -19,7 +19,7 @@
                script-src 'self' 'unsafe-inline';">
 
     <!-- Internet icon -->
-    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
+    <link rel="icon" type="/image/png" href="/favicon-96x96.png" sizes="96x96">
     <link rel="shortcut icon" href="/favicon.ico" sizes="any">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="manifest" href="/site.webmanifest">
@@ -32,11 +32,11 @@
         <!-- Background Texture -->
         <div class="bg-texture_legacy"></div>
 
-        <!-- Physarum screen -->
-        <canvas id="physarum-canvas" style="position:absolute; inset:0; z-index:1; display:block; width:100%; height:100%;"></canvas>
+        <!-- Halftone screen -->
+        <canvas id="halftone-canvas" style="position:absolute; inset:0; z-index:1; display:block; width:100%; height:100%;"></canvas>
 
-        <!-- Logo source: rasterised into the nutrient field, never rendered -->
-        <svg id="svg-source_physarum" viewBox="0 0 1000 1100" aria-hidden="true" style="position:absolute; width:0; height:0; overflow:hidden;">
+        <!-- Logo source: sampled into the height field, never rendered -->
+        <svg id="svg-source_halftone" viewBox="0 0 1000 1100" aria-hidden="true" style="position:absolute; width:0; height:0; overflow:hidden;">
         <path d="M477.9,730c-31.9-13.7-62.4-30.2-91-49.1c-33.4-22-64.5-47.4-92.6-75.7c-32.8-32.9-61.8-69.7-86.1-109.7 C160,416.5,130.1,325,124.3,227C171.2,144.6,246,80,335.8,46c-34.2,56.8-57.7,120.8-67.8,189.2c-3.7,24.8-5.6,50.1-5.6,75.8 c0,109.4,34.1,210.9,92.3,294.3c10,14.4,20.8,28.2,32.2,41.4C413.8,678,444.4,706,477.9,730z"/>
         <path d="M546.2,737.8c-151.9-82.1-255.1-242.9-255.1-427.7c0-43.2,5.6-85.1,16.2-124.9C366.7,121.4,447.5,78,538.4,66.4 C454.6,151.9,403,269,403,398.2c0,53.9,9,105.7,25.5,153.9c6.3,18.3,13.6,36,22,53.2C474.6,654.9,507.1,699.7,546.2,737.8z"/>
         <path d="M386.9,717.3v317.8H253.3V607.2C292.4,649.9,337.3,687,386.9,717.3z"/>
@@ -71,8 +71,8 @@
 
 
 
-<!-- physarum.js load -->
-<script src="./javascript/physarum.js"></script>
+<!-- halftone.js load -->
+<script src="/javascript/halftone.js"></script>
 
 
 </body>

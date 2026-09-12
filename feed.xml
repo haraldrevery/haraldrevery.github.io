@@ -27,58 +27,6 @@
       <enclosure url="https://haraldrevery.com/notebook_thumbnails/some_text_just_works_min.jpg" length="64366" type="image/jpeg" />
     </item>
     <item>
-      <title>RVRY_ASCII</title>
-      <link>https://haraldrevery.com/notebook_pages/rvry_ascii</link>
-      <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/rvry_ascii</guid>
-      <pubDate>Fri, 17 Jul 2026 00:00:00 GMT</pubDate>
-      <description>Ascii art generator.</description>
-      <category>notebook</category>
-      <category>utility</category>
-      <enclosure url="https://haraldrevery.com/notebook_thumbnails/rvry_ascii_thumbnail.jpg" length="45813" type="image/jpeg" />
-    </item>
-    <item>
-      <title>Revery Notebook</title>
-      <link>https://haraldrevery.com/notebook_pages/revery_notebook_info</link>
-      <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/revery_notebook_info</guid>
-      <pubDate>Fri, 10 Apr 2026 00:00:00 GMT</pubDate>
-      <description>A markdown editor with LaTeX support for writing and exporting notes.</description>
-      <category>notebook</category>
-      <category>utility</category>
-      <enclosure url="https://haraldrevery.com/notebook_thumbnails/revery_notebook_min.jpg" length="39999" type="image/jpeg" />
-    </item>
-    <item>
-      <title>Time</title>
-      <link>https://haraldrevery.com/notebook_pages/clock_and_date</link>
-      <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/clock_and_date</guid>
-      <pubDate>Thu, 02 Apr 2026 00:00:00 GMT</pubDate>
-      <description>Just a clock. Click the time to set a timer or an alarm. Click the date to create a 300 DPI event card.</description>
-      <category>notebook</category>
-      <category>utility</category>
-      <enclosure url="https://haraldrevery.com/notebook_thumbnails/timeclock_min.jpg" length="39854" type="image/jpeg" />
-    </item>
-    <item>
-      <title>One-dimensional graph plot</title>
-      <link>https://haraldrevery.com/notebook_pages/1dgraph</link>
-      <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/1dgraph</guid>
-      <pubDate>Sun, 08 Feb 2026 00:00:00 GMT</pubDate>
-      <description>One-dimensional graph visualizer with interactive sliders for each parameter. Made to easily see and compare how different one dimensional functions behave visually.</description>
-      <category>notebook</category>
-      <category>math</category>
-      <category>education</category>
-      <enclosure url="https://haraldrevery.com/notebook_thumbnails/1dgraphplot_min.jpg" length="39996" type="image/jpeg" />
-    </item>
-    <item>
-      <title>Two-dimensional phase portrait</title>
-      <link>https://haraldrevery.com/notebook_pages/2dphaseportrait</link>
-      <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/2dphaseportrait</guid>
-      <pubDate>Sat, 07 Feb 2026 00:00:00 GMT</pubDate>
-      <description>Automated two-dimensional phase portrait generator for educational use, made for university courses involving non-linear dynamical systems.</description>
-      <category>notebook</category>
-      <category>physics</category>
-      <category>education</category>
-      <enclosure url="https://haraldrevery.com/notebook_thumbnails/2dphaseportrait_min.jpg" length="28357" type="image/jpeg" />
-    </item>
-    <item>
       <title>Galdhøpiggen</title>
       <link>https://haraldrevery.com/notebook_pages/galdhopiggen</link>
       <guid isPermaLink="true">https://haraldrevery.com/notebook_pages/galdhopiggen</guid>

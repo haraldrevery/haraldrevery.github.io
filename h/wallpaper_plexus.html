@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="main.css"> 
-    <title>Harald Revery Particles Animation</title>
+    <link rel="stylesheet" href="/main.css"> 
+    <title>Harald Revery Plexus Animation</title>
 
     <!-- Preload LCP image (page load optimization) -->
-    <link rel="preload" href="fonts/HaraldReveryTextFont.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="fonts/HaraldReveryMonoFont.woff2" as="font" type="font/woff2" crossorigin>    
-
+    <link rel="preload" href="/fonts/HaraldReveryTextFont.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/HaraldReveryMonoFont.woff2" as="font" type="font/woff2" crossorigin>
+    
      <!-- test CSP -->
     <meta http-equiv="Content-Security-Policy" 
       content="default-src 'self'; 
@@ -30,32 +30,69 @@
 <body>
     <div class="hero-container_legacy">
         <!-- Background Texture -->
-        <div class="bg-texture_legacy1"></div>
+        <div class="bg-texture_legacy"></div>
 
-
+        <!-- Background Plexus -->
+        <div class="background-plexus_legacy">
+            <canvas id="background-plexus-canvas_legacy"></canvas>
+        </div>
 
         <!-- Logo Container -->
         <div id="logo-container_legacy">
-
-
-
-
-            <canvas id="sand-canvas"></canvas>
-    </div>
-
-    
-
-    <div class="mode-toggle" id="mode-toggle">
-        <span id="mode-icon">☀</span>
-    </div>
-
-    <svg id="svg-source" viewBox="0 0 1000 1100">
-        <path d="M477.9,730c-31.9-13.7-62.4-30.2-91-49.1c-33.4-22-64.5-47.4-92.6-75.7c-32.8-32.9-61.8-69.7-86.1-109.7 C160,416.5,130.1,325,124.3,227C171.2,144.6,246,80,335.8,46c-34.2,56.8-57.7,120.8-67.8,189.2c-3.7,24.8-5.6,50.1-5.6,75.8 c0,109.4,34.1,210.9,92.3,294.3c10,14.4,20.8,28.2,32.2,41.4C413.8,678,444.4,706,477.9,730z"/>
-        <path d="M546.2,737.8c-151.9-82.1-255.1-242.9-255.1-427.7c0-43.2,5.6-85.1,16.2-124.9C366.7,121.4,447.5,78,538.4,66.4 C454.6,151.9,403,269,403,398.2c0,53.9,9,105.7,25.5,153.9c6.3,18.3,13.6,36,22,53.2C474.6,654.9,507.1,699.7,546.2,737.8z"/>
-        <path d="M386.9,717.3v317.8H253.3V607.2C292.4,649.9,337.3,687,386.9,717.3z"/>
-        <path d="M956.1,98.2v936.8H839.9V605.3H485c-19.2-36-33.5-75.1-42.1-116.2h397V98.2H956.1z"/>
-    </svg>
-
+            <div class="position-wrapper_legacy">
+                <svg id="main-logo-svg_legacy" viewBox="0 0 1000 1100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+                    
+                    
+                    <!-- Definitions -->
+                    <defs>
+                        <g id="logo-shape-outline_legacy">
+                            <path d="M477.9,730c-31.9-13.7-62.4-30.2-91-49.1c-33.4-22-64.5-47.4-92.6-75.7c-32.8-32.9-61.8-69.7-86.1-109.7 C160,416.5,130.1,325,124.3,227C171.2,144.6,246,80,335.8,46c-34.2,56.8-57.7,120.8-67.8,189.2c-3.7,24.8-5.6,50.1-5.6,75.8 c0,109.4,34.1,210.9,92.3,294.3c10,14.4,20.8,28.2,32.2,41.4C413.8,678,444.4,706,477.9,730z"/>
+                            <path d="M546.2,737.8c-151.9-82.1-255.1-242.9-255.1-427.7c0-43.2,5.6-85.1,16.2-124.9C366.7,121.4,447.5,78,538.4,66.4 C454.6,151.9,403,269,403,398.2c0,53.9,9,105.7,25.5,153.9c6.3,18.3,13.6,36,22,53.2C474.6,654.9,507.1,699.7,546.2,737.8z"/>
+                            <path d="M386.9,717.3v317.8H253.3V607.2C292.4,649.9,337.3,687,386.9,717.3z"/>
+                            <path d="M956.1,98.2v936.8H839.9V605.3H485c-19.2-36-33.5-75.1-42.1-116.2h397V98.2H956.1z"/>
+                        </g>
+                        
+                        <linearGradient id="logoGradient_legacy" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#1a1a1a" />
+                            <stop offset="100%" stop-color="#000000" />
+                        </linearGradient>
+                        
+                        <linearGradient id="logoGradientDark_legacy" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#ffffff" />
+                            <stop offset="100%" stop-color="#e0e0e0" />
+                        </linearGradient>
+                        
+                        <clipPath id="logoClip_legacy">
+                            <path d="M477.9,730c-31.9-13.7-62.4-30.2-91-49.1c-33.4-22-64.5-47.4-92.6-75.7c-32.8-32.9-61.8-69.7-86.1-109.7 C160,416.5,130.1,325,124.3,227C171.2,144.6,246,80,335.8,46c-34.2,56.8-57.7,120.8-67.8,189.2c-3.7,24.8-5.6,50.1-5.6,75.8 c0,109.4,34.1,210.9,92.3,294.3c10,14.4,20.8,28.2,32.2,41.4C413.8,678,444.4,706,477.9,730z"/>
+                            <path d="M546.2,737.8c-151.9-82.1-255.1-242.9-255.1-427.7c0-43.2,5.6-85.1,16.2-124.9C366.7,121.4,447.5,78,538.4,66.4 C454.6,151.9,403,269,403,398.2c0,53.9,9,105.7,25.5,153.9c6.3,18.3,13.6,36,22,53.2C474.6,654.9,507.1,699.7,546.2,737.8z"/>
+                            <path d="M386.9,717.3v317.8H253.3V607.2C292.4,649.9,337.3,687,386.9,717.3z"/>
+                            <path d="M956.1,98.2v936.8H839.9V605.3H485c-19.2-36-33.5-75.1-42.1-116.2h397V98.2H956.1z"/>
+                        </clipPath>
+                    </defs>
+                    
+                    <!-- Implosion waves -->
+                    <g class="implosion-waves_legacy">
+                        <use href="#logo-shape-outline_legacy" class="wave-echo_legacy echo-1_legacy" />
+                        <use href="#logo-shape-outline_legacy" class="wave-echo_legacy echo-2_legacy" />
+                        <use href="#logo-shape-outline_legacy" class="wave-echo_legacy echo-3_legacy" />
+                    </g>
+                    
+                    <!-- Canvas clipped by logo shape -->
+                    <foreignObject width="1000" height="1100" clip-path="url(#logoClip_legacy)">
+                        <canvas id="plexus-canvas_legacy" width="1000" height="1100"></canvas>
+                    </foreignObject>
+                    
+                    <!-- Logo paths with animation -->
+                    <g id="logo-shape-definition_legacy" class="animate-logo_legacy">
+                        <path d="M477.9,730c-31.9-13.7-62.4-30.2-91-49.1c-33.4-22-64.5-47.4-92.6-75.7c-32.8-32.9-61.8-69.7-86.1-109.7 C160,416.5,130.1,325,124.3,227C171.2,144.6,246,80,335.8,46c-34.2,56.8-57.7,120.8-67.8,189.2c-3.7,24.8-5.6,50.1-5.6,75.8 c0,109.4,34.1,210.9,92.3,294.3c10,14.4,20.8,28.2,32.2,41.4C413.8,678,444.4,706,477.9,730z"/>
+                        <path d="M546.2,737.8c-151.9-82.1-255.1-242.9-255.1-427.7c0-43.2,5.6-85.1,16.2-124.9C366.7,121.4,447.5,78,538.4,66.4 C454.6,151.9,403,269,403,398.2c0,53.9,9,105.7,25.5,153.9c6.3,18.3,13.6,36,22,53.2C474.6,654.9,507.1,699.7,546.2,737.8z"/>
+                        <path d="M386.9,717.3v317.8H253.3V607.2C292.4,649.9,337.3,687,386.9,717.3z"/>
+                        <path d="M956.1,98.2v936.8H839.9V605.3H485c-19.2-36-33.5-75.1-42.1-116.2h397V98.2H956.1z"/>
+                    </g>
+                    
+                </svg>
+                
+            </div>
             
         </div>
 
@@ -66,7 +103,10 @@
             </a>
         </div>
 
-
+        <!-- Dark Mode Toggle -->
+        <div class="mode-toggle_legacy" id="mode-toggle_legacy">
+            <span id="mode-icon_legacy">☀</span>
+        </div>
     </div>
 
 
@@ -87,7 +127,7 @@
 
 
 <!-- plexus.js load -->
-<script src="./javascript/stardust.js"></script>
+<script src="/javascript/plexus.js"></script>
 
 </body>
 </html>

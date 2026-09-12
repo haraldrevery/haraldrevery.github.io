@@ -49,36 +49,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://haraldrevery.com/notebook_pages/rvry_ascii</loc>
-    <lastmod>2026-07-17</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://haraldrevery.com/notebook_pages/revery_notebook_info</loc>
-    <lastmod>2026-04-10</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://haraldrevery.com/notebook_pages/clock_and_date</loc>
-    <lastmod>2026-04-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://haraldrevery.com/notebook_pages/1dgraph</loc>
-    <lastmod>2026-02-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://haraldrevery.com/notebook_pages/2dphaseportrait</loc>
-    <lastmod>2026-02-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://haraldrevery.com/notebook_pages/galdhopiggen</loc>
     <lastmod>2025-08-17</lastmod>
     <changefreq>monthly</changefreq>
@@ -110,25 +80,13 @@
   </url>
   <url>
     <loc>https://haraldrevery.com/notebook_pages/tag-education</loc>
-    <lastmod>2026-02-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://haraldrevery.com/notebook_pages/tag-math</loc>
-    <lastmod>2026-02-08</lastmod>
+    <lastmod>2025-02-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://haraldrevery.com/notebook_pages/tag-photography</loc>
     <lastmod>2025-08-17</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://haraldrevery.com/notebook_pages/tag-physics</loc>
-    <lastmod>2026-02-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -141,12 +99,6 @@
   <url>
     <loc>https://haraldrevery.com/notebook_pages/tag-thoughts</loc>
     <lastmod>2026-08-28</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://haraldrevery.com/notebook_pages/tag-utility</loc>
-    <lastmod>2026-07-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
