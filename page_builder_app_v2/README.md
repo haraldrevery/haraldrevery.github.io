@@ -34,7 +34,7 @@ bun install
 bun run build                # typecheck + vite
 bunx tauri dev               # dev app (port 5174 — v1 uses 5173)
 bunx tauri build --no-bundle # release binary
-bun test tests               # 269 tests (see Tests: v1 deps required)
+bun test tests               # 282 tests (see Tests: v1 deps required)
 ```
 
 **Use `bunx tauri build`, not `cargo build`.** Plain cargo produces a binary that
@@ -322,7 +322,7 @@ a v1 file rather than silently mangling it.
 ```bash
 bun install                      # in THIS folder
 (cd ../page_builder && bun install)   # and in v1 — see below
-bun test tests                   # 269 tests
+bun test tests                   # 282 tests
 ```
 
 `prose-parity.test.tsx` imports v1's real renderer from `../page_builder/src/`,
@@ -559,6 +559,61 @@ with a duplicate `.main-nav` that disables the site's view transitions.
 One deliberate preview difference: the shell is rendered without `navScroll`, so
 preview always shows the nav bar even for a page that will hide-and-reveal it
 once published.
+
+## Photo titles and descriptions from the file
+
+Picking a photo pre-fills its caption fields from the title and description
+embedded in the file, so they are not typed twice:
+
+| block | title → | description → |
+|---|---|---|
+| Gallery (per photo) | lightbox title | lightbox description |
+| Image | — | caption |
+| Featured | title | excerpt |
+
+- **Only on import, only into empty fields.** Picking a photo (or the gallery's
+  **✎ Fill empty titles & descriptions** button, for photos linked earlier)
+  fills a field only while it is blank. Typed text is never replaced — including
+  when a block's photo is swapped for another. Nothing happens on open or
+  export, so a saved page is never edited behind your back.
+- **Alt text is never pre-filled.** It is the author's to write, and the page
+  check keeps asking for it.
+- A description identical to the title beside it is skipped — the lightbox
+  shows both, and would read the same line twice. The Image caption has no
+  title beside it, so it keeps the description regardless.
+- Hero and the card image are deliberately not wired: their text fields are the
+  page's h1 and SEO description, not a photo caption.
+
+**Read from XMP only** (`src-tauri/src/embedded_text.rs`, `dc:title` /
+`dc:description`). Editors write the same caption into XMP, EXIF and IPTC, and
+in this repo only the XMP copy is right: EXIF `ImageDescription` holds raw UTF-8
+in a field the spec types as ASCII (a spec-following reader shows
+"Galdhøpiggen" as `Galdh..piggen`), and IPTC holds Latin-1 with no charset
+marker. Every photo with EXIF text also has it in XMP. The reader is header-only
+like `dims_of` (a JPEG is read up to its start of scan; PNG iTXt and WebP `XMP `
+chunks are found by seeking), resolves namespaces rather than trusting the `dc:`
+prefix, prefers the `x-default` language, flattens whitespace, and returns
+nothing — never an error — for anything it cannot read.
+
+Two traps it exists to avoid: quick-xml reports `&quot;` / `&#39;` as separate
+`GeneralRef` events, not as part of the text (many captions here use them —
+dropping the event loses the quotes); and a caption with a newline would be
+silently mangled by the single-line sidebar inputs.
+
+**Writes go through `updateBlock`, not the field's `onChange`.** Puck's field
+`onChange` writes to whichever block is selected *when it is called*
+(`createOnChange` reads `selectedItem` at call time), and a pick calls it after
+the native dialog closes — select another block while the dialog is open and the
+photo lands there. `updateBlock` captures the block's id before the dialog,
+looks the block up by id afterwards (inside a Columns slot too, via
+`getSelectorForId`), builds on its current props, and writes photo + caption
+text as one undoable `replace`. It is also the only way to set props beside the
+one a custom field owns. The hero still uses `onChange`: it is a root field.
+
+Tests: `tests/photo-text.test.ts` (the fill rules, and the action updateBlock
+builds), `tests/update-block-puck.test.tsx` (updateBlock against a real Puck
+store: a nested block, one undo step, onChange firing — note Puck records
+history through a 300ms debounce), and the Rust tests in `embedded_text.rs`.
 
 ## Known gaps
 

@@ -31,6 +31,7 @@ import { GalleryItemsEditor } from "./fields/GalleryItemsEditor";
 import { SwapColumnsField } from "./fields/SwapColumns";
 import { numberField } from "./fields/numberField";
 import { pathField, imageField, EMPTY_IMAGE } from "./fields/mediaField";
+import { IMAGE_TEXT, FEATURED_TEXT } from "./fields/photoText";
 import { PageRoot, DEFAULT_META, DEFAULT_HERO, type RootProps } from "./PageRoot";
 
 export interface Components {
@@ -285,7 +286,9 @@ export const config: Config<{ components: Components; root: RootProps }> = {
     Image: {
       label: "Single image",
       fields: {
-        image: imageField("photos", "Image"),
+        // Picking a photo pre-fills an EMPTY caption from its embedded
+        // description. Alt is never pre-filled. See fields/photoText.ts.
+        image: imageField("photos", "Image", IMAGE_TEXT),
         alt: { type: "text", label: "Alt text" },
         caption: { type: "text", label: "Caption" },
         lightbox: onOff("Open in lightbox"),
@@ -301,7 +304,8 @@ export const config: Config<{ components: Components; root: RootProps }> = {
     Featured: {
       label: "Featured dispatch (photo + panel)",
       fields: {
-        image: imageField("photos", "Photo"),
+        // Pre-fills an empty title and excerpt from the photo's embedded text.
+        image: imageField("photos", "Photo", FEATURED_TEXT),
         alt: { type: "text", label: "Alt text" },
         tag: { type: "text", label: "Tag (small mono label)" },
         title: { type: "text", label: "Title" },

@@ -2,6 +2,13 @@ import { invoke } from "@tauri-apps/api/core";
 import { toast } from "./ui/toast";
 import { hasSvgText, setSvgText } from "./blocks/svgStore";
 
+/// A photo's embedded XMP title and description; null where it has none.
+/// XMP only — see src-tauri/src/embedded_text.rs for why not EXIF or IPTC.
+export interface ImageText {
+  title: string | null;
+  description: string | null;
+}
+
 export interface PickedFile {
   web: string;
   full: string;
@@ -9,6 +16,8 @@ export interface PickedFile {
   thumbExists: boolean;
   width: number | null;
   height: number | null;
+  /// Only looked up for kind "image"; null when the file carries none.
+  text: ImageText | null;
 }
 
 interface PickResult {
@@ -52,6 +61,13 @@ export async function checkFiles(paths: string[]): Promise<boolean[]> {
 export async function imageDims(paths: string[]): Promise<([number, number] | null)[]> {
   if (!paths.length) return [];
   return invoke<([number, number] | null)[]>("image_dims", { paths });
+}
+
+/// Batch embedded title/description lookup for repo images (null per path
+/// that carries none, or cannot be read).
+export async function imageText(paths: string[]): Promise<(ImageText | null)[]> {
+  if (!paths.length) return [];
+  return invoke<(ImageText | null)[]>("image_text", { paths });
 }
 
 export interface FileHashInfo {

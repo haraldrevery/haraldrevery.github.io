@@ -12,11 +12,14 @@
  * store.reorderGalleryItem (state.ts:222-237) plus the galleryItemsEditor
  * section of ui/blockForms.ts.
  */
-import { FieldLabel } from "@measured/puck";
-import { pickMedia } from "../../media";
+import { FieldLabel, useGetPuck } from "@measured/puck";
+import { imageText, pickMedia } from "../../media";
 import { recheckImages } from "../../export/fixups";
+import { toast } from "../../ui/toast";
 import type { GalleryItem } from "../components/Gallery";
-import { Ops, SortableItems, useListOps } from "./itemList";
+import { Ops, SortableItems, inheritItemId, useListOps } from "./itemList";
+import { GALLERY_TEXT, textFill } from "./photoText";
+import { selectedBlockId, updateBlock } from "./updateBlock";
 
 /// Green when alt + title + description are all filled, yellow when partial —
 /// the media-completeness dot from v1 (defs.ts:249). Alt matters for
@@ -37,6 +40,7 @@ export function GalleryItemsEditor({
   label?: string;
 }) {
   const items = value ?? [];
+  const getPuck = useGetPuck();
 
   const { patch, move, remove } = useListOps(items, onChange);
 
@@ -51,12 +55,21 @@ export function GalleryItemsEditor({
     onChange(next);
   };
 
+  /*
+   * Picked photos arrive with their embedded title and description already in
+   * the caption fields (see photoText.ts). Alt stays empty — it is the
+   * author's to write.
+   *
+   * Written by block id rather than onChange, because this runs after the
+   * dialog closes — see updateBlock.ts. The id is taken BEFORE the dialog
+   * opens, while this block's sidebar is the one on screen.
+   */
   const add = async () => {
+    const id = selectedBlockId(getPuck());
     const picked = await pickMedia("image", true, "photos");
     if (!picked.length) return;
-    onChange([
-      ...items,
-      ...picked.map((p) => ({
+    const fresh = picked.map((p) => {
+      const it: GalleryItem = {
         full: p.full,
         thumb: p.thumb,
         alt: "",
@@ -65,8 +78,51 @@ export function GalleryItemsEditor({
         thumbMissing: !p.thumbExists,
         w: p.width ?? undefined,
         h: p.height ?? undefined,
-      })),
-    ]);
+      };
+      return { ...it, ...textFill(p.text, GALLERY_TEXT, it) };
+    });
+    if (id) {
+      updateBlock(getPuck(), id, (props) => ({ ...props, items: [...(props.items ?? []), ...fresh] }));
+    } else {
+      onChange([...items, ...fresh]);
+    }
+  };
+
+  /*
+   * The import-time fill, for photos that were linked before it existed: fill
+   * EMPTY titles and descriptions from each photo's embedded text. Never
+   * replaces typed text and never touches alt. Keyed by path, and applied to
+   * the items as they are AFTER the disk read, so a row edited or added in the
+   * meantime is built on rather than reverted.
+   */
+  const fillFromPhotos = async () => {
+    const id = selectedBlockId(getPuck());
+    const paths = [...new Set(items.map((it) => it.full).filter(Boolean))];
+    const texts = await imageText(paths).catch((e) => {
+      toast(`Could not read photo metadata: ${e}`, true);
+      return null;
+    });
+    if (!texts || !id) return;
+    const byPath = new Map(paths.map((p, n) => [p, texts[n]]));
+
+    let filled = 0;
+    updateBlock(getPuck(), id, (props) => {
+      const next = ((props.items ?? []) as GalleryItem[]).map((it) => {
+        const add = textFill(byPath.get(it.full), GALLERY_TEXT, it);
+        if (!Object.keys(add).length) return it;
+        filled++;
+        const replaced = { ...it, ...add };
+        inheritItemId(it, replaced); // the row's React key — see useListOps.patch
+        return replaced;
+      });
+      // Nothing filled = no write, so no undo step that visibly does nothing.
+      return filled ? { ...props, items: next } : null;
+    });
+    toast(
+      filled
+        ? `Filled ${filled} photo${filled === 1 ? "" : "s"} from embedded metadata.`
+        : "Nothing to fill: no empty title or description has embedded text to take.",
+    );
   };
 
   return (
@@ -83,6 +139,16 @@ export function GalleryItemsEditor({
           title="Adopt _min thumbnails generated since these photos were linked"
         >
           ↻ Re-check files
+        </button>
+      )}
+      {items.length > 0 && (
+        <button
+          type="button"
+          className="pb-items__add"
+          onClick={fillFromPhotos}
+          title="Fill EMPTY titles and descriptions from each photo's embedded metadata. Never replaces text you typed; alt text is left to you."
+        >
+          ✎ Fill empty titles &amp; descriptions
         </button>
       )}
 

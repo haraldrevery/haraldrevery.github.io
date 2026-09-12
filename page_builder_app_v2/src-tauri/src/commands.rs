@@ -5,6 +5,7 @@ use serde::Serialize;
 use tauri::State;
 use tauri_plugin_dialog::DialogExt;
 
+use crate::embedded_text::{self, ImageText};
 use crate::{repo, AppState};
 
 const SITE_URL: &str = "https://haraldrevery.com";
@@ -156,6 +157,9 @@ pub struct PickedFile {
     pub thumb_exists: bool,
     pub width: Option<u32>,
     pub height: Option<u32>,
+    /// The photo's embedded XMP title / description, for pre-filling caption
+    /// fields. Only looked up for kind "image"; see embedded_text.rs.
+    pub text: Option<ImageText>,
 }
 
 /// Pixel dimensions of an image inside the repo (header-only read).
@@ -164,6 +168,11 @@ fn dims_of(root: &Path, web: &str) -> Option<(u32, u32)> {
     imagesize::size(&file)
         .ok()
         .map(|s| (s.width as u32, s.height as u32))
+}
+
+/// Embedded title / description of an image inside the repo (header-only read).
+fn text_of(root: &Path, web: &str) -> Option<ImageText> {
+    embedded_text::read_image_text(&resolve_in_repo(root, web)?)
 }
 
 #[derive(Serialize)]
@@ -265,6 +274,13 @@ pub async fn pick_media(
                 let (full, thumb, thumb_exists) = derive_full_thumb(&web, &root);
                 // ratio comes from the full-size image; fall back to the picked file
                 let dims = dims_of(&root, &full).or_else(|| dims_of(&root, &web));
+                // Same preference for the embedded text. Only images: a download
+                // or a video would be opened for nothing.
+                let text = if kind == "image" {
+                    text_of(&root, &full).or_else(|| text_of(&root, &web))
+                } else {
+                    None
+                };
                 files.push(PickedFile {
                     web,
                     full,
@@ -272,6 +288,7 @@ pub async fn pick_media(
                     thumb_exists,
                     width: dims.map(|d| d.0),
                     height: dims.map(|d| d.1),
+                    text,
                 });
             }
             None => rejected.push(path.display().to_string()),
@@ -298,6 +315,17 @@ pub fn image_dims(
 ) -> Result<Vec<Option<(u32, u32)>>, String> {
     let root = repo_root(&state)?;
     Ok(paths.iter().map(|p| dims_of(&root, p)).collect())
+}
+
+/// Batch embedded-text lookup, for the gallery's "fill empty titles &
+/// descriptions" button (photos linked before picking pre-filled them).
+#[tauri::command]
+pub fn image_text(
+    state: State<AppState>,
+    paths: Vec<String>,
+) -> Result<Vec<Option<ImageText>>, String> {
+    let root = repo_root(&state)?;
+    Ok(paths.iter().map(|p| text_of(&root, p)).collect())
 }
 
 // ---------------------------------------------------------------- file hashes

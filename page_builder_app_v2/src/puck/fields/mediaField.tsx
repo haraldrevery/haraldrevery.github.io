@@ -10,10 +10,14 @@
  * CONSTRAINT that shapes these: a custom field's onChange can only write its
  * OWN prop. So anything that needs both a full-size path and its _min twin
  * stores them as ONE object-valued prop (see PickedImage) rather than as two
- * sibling props the picker would have no way to set together.
+ * sibling props the picker would have no way to set together. Pre-filling the
+ * caption props beside the photo is the one exception, and goes through
+ * updateBlock instead.
  */
-import { FieldLabel, type CustomField } from "@measured/puck";
+import { FieldLabel, useGetPuck, type CustomField } from "@measured/puck";
 import { pickMedia, prefetchSvg, type MediaKind } from "../../media";
+import { textFill, type TextTargets } from "./photoText";
+import { selectedBlockId, updateBlock } from "./updateBlock";
 
 export interface PickedImage {
   full: string;
@@ -85,31 +89,68 @@ export function pathField(kind: MediaKind, startDir: string, label: string): Cus
 }
 
 /// Value is {full, thumb} — one prop, so the picker can set both at once.
-export function imageField(startDir: string, label: string): CustomField<PickedImage> {
+/// `text` names the block's caption props to pre-fill from the photo's
+/// embedded title / description (see photoText.ts); the hero passes none.
+export function imageField(startDir: string, label: string, text?: TextTargets): CustomField<PickedImage> {
   return {
     type: "custom",
     label,
-    render: ({ value, onChange }) => {
-      const v = value ?? EMPTY_IMAGE;
-      return (
-        <>
-          <Row
-            title={label}
-            label={v.full ? base(v.full) : "— none —"}
-            onPick={async () => {
-              const [f] = await pickMedia("image", false, startDir);
-              if (!f) return;
-              onChange({ full: f.full, thumb: f.thumb, thumbMissing: !f.thumbExists });
-            }}
-            onClear={v.full ? () => onChange(EMPTY_IMAGE) : undefined}
-          />
-          {v.full && v.thumbMissing && (
-            <span className="pb-warn" title="No _min thumbnail; using the full-size image">
-              no _min
-            </span>
-          )}
-        </>
-      );
-    },
+    // Puck renders `render` as a component, so the picker may use hooks.
+    render: ({ value, onChange }) => (
+      <ImagePicker startDir={startDir} label={label} text={text} value={value} onChange={onChange} />
+    ),
   };
+}
+
+function ImagePicker({
+  startDir,
+  label,
+  text,
+  value,
+  onChange,
+}: {
+  startDir: string;
+  label: string;
+  text?: TextTargets;
+  value?: PickedImage;
+  onChange: (v: PickedImage) => void;
+}) {
+  const getPuck = useGetPuck();
+  const v = value ?? EMPTY_IMAGE;
+
+  const pick = async () => {
+    // Taken BEFORE the dialog, while this block's sidebar is the one on screen.
+    const id = selectedBlockId(getPuck());
+    const [f] = await pickMedia("image", false, startDir);
+    if (!f) return;
+    const image: PickedImage = { full: f.full, thumb: f.thumb, thumbMissing: !f.thumbExists };
+    if (id) {
+      // The photo and any caption text it brings, as one write and one undo
+      // step, to the block that opened the dialog — see updateBlock.ts.
+      updateBlock(getPuck(), id, (props) => ({
+        ...props,
+        image,
+        ...(text ? textFill(f.text, text, props) : {}),
+      }));
+    } else {
+      // The hero: a root field, shown only while no block is selected.
+      onChange(image);
+    }
+  };
+
+  return (
+    <>
+      <Row
+        title={label}
+        label={v.full ? base(v.full) : "— none —"}
+        onPick={pick}
+        onClear={v.full ? () => onChange(EMPTY_IMAGE) : undefined}
+      />
+      {v.full && v.thumbMissing && (
+        <span className="pb-warn" title="No _min thumbnail; using the full-size image">
+          no _min
+        </span>
+      )}
+    </>
+  );
 }

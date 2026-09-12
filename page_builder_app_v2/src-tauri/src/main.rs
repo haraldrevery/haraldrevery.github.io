@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod commands;
+mod embedded_text;
 mod repo;
 mod server;
 
@@ -28,6 +29,7 @@ fn main() {
             commands::pick_media,
             commands::check_files,
             commands::image_dims,
+            commands::image_text,
             commands::hash_files,
             commands::read_svg,
             commands::list_projects,

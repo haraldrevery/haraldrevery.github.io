@@ -2047,6 +2047,7 @@ version = "2.0.0"
 dependencies = [
  "dirs",
  "imagesize",
+ "quick-xml",
  "serde",
  "serde_json",
  "sha2",
