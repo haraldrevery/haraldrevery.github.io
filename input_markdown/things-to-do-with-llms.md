@@ -44,7 +44,7 @@ Having a printer and some nice *print ready* templates to take what ever you hav
 
 ## OBS Studio streaming layout
 
-One thing that I find odd is how much we use computers, yet there is minimum efforts in present you stuff on the screen to others. Recoding and streaming is one of those ways we can show how to do something on a computer, yet only the video game sphere has pushed this field. 
+One thing that I find odd is how much we use computers, yet there is minimum efforts in how people present stuff to each other on the screen to others. Recoding and streaming is one of those ways we can show how to do something on a computer, yet only the video game sphere has pushed this field. 
 
 Making an OBS Studio layout for screen recording, having screen + camera view with easy key-binds between the basic scenes seem like nice thing to have ready to go whenever you want to just share something on the Internet. 
 
