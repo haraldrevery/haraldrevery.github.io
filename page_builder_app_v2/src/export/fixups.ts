@@ -9,7 +9,7 @@
  * undo history, and so does this.
  */
 import type { Config, Data } from "@measured/puck";
-import { visitComponents } from "./collect";
+import { collectMediaPaths, visitComponents } from "./collect";
 import { checkFiles, deriveMinPath, hashFiles, imageDims } from "../media";
 import { toast } from "../ui/toast";
 import type { GalleryItem } from "../puck/components/Gallery";
@@ -183,4 +183,24 @@ export async function refreshDownloadHashes(data: Data, config: Config): Promise
   });
 
   return { changed, missing, dirtied };
+}
+
+/*
+ * The page check's on-disk test: every media path the page publishes
+ * (collectMediaPaths) that is not a file in the repo.
+ *
+ * Unlike the passes above this never mutates the data and never toasts. It runs
+ * after every pause in typing, so a backend failure — or corrupt data the
+ * collector cannot walk — reports NOTHING, rather than a wall of false
+ * "missing" warnings or a toast per keystroke.
+ */
+export async function findMissingMedia(data: Data, config: Config): Promise<string[]> {
+  try {
+    const paths = collectMediaPaths(data, config);
+    if (!paths.length) return [];
+    const found = await checkFiles(paths);
+    return paths.filter((_, i) => !found[i]);
+  } catch {
+    return [];
+  }
 }

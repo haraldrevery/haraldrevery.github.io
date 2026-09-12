@@ -142,19 +142,24 @@ export function collectStats(data: Data, config: Config): PageStats {
           if (it.full) images.push({ src: it.full, w: it.w, h: it.h, alt: it.alt ?? "" });
         }
         break;
-      case "Image":
+      case "Image": {
         // The Image block stores {full, thumb} as ONE prop — a custom field's
         // onChange can only write its own prop, so the path and its _min twin
-        // travel together. See fields/mediaField.tsx.
-        if (props.image?.full) images.push({ src: props.image.full, alt: props.alt ?? "" });
+        // travel together. See fields/mediaField.tsx. Either path renders a
+        // picture (Media.tsx), so either one puts it on the page.
+        const src = props.image?.full || props.image?.thumb;
+        if (src) images.push({ src, alt: props.alt ?? "" });
         break;
-      case "Featured":
+      }
+      case "Featured": {
         // Same one-prop {full, thumb} shape as Image. The photo is the block's
         // whole point, so it belongs in the JSON-LD image list. The eyebrow
         // `tag` is a label, not prose, so it is deliberately not counted.
-        if (props.image?.full) images.push({ src: props.image.full, alt: props.alt ?? "" });
+        const src = props.image?.full || props.image?.thumb;
+        if (src) images.push({ src, alt: props.alt ?? "" });
         words += countWords(props.title) + countWords(props.excerpt);
         break;
+      }
       case "Faq":
         for (const it of props.items ?? []) faq.push({ q: it.q, a: it.a });
         break;
@@ -173,8 +178,9 @@ export function collectDownloadPaths(data: Data, config: Config): string[] {
   return out;
 }
 
-/// Images with no alt text, and icons with no accessible name — the lint pass's
-/// tree-walking half (v1 lint.ts:74-93, :117-125).
+/// Images with no alt text, icons with no accessible name, videos missing
+/// part of their glass panel and media blocks with nothing picked — the lint
+/// pass's tree-walking half (v1 lint.ts:74-93, :117-125).
 export function collectA11yIssues(
   data: Data,
   config: Config,
@@ -188,35 +194,62 @@ export function collectA11yIssues(
   /// means the file could not be read — and the renderer would emit its
   /// "[svg … not loaded]" placeholder into the published page.
   missingSvgs: number;
+  /// Videos that have a file but lack part of the glass panel: the poster
+  /// (without it the player is a black box until the video loads), the title
+  /// or the description.
+  videosNoPoster: number;
+  videosNoTitle: number;
+  videosNoDescription: number;
+  /// The block type of every media block with nothing picked, one entry per
+  /// block. Video, Image, Audio and Svg then publish nothing at all; an empty
+  /// Gallery publishes an empty grid, i.e. a blank gap.
+  emptyMedia: string[];
 } {
   let missingAlt = 0;
   let totalImages = 0;
   let unlabeledIcons = 0;
   let missingDownloads = 0;
   let missingSvgs = 0;
+  let videosNoPoster = 0;
+  let videosNoTitle = 0;
+  let videosNoDescription = 0;
+  const emptyMedia: string[] = [];
 
   visitComponents(data, config, ({ type, props, visible }) => {
     if (!visible) return;
     if (type === "Gallery") {
-      for (const it of (props.items ?? []) as GalleryItem[]) {
+      const items = (props.items ?? []) as GalleryItem[];
+      if (!items.length) emptyMedia.push("Gallery");
+      for (const it of items) {
         totalImages++;
         if (!(it.alt || "").trim()) missingAlt++;
       }
     }
-    if (type === "Image" && props.image?.full) {
+    // Either path renders a picture (Media.tsx, Featured.tsx), so either one
+    // makes the alt text matter.
+    const picture = props.image?.full || props.image?.thumb;
+    if (type === "Image") {
+      if (picture) {
+        totalImages++;
+        if (!(props.alt || "").trim()) missingAlt++;
+      } else {
+        emptyMedia.push("Image");
+      }
+    }
+    if (type === "Featured" && picture) {
       totalImages++;
       if (!(props.alt || "").trim()) missingAlt++;
     }
-    if (type === "Featured" && props.image?.full) {
-      totalImages++;
-      if (!(props.alt || "").trim()) missingAlt++;
-    }
-    if (type === "Svg" && props.src) {
-      totalImages++;
-      if (!(props.alt || "").trim()) missingAlt++;
-      // Only the themed path inlines the file; un-themed renders a plain <img>,
-      // which fails visibly as a broken image rather than as placeholder text.
-      if (props.themed !== false && !hasSvgText(props.src)) missingSvgs++;
+    if (type === "Svg") {
+      if (props.src) {
+        totalImages++;
+        if (!(props.alt || "").trim()) missingAlt++;
+        // Only the themed path inlines the file; un-themed renders a plain <img>,
+        // which fails visibly as a broken image rather than as placeholder text.
+        if (props.themed !== false && !hasSvgText(props.src)) missingSvgs++;
+      } else {
+        emptyMedia.push("Svg");
+      }
     }
     if (type === "Icons") {
       for (const it of props.items ?? []) {
@@ -227,7 +260,78 @@ export function collectA11yIssues(
     if (type === "Downloads") {
       for (const it of props.items ?? []) if (it.missing) missingDownloads++;
     }
+    if (type === "Audio" && !props.src) emptyMedia.push("Audio");
+    if (type === "Video") {
+      if (!props.src) {
+        // Nothing is published, so there is no panel to be missing parts of.
+        emptyMedia.push("Video");
+      } else {
+        if (!(props.poster || "").trim()) videosNoPoster++;
+        if (!(props.title || "").trim()) videosNoTitle++;
+        if (!(props.caption || "").trim()) videosNoDescription++;
+      }
+    }
   });
 
-  return { missingAlt, totalImages, unlabeledIcons, missingDownloads, missingSvgs };
+  return {
+    missingAlt, totalImages, unlabeledIcons, missingDownloads, missingSvgs,
+    videosNoPoster, videosNoTitle, videosNoDescription, emptyMedia,
+  };
+}
+
+/*
+ * Every media file the page PUBLISHES a reference to — video and poster, audio,
+ * and the photos behind Image, Featured, Gallery and the hero — for the page
+ * check's on-disk test (findMissingMedia in fixups.ts).
+ *
+ * Mirrors what each component emits, so a path that is stored but not rendered
+ * (the full-size photo behind an Image with the lightbox off, the poster of a
+ * Video with no file) is not reported. Visible content only, like the rest of
+ * the lint. Svg and Icons are covered by the svg cache check, Downloads by the
+ * hash refresh. Remote URLs are skipped: there is no local file to look for.
+ */
+export function collectMediaPaths(data: Data, config: Config): string[] {
+  const out = new Set<string>();
+  const add = (p: unknown) => {
+    const s = typeof p === "string" ? p.trim() : "";
+    if (s && !/^[a-z][a-z0-9+.-]*:/i.test(s)) out.add(s);
+  };
+
+  const root = (data.root?.props ?? {}) as Partial<RootProps>;
+  if (root.hasHero && root.hero) {
+    const img = root.hero.image ?? { full: "", thumb: "" };
+    // Hero.tsx: the cover is the sharp full-size photo, the backdrop a
+    // blurred thumbnail. Other backgrounds use no photo at all.
+    if (root.hero.background === "cover") add(img.full || img.thumb);
+    else if (root.hero.background === "backdrop") add(img.thumb || img.full);
+  }
+
+  visitComponents(data, config, ({ type, props, visible }) => {
+    if (!visible) return;
+    switch (type) {
+      case "Video":
+        if (props.src) {
+          add(props.src);
+          add(props.poster);
+        }
+        break;
+      case "Audio":
+        add(props.src);
+        break;
+      case "Image":
+      case "Featured": {
+        const img = props.image ?? {};
+        add(img.thumb || img.full);
+        if (props.lightbox && img.full) add(img.full);
+        break;
+      }
+      case "Gallery":
+        for (const it of (props.items ?? []) as GalleryItem[]) {
+          add(it.full);
+          add(it.thumb || it.full);
+        }
+        break;
+    }
+  });
+  return [...out];
 }

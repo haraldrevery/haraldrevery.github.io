@@ -19,6 +19,12 @@
  * flickered on every keystroke would be more distracting than the lag it
  * describes. The trade-off is that typing continuously for a long time keeps
  * showing the result from the last pause.
+ *
+ * The one part that needs the backend is the on-disk file check, so it runs
+ * as an async effect on the same debounced data and is folded in when it
+ * lands. Until then the panel keeps the previous file list: files go missing
+ * far more rarely than text changes, and blanking the warning on every pause
+ * would make it flicker.
  */
 import { useEffect, useMemo, useState } from "react";
 import { usePuck, type Data } from "@measured/puck";
@@ -26,6 +32,7 @@ import { config } from "../puck/config";
 import { lintPage, type LintIssue } from "../export/lint";
 import { renderExportContent, renderExportHero, renderExportHeader } from "../export/renderExport";
 import { humanDate } from "../export/export";
+import { findMissingMedia } from "../export/fixups";
 
 /// Long enough that a normal typing burst collapses into one run, short enough
 /// that the panel still feels live when you stop.
@@ -35,20 +42,26 @@ const RECHECK_DELAY_MS = 300;
  * The whole check, as a plain function of the data — no hooks, so it is
  * testable without a React renderer and the component below stays pure glue.
  * Same split as listOps.ts: the part worth testing carries no React.
+ *
+ * `missingFiles` is the result of the async on-disk lookup; empty = none
+ * found, or not looked up yet.
  */
-export function runPageCheck(data: Data): LintIssue[] {
+export function runPageCheck(data: Data, missingFiles: string[] = []): LintIssue[] {
   try {
     const html = [
       renderExportHero(data),
       renderExportHeader(data, humanDate),
       renderExportContent(data),
     ].join("\n");
-    return lintPage({ data, config, html });
+    return lintPage({ data, config, html, missingFiles });
   } catch (e) {
     // A half-typed markdown block must never take the panel down with it.
     return [{ severity: "warn" as const, message: `Page check failed: ${String(e)}` }];
   }
 }
+
+const sameList = (a: string[], b: string[]) =>
+  a.length === b.length && a.every((x, i) => x === b[i]);
 
 export function PageCheck() {
   const data = usePuck().appState.data as Data;
@@ -72,7 +85,21 @@ export function PageCheck() {
     return () => clearTimeout(t);
   }, [data, behind]);
 
-  const issues = useMemo(() => runPageCheck(checked), [checked]);
+  const [missingFiles, setMissingFiles] = useState<string[]>([]);
+  useEffect(() => {
+    let live = true;
+    findMissingMedia(checked, config).then((files) => {
+      // Keep the same array when nothing changed, so an unchanged result does
+      // not re-run the whole render below.
+      if (live) setMissingFiles((prev) => (sameList(prev, files) ? prev : files));
+    });
+    // A slow lookup for older data must not overwrite a newer result.
+    return () => {
+      live = false;
+    };
+  }, [checked]);
+
+  const issues = useMemo(() => runPageCheck(checked, missingFiles), [checked, missingFiles]);
 
   const warns = issues.filter((i) => i.severity === "warn").length;
 

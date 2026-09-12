@@ -413,19 +413,6 @@ describe("the remaining nine block types match v1", () => {
     expect(actual).toContain("width:60%");
   });
 
-  test("Video with the glass panel off matches, with poster and caption", () => {
-    // v1 has no panel; v2 defaults it on, so parity is the panel-off figure.
-    const { expected, actual } = pair(
-      "video",
-      { src: "/video/a.mp4", poster: "/photos/a.jpg", caption: "Cap" },
-      "Video",
-      { src: "/video/a.mp4", poster: "/photos/a.jpg", caption: "Cap", panel: false },
-    );
-    expect(normLoose(actual)).toBe(normLoose(expected));
-    // the caption is real content, so assert it exactly
-    expect(actual).toContain("<figcaption>Cap</figcaption>");
-  });
-
   test("Audio matches, plain and as a release panel", () => {
     for (const panel of [false, true]) {
       const { expected, actual } = pair(

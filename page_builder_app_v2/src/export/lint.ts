@@ -1,15 +1,18 @@
 /*
  * Page checks: heading outline (browser reader mode and search engines build
- * the document outline from it) and the SEO basics the front matter feeds.
+ * the document outline from it), the SEO basics the front matter feeds, and
+ * the blocks that would publish broken or empty.
  *
- * Ported from v1's src/lint.ts. The heading scan and the meta checks are
- * verbatim; the two tree walks (alt text, icons/downloads) moved onto
- * src/export/collect.ts, and the "N hero blocks" check is gone — the hero is a
- * root field now, so there is exactly one by construction.
+ * Ported from v1's src/lint.ts. The tree walks (alt text, icons, downloads,
+ * videos, empty blocks) live in src/export/collect.ts, and the "N hero blocks"
+ * check is gone — the hero is a root field now, so there is exactly one by
+ * construction.
  *
  * headingIssues deliberately runs on the RENDERED HTML rather than the tree, so
  * markdown '#' headings inside a Text block, standalone Heading blocks, column
- * content and (later) raw HTML are all covered by the same scan.
+ * content and raw HTML are all covered by the same scan. That HTML must include
+ * the header (renderExportHeader): on a page with no hero, it carries the page
+ * title as the H1.
  */
 import type { Config, Data } from "@measured/puck";
 import { collectA11yIssues } from "./collect";
@@ -23,7 +26,25 @@ export interface LintIssue {
   message: string;
 }
 
-export function headingIssues(html: string, hasContent: boolean): LintIssue[] {
+/*
+ * Every published <title> is this prefix plus the page title (base.njk), and
+ * og:title / twitter:title repeat it, so the length a search result has to fit
+ * is the two together. Keep in step with eleventy_settings/base.njk.
+ */
+const TITLE_PREFIX = "Harald Revery - ";
+/// Roughly where search results start cutting a <title> off.
+const TITLE_MAX = 60;
+
+/*
+ * `h1Source` names the field the page's H1 comes from. A builder page never
+ * needs a "# Title" in its body: the page title (or the hero's title) IS the
+ * H1, so advice to write one produces a second H1 the moment the title is set.
+ */
+export function headingIssues(
+  html: string,
+  hasContent: boolean,
+  h1Source = "the page title",
+): LintIssue[] {
   const issues: LintIssue[] = [];
   // FAQ question <h3>s are widget labels (about.html pattern), not part of the
   // document outline — drop them before scanning.
@@ -41,7 +62,7 @@ export function headingIssues(html: string, hasContent: boolean): LintIssue[] {
       issues.push({
         severity: "warn",
         message:
-          "No headings — start the page with one H1 title (a Heading block at level 1, or “# Title” in a Text block). Reader mode and search engines build the outline from it.",
+          `No headings — fill in ${h1Source}; it becomes the page's H1. Then use “## Section” in Text blocks for sections. Reader mode and search engines build the outline from them.`,
       });
     }
     return issues;
@@ -52,21 +73,19 @@ export function headingIssues(html: string, hasContent: boolean): LintIssue[] {
     issues.push({
       severity: "warn",
       message:
-        "No H1 — the page starts at H" +
-        headings[0] +
-        ". Use exactly one H1 as the main title (“# Title”), then H2 for sections.",
+        `No H1 — the page starts at H${headings[0]}. The H1 is ${h1Source}: fill that in rather than writing “# Title” in a Text block.`,
     });
   } else {
     if (headings[0] !== 1) {
       issues.push({
         severity: "warn",
-        message: `The first heading is H${headings[0]} — the H1 title should come before other headings.`,
+        message: `The first heading is H${headings[0]} — the H1 (${h1Source}) should come before other headings.`,
       });
     }
     if (h1s > 1) {
       issues.push({
         severity: "warn",
-        message: `${h1s} H1 headings — keep exactly one H1 and use H2/H3 for sections, or reader mode gets confused about the title.`,
+        message: `${h1s} H1 headings — keep exactly one, ${h1Source}, and use “##” and “###” for sections, or reader mode gets confused about the title.`,
       });
     }
   }
@@ -88,18 +107,26 @@ export function headingIssues(html: string, hasContent: boolean): LintIssue[] {
 export interface LintInput {
   data: Data;
   config: Config;
-  /// The rendered export markup: hero first, then content — the hero's <h1>
-  /// has to count in the outline.
+  /// The rendered export markup: hero, header, then content — the H1 lives in
+  /// the hero or the header, and has to count in the outline.
   html: string;
+  /// Root-absolute paths the page publishes that are not on disk
+  /// (findMissingMedia in fixups.ts). The lookup needs the backend, so the
+  /// caller does it; omitted means "not checked", not "all present".
+  missingFiles?: string[];
 }
 
-export function lintPage({ data, config, html }: LintInput): LintIssue[] {
+export function lintPage({ data, config, html, missingFiles = [] }: LintInput): LintIssue[] {
   const issues: LintIssue[] = [];
   const root = (data.root?.props ?? {}) as Partial<RootProps>;
   const meta = (root.meta ?? {}) as PageMeta;
   const hasContent = (data.content ?? []).length > 0 || !!root.hasHero;
 
-  issues.push(...headingIssues(html, hasContent));
+  // Name the field that actually produces the H1 (Hero.tsx or staticHeader).
+  const h1Source = root.hasHero
+    ? "the hero's “Title (h1)” field"
+    : "the Title under Page / SEO";
+  issues.push(...headingIssues(html, hasContent, h1Source));
 
   // The hero-count check is gone: hasHero is a boolean, so "N heroes" cannot
   // happen. Its content checks still apply.
@@ -129,6 +156,24 @@ export function lintPage({ data, config, html }: LintInput): LintIssue[] {
       message: `${a11y.missingSvgs} SVG${a11y.missingSvgs > 1 ? "s" : ""} could not be read — the page would publish a “[svg … not loaded]” placeholder instead of the artwork.`,
     });
   }
+  if (missingFiles.length) {
+    const n = missingFiles.length;
+    const names = missingFiles.map((p) => p.split("/").pop() || p);
+    const shown = names.slice(0, 3).join(", ") + (n > 3 ? ` and ${n - 3} more` : "");
+    issues.push({
+      severity: "warn",
+      message: `${n} file${n > 1 ? "s" : ""} not found on disk: ${shown} — the page would publish ${n > 1 ? "them" : "it"} broken.`,
+    });
+  }
+  if (a11y.emptyMedia.length) {
+    const n = a11y.emptyMedia.length;
+    const kinds = [...new Set(a11y.emptyMedia)].join(", ");
+    const gap = a11y.emptyMedia.includes("Gallery") ? " (an empty gallery leaves a blank gap)" : "";
+    issues.push({
+      severity: "warn",
+      message: `${n} empty media block${n > 1 ? "s" : ""} (${kinds}) — pick a file or delete ${n > 1 ? "them" : "it"}. As ${n > 1 ? "they are, they publish" : "it is, it publishes"} nothing${gap}.`,
+    });
+  }
   if (a11y.missingDownloads) {
     issues.push({
       severity: "warn",
@@ -145,11 +190,14 @@ export function lintPage({ data, config, html }: LintInput): LintIssue[] {
   const title = meta.title ?? "";
   if (!title.trim()) {
     issues.push({ severity: "warn", message: "No title — required for the file name, <title> tag and social cards." });
-  } else if (title.length > 55) {
-    issues.push({
-      severity: "info",
-      message: `Title is ${title.length} chars — search results truncate around 55–60.`,
-    });
+  } else {
+    const shown = TITLE_PREFIX.length + title.length;
+    if (shown > TITLE_MAX) {
+      issues.push({
+        severity: "info",
+        message: `Title is ${shown} chars as published (“${TITLE_PREFIX}” + ${title.length}) — search results cut titles off around ${TITLE_MAX}.`,
+      });
+    }
   }
 
   /*
@@ -198,6 +246,29 @@ export function lintPage({ data, config, html }: LintInput): LintIssue[] {
     issues.push({
       severity: "info",
       message: `${a11y.missingAlt} image${a11y.missingAlt > 1 ? "s" : ""} without alt text (image SEO + accessibility).`,
+    });
+  }
+
+  // The glass panel is the Video block's whole look: poster, title, description.
+  if (a11y.videosNoPoster) {
+    const n = a11y.videosNoPoster;
+    issues.push({
+      severity: "info",
+      message: `${n} video${n > 1 ? "s" : ""} without a poster image — the player is a black box until the video loads.`,
+    });
+  }
+  if (a11y.videosNoTitle) {
+    const n = a11y.videosNoTitle;
+    issues.push({
+      severity: "info",
+      message: `${n} video${n > 1 ? "s" : ""} without a title — the glass panel has no heading.`,
+    });
+  }
+  if (a11y.videosNoDescription) {
+    const n = a11y.videosNoDescription;
+    issues.push({
+      severity: "info",
+      message: `${n} video${n > 1 ? "s" : ""} without a description under the title.`,
     });
   }
 

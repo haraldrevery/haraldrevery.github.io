@@ -44,7 +44,7 @@ function sample(type: BlockType) {
         excerpt: "One paragraph of standfirst copy.", photoSide: "right",
       },
       Svg: { src: "/svg/test.svg", alt: "s" },
-      // Defaults to the glass panel, so the video-card classes are covered.
+      // Always the glass panel, so the video-card classes are covered.
       Video: { src: "/video/a.mp4", poster: "/photos/a.jpg", title: "T", caption: "c" },
       Audio: { src: "/audio/a.mp3", title: "T" },
       Icons: { items: [{ src: "/svg/test.svg", label: "L", href: "https://example.com" }], label: "Listen" },
@@ -172,14 +172,25 @@ describe("video glass panel", () => {
   const video = (over: Record<string, unknown>) =>
     html([{ type: "Video", props: { ...sample("Video").props, ...over } }]);
 
-  test("a block saved before the panel existed exports with it, as the editor shows it", () => {
-    // No `panel` and no `title` key at all — the shape of an older project.
-    // The editor fills both from defaultProps; the export must agree.
-    const { panel: _p, title: _t, ...old } = sample("Video").props as Record<string, unknown>;
+  test("a block saved before the title existed exports as the editor shows it", () => {
+    // No `title` key at all — the shape of an older project. The editor fills
+    // it from defaultProps; the export must agree.
+    const { title: _t, ...old } = sample("Video").props as Record<string, unknown>;
     const out = html([{ type: "Video", props: { ...old, caption: "About the film" } as any }]);
     expect(out).toContain('<figure class="preview-card video-card">');
     expect(out).toContain('<p class="video-card__text">About the film</p>');
     expect(out).not.toContain("video-card__title");
+  });
+
+  test("a block saved with the old panel toggle OFF still gets the panel", () => {
+    // The bare-figure variant was removed: its <figcaption> sat outside any
+    // .prose wrapper and published unstyled. Projects can still carry
+    // `panel: false`, and it must not bring that look back.
+    const out = video({ panel: false, title: "Isolated", caption: "Live." });
+    expect(out).toContain('<figure class="preview-card video-card">');
+    expect(out).toContain('<h2 class="video-card__title">Isolated</h2>');
+    expect(out).toContain('<p class="video-card__text">Live.</p>');
+    expect(out).not.toContain("<figure><video");
   });
 
   test("title and description sit in one figcaption under the player", () => {
@@ -192,14 +203,6 @@ describe("video glass panel", () => {
 
   test("no title and no description emits no empty figcaption", () => {
     expect(video({ title: " ", caption: "" })).not.toContain("figcaption");
-  });
-
-  test("panel off is the bare figure with a caption line, and drops the title", () => {
-    const out = video({ panel: false, title: "Ignored", caption: "Cap" });
-    expect(out).not.toContain("preview-card");
-    expect(out).not.toContain("Ignored");
-    expect(out).toContain("<figure><video");
-    expect(out).toContain("<figcaption>Cap</figcaption>");
   });
 });
 

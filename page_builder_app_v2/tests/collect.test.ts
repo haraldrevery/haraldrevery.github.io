@@ -12,6 +12,7 @@ import {
   collectStats,
   collectSvgSrcs,
   collectA11yIssues,
+  collectMediaPaths,
 } from "../src/export/collect";
 import { DEFAULT_HERO } from "../src/puck/PageRoot";
 
@@ -173,5 +174,53 @@ describe("collectors handle every block type's real prop shape", () => {
   test("missing download files are flagged", () => {
     const data = mk([{ type: "Downloads", props: { id: "d", items: [{ src: "/f/a.zip", label: "", size: 0, sha256: "", sha512: "", missing: true }], spacing: "normal" } }]);
     expect(collectA11yIssues(data, config).missingDownloads).toBe(1);
+  });
+});
+
+describe("collectMediaPaths", () => {
+  // The page check stats exactly these paths on disk, so it must list what the
+  // page PUBLISHES — no more (false "missing" warnings), no less.
+  const video = (id: string, over: Record<string, unknown>) => ({
+    type: "Video",
+    props: { ...config.components.Video.defaultProps, id, ...over },
+  });
+
+  test("lists what each block publishes, and only that", () => {
+    const data = mk([
+      video("v", { src: "/video/a.mp4", poster: "/video/thumbnail/a.jpg" }),
+      // no file: nothing is published, so its poster is not referenced either
+      video("empty", { poster: "/video/thumbnail/unused.jpg" }),
+      // remote: there is no local file to look for
+      video("remote", { src: "https://example.com/v.mp4" }),
+      { type: "Audio", props: { id: "au", src: "/audio/a.mp3", title: "", panel: false, spacing: "normal" } },
+      // lightbox off: only the thumbnail is in the markup
+      { type: "Image", props: { id: "i", image: { full: "/photos/i.jpg", thumb: "/photos/i_min.jpg" }, alt: "", caption: "", lightbox: false, widthPct: 100, spacing: "normal" } },
+      gallery("g", [img("g1")]),
+    ]);
+    expect(collectMediaPaths(data, config).sort()).toEqual([
+      "/audio/a.mp3",
+      "/photos/g1.jpg",
+      "/photos/g1_min.jpg",
+      "/photos/i_min.jpg",
+      "/video/a.mp4",
+      "/video/thumbnail/a.jpg",
+    ]);
+  });
+
+  test("skips content in a hidden count-1 right slot", () => {
+    const data = mk([columns("c", 1, [], [video("v", { src: "/video/a.mp4" })])]);
+    expect(collectMediaPaths(data, config)).toEqual([]);
+  });
+
+  test("includes the hero photo the chosen background actually uses", () => {
+    const hero = (background: string) =>
+      mk([], { hasHero: true, hero: { ...DEFAULT_HERO, background, image: { full: "/photos/h.jpg", thumb: "/photos/h_min.jpg" } } });
+    expect(collectMediaPaths(hero("cover"), config)).toEqual(["/photos/h.jpg"]);
+    expect(collectMediaPaths(hero("backdrop"), config)).toEqual(["/photos/h_min.jpg"]);
+    expect(collectMediaPaths(hero("dots"), config)).toEqual([]);
+  });
+
+  test("an empty page lists nothing", () => {
+    expect(collectMediaPaths(mk([]), config)).toEqual([]);
   });
 });

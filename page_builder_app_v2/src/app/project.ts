@@ -17,7 +17,9 @@ import {
 import { renderExportContent, renderExportHero, renderExportHeader } from "../export/renderExport";
 import { lintPage, type LintIssue } from "../export/lint";
 import { collectSvgSrcs } from "../export/collect";
-import { revalidateThumbs, refreshDownloadHashes, type HashReport } from "../export/fixups";
+import {
+  revalidateThumbs, refreshDownloadHashes, findMissingMedia, type HashReport,
+} from "../export/fixups";
 import { prefetchSvgs } from "../media";
 import type { RootProps } from "../puck/PageRoot";
 
@@ -151,6 +153,7 @@ export async function buildExport(
   const issues = lintPage({
     data, config,
     html: `${heroHtml}\n${headerHtml}\n${contentHtml}`,
+    missingFiles: await findMissingMedia(data, config),
   });
 
   // .html: input_custom_post/ files are read from disk by eleventy.config.js and
