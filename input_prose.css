@@ -540,8 +540,13 @@
 .article-outline-subsublist { padding-left: 1.15rem; margin-top: 0.15rem; }   /* sub-header indent */
 .article-outline-panel li { margin: 0.1rem 0; }
 
-/* Offset in-page anchor jumps so a heading clears the fixed nav bar (no JS) */
-.prose :where(h1, h2, h3, h4, h5, h6) { scroll-margin-top: 6rem; }
+/* Offset in-page anchor jumps so a heading clears the fixed nav bar (no JS).
+   Keyed on [id], not on .prose: block posts (input_custom_post/) put headings
+   outside any .prose wrapper (Featured, the video card, FAQ) and addAnchors
+   gives those ids too, so a .prose-scoped rule left them landing under the
+   nav. Markdown posts are unaffected: every heading there is in .prose AND
+   has an id. */
+:where(h1, h2, h3, h4, h5, h6)[id] { scroll-margin-top: 6rem; }
 
 .article-outline-panel a {
   display: block;

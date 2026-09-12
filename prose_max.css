@@ -3332,7 +3332,7 @@
 .article-outline-panel li {
   margin: 0.1rem 0;
 }
-.prose :where(h1, h2, h3, h4, h5, h6) {
+:where(h1, h2, h3, h4, h5, h6)[id] {
   scroll-margin-top: 6rem;
 }
 .article-outline-panel a {
