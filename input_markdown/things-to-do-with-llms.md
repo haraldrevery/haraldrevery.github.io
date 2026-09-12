@@ -6,7 +6,7 @@ tags: [thoughts]
 description: Things to do with "AI" (LLM) that are useful before the bubble bursts, regulations hit or gets too expensive. 
 ---
 
-For the last eight months, I have been experimenting a lot with Large Language Models (LLMs), despite me being very hesitant to using "AI tools" for various reasons, I do find this technology very useful for certain tasks, one being to generate code, specifically HTML, JavaScript and Python (some mixed results with Rust and C++), but here some cool projects to do while the "AI" hype is carrying most of the computational costs. 
+For the last eight months, I have been experimenting a lot with Large Language Models (LLMs), despite me being very hesitant to using "AI tools" for various reasons, I do find this technology very useful for certain tasks, one being to generate code, specifically HTML, JavaScript and Python (with some mixed results with Rust and C++), but here some cool projects to do while the "AI" hype is carrying most of the computational costs. 
 
 Maybe models gets better and cheaper or it will be regulated, expensive, hit the data wall or the limit of what token prediction algorithms can do hits a ceiling, leading to another "AI winter". 
 
