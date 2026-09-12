@@ -19,7 +19,7 @@ Anyway, instead of speculating I will focus on naming some cool projects to play
 
 Make your own website, preferably a static website with as little JS and dependencies as possible to not break, easy to archive and maintain. 
 
-In the digital age, being under social media algorithms and being forced to present yourself with a very stale aesthetics feels wrong. With your own website, the only guideline you have to follow is the server providers terms of service and national law, no power tripping admin or shadow bans. With LLMs and domains being relatively cheap (in addition of getting a nice email domain), I think it's worth creating your own "corner of the Internet" for you portfolio or blog.
+In the digital age, being under social media algorithms and being forced to present yourself with a very stale aesthetics feels wrong. With your own website, the only guideline you have to follow is the server providers terms of service and national law, no power tripping admin or shadow bans. With LLMs and domains being relatively cheap (in addition of getting a nice email domain), I think it's worth creating your own "corner of the Internet" for your portfolio or blog.
 
 ---
 
