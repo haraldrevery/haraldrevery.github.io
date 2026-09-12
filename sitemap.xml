@@ -43,12 +43,6 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://haraldrevery.com/notebook_pages/stress_test</loc>
-    <lastmod>2026-09-09</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://haraldrevery.com/notebook_pages/things-to-do-with-llms</loc>
     <lastmod>2026-08-28</lastmod>
     <changefreq>monthly</changefreq>
@@ -81,12 +75,6 @@
   <url>
     <loc>https://haraldrevery.com/notebook_pages/2dphaseportrait</loc>
     <lastmod>2026-02-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://haraldrevery.com/notebook_pages/_new_post</loc>
-    <lastmod>2026-01-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -134,7 +122,7 @@
   </url>
   <url>
     <loc>https://haraldrevery.com/notebook_pages/tag-photography</loc>
-    <lastmod>2026-01-01</lastmod>
+    <lastmod>2025-08-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -147,12 +135,6 @@
   <url>
     <loc>https://haraldrevery.com/notebook_pages/tag-settings</loc>
     <lastmod>2022-01-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://haraldrevery.com/notebook_pages/tag-test</loc>
-    <lastmod>2026-09-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
