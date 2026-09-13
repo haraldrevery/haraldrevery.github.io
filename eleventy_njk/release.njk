@@ -12,6 +12,30 @@ eleventyExcludeFromCollections: true
 {% set genres = release.genres or [] %}
 {% set s = release.streaming or {} %}
 {% set hasStreaming = s.spotify or s.apple or s.soundcloud or s.tidal or s.deezer or s.amazon or s.youtube or s.odysee %}
+{#- Meta + share description. `introduction` on its own is a 13-55 character
+    tagline, and several releases share the same one ("For those night
+    drives."), which search engines treat as a thin, duplicate snippet. So it is
+    extended with the facts that make each page unique: title, year, type,
+    artist, genres and where to listen. A hand-written `description` in the
+    release JSON replaces the whole generated sentence.
+    `release.year` is the TZ-safe year from the releases collection, never a
+    parse of the raw `date` string. -#}
+{%- set intro = (release.introduction or "") | trim -%}
+{%- if intro and not (intro.endsWith(".") or intro.endsWith("!") or intro.endsWith("?")) %}{% set intro = intro + "." %}{% endif -%}
+{%- set typeWord = release.type if release.type == "EP" else (release.type or "release") | lower -%}
+{%- set article = "a" if (release.year or not (typeWord | first | lower) in ["a", "e", "i", "o", "u"]) else "an" -%}
+{%- set services = [] -%}
+{%- for key, label in [["spotify", "Spotify"], ["apple", "Apple Music"], ["soundcloud", "SoundCloud"], ["tidal", "Tidal"], ["deezer", "Deezer"], ["amazon", "Amazon Music"], ["youtube", "YouTube"], ["odysee", "Odysee"]] -%}
+{%- if s[key] %}{% set pushed = services.push(label) %}{% endif -%}
+{%- endfor -%}
+{%- set coreDescription = (intro + " " if intro else "")
+    + release.name + " is " + article + " " + ((release.year + " ") if release.year else "") + typeWord + " by " + artist + "."
+    + ((" Genre: " + genres | join(", ") + ".") if genres.length else "") -%}
+{%- set listenClause = (" Listen on " + services.slice(0, 2) | join(", ") + (" and more." if services.length > 2 else ".")) if services.length else "" -%}
+{#- Search results cut a snippet at roughly 160 characters, so the listen
+    clause is only appended while it still fits; the facts come first. -#}
+{%- set autoDescription = (coreDescription + listenClause) if (coreDescription + listenClause) | length <= 160 else coreDescription -%}
+{%- set metaDescription = (release.description | trim) if release.description else autoDescription -%}
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
@@ -24,7 +48,7 @@ eleventyExcludeFromCollections: true
     <!-- Page title + SEO (generated from input_release/*.json)                 -->
     <!-- ====================================================================== -->
     <title>Harald Revery - {{ release.name }}</title>
-    <meta name="description" content="{{ release.introduction }}">
+    <meta name="description" content="{{ metaDescription }}">
     <meta name="keywords" content="Harald Revery, {{ release.name }}, {{ release.type }}{% if genres.length %}, {{ genres | join(', ') }}{% endif %}{% if release.isrc %}, ISRC {{ release.isrc }}{% endif %}">
 
     <!-- Preload LCP assets -->
@@ -34,7 +58,7 @@ eleventyExcludeFromCollections: true
 
     <!--  Open Graph (social media share card) -->
     <meta property="og:title" content="{{ release.name }} — Harald Revery" />
-    <meta property="og:description" content="{{ release.introduction }}" />
+    <meta property="og:description" content="{{ metaDescription }}" />
     <meta property="og:image" content="https://haraldrevery.com{{ release.artcover }}" />
     <meta property="og:url" content="https://haraldrevery.com{{ release.url | cleanUrl }}" />
     <meta property="og:type" content="{{ ogType }}" />

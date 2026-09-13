@@ -22,7 +22,9 @@
 #}
 {%- set sec = sectionNumber or 10 -%}
 
-<h4 class="font-bold mt-8 mb-2 text-lg">{{ sec }}.1 {{ licenseListHeading }}</h4>
+{#- h3: a subsection of legal.md's "## 10." section (see legal.njk). The
+    utility classes set its look, so the level can follow the outline. -#}
+<h3 class="font-bold mt-8 mb-2 text-lg">{{ sec }}.1 {{ licenseListHeading }}</h3>
 
 <div class="not-prose mt-5 space-y-4">
 {%- for lib in licenses %}
@@ -50,6 +52,6 @@
 </div>
 
 {%- if licenseClosing %}
-<h4 class="font-bold mt-8 mb-2 text-lg">{{ sec }}.2 {{ licenseClosingHeading }}</h4>
+<h3 class="font-bold mt-8 mb-2 text-lg">{{ sec }}.2 {{ licenseClosingHeading }}</h3>
 <p>{{ licenseClosing }}</p>
 {%- endif %}

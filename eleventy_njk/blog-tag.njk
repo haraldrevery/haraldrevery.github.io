@@ -7,6 +7,12 @@ permalink: "notebook_pages/tag-{{ tagData.tag | slugify }}{% if tagData.pageNumb
 layout: base.njk
 eleventyComputed:
   title: "{{ tagData.tag }} - Notebook{% if tagData.pageNumber > 0 %} - Page {{ tagData.pageNumber + 1 }}{% endif %}"
+  # base.njk emits this as the meta, og: and twitter: description. Built from
+  # the posts on this page (first three titles), so every tag page gets its own
+  # snippet instead of none. `| safe` because computed strings are rendered by
+  # Nunjucks with autoescape on, and base.njk escapes the value again on output:
+  # without it a title like "Q&A" would reach the page as "Q&amp;amp;A".
+  description: "Notes from Harald Revery's Notebook tagged “{{ tagData.tag | safe }}”{% if tagData.pageNumber > 0 %}, page {{ tagData.pageNumber + 1 }}{% endif %}: {% for p in tagData.posts %}{% if loop.index <= 3 %}{% if loop.index > 1 %}, {% endif %}{{ p.data.title | safe }}{% endif %}{% endfor %}{% if tagData.posts.length > 3 %} and {{ tagData.posts.length - 3 }} more{% endif %}."
 ---
 
 <div class="scroll-sentinel absolute top-0 h-[50vh] w-full pointer-events-none"></div>

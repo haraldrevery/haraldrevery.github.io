@@ -6,7 +6,7 @@
 # The library list in 10.1 is generated from the files in licenses/ — do not
 # write it by hand. See licenses/README.md.
 #
-# `title` goes in <title>, OG and Twitter tags; `heading` is the visible <h2>.
+# `title` goes in <title>, OG and Twitter tags; `heading` is the visible <h1>.
 title: "Privacy Policy"
 heading: "Legal Notice & Privacy Policy"
 description: "Privacy policy, imprint, and terms of use for haraldrevery.com — the official website of music artist Harald Revery."
@@ -31,7 +31,7 @@ licenseClosing: >-
   respective open source licenses.
 ---
 
-### 1\. Impressum (Legal Disclosure)
+## 1\. Impressum (Legal Disclosure)
 
 Information provided in accordance with the Swedish Electronic Commerce Act (2002:562) and EU transparency requirements:
 
@@ -40,28 +40,28 @@ Information provided in accordance with the Swedish Electronic Commerce Act (200
 **Location:** Gothenburg, Sweden  
 **Contact:** [Contact Page](/contact.html) or [contact@haraldrevery.com](mailto:contact@haraldrevery.com)
 
-### 2\. Intellectual Property Rights
+## 2\. Intellectual Property Rights
 
 The name "Harald Revery™" and associated brand elements are claimed trademarks of Harald Mark Thirslund. Unless otherwise stated, all creative assets on this website—including **audio recordings, musical compositions, custom typography (HaraldReveryTextFont, HaraldReveryMonoFont), photography, and the brand logo** —are the exclusive property of Harald Mark Thirslund and are protected by international copyright laws. Unauthorized reproduction, distribution, or commercial use is strictly prohibited.
 
 The technical architecture of this website incorporates third-party open source software libraries distributed under various open source licenses, including the **MIT License**, the **BSD 3-Clause License**, and the **Apache License, Version 2.0**. These licenses apply only to the respective third-party libraries and not to the creative content of this website. All required copyright notices and license acknowledgements are set out in **Section 10 (Open Source Software Notices)** of this Legal Notice. The full text of each applicable license is available in the [/licence/ directory](/licence/) of this website.
 
-### 3\. Privacy Policy & Data Protection (GDPR Compliance)
+## 3\. Privacy Policy & Data Protection (GDPR Compliance)
 
-#### 3.1 Data Controller
+### 3.1 Data Controller
 
 The data controller for this website is Harald Mark Thirslund. For data protection inquiries, please use the contact information provided in Section 1.
 
-#### 3.2 Cookie & Local Storage Policy
+### 3.2 Cookie & Local Storage Policy
 
 In accordance with the Swedish Electronic Communications Act, we provide information about the "cookies" (and similar technologies) used on this site. This site minimizes tracking to protect your privacy.
 
 | Name | Type | Purpose | Duration |
 | --- | --- | --- | --- |
-| rvry-theme | LocalStorage | Strictly Necessary: remembers your light/dark preference in the ASCII tool ([/notebook_pages/rvry_ascii](/notebook_pages/rvry_ascii.html)). | Persistent |
+| rvry-theme | LocalStorage | Strictly Necessary: remembers your light/dark preference in the ASCII tool ([/notebook_pages/rvry_ascii](/rvry_ascii/rvry_ascii.html)). | Persistent |
 | rvry-tab | LocalStorage | Strictly Necessary: remembers the last tab you had open in the ASCII tool. | Persistent |
 | rvry-settings | LocalStorage | Strictly Necessary: remembers the settings you chose in the ASCII tool. | Persistent |
-| clock-lang | LocalStorage | Strictly Necessary: remembers your language choice on the clock page ([/notebook_pages/clock_and_date](/notebook_pages/clock_and_date.html)). | Persistent |
+| clock-lang | LocalStorage | Strictly Necessary: remembers your language choice on the clock page ([/notebook_pages/clock_and_date](/h/clock_and_date.html)). | Persistent |
 | clock-anim | LocalStorage | Strictly Necessary: remembers your animation preference on the clock page. | Persistent |
 | rvry-reading-width | LocalStorage | Strictly Necessary: remembers the reading-column width you chose with the width button on notebook articles. | Persistent |
 
@@ -71,14 +71,14 @@ This site sets no cookies of its own and uses no analytics or visitor tracking. 
 
 **Third-Party Cookies:** We do not set tracking cookies. Where a page on this site embeds content hosted by a third party — for example a video or audio player — that provider may set its own cookies or storage when the embedded content loads or when you interact with it. The same applies to any external platform you reach by following a link from this site. We do not control those cookies. You can manage them via your browser settings.
 
-#### 3.3 Legal Basis for Processing
+### 3.3 Legal Basis for Processing
 
 We process your personal data on the following legal bases:
 
 - **Consent (Article 6(1)(a) GDPR):** When you submit a contact form or use an email on the website, you provide explicit consent for us to process your data to respond to your inquiry.
 - **Legitimate Interest (Article 6(1)(f) GDPR):** We have a legitimate interest in responding to business inquiries and communications.
 
-#### 3.4 How We Use Your Data
+### 3.4 How We Use Your Data
 
 Email communications are used solely to:
 
@@ -87,7 +87,7 @@ Email communications are used solely to:
 
 We do not use your data for marketing purposes without your explicit consent, nor do we sell or share your data with third parties.
 
-#### 3.5 Data Retention
+### 3.5 Data Retention
 
 We retain email communications for as long as necessary to fulfill the purpose for which they were collected, typically:
 
@@ -96,11 +96,11 @@ We retain email communications for as long as necessary to fulfill the purpose f
 
 You may request deletion of your data at any time (see Section 3.8).
 
-#### 3.6 Data Security
+### 3.6 Data Security
 
 Email communications are transmitted via Gmail's secure infrastructure, which uses industry-standard encryption (TLS). However, please be aware that email is not a completely secure medium, and we cannot guarantee the security of data transmitted via email.
 
-#### 3.7 Third-Party Services & Infrastructure
+### 3.7 Third-Party Services & Infrastructure
 
 To ensure the security and performance of this website, we use the following service providers:
 
@@ -121,7 +121,7 @@ This website contains links to third-party platforms including:
 
 These external services have their own privacy policies and may use cookies and tracking technologies. We are not responsible for their data practices. We recommend reviewing their privacy policies before using these services.
 
-#### 3.8 Your Rights Under GDPR
+### 3.8 Your Rights Under GDPR
 
 As a data subject in the EU, you have the following rights:
 
@@ -135,7 +135,7 @@ As a data subject in the EU, you have the following rights:
 
 To exercise any of these rights, please contact us using the information in Section 1.
 
-#### 3.9 Right to Lodge a Complaint
+### 3.9 Right to Lodge a Complaint
 
 If you believe your data protection rights have been violated, you have the right to lodge a complaint with a supervisory authority.
 
@@ -151,17 +151,17 @@ Website: [www.imy.se](https://www.imy.se/)
 **Information Commissioner's Office (ICO)**  
 Website: [www.ico.org.uk](https://www.ico.org.uk/)
 
-#### 3.10 International Data Transfers
+### 3.10 International Data Transfers
 
 We use Gmail for communications. When you email us, your data is processed by Google LLC in the United States. These transfers are governed by **Google's Privacy Policy** and, where applicable, the **EU-U.S. Data Privacy Framework**.
 
 Please note that for personal Gmail accounts, the standard enterprise Data Processing Addendum is not available. By contacting us via email, you acknowledge that your data may be transferred to and stored on Google's servers in the U.S..
 
-#### 3.11 Children's Privacy
+### 3.11 Children's Privacy
 
 This website is not directed at children under 16 years of age. We do not knowingly collect personal data from children. If you believe a child has provided us with personal data, please contact us immediately.
 
-#### 3.12 Additional Disclosures for U.S. Residents
+### 3.12 Additional Disclosures for U.S. Residents
 
 **Children's Privacy:** In compliance with the U.S. Children's Online Privacy Protection Act (COPPA), we do not knowingly collect personal information from children under the age of 13.
 
@@ -169,17 +169,17 @@ This website is not directed at children under 16 years of age. We do not knowin
 
 **Residents of U.S. states:** Residents of U.S. states with applicable privacy laws (including but not limited to California, Virginia, Colorado, and Connecticut) may have rights to access, correct, delete, or opt out of certain data uses. To exercise these rights, contact us using the details in Section 1.
 
-#### 3.13 Additional Disclosures for Australian Residents
+### 3.13 Additional Disclosures for Australian Residents
 
 **Overseas Data Disclosure:** By using this site or contacting us via email, you acknowledge that your personal information may be processed on servers located outside of Australia, primarily in the United States (via Google LLC) and the European Union.
 
 **Complaints:** If you are an Australian resident and have a complaint regarding our handling of your personal information, you may also contact the Office of the Australian Information Commissioner (OAIC) at [www.oaic.gov.au](https://www.oaic.gov.au/).
 
-### 4\. Terms of Service
+## 4\. Terms of Service
 
 By accessing and using this website, you agree to comply with and be bound by the following terms. If you do not agree, please discontinue use of the site immediately.
 
-#### 4.1 Acceptable Use
+### 4.1 Acceptable Use
 
 You agree to use this website only for lawful purposes. You are prohibited from:
 
@@ -187,15 +187,15 @@ You agree to use this website only for lawful purposes. You are prohibited from:
 - Using automated systems (bots, scrapers) to harvest content without prior written permission.
 - Decompiling or reverse-engineering the custom fonts or scripts provided on this site.
 
-#### 4.2 External Links
+### 4.2 External Links
 
 This site contains links to external platforms (Spotify, YouTube, etc.). Your use of those platforms is governed by their respective terms. Harald Revery™ is not responsible for the content or availability of these external services.
 
-#### 4.3 Modification of Service
+### 4.3 Modification of Service
 
 We reserve the right to modify, suspend, or discontinue any part of this website—including the availability of specific audio tracks or galleries—at any time without notice.
 
-#### 4.4 Music Streaming & Usage Rights
+### 4.4 Music Streaming & Usage Rights
 
 The music available on this website is provided for **personal, non-commercial streaming only**. By accessing the audio player and streaming music on this site, you agree to the following:
 
@@ -208,7 +208,7 @@ The music available on this website is provided for **personal, non-commercial s
 
 All music streamed on this site remains the exclusive property of Harald Mark Thirslund and is protected by international copyright laws. Unauthorized use may result in legal action.
 
-#### 4.5 User Indemnification
+### 4.5 User Indemnification
 
 To the extent permitted by applicable law, you agree to indemnify and hold harmless Harald Mark Thirslund (trading as Harald Revery™) from and against claims, liabilities, damages, losses, and reasonable costs (including reasonable legal fees) to the extent they are caused by your own intentional or negligent conduct in the following respects:
 
@@ -220,7 +220,7 @@ To the extent permitted by applicable law, you agree to indemnify and hold harml
 
 This clause applies only to the extent the loss is actually caused by you, and does not extend to anything caused by us or by a third party. Nothing in this section limits or excludes any mandatory statutory right you have as a consumer under Swedish or EU law. This indemnification obligation will survive the termination or expiration of your use of this website.
 
-### 5\. Disclaimer & Limitation of Liability
+## 5\. Disclaimer & Limitation of Liability
 
 The content and technical features on this website are provided "as is" and "as available" for informational and artistic purposes. We make no warranties, express or implied, regarding:
 
@@ -234,25 +234,25 @@ The content and technical features on this website are provided "as is" and "as 
 
 To the maximum extent permitted by Swedish law, Harald Mark Thirslund shall not be liable for any direct, indirect, incidental, or consequential damages—including but not limited to data loss or technical interruptions—arising from your use of or inability to use this website.
 
-### 6\. Changes to This Policy
+## 6\. Changes to This Policy
 
 We may update this Legal Notice and Privacy Policy from time to time to reflect changes in our practices or for legal, operational, or regulatory reasons. The updated policy will be posted on this page with a revised "Last Updated" date.
 
 **Last Updated:** August 3, 2026
 
-### 7\. Governing Law
+## 7\. Governing Law
 
 This Legal Notice and Privacy Policy shall be governed by and construed in accordance with Swedish law. Any disputes shall be subject to the exclusive jurisdiction of Swedish courts.
 
-### 8\. Severability
+## 8\. Severability
 
 If any provision of this Legal Notice, Privacy Policy, or Terms of Service is found to be unlawful, void, or unenforceable by a court of competent jurisdiction, that provision shall be deemed severable and shall not affect the validity and enforceability of the remaining provisions. The remaining provisions shall continue in full force and effect.
 
 In the event of severability, the parties agree that the court should endeavor to give effect to the parties' intentions as reflected in the provision, and that the other provisions of this agreement shall remain in full force and effect.
 
-### 9\. Blog Content, Reviews & Editorial Disclaimer
+## 9\. Blog Content, Reviews & Editorial Disclaimer
 
-#### 9.1 Nature of Content
+### 9.1 Nature of Content
 
 The blog content published on this website ("Notebook") consists of personal opinions, reviews, recommendations, commentary, and editorial content created by Harald Mark Thirslund. All blog posts, articles, and written content represent the author's personal views and experiences at the time of publication and should not be construed as:
 
@@ -262,7 +262,7 @@ The blog content published on this website ("Notebook") consists of personal opi
 - Objective or impartial analysis
 - Official positions or statements on behalf of any organization, company, or third party
 
-#### 9.2 Personal Opinion & Expression
+### 9.2 Personal Opinion & Expression
 
 All blog content represents personal opinions, subjective experiences, and individual perspectives. The author reserves the right to express opinions on any topic, including but not limited to: politics, culture, technology, products, services, entertainment, and social issues. Readers are encouraged to:
 
@@ -273,7 +273,7 @@ All blog content represents personal opinions, subjective experiences, and indiv
 
 **Political Content:** Any political commentary, analysis, or opinion expressed on this blog represents solely the personal views of the author and does not constitute political advocacy, campaigning, or endorsement of any political party, candidate, or ideology. Readers should seek diverse sources of information when forming political opinions.
 
-#### 9.3 AI-Assisted Content
+### 9.3 AI-Assisted Content
 
 Some blog content may be created with the assistance of artificial intelligence (AI) tools, including but not limited to: text generation, editing assistance, research summarization, or content enhancement. When AI tools are used:
 
@@ -284,7 +284,7 @@ Some blog content may be created with the assistance of artificial intelligence 
 
 Readers are advised to independently verify information and not rely solely on any content (whether AI-assisted or human-written) for critical decisions. The use of AI assistance does not alter the disclaimer and limitation of liability provisions outlined in this section.
 
-#### 9.4 Product Reviews & Recommendations
+### 9.4 Product Reviews & Recommendations
 
 Product reviews, service recommendations, and comparative analyses published on this blog are based on the author's personal experience, research, and subjective assessment at the time of writing. These reviews are provided for informational and entertainment purposes only.
 
@@ -296,7 +296,7 @@ Product reviews, service recommendations, and comparative analyses published on 
 - **Temporal Limitation:** Products, services, prices, features, and availability change over time. Information may become outdated without notice.
 - **No Liability for Purchases:** We are not responsible for any purchasing decisions you make based on blog content, nor for any dissatisfaction, financial loss, or damages resulting from products or services mentioned.
 
-#### 9.5 Affiliate Relationships & Compensation
+### 9.5 Affiliate Relationships & Compensation
 
 This blog may contain affiliate links, sponsored content, or references to products/services for which the author may receive compensation, commissions, free products, or other benefits. When such relationships exist, they will be disclosed within the relevant content in accordance with applicable consumer protection laws and FTC guidelines.
 
@@ -309,7 +309,7 @@ This blog may contain affiliate links, sponsored content, or references to produ
 
 **Current Status:** As of the "Last Updated" date of this policy, this blog does not currently participate in affiliate programs. This status may change in the future, and specific disclosures will be provided in relevant content.
 
-#### 9.6 Accuracy & Information Currency
+### 9.6 Accuracy & Information Currency
 
 While we strive to provide accurate and current information, blog content is provided "as is" without any warranty of accuracy, completeness, or timeliness. We make no commitment to update previously published content to reflect:
 
@@ -321,7 +321,7 @@ While we strive to provide accurate and current information, blog content is pro
 
 Readers should verify current information, especially for time-sensitive matters such as pricing, availability, technical specifications, or legal/regulatory requirements.
 
-#### 9.7 No Professional Advice
+### 9.7 No Professional Advice
 
 Content published on this blog does **NOT** constitute professional advice and should not be relied upon as a substitute for consultation with qualified professionals. Specifically:
 
@@ -332,7 +332,7 @@ Content published on this blog does **NOT** constitute professional advice and s
 
 Any action you take based on blog content is strictly at your own risk, and we will not be liable for any losses, damages, or consequences arising from such actions.
 
-#### 9.8 Third-Party References & External Links
+### 9.8 Third-Party References & External Links
 
 Blog posts may reference third-party websites, products, services, individuals, companies, or organizations. These references do not constitute endorsements unless explicitly stated. We are not responsible for:
 
@@ -342,7 +342,7 @@ Blog posts may reference third-party websites, products, services, individuals, 
 - Changes or discontinuation of external resources
 - Any damages resulting from your interaction with third parties mentioned in blog content
 
-#### 9.9 Limitation of Liability for Blog Content
+### 9.9 Limitation of Liability for Blog Content
 
 To the maximum extent permitted by Swedish law and EU regulations, Harald Mark Thirslund (trading as Harald Revery™) shall not be liable for any direct, indirect, incidental, special, consequential, or punitive damages arising from or related to:
 
@@ -361,7 +361,7 @@ To the maximum extent permitted by Swedish law and EU regulations, Harald Mark T
 - You will conduct your own research before making decisions
 - You will not hold the author liable for your interpretations or applications of blog content
 
-#### 9.10 Intellectual Property in Blog Content
+### 9.10 Intellectual Property in Blog Content
 
 All blog posts, articles, images, graphics, and written content published in the "Notebook" section are the intellectual property of Harald Mark Thirslund and are protected by copyright law.
 
@@ -378,7 +378,7 @@ All blog posts, articles, images, graphics, and written content published in the
 - Removing attribution or claiming authorship of content
 - Modifying content and republishing as your own
 
-#### 9.11 Right to Modify or Remove Content
+### 9.11 Right to Modify or Remove Content
 
 We reserve the right, at our sole discretion and without prior notice, to:
 
@@ -389,7 +389,7 @@ We reserve the right, at our sole discretion and without prior notice, to:
 
 We are under no obligation to maintain, update, or preserve blog content indefinitely.
 
-### 10\. Open Source Software Notices
+## 10\. Open Source Software Notices
 
 This website is built in part using third-party open source software libraries. In accordance with the terms of their respective licenses, the required copyright notices and license acknowledgements are reproduced below. These notices apply solely to the named third-party libraries and do not grant any rights in the creative content of this website (music, fonts, photography, or brand assets), which remain the exclusive property of Harald Mark Thirslund as stated in Section 2.
 

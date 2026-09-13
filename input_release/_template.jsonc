@@ -33,7 +33,8 @@
   "genres": ["Melodic House", "Electronic"],// hero chips + the "Genre" row
   "kicker": "New Single — Out Now",         // small line above the title.
                                             // Omit for an auto "New <type> — Out Now".
-  "introduction": "One-line tagline shown under the title (also used as the page description and social-share text).",
+  "introduction": "One-line tagline shown under the title (also the start of the page description and social-share text).",
+  // "description": "Optional hand-written search/share snippet, 110-160 characters. Omit it and one is generated from introduction, name, year, type, artist, genres and streaming.",
   "about": "<p>The story of the release. HTML is allowed: <em>emphasis</em>, links, multiple &lt;p&gt; paragraphs.</p>",
 
   // ---- Optional: streaming (include ONLY the links you have) ---------------

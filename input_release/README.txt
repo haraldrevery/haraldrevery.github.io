@@ -54,8 +54,14 @@ Recommended:
   genres          Array of genre / tag strings. Shown as hero chips + the
                   "Genre" row, e.g. ["Melodic House", "Electronic"].
   kicker          Small line above the title. Defaults to "New <type> — Out Now".
-  introduction    One-line tagline under the title (also used as the page's
-                  meta description + social share text).
+  introduction    One-line tagline under the title. Also the first sentence of
+                  the page's meta description + social share text, which
+                  release.njk extends with the title, year, type, artist,
+                  genres and streaming services, e.g. "For those night drives.
+                  Isolated is a 2018 single by Harald Revery. Genre: ..."
+  description     Optional hand-written meta description + social share text.
+                  Replaces the generated one entirely. Aim for 110-160
+                  characters and make it unique to this release.
   about           "About the release" text. HTML is allowed (<p>, <em>, <a> ...).
 
 Optional (a field/section is only rendered when present):
