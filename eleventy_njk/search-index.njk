@@ -48,10 +48,11 @@ staticEntries:
   HTML-entity-escaped by Nunjucks autoescape and corrupts the JSON.
 
   URLs are the real file names ("/music.html"), the same as every other
-  internal link (nav.njk). The host is GitHub Pages, which serves both /foo and
-  /foo.html with no redirect, but a local preview (VS Code Live Server) only
-  finds /foo.html — a clean URL there is a 404. The canonical, sitemap and
-  JSON-LD carry the clean URL, so search engines still see one address.
+  internal link (nav.njk). The live site 301-redirects /foo.html to /foo (a
+  Cloudflare Redirect Rule, see information/SETUP.md "Deploying"), but a local
+  preview (VS Code Live Server) only finds /foo.html — a clean URL there is a
+  404. The canonical, sitemap and JSON-LD carry the clean URL, so search
+  engines still see one address.
 
   To REMOVE search: delete this file (and the other files listed in search.njk),
   plus the generated /search-index.json at the repo root.

@@ -699,8 +699,10 @@ module.exports = function(eleventyConfig) {
   eleventyConfig.addFilter("isoStamp", (dateObj) => isoStamp(dateObj) || "");
 
   // Strip a trailing ".html" so every emitted URL (canonical, og:url, sitemap
-  // <loc>) matches the clean URL Cloudflare Pages actually serves — it 308-
-  // redirects /foo.html -> /foo. Leaves "/" and already-clean URLs untouched.
+  // <loc>) is the clean URL. GitHub Pages answers both /foo and /foo.html with
+  // a 200; a Cloudflare Redirect Rule in front of it 301s /foo.html -> /foo so
+  // only the clean one survives (information/SETUP.md, "Deploying"). Leaves "/"
+  // and already-clean URLs untouched.
   eleventyConfig.addFilter("cleanUrl", (url) => {
     return typeof url === "string" ? url.replace(/\.html$/, "") : url;
   });
@@ -842,9 +844,10 @@ module.exports = function(eleventyConfig) {
   // linked to the canonical artist entity via byArtist @id. Emit with `| safe`.
   eleventyConfig.addFilter("musicAlbumLd", (release) => {
     // Clean URL, matching <link rel="canonical"> and the sitemap <loc>.
-    // Cloudflare Pages 308-redirects /foo.html -> /foo, so a schema.org `url`
-    // still carrying ".html" names a redirect rather than the canonical page
-    // (articleLd already strips it; these two had drifted).
+    // The live site 301s /foo.html -> /foo (Cloudflare Redirect Rule, see the
+    // cleanUrl filter), so a schema.org `url` still carrying ".html" names a
+    // redirect rather than the canonical page (articleLd already strips it;
+    // these two had drifted).
     const url = SITE_ORIGIN + String(release.url || "").replace(/\.html$/, "");
     const relTypeMap = { Single: "SingleRelease", EP: "EPRelease" };
     const obj = {

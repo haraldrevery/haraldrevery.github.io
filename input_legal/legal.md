@@ -44,7 +44,7 @@ Information provided in accordance with the Swedish Electronic Commerce Act (200
 
 The name "Harald Revery™" and associated brand elements are claimed trademarks of Harald Mark Thirslund. Unless otherwise stated, all creative assets on this website—including **audio recordings, musical compositions, custom typography (HaraldReveryTextFont, HaraldReveryMonoFont), photography, and the brand logo** —are the exclusive property of Harald Mark Thirslund and are protected by international copyright laws. Unauthorized reproduction, distribution, or commercial use is strictly prohibited.
 
-The technical architecture of this website incorporates third-party open source software libraries distributed under various open source licenses, including the **MIT License**, the **BSD 3-Clause License**, and the **Apache License, Version 2.0**. These licenses apply only to the respective third-party libraries and not to the creative content of this website. All required copyright notices and license acknowledgements are set out in **Section 10 (Open Source Software Notices)** of this Legal Notice. The full text of each applicable license is available in the [/licence/ directory](/licence/) of this website.
+The technical architecture of this website incorporates third-party open source software libraries distributed under various open source licenses, including the **MIT License**, the **BSD 3-Clause License**, and the **Apache License, Version 2.0**. These licenses apply only to the respective third-party libraries and not to the creative content of this website. All required copyright notices and license acknowledgements are set out in **Section 10 (Open Source Software Notices)** of this Legal Notice. The full text of each applicable license is reproduced in [Section 10](#open-source-software-notices).
 
 ## 3\. Privacy Policy & Data Protection (GDPR Compliance)
 
@@ -389,11 +389,14 @@ We reserve the right, at our sole discretion and without prior notice, to:
 
 We are under no obligation to maintain, update, or preserve blog content indefinitely.
 
-## 10\. Open Source Software Notices
+{# Raw HTML rather than "## 10\. …" so it can carry an id: Section 2 links here.
+   markdown-it-attrs' brace syntax for ids would open a Nunjucks comment, because
+   this file is rendered by Nunjucks before markdown. #}
+<h2 id="open-source-software-notices">10. Open Source Software Notices</h2>
 
 This website is built in part using third-party open source software libraries. In accordance with the terms of their respective licenses, the required copyright notices and license acknowledgements are reproduced below. These notices apply solely to the named third-party libraries and do not grant any rights in the creative content of this website (music, fonts, photography, or brand assets), which remain the exclusive property of Harald Mark Thirslund as stated in Section 2.
 
-Each library is listed below with its copyright notice and the complete, unmodified text of its license. The same texts are also available as individual files in the [/licence/ directory](/licence/) of this website.
+Each library is listed below with its copyright notice and the complete, unmodified text of its license. Each entry also links to its license as a separate plain-text file.
 
 The libraries listed below are distributed under the following licenses:
 
