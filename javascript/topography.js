@@ -43,13 +43,16 @@ toggle.addEventListener('click', () => {
     icon.textContent = isDark ? '☀' : '🌙';
 });
 
-// Grid / contour settings. The grid is sized in columns rather than pixels, so
-// a 4K screen gets the same cell count (and the same frame cost) as a 1080p
-// one, just with a proportionally larger cell. One grid cell is one world unit.
+// Grid / contour settings. The cell is sized as a fraction of the width rather
+// than in pixels, so a 4K screen gets the same cell count (and the same frame
+// cost) as a 1080p one, just with a proportionally larger cell. One grid cell
+// is one world unit. TARGET_COLS is how many cells span the middle of the
+// screen; the grid itself is fitted to the camera and runs wider toward the
+// far edge (see fitGrid).
 const TARGET_COLS = 192;
 const MIN_CELL = 3;           // px
-const ROW_OVERSCAN = 1.45;    // extra rows, so the tilted ground runs off-screen
-                              // even at the shallowest PITCH below
+const EDGE_MARGIN = 2;        // cells of ground kept past every screen edge
+const FIT_PITCHES = 6;        // pitches fitGrid samples across the tilt range
 const LEVEL_STEP = 0.09;      // height between contour lines
 const LEVEL_COUNT = 32;
 const INDEX_EVERY = 4;        // every Nth contour is drawn heavier
@@ -64,8 +67,9 @@ const ALPHA_REF = 1.8;        // height that maps to a fully bright line
 // horizon. Useful range is roughly 40-70; below ~40 the map foreshortens so
 // hard the logo stops reading. Cliffs steeper than this angle turn their backs
 // on the camera and cull away — that is what keeps them from tangling, so
-// lowering this also hides more of the far side. ROW_OVERSCAN above is sized
-// to keep the ground off-screen down to about 40; go lower and raise it too.
+// lowering this also hides more of the far side. The grid fits itself to this
+// and TILT_RANGE, so the ground runs off every edge at any setting — but the
+// lower the pitch, the deeper the camera sees and the more grid that takes.
 //
 // YAW: how far the view is turned around, in degrees. 0 faces the map square
 // on. This turns the logo with it, so a little goes a long way — past ~15 the
@@ -221,7 +225,8 @@ const SURFACE_PHASE = 0.5 - Math.sin(Math.asin(1 - 2 * RISE_SURFACED) / 3);
 const BREATH_WARP = Math.log(SURFACE_PHASE) / Math.log(SUBMERGE_SHARE);
 
 let width, height, dpr, cell;
-let cols, rows, halfCols, halfRows;
+let cols, rows, halfCols, focusRow;  // focusRow: the row under the screen's middle
+let rowLo, rowHi;                    // each node row's span of columns, see fitGrid
 let field, onIsland, mesa;
 let rimX, rimY, rimBreak, rimI, rimJ, rimH, rimSx, rimSy, rimOk;
 const rimBuckets = [];
@@ -297,16 +302,26 @@ function updateCamera(t) {
 let gX = 0, gY = 0;
 
 function screenToGrid(sx, sy, h) {
-    const Y = (sy - cy) / zoom;
-    const den = FOCAL * sinP + Y * cosP;
-    if (den <= 1e-3) return false;              // at or above the horizon
+    const wz = depthUnder(sy, h, sinP, cosP);
+    if (wz === Infinity) return false;          // at or above the horizon
 
     const wy = (h - ELEV_REF) * ELEV_SCALE;
-    const wz = (wy * (Y * sinP - FOCAL * cosP) - Y * FOCAL) / den;
     const scale = FOCAL / (FOCAL + wz * cosP - wy * sinP);
     gX = halfCols + (sx - cx) / (scale * zoom);
-    gY = halfRows - wz;
+    gY = focusRow - wz;
     return true;
+}
+
+// The depth half of that on its own, for any pitch (given as its sine and
+// cosine): fitGrid needs to ask about pitches the camera is not at. Infinity
+// at or above the horizon.
+function depthUnder(sy, h, sp, cp) {
+    const Y = (sy - cy) / zoom;
+    const den = FOCAL * sp + Y * cp;
+    if (den <= 1e-3) return Infinity;
+
+    const wy = (h - ELEV_REF) * ELEV_SCALE;
+    return (wy * (Y * sp - FOCAL * cp) - Y * FOCAL) / den;
 }
 
 // Put the hill where the cursor is pointing.
@@ -561,9 +576,9 @@ function buildLogo() {
     off.height = H;
     const octx = off.getContext('2d', { willReadFrequently: true });
 
-    // Fit the 1000x1100 viewBox into the grid, centred, then nudged. The span
-    // is measured against the visible rows, not the overscanned ones, so the
-    // island keeps its size on screen.
+    // Fit the 1000x1100 viewBox onto the middle of the screen, then nudged.
+    // The span is measured against the screen's height, not the grid's, so
+    // the island keeps its size on screen however deep the grid runs.
     const sg = (LOGO_SPAN * (height / cell)) / 1100;   // grid units per SVG unit
     const s = sg * S;
 
@@ -576,9 +591,13 @@ function buildLogo() {
     const ox = LOGO_SHIFT_X * width / zoom;
     const oy = LOGO_SHIFT_Y * height / (zoom * Math.sin(PITCH));
 
+    // The middle of the screen, in grid cells. The half cell is where the logo
+    // has always sat; LOGO_SHIFT was tuned against it.
+    const gcx = halfCols + 0.5, gcy = focusRow + 0.5;
+
     octx.setTransform(s, 0, 0, s,
-                      W / 2 - 500 * s + ox * S,
-                      H / 2 - 550 * s + oy * S);
+                      (gcx + ox) * S - 500 * s,
+                      (gcy + oy) * S - 550 * s);
     octx.fillStyle = '#fff';
     svg.querySelectorAll('path').forEach(p => {
         octx.fill(new Path2D(p.getAttribute('d')));
@@ -618,8 +637,7 @@ function buildLogo() {
     }
 
     // Same placement as the raster above, minus the supersampling.
-    // Same placement as the raster above, minus the supersampling.
-    buildRim(sg, w / 2 - 500 * sg + ox, h / 2 - 550 * sg + oy);
+    buildRim(sg, gcx + ox - 500 * sg, gcy + oy - 550 * sg);
 }
 
 /*
@@ -681,9 +699,9 @@ function prepRim(t, top) {
         // the rim has to feel it the same way the plates do, or it would hang
         // in the air through a swell the terrain around it has already risen
         // over.
-        const rx = mx - halfCols, ry = my - halfRows;
+        const rx = mx - halfCols, ry = my - focusRow;
         const ci = rx * cosY + ry * sinY + halfCols;
-        const cj = -rx * sinY + ry * cosY + halfRows;
+        const cj = -rx * sinY + ry * cosY + focusRow;
 
         let ground = fbm(mx * NOISE_SCALE + drift,
                          my * NOISE_SCALE - drift * 0.6, z) * NOISE_AMP;
@@ -772,7 +790,7 @@ function sampleField(t) {
 
     for (let j = 0; j <= rows; j++) {
         const row = j * w;
-        const dj = j - halfRows;
+        const dj = j - focusRow;
 
         // Whole rows miss the hill entirely; skipping them keeps it off the
         // hot path when it is inactive and cheap when it is not.
@@ -784,7 +802,8 @@ function sampleField(t) {
             if (Math.abs(j - rpJ[k]) < rpOut[k]) { rippleRow = true; break; }
         }
 
-        for (let i = 0; i <= cols; i++) {
+        // Only this row's span: past it the ground is off-screen (see fitGrid).
+        for (let i = rowLo[j], end = rowHi[j]; i <= end; i++) {
             const di = i - halfCols;
 
             // Where this node reads from, once the world is turned.
@@ -794,11 +813,11 @@ function sampleField(t) {
             // The hill is added in camera-grid space, not world space, so it
             // is pinned to the cursor rather than drifting with the noise.
             const ground = fbm((rx + halfCols) * NOISE_SCALE + drift,
-                               (ry + halfRows) * NOISE_SCALE - drift * 0.6,
+                               (ry + focusRow) * NOISE_SCALE - drift * 0.6,
                                z) * NOISE_AMP
                          + (hillRow ? hillAt(i, j) : 0);
 
-            const m = sampleMesa(rx + halfCols, ry + halfRows);
+            const m = sampleMesa(rx + halfCols, ry + focusRow);
             const island = top + m;
 
             const k = row + i;
@@ -827,7 +846,7 @@ let pX = 0, pY = 0;
 
 function project(gi, gj, h) {
     const wy = (h - ELEV_REF) * ELEV_SCALE;
-    const wz = halfRows - gj;
+    const wz = focusRow - gj;
     const scale = FOCAL / (FOCAL + wz * cosP - wy * sinP);
     pX = cx + (gi - halfCols) * scale * zoom;
     pY = cy + (-wy * cosP - wz * sinP) * scale * zoom;
@@ -873,9 +892,10 @@ function rasterizeHorizon(x0, y0, x1, y1) {
 // Rasterise one node row's surface profile into the horizon.
 function addHorizonRow(j) {
     const row = j * (cols + 1);
-    project(0, j, field[row]);
+    const start = rowLo[j], end = rowHi[j];
+    project(start, j, field[row + start]);
     let px = pX, py = pY;
-    for (let i = 1; i <= cols; i++) {
+    for (let i = start + 1; i <= end; i++) {
         project(i, j, field[row + i]);
         rasterizeHorizon(px, py, pX, pY);
         px = pX; py = pY;
@@ -912,7 +932,9 @@ function buildContours(t) {
             if (!visible(pX, pY)) rimOk[p] = 0;
         }
 
-        for (let i = 0; i < cols; i++) {
+        // The nearer row's span: the farther one always covers it, so all
+        // four corners of every cell here have been sampled.
+        for (let i = rowLo[j + 1], end = rowHi[j + 1]; i < end; i++) {
             const k = j * w + i;
             const a = field[k], b = field[k + 1], c = field[k + w + 1], d = field[k + w];
 
@@ -1112,6 +1134,75 @@ function animate() {
     requestAnimationFrame(animate);
 }
 
+/*
+ * Fit the grid to the ground the camera can see, rather than to the screen.
+ *
+ * The tilted plane reaches the screen as a trapezoid, narrow at the far end and
+ * wide at the near one, so a grid only as wide as the screen pulls in from both
+ * edges partway up. On a landscape screen the fog mostly hides that. A portrait
+ * one looks about three times as deep into the map, and there the bare strips
+ * down the sides, and the far edge itself, land in plain view.
+ *
+ * So the depth range is solved from the top and bottom of the screen, and each
+ * row gets just the width it needs at its own depth: near rows are magnified
+ * and need less than the screen, far rows need more. Both are taken over every
+ * pitch the cursor can tilt to and every height the ground at an edge can
+ * reach, so no frame uncovers an edge. The arrays are as wide as the widest
+ * row, but the per-frame loops walk only each row's span, so the cost follows
+ * the ground on screen rather than the rectangle around it.
+ */
+function fitGrid() {
+    // The plain's floor, and a cursor hill standing on its highest ground.
+    // The island never reaches an edge, so it is left out.
+    const hLo = 0, hHi = NOISE_AMP + HILL_HEIGHT;
+    const wyLo = (hLo - ELEV_REF) * ELEV_SCALE, wyHi = (hHi - ELEV_REF) * ELEV_SCALE;
+    const sp = [], cp = [];
+    for (let s = 0; s < FIT_PITCHES; s++) {
+        const p = PITCH - TILT_RANGE + 2 * TILT_RANGE * s / (FIT_PITCHES - 1);
+        sp.push(Math.sin(p));
+        cp.push(Math.cos(p));
+    }
+
+    // The top of the screen sees farthest over the lowest ground, the bottom
+    // nearest over the highest. A window tall enough to bring the horizon on
+    // screen has no far edge to find, so the depth is capped at FOCAL rather
+    // than running off to infinity.
+    let far = 0, near = 0;
+    for (let s = 0; s < FIT_PITCHES; s++) {
+        far = Math.max(far, Math.min(FOCAL, depthUnder(0, hLo, sp[s], cp[s])));
+        near = Math.min(near, depthUnder(height, hHi, sp[s], cp[s]));
+    }
+    focusRow = Math.ceil(far) + EDGE_MARGIN;
+    rows = focusRow + Math.ceil(-near) + EDGE_MARGIN;
+
+    // Half-width each node row needs, in cells. Measured one row farther out,
+    // since a row also carries the cells behind it; that keeps every row's
+    // span inside the span of the row behind it, which is what lets a cell
+    // count on all four of its corners having been sampled.
+    const need = new Float32Array(rows + 1);
+    let widest = 0;
+    for (let j = 0; j <= rows; j++) {
+        const wz = focusRow - Math.max(0, j - 1);
+        let den = -Infinity;          // the largest perspective divisor, i.e.
+                                      // the smallest the ground gets here
+        for (let s = 0; s < FIT_PITCHES; s++) {
+            den = Math.max(den, wz * cp[s] - wyLo * sp[s], wz * cp[s] - wyHi * sp[s]);
+        }
+        const scale = FOCAL / (FOCAL + den);
+        need[j] = width / (2 * scale * zoom) + EDGE_MARGIN;
+        if (need[j] > widest) widest = need[j];
+    }
+
+    halfCols = Math.ceil(widest);
+    cols = 2 * halfCols;
+    rowLo = new Int32Array(rows + 1);
+    rowHi = new Int32Array(rows + 1);
+    for (let j = 0; j <= rows; j++) {
+        rowLo[j] = Math.max(0, Math.floor(halfCols - need[j]));
+        rowHi[j] = Math.min(cols, Math.ceil(halfCols + need[j]));
+    }
+}
+
 function resize() {
     width = window.innerWidth;
     height = window.innerHeight;
@@ -1122,10 +1213,14 @@ function resize() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     cell = Math.max(MIN_CELL, width / TARGET_COLS);
-    cols = Math.ceil(width / cell);
-    rows = Math.ceil((height / cell) * ROW_OVERSCAN);
-    halfCols = cols / 2;
-    halfRows = rows / 2;
+    cx = width / 2;
+    cy = height / 2;
+    // Pixels per world unit at the middle of the screen. Tied to the cell, not
+    // to the grid, so however wide fitGrid makes the grid the picture keeps
+    // its scale.
+    zoom = width / (Math.ceil(width / cell) * 0.95);
+
+    fitGrid();
     const nodes = (cols + 1) * (rows + 1);
     field = new Float32Array(nodes);
     onIsland = new Uint8Array(nodes);
@@ -1133,12 +1228,6 @@ function resize() {
     for (let j = 0; j < rows; j++) rimBuckets.push([]);
     hw = Math.ceil(width);
     horizon = new Float32Array(hw);
-
-    cx = width / 2;
-    cy = height / 2;
-    // Wide enough that the ground still spans the screen at its far edge,
-    // where perspective has shrunk it the most.
-    zoom = width / (cols * 0.95);
 
     buildFog();
     buildLogo();
