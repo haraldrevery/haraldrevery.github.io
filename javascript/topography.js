@@ -176,13 +176,23 @@ const RIM_ALPHA_MAX = 1.0;
 
 const LOGO_SPAN = 0.62;       // fraction of viewport height
 
+// >>> LOGO FIT ON NARROW SCREENS <<<
+// LOGO_SPAN alone would make the logo wider than a portrait screen, so it is
+// also held inside the width: shrunk, only if it has to be, until its outline
+// and the full skirt of plates around it stay LOGO_MARGIN of the width clear
+// of both sides at every angle the view swings to (see fitLogo). Landscape
+// screens never reach the limit and keep the LOGO_SPAN size exactly. Raise
+// this for more air around the logo on a phone, lower it for a bigger logo.
+const LOGO_MARGIN = 0.03;     // fraction of viewport width, each side
+
 // >>> LOGO POSITION — NUDGE IT HERE <<<
 // Offsets from centre, as a fraction of the viewport: X positive moves it
 // right, Y positive moves it down. Y also walks it toward the camera across
 // the ground plane, so it grows a little as it comes down and shrinks as it
-// goes up — that is the perspective, not a bug. Keep them modest: the island
-// is carved out of the grid, and pushing it far enough to reach an edge will
-// clip its skirt.
+// goes up — that is the perspective, not a bug. Keep them modest: X is
+// counted when the logo is fitted to the width, so pushing it toward a side
+// shrinks it on narrow screens; Y is not, and pushed far enough the logo runs
+// off the top or bottom of the screen.
 const LOGO_SHIFT_X = -0.036;
 const LOGO_SHIFT_Y = 0;
 const FALLOFF = 9;            // cells the skirt takes to drop one unit;
@@ -228,6 +238,7 @@ let width, height, dpr, cell;
 let cols, rows, halfCols, focusRow;  // focusRow: the row under the screen's middle
 let rowLo, rowHi;                    // each node row's span of columns, see fitGrid
 let field, onIsland, mesa;
+let outlineX, outlineY;              // the logo's outline in SVG units, see sampleOutline
 let rimX, rimY, rimBreak, rimI, rimJ, rimH, rimSx, rimSy, rimOk;
 const rimBuckets = [];
 let islandTop = 0;
@@ -554,6 +565,68 @@ function distanceTransform(src, w, h) {
     return d;
 }
 
+/*
+ * How big the logo can be and still clear both sides of the screen.
+ *
+ * sgMax is the size LOGO_SPAN asks for, taken off the screen's height. That is
+ * right for a landscape screen and far too big for a portrait one, where the
+ * logo comes out wider than the screen and the H runs off the side. So sgMax
+ * is only a ceiling: the outline is projected at the island's full height,
+ * over every yaw the drift or the cursor can swing to and every pitch the
+ * cursor can tilt to, with the skirt's full drop added around it, and if any
+ * of that would come within LOGO_MARGIN of a side, the logo is shrunk until
+ * none of it does. The swing matters more than it sounds: turning a logo
+ * that is taller than it is wide throws its corners out sideways, and the
+ * near ones are magnified on the way.
+ *
+ * The widest reach only grows with the size, so the largest size that fits
+ * is found by bisection. A landscape screen passes at the ceiling on the
+ * first test and keeps exactly the LOGO_SPAN size. Runs per resize, never per
+ * frame. (lx, ly) is where the viewBox's centre lands on the grid.
+ */
+function fitLogo(sgMax, lx, ly) {
+    const reachMax = width * (0.5 - LOGO_MARGIN);
+    const wy = (LOGO_HEIGHT - ELEV_REF) * ELEV_SCALE;
+    const skirt = FALLOFF * LOGO_HEIGHT;       // cells from rim to plain floor
+    const swing = Math.max(DRIFT_YAW, YAW_RANGE);
+    const dx = lx - halfCols, dy = ly - focusRow;
+
+    const views = [];                          // sin/cos of yaw, then of pitch
+    for (const a of [-1, -0.5, 0, 0.5, 1]) {
+        for (const b of [-1, 1]) {
+            const yawV = YAW + a * swing, pitchV = PITCH + b * TILT_RANGE;
+            views.push(Math.sin(yawV), Math.cos(yawV), Math.sin(pitchV), Math.cos(pitchV));
+        }
+    }
+
+    // The same placement and turn prepRim gives each rim point, then the
+    // same projection, reduced to how far from the middle it lands.
+    const fits = sg => {
+        for (let v = 0; v < views.length; v += 4) {
+            const ySin = views[v], yCos = views[v + 1];
+            const pSin = views[v + 2], pCos = views[v + 3];
+            for (let p = 0; p < outlineX.length; p++) {
+                const u = dx + (outlineX[p] - 500) * sg;
+                const w = dy + (outlineY[p] - 550) * sg;
+                const across = u * yCos + w * ySin;
+                const wz = u * ySin - w * yCos;
+                const den = FOCAL + wz * pCos - wy * pSin;
+                if (den <= 1e-3) return false;
+                if ((Math.abs(across) + skirt) * (FOCAL / den) * zoom > reachMax) return false;
+            }
+        }
+        return true;
+    };
+
+    if (fits(sgMax)) return sgMax;
+    let lo = 0, hi = sgMax;
+    for (let k = 0; k < 16; k++) {
+        const mid = (lo + hi) / 2;
+        if (fits(mid)) lo = mid; else hi = mid;
+    }
+    return lo;
+}
+
 function buildLogo() {
     /*
      * The silhouette is traced at LOGO_DETAIL times the contour grid, and the
@@ -576,12 +649,6 @@ function buildLogo() {
     off.height = H;
     const octx = off.getContext('2d', { willReadFrequently: true });
 
-    // Fit the 1000x1100 viewBox onto the middle of the screen, then nudged.
-    // The span is measured against the screen's height, not the grid's, so
-    // the island keeps its size on screen however deep the grid runs.
-    const sg = (LOGO_SPAN * (height / cell)) / 1100;   // grid units per SVG unit
-    const s = sg * S;
-
     // Offsets are a fraction of the viewport, converted to grid cells. Divide
     // by zoom rather than cell — that is what the camera actually scales by —
     // and the vertical by sin(PITCH) as well, since moving across a tilted
@@ -594,6 +661,14 @@ function buildLogo() {
     // The middle of the screen, in grid cells. The half cell is where the logo
     // has always sat; LOGO_SHIFT was tuned against it.
     const gcx = halfCols + 0.5, gcy = focusRow + 0.5;
+
+    // Fit the 1000x1100 viewBox onto the middle of the screen, then nudged.
+    // The span is measured against the screen's height, not the grid's, so
+    // the island keeps its size on screen however deep the grid runs — unless
+    // that is too wide for the screen, in which case fitLogo shrinks it. sg is
+    // grid units per SVG unit.
+    const sg = fitLogo((LOGO_SPAN * (height / cell)) / 1100, gcx + ox, gcy + oy);
+    const s = sg * S;
 
     octx.setTransform(s, 0, 0, s,
                       (gcx + ox) * S - 500 * s,
@@ -652,8 +727,11 @@ function buildLogo() {
  * So it gets traced from the path data at full precision and projected point
  * by point. Stroking a transformed Path2D would not work: perspective is not
  * an affine transform, and every point sits at a different depth.
+ *
+ * The SVG never changes, so it is traced once, in its own units; fitLogo
+ * measures that tracing, and buildRim places it on the grid for each screen.
  */
-function buildRim(sg, gox, goy) {
+function sampleOutline() {
     const xs = [], ys = [], breaks = [];
 
     svg.querySelectorAll('path').forEach(p => {
@@ -662,17 +740,26 @@ function buildRim(sg, gox, goy) {
         // The four outlines are disjoint, so each one is silhouette throughout.
         for (let d = 0; d <= len; d += RIM_STEP) {
             const pt = p.getPointAtLength(Math.min(d, len));
-            xs.push(pt.x * sg + gox);
-            ys.push(pt.y * sg + goy);
+            xs.push(pt.x);
+            ys.push(pt.y);
             breaks.push(first ? 1 : 0);
             first = false;
         }
     });
 
-    const n = xs.length;
-    rimX = Float32Array.from(xs);
-    rimY = Float32Array.from(ys);
+    outlineX = Float32Array.from(xs);
+    outlineY = Float32Array.from(ys);
     rimBreak = Uint8Array.from(breaks);
+}
+
+function buildRim(sg, gox, goy) {
+    const n = outlineX.length;
+    rimX = new Float32Array(n);
+    rimY = new Float32Array(n);
+    for (let p = 0; p < n; p++) {
+        rimX[p] = outlineX[p] * sg + gox;
+        rimY[p] = outlineY[p] * sg + goy;
+    }
     rimI = new Float32Array(n);
     rimJ = new Float32Array(n);
     rimH = new Float32Array(n);
@@ -1153,7 +1240,8 @@ function animate() {
  */
 function fitGrid() {
     // The plain's floor, and a cursor hill standing on its highest ground.
-    // The island never reaches an edge, so it is left out.
+    // The island is left out: LOGO_SPAN keeps it off the top and bottom, and
+    // fitLogo off the sides.
     const hLo = 0, hHi = NOISE_AMP + HILL_HEIGHT;
     const wyLo = (hLo - ELEV_REF) * ELEV_SCALE, wyHi = (hHi - ELEV_REF) * ELEV_SCALE;
     const sp = [], cp = [];
@@ -1234,6 +1322,7 @@ function resize() {
 }
 
 function setup() {
+    sampleOutline();
     resize();
 
     let resizeTimer;
