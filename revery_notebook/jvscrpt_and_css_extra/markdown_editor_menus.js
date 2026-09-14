@@ -63,13 +63,13 @@ let paneLabelsHidden = false;     // hide the editor/preview pane label bars (Th
    { label: 'Display Name', val: 'unique-key', url: '/path/to/image.jpg' }  */
 const BACKGROUND_OPTIONS = [
   { label: 'None',        val: 'none',   url: null },
-  { label: 'Galdhøpiggen', val: 'bg_1',   url: '../image_assets/bg_1_max.jpg' },
-  { label: 'Rocks',     val: 'bg_2',   url: '../image_assets/bg_2_max.jpg'  },
-  { label: 'Matterhorn',  val: 'bg_3',   url: '../image_assets/bg_3_max.jpg'  },
-  { label: 'Alpern',      val: 'bg_4',   url: '../image_assets/bg_4_max.jpg'  },
-  { label: 'Grass',       val: 'bg_5',   url: '../image_assets/bg_5_max.jpg'  },
-  { label: 'Tree',        val: 'bg_6',   url: '../image_assets/bg_6_max.jpg'  },
-  { label: 'Tjurpannan',        val: 'bg_7',   url: '../image_assets/bg_7_max.jpg'  }
+  { label: 'Galdhøpiggen', val: 'bg_1',   url: '../image_assets/bg_1_web.jpg' },
+  { label: 'Rocks',     val: 'bg_2',   url: '../image_assets/bg_2_web.jpg'  },
+  { label: 'Matterhorn',  val: 'bg_3',   url: '../image_assets/bg_3_web.jpg'  },
+  { label: 'Alpern',      val: 'bg_4',   url: '../image_assets/bg_4_web.jpg'  },
+  { label: 'Grass',       val: 'bg_5',   url: '../image_assets/bg_5_web.jpg'  },
+  { label: 'Tree',        val: 'bg_6',   url: '../image_assets/bg_6_web.jpg'  },
+  { label: 'Tjurpannan',        val: 'bg_7',   url: '../image_assets/bg_7_web.jpg'  }
 ];
 
 /* ── Settings Persistence ─────────────────────────────────────────────── */
