@@ -56,7 +56,7 @@ let editorDragEnabled = true;     // drag the editor column edge to resize it (d
 window.editorDragEnabled = true;  // Mirror read by layout.js at event time
 let flipLayout = false;           // mirror the desktop panel order (Advanced Options)
 window.flipLayout = false;        // Mirror read by the drag handlers at event time
-let paneLabelsHidden = false;     // hide the editor/preview pane label bars (Theme submenu)
+let paneLabelsHidden = false;     // hide the editor/preview panel label bars (Theme submenu)
 
 /* ── Background image options ─────────────────────────────────────────────
    To add a new background: append a new entry to this array.
@@ -243,7 +243,7 @@ window.applyDOMTranslations = function() {
   updateTxt('#btn-reader-outline', 'Outline');
   updateTxt('#btn-export .btn-label-desktop', 'Export .md');
   updateTxt('#btn-export .btn-label-mobile', 'Export');
-  // Target the title spans only — the pane labels also host +/- font buttons.
+  // Target the title spans only — the panel labels also host +/- font buttons.
   updateTxt('#editor-pane-title', 'Markdown');
   updateTxt('#preview-pane-title', 'Preview');
   updateTxt('#outline-pane-title', 'Outline');
@@ -495,7 +495,7 @@ function stepTextSize(current, dir) {
 }
 
 /* Canonical setters — shared by the Settings submenus and the +/- buttons
-   on the pane label bars. Same contract as setOutlineFontSize: snap,
+   on the panel label bars. Same contract as setOutlineFontSize: snap,
    apply, persist, re-sync the Settings checkmark. */
 window.setEditorTextSize = function (pct) {
   editorTextSize = snapTextSize(pct);
@@ -510,14 +510,22 @@ window.setPreviewTextSize = function (pct) {
   if (typeof buildSettingsMenu === 'function') buildSettingsMenu();
 };
 
-/* The +/- buttons on the editor and preview pane label bars. In Live
-   Preview the editor surface renders with the PREVIEW text size (raw
-   lines and widgets both — the editor size is inert there), so the
-   editor-bar buttons drive the size the user is actually looking at. */
+/* The +/- buttons on the editor and preview panel label bars (with the
+   bars hidden, CSS turns the same buttons into a hover corner — see
+   "Pane hover corner" in the stylesheet). In Live Preview the editor
+   surface renders with the PREVIEW text size (raw lines and widgets
+   both — the editor size is inert there), so the editor-bar buttons
+   drive the size the user is actually looking at. */
 (function initPaneTextSizeButtons() {
   const wirePair = (minusId, plusId, step) => {
     const minus = document.getElementById(minusId);
     const plus  = document.getElementById(plusId);
+    /* Never take the editor's focus: a <button> focuses itself on
+       mousedown, so typing right after a size click went nowhere (same
+       rule as the live-preview widget buttons). The click still fires. */
+    for (const btn of [minus, plus]) {
+      if (btn) btn.addEventListener('mousedown', (e) => e.preventDefault());
+    }
     if (minus) minus.addEventListener('click', (e) => { e.stopPropagation(); step(-1); });
     if (plus)  plus.addEventListener('click',  (e) => { e.stopPropagation(); step(1); });
   };
@@ -1438,7 +1446,7 @@ function applyEditorBgStyle() {
   }
 }
 
-/* Hide/show the editor & preview pane label bars (CSS keys on the class;
+/* Hide/show the editor & preview panel label bars (CSS keys on the class;
    the outline pane's label is deliberately untouched — it hosts the
    outline font-size buttons). */
 function applyPaneLabelsVisibility() {
@@ -1474,31 +1482,42 @@ if (backgroundOpacity !== null) {
 window.setSlowHardwareMode(slowHardwareMode); // sync body class + bg suppression on boot
 window.setLivePreviewMode(livePreviewMode);   // install editor extension + hide pane if saved on
 
-function applyLoadedStates() {
-  // Apply visibility to preview and editor panes based on saved state
-  prPane.style.display = previewVisible ? '' : 'none';
-  divider.style.display = (previewVisible && !readerMode) ? '' : 'none';
-  
-  if (!readerMode) {
-    if (previewVisible) {
-      edPane.style.width = window.savedEditorWidth || '33.33%';
-      edPane.style.flex = 'none';
-    } else {
-      edPane.style.width = '100%';
-      edPane.style.flex = '1';
-    }
+/* The ONE writer of the editor / divider / preview layout. Two user
+   choices decide it — previewVisible and readerMode — applied as inline
+   styles (the divider drag writes widths inline too). The body classes
+   mirror the same two choices for CSS (reader chrome; which pane the
+   desktop outline overlay covers — see --outline-cover in the
+   stylesheet). Boot, the Preview toggle and the Reader toggle all come
+   through here, so the classes and the inline styles cannot drift. */
+function applyPaneLayout() {
+  document.body.classList.toggle('reader-mode-active', readerMode);
+  document.body.classList.toggle('preview-hidden', !previewVisible);
+  if (readerMode) {
+    edPane.style.display  = 'none';
+    divider.style.display = 'none';
+    prPane.style.display  = '';
+    return;
   }
+  edPane.style.display  = '';
+  prPane.style.display  = previewVisible ? '' : 'none';
+  divider.style.display = previewVisible ? '' : 'none';
+  if (previewVisible) {
+    // Split layout — use the user's last dragged width if available
+    edPane.style.width = window.savedEditorWidth || '33.33%';
+    edPane.style.flex  = 'none';
+  } else {
+    // Editor fills the workspace
+    edPane.style.width = '100%';
+    edPane.style.flex  = '1';
+  }
+}
+
+function applyLoadedStates() {
+  // Panes, divider and reader mode from the saved state
+  applyPaneLayout();
 
   // Restore mobile view frame
   prPane.classList.toggle('mobile-preview', mobileView);
-
-  // Restore reader mode
-  document.body.classList.toggle('reader-mode-active', readerMode);
-  if (readerMode) {
-    edPane.style.display = 'none';
-    divider.style.display = 'none';
-    prPane.style.display = '';
-  }
 
 // Restore outline visibility
   const outlinePane = document.getElementById('outline-pane');
@@ -2739,14 +2758,14 @@ const themeOptions = [
   };
   themeSub.appendChild(bgStyleBtn);
 
-  // ── Pane label bars toggle (■ = bars visible), right under the gradient row
+  // ── Panel label bars toggle (■ = bars visible), right under the gradient row
   const paneLabelsBtn = document.createElement('button');
   paneLabelsBtn.className = 'menu-item';
   const paneLabelsCheck = document.createElement('span');
   paneLabelsCheck.className = 'menu-item-check';
   paneLabelsCheck.textContent = paneLabelsHidden ? '□' : '■';
   paneLabelsBtn.appendChild(paneLabelsCheck);
-  paneLabelsBtn.appendChild(document.createTextNode(window.t('Pane label bars')));
+  paneLabelsBtn.appendChild(document.createTextNode(window.t('Panel label bars')));
   paneLabelsBtn.onclick = (e) => {
     e.stopPropagation();
     paneLabelsHidden = !paneLabelsHidden;
@@ -3073,50 +3092,15 @@ const themeOptions = [
 
 function togglePreview() {
   previewVisible = !previewVisible;
-  
-  if (readerMode && !previewVisible) {
-    readerMode = false;
-    edPane.style.display = '';
-  }
-
-  prPane.style.display      = previewVisible ? '' : 'none';
-  divider.style.display     = (previewVisible && !readerMode) ? '' : 'none';
-  
-  if (!readerMode) {
-    if (previewVisible) {
-      // Restore split layout — use the user's last dragged width if available
-      edPane.style.width = window.savedEditorWidth || '33.33%';
-      edPane.style.flex  = 'none';
-    } else {
-      // Editor fills the workspace
-      edPane.style.width = '100%';
-      edPane.style.flex  = '1';
-    }
-  }
+  // Hiding the preview while reading leaves reader mode (nothing to read)
+  if (readerMode && !previewVisible) readerMode = false;
+  applyPaneLayout();
   buildSettingsMenu(); // refresh checkmark
 }
 
 function toggleReaderMode() {
   readerMode = !readerMode;
-  document.body.classList.toggle('reader-mode-active', readerMode);
-  if (readerMode) {
-    edPane.style.display = 'none';
-    divider.style.display = 'none';
-    prPane.style.display = '';
-  } else {
-    edPane.style.display = '';
-    divider.style.display = previewVisible ? '' : 'none';
-    prPane.style.display = previewVisible ? '' : 'none';
-    
-    if (previewVisible) {
-      // Restore split layout — use the user's last dragged width if available
-      edPane.style.width = window.savedEditorWidth || '33.33%';
-      edPane.style.flex  = 'none';
-    } else {
-      edPane.style.width = '100%';
-      edPane.style.flex  = '1';
-    }
-  }
+  applyPaneLayout();
   buildSettingsMenu(); // refresh checkmarks
 }
 
