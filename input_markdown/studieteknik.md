@@ -4,6 +4,7 @@ date: 2025-02-28
 image: /notebook_thumbnails/studyguide_min.jpg
 tags: [education]
 description: Some tips on how to study without rushing through everything  in the end.
+draft: true
 ---
 
 

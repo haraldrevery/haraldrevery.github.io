@@ -55,12 +55,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://haraldrevery.com/notebook_pages/studieteknik</loc>
-    <lastmod>2025-02-28</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://haraldrevery.com/notebook_pages/2024photography</loc>
     <lastmod>2024-12-29</lastmod>
     <changefreq>monthly</changefreq>
@@ -77,12 +71,6 @@
     <lastmod>2022-01-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://haraldrevery.com/notebook_pages/tag-education</loc>
-    <lastmod>2025-02-28</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://haraldrevery.com/notebook_pages/tag-photography</loc>
