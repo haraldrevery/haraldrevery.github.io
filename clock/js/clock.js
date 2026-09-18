@@ -106,7 +106,7 @@
             alarm_armed: 'Rings at {time} · in {left}',
             left_min: '{m} min', left_hm: '{h} h {m} min', left_now: 'less than a minute',
             ring_timer: 'Time is up', ring_alarm: 'Alarm · {time}',
-            lap: 'Lap',
+            lap: 'Lap', laps_one: '1 lap', laps_many: '{n} laps', export_csv: 'Export .csv',
             settings: 'Settings', close: 'Close', face: 'Face', theme: 'Theme', background: 'Background',
             opacity: 'Opacity', format: 'Format', seconds: 'Seconds', size: 'Size', language: 'Language',
             auto: 'Auto', dark: 'Dark', light: 'Light', sepia: 'Sepia',
@@ -132,7 +132,7 @@
             alarm_armed: 'Ringer {time} · om {left}',
             left_min: '{m} min', left_hm: '{h} h {m} min', left_now: 'mindre än en minut',
             ring_timer: 'Tiden är ute', ring_alarm: 'Larm · {time}',
-            lap: 'Varv',
+            lap: 'Varv', laps_one: '1 varv', laps_many: '{n} varv', export_csv: 'Exportera .csv',
             settings: 'Inställningar', close: 'Stäng', face: 'Urtavla', theme: 'Tema', background: 'Bakgrund',
             opacity: 'Opacitet', format: 'Format', seconds: 'Sekunder', size: 'Storlek', language: 'Språk',
             auto: 'Auto', dark: 'Mörk', light: 'Ljus', sepia: 'Sepia',
@@ -719,7 +719,7 @@
         var sw = T.sw;
         if (sw.running) {
             sw.laps.push(swElapsed());
-            if (sw.laps.length > 99) sw.laps.shift();
+            if (sw.laps.length > 999) sw.laps.shift();
         } else {
             sw.elapsed = 0;
             sw.laps = [];
@@ -744,6 +744,24 @@
         }
     }
     function swText(ms) { return hms(ms) + '.' + pad(Math.floor((ms % 1000) / 10)); }
+    // One row per lap plus a final "total" row with the full elapsed time
+    // (the stopwatch may be running or paused past the last lap).
+    function swExportCsv() {
+        var laps = T.sw.laps, total = swElapsed(), prev = 0;
+        var rows = [['lap', 'lap_time', 'total_time', 'lap_ms', 'total_ms']];
+        laps.forEach(function (ms, i) {
+            rows.push([i + 1, swText(ms - prev), swText(ms), ms - prev, ms]);
+            prev = ms;
+        });
+        rows.push(['total', '', swText(total), '', total]);
+        var csv = rows.map(function (r) { return r.join(','); }).join('\r\n') + '\r\n';
+        var d = new Date();
+        var a = document.createElement('a');
+        a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+        a.download = 'stopwatch_' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+            '_' + pad(d.getHours()) + '-' + pad(d.getMinutes()) + '.csv';
+        a.click();
+    }
     function renderStopwatch() {
         var ms = swElapsed();
         swDigits(hms(ms));
@@ -753,6 +771,9 @@
         start.dataset.variant = sw.running ? '' : 'primary';
         lap.textContent = sw.running ? t('btn_lap') : t('btn_reset');
         lap.disabled = !sw.running && sw.elapsed === 0;
+        var n = sw.laps.length;
+        $('#sw-log-head').hidden = ms === 0 && !n;
+        setText($('#sw-lap-count'), n ? t(n === 1 ? 'laps_one' : 'laps_many', { n: n }) : '');
     }
 
     // ======================================================================
@@ -1199,6 +1220,7 @@
         // Stopwatch
         $('#sw-start').addEventListener('click', swStartPause);
         $('#sw-lap').addEventListener('click', swLapReset);
+        $('#sw-export').addEventListener('click', swExportCsv);
         // Ringing
         $('#ring-dismiss').addEventListener('click', dismiss);
 

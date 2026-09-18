@@ -523,9 +523,35 @@ body {
 .armed .num-input { color: var(--ink); }
 .armed #alarm-edit { opacity: .9; }
 
-.laps {
+/* Stopwatch: an empty first row and the lap log as the last row share the
+   leftover height equally, so heading + time + buttons stay put however many
+   laps there are; the log scrolls inside its own row. `contain: size` is what
+   makes this work — without it the list's full height feeds back into the
+   tool's height and both "equal" rows grow with every lap. */
+.view[data-view="stopwatch"].active { align-items: stretch; }
+.tool-sw { grid-template-rows: 1fr auto auto auto minmax(120px, 1fr); }
+.tool-sw::before { content: ""; }
+.sw-log {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    align-content: start;
     width: min(520px, 100%);
-    max-height: 28vh;
+    contain: size;
+}
+.sw-log-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+    font-size: .64rem;
+    letter-spacing: .26em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+}
+.laps {
+    min-height: 0;
     overflow-y: auto;
     padding: 0;
     list-style: none;
@@ -533,6 +559,8 @@ body {
     letter-spacing: .14em;
     text-transform: uppercase;
     color: var(--ink-dim);
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
 }
 .laps li {
     display: grid;

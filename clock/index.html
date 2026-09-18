@@ -261,7 +261,9 @@
 
         <!-- ========== STOPWATCH ========== -->
         <section class="view" data-view="stopwatch">
-            <div class="tool">
+            <!-- Laps live in their own row below the controls, so adding
+                 one never moves the time or the buttons (see .tool-sw). -->
+            <div class="tool tool-sw">
                 <h2 class="heading" data-i18n="sw_heading">Stopwatch</h2>
 
                 <div class="big-numerals">
@@ -273,7 +275,13 @@
                     <button class="btn" data-variant="primary" id="sw-start" data-i18n="btn_start">Start</button>
                 </div>
 
-                <ol class="laps" id="sw-laps" reversed></ol>
+                <div class="sw-log">
+                    <div class="sw-log-head" id="sw-log-head" hidden>
+                        <span id="sw-lap-count"></span>
+                        <button class="chip" id="sw-export" data-i18n="export_csv">Export .csv</button>
+                    </div>
+                    <ol class="laps" id="sw-laps" reversed></ol>
+                </div>
             </div>
         </section>
     </main>
