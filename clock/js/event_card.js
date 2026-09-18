@@ -1,3 +1,7 @@
+/* Event card designer for /clock/. Loaded on demand by clock.js the first
+   time the date is clicked; the markup comes from <template id="ecm-template">
+   in clock/index.html, cloned into the page just before this script runs.
+   Public API: window.EventCard.open(). */
 (function () {
 'use strict';
 
@@ -37,7 +41,7 @@ var S = {
     padScale:   1.0,           
     titleColor: '#ffffff',
     dateColor:  '#a1a1a1',     
-    formatId:   'landscape',
+    formatId:   '1080p',
     calView:    new Date(),
     padRatio:   0.0,           // NEW
     fileType:   'jpg'         
@@ -85,7 +89,6 @@ var _currentLogoIdx = 0;
 var _rawLogoSvg = null;
 var _coloredLogoImg = new Image();
 var _coloredLogoHex = null;
-var _lastBlobUrl = null;
 
 // Helper to fetch the raw SVG
 function loadLogoSvg(src) {
@@ -93,7 +96,7 @@ function loadLogoSvg(src) {
         .then(function(res) { return res.text(); })
         .then(function(text) { 
             _rawLogoSvg = text;
-            _coloredLogoHex = null; // Force regeneration of the blob URL
+            _coloredLogoHex = null; // Force regeneration of the coloured logo
             updateColoredLogo(S.titleColor); 
         });
 }
@@ -110,16 +113,10 @@ function updateColoredLogo(hexColor) {
         '$1<style>path, circle, rect, polygon, polyline { fill: none !important; stroke: ' + hexColor + ' !important; stroke-width: 3px !important; vector-effect: non-scaling-stroke !important; }</style>'
     );
     
-    var blob = new Blob([styledSvg], {type: 'image/svg+xml;charset=utf-8'});
-    var url = URL.createObjectURL(blob);
-    
-    _coloredLogoImg.onload = function() {
-        scheduleRedraw();
-        // Clean up memory
-        if (_lastBlobUrl) URL.revokeObjectURL(_lastBlobUrl);
-        _lastBlobUrl = url;
-    };
-    _coloredLogoImg.src = url;
+    // A data: URL, not a blob: URL — the live Cloudflare CSP allows data:
+    // images but not blob: ones, so a blob URL silently never loads there.
+    _coloredLogoImg.onload = scheduleRedraw;
+    _coloredLogoImg.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(styledSvg);
     _coloredLogoHex = hexColor;
 }
 
@@ -178,22 +175,35 @@ var formatsEl  = document.getElementById('ecm-formats');
 var previewWrap= document.getElementById('ecm-preview-wrap');
 var canvas     = document.getElementById('ecm-canvas');
 var exportBtn  = document.getElementById('ecm-export-btn');
-var clockDate  = document.getElementById('clock-date');
 var padScale    = document.getElementById('ecm-pad-scale');      // NEW
 var padScaleVal = document.getElementById('ecm-pad-scale-val');  // NEW
 var alignRow    = document.getElementById('ecm-align-row');      // NEW
 
 /* ─── OPEN / CLOSE ───────────────────────────────────────── */
-clockDate.addEventListener('click', function () {
+var _returnFocus = null;
+function openCard() {
+    _returnFocus = document.activeElement;
     overlay.classList.add('active');
-    setTimeout(redrawPreview, 60); 
-});
-closeBtn.addEventListener('click', function () {
+    // Canvas text only uses a web font once it is loaded, and nothing else on
+    // the page may have asked for HaraldText yet.
+    Promise.all([
+        document.fonts.load('400 40px HaraldMono'),
+        document.fonts.load('400 40px HaraldText')
+    ]).catch(function () {}).then(function () { redrawPreview(); });
+    setTimeout(function () { titleInput.focus({ preventScroll: true }); }, 60);
+}
+function closeCard() {
     overlay.classList.remove('active');
-});
+    if (_returnFocus && _returnFocus.focus) _returnFocus.focus({ preventScroll: true });
+}
+closeBtn.addEventListener('click', closeCard);
 overlay.addEventListener('click', function (e) {
-    if (e.target === overlay) overlay.classList.remove('active');
+    if (e.target === overlay) closeCard();
 });
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && overlay.classList.contains('active')) closeCard();
+});
+window.EventCard = { open: openCard };
 
 /* ─── INPUTS & COLORS ────────────────────────────────────── */
 titleInput.addEventListener('input', function () { S.title = titleInput.value; scheduleRedraw(); });
@@ -1295,7 +1305,7 @@ exportBtn.addEventListener('click', function () {
         var yyyy = pad4(S.date.getFullYear());
         var mm   = pad(S.date.getMonth() + 1);
         var dd   = pad(S.date.getDate());
-        var slug = (S.title || 'event').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/, '');
+        var slug = (S.title || 'event').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'event';
         var baseFilename = yyyy + '_' + mm + '_' + dd + '_' + slug;
 
         var link = document.createElement('a');

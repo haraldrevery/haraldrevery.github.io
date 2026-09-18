@@ -1,0 +1,206 @@
+/* Event card designer (/clock/). Loaded on demand together with
+   js/event_card.js. Uses the theme tokens and control styles from clock.css,
+   so it follows the clock's dark / light / sepia theme. The card itself has
+   its own Dark / Light choice — that is the exported image, not this UI. */
+
+.ecm-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: color-mix(in srgb, var(--bg) 70%, transparent);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .35s var(--ease), visibility 0s linear .35s;
+}
+.ecm-overlay.active { opacity: 1; visibility: visible; transition: opacity .35s var(--ease), visibility 0s; }
+
+.ecm-modal {
+    display: flex;
+    flex-direction: column;
+    width: min(1040px, 100%);
+    max-height: min(92vh, 900px);
+    overflow: hidden;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--bg);
+    box-shadow: 0 30px 90px rgba(0, 0, 0, .35);
+    user-select: none;
+    transform: translateY(12px) scale(.98);
+    transition: transform .35s var(--ease);
+}
+.ecm-overlay.active .ecm-modal { transform: none; }
+
+.ecm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    padding: 10px 12px 10px 24px;
+    border-bottom: 1px solid var(--line);
+}
+.ecm-header-title { font-size: .7rem; letter-spacing: .32em; text-transform: uppercase; color: var(--ink-dim); }
+
+.ecm-body { display: grid; grid-template-columns: 1fr 1fr; flex: 1; min-height: 0; overflow: hidden; }
+.ecm-col-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 20px 24px 24px;
+    overflow-y: auto;
+    border-right: 1px solid var(--line);
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+}
+.ecm-col-preview { display: flex; flex-direction: column; gap: 16px; padding: 20px 24px 24px; min-height: 0; }
+
+.ecm-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: .6rem;
+    letter-spacing: .26em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+}
+.ecm-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.ecm-input, .ecm-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    font-family: var(--mono);
+    font-size: .82rem;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--hover);
+    outline: none;
+    user-select: text;
+    transition: border-color .2s, background-color .2s;
+}
+.ecm-input::placeholder, .ecm-textarea::placeholder { color: var(--ink-faint); }
+.ecm-input:focus, .ecm-textarea:focus { border-color: var(--ink-dim); background: var(--pressed); }
+.ecm-textarea { min-height: 96px; resize: vertical; line-height: 1.5; }
+
+/* Toggle rows reuse the segmented control look */
+.ecm-toggle-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    padding: 3px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--hover);
+}
+.ecm-toggle-btn {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 6px 9px calc(6px + .14em);
+    font-size: .66rem;
+    line-height: 1;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--ink-dim);
+    border-radius: 9px;
+    transition: color .2s, background-color .2s;
+}
+.ecm-toggle-btn:hover { color: var(--ink); }
+.ecm-toggle-btn.active { color: var(--ink); background: var(--pressed); }
+
+/* Size list reuses the chip look */
+.ecm-formats { display: flex; flex-wrap: wrap; gap: 6px; }
+.ecm-fmt-btn {
+    padding: 8px 11px 8px calc(11px + .12em);
+    font-size: .64rem;
+    line-height: 1;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--ink-dim);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    transition: color .2s, border-color .2s, background-color .2s;
+}
+.ecm-fmt-btn:hover { color: var(--ink); border-color: var(--line-strong); }
+.ecm-fmt-btn.active { color: var(--ink); border-color: var(--ink-dim); background: var(--pressed); }
+
+/* Calendar */
+.ecm-cal { padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }
+.ecm-cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.ecm-cal-nav-btn {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--ink-dim);
+    transition: color .2s, background-color .2s;
+}
+.ecm-cal-nav-btn:hover { color: var(--ink); background: var(--hover); }
+.ecm-cal-month-label { font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; }
+.ecm-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.ecm-cal-dow { padding: 4px 0; font-size: .56rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
+.ecm-cal-day {
+    padding: 6px 0;
+    font-size: .74rem;
+    color: var(--ink-dim);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: color .15s, background-color .15s;
+}
+.ecm-cal-day:hover { color: var(--ink); background: var(--hover); }
+.ecm-cal-day.ecm-today { border-color: var(--line-strong); color: var(--ink); }
+.ecm-cal-day.ecm-selected { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+.ecm-cal-day.ecm-other { visibility: hidden; pointer-events: none; }
+
+/* Colour pickers and sliders */
+.ecm-color {
+    width: 100%;
+    height: 34px;
+    padding: 3px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: transparent;
+    cursor: pointer;
+}
+.ecm-color::-webkit-color-swatch-wrapper { padding: 0; }
+.ecm-color::-webkit-color-swatch { border: 0; border-radius: 7px; }
+.ecm-color::-moz-color-swatch { border: 0; border-radius: 7px; }
+.ecm-slider-head { display: flex; align-items: baseline; justify-content: space-between; }
+.ecm-slider-head .ecm-label { margin-bottom: 10px; }
+.ecm-val { font-size: .64rem; color: var(--ink-dim); }
+.ecm-slider { width: 100%; margin: 0; accent-color: var(--ink); cursor: pointer; }
+
+/* Preview + export */
+.ecm-preview-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-height: 160px;
+    padding: 12px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--hover);
+}
+.ecm-preview-wrap canvas {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 3px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, .35);
+}
+.ecm-col-preview .btn { width: 100%; }
+
+@media (max-width: 720px) {
+    .ecm-body { grid-template-columns: 1fr; overflow-y: auto; }
+    .ecm-col-form { overflow: visible; border-right: 0; border-bottom: 1px solid var(--line); }
+    .ecm-preview-wrap { min-height: 220px; }
+}
