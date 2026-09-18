@@ -57,10 +57,9 @@ $PAGE_IMG_MAX_KB = Get-Threshold 'PAGE_IMG_MAX_KB' 8000
 # broken image path in this repo lives in one, and including them buries the
 # findings that matter. Add new sections here as the site grows.
 $ROOT_PAGES = @(
-    'index','about','contact','music','notebook','discography','download','legal','404','h',
-    'wallpaper_line','wallpaper_particles','wallpaper_plexus','wallpaper_topography'
+    'index','about','contact','music','notebook','discography','download','legal','404','h'
 )
-$PAGE_DIRS = @('notebook_pages','release')
+$PAGE_DIRS = @('notebook_pages','release','h','clock')
 $CSS_FILES = @('main.css','prose.css')
 
 # Directories skipped when hunting for oversized assets. Only things that are

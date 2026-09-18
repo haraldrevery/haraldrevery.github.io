@@ -42,8 +42,8 @@ const COPYRIGHT_SEARCH_LINES = 30;
 // "      copyright notice that is included in or attached to the work"
 // (dompurify lines 48, 80, 111) which must never be mistaken for the notice.
 //
-// Some notices span several lines — jsPDF is "Copyright" followed by two "(c) …"
-// lines, highlight.js is a copyright line followed by "All rights reserved." —
+// Some notices span several lines — a "Copyright" line followed by "(c) …"
+// lines, or highlight.js's copyright line followed by "All rights reserved." —
 // so keep absorbing continuation lines after the first hit.
 //
 // Returns null when the file carries no notice at all. That is not a parse
@@ -71,7 +71,7 @@ const extractCopyright = (text) => {
 // Best-effort license family, used only as a label on the card. Order matters:
 // the dual-licensed check has to come before the plain Apache one, and the MIT
 // body-text marker catches the files that carry no header line at all
-// (markdown-it, markdown-it-footnote, jsPDF_4_2_1).
+// (markdown-it, markdown-it-footnote).
 //
 // Deliberately NOT fatal when it finds nothing — the full license text is on the
 // page either way, so a missing badge is cosmetic.

@@ -39,7 +39,7 @@
 #   - script 'unsafe-inline'  -> inline event handlers on interactive notebook pages
 #   - script 'unsafe-eval'    -> Alpine.js and math.js evaluate expressions
 #   - style  'unsafe-inline'  -> the many inline style="" attributes
-#   - img/media data: blob:   -> clock canvas + jsPDF (event_card)
+#   - img/media data: blob:   -> clock event card (data: image export, blob: logo)
 #   - everything else 'self'  -> all JS/CSS/fonts/audio are self-hosted
 #   - object-src 'none', base-uri 'self', frame-ancestors 'self' -> hardening
 # If you later embed a YouTube/Spotify player or add Cloudflare Web Analytics,

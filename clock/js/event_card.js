@@ -424,7 +424,7 @@ function drawCard(ctx, w, h, isExport) {
     var fgBody        = isDark ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.72)';
     
     // NEW: Check if transparent mode is active
-    var isTransparent = S.fileType === 'png_transp' || S.fileType === 'pdf_transp';
+    var isTransparent = S.fileType === 'png_transp';
 
     var isBanner  = (w / h) > 2.6;
     var isPortrait= (h / w) > 1.2;
@@ -1298,41 +1298,16 @@ exportBtn.addEventListener('click', function () {
         var slug = (S.title || 'event').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/, '');
         var baseFilename = yyyy + '_' + mm + '_' + dd + '_' + slug;
 
-    if (S.fileType === 'pdf' || S.fileType === 'pdf_transp') {
-            var jsPDF = window.jspdf.jsPDF; 
-            
-            if (!jsPDF) {
-                alert("PDF library not loaded. Check your script tags or CSP.");
-                return;
-            }
+        var link = document.createElement('a');
+        // Clean up extension naming for files
+        var ext = S.fileType.replace('_transp', '');
+        link.download = baseFilename + '.' + ext;
 
-            var orientation = fmt.w > fmt.h ? 'landscape' : 'portrait';
-            var pdf = new jsPDF({ 
-                orientation: orientation, 
-                unit: 'px', 
-                format: [fmt.w, fmt.h] 
-            });
-            
-            // NEW: Use PNG with Alpha for Transparent PDF exports, otherwise JPEG for compression
-            var imgData = (S.fileType === 'pdf_transp') 
-                ? off.toDataURL('image/png') 
-                : off.toDataURL('image/jpeg', 0.92);
-            var format = (S.fileType === 'pdf_transp') ? 'PNG' : 'JPEG';
-            
-            pdf.addImage(imgData, format, 0, 0, fmt.w, fmt.h);
-            pdf.save(baseFilename + '.pdf');
-        } else {
-            var link = document.createElement('a');
-            // Clean up extension naming for files
-            var ext = S.fileType.replace('_transp', ''); 
-            link.download = baseFilename + '.' + ext;
-            
-            // NEW: Make sure both 'png' and 'png_transp' output as actual PNGs
-            link.href = (S.fileType.includes('png')) 
-                ? off.toDataURL('image/png') 
-                : off.toDataURL('image/jpeg', 0.92);
-            link.click();
-        }
+        // Make sure both 'png' and 'png_transp' output as actual PNGs
+        link.href = (S.fileType.includes('png'))
+            ? off.toDataURL('image/png')
+            : off.toDataURL('image/jpeg', 0.92);
+        link.click();
     });
 });
 

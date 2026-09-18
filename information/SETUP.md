@@ -430,7 +430,7 @@ The CSP is the union of what the site actually uses:
 |---|---|
 | `script-src 'self' 'unsafe-inline' 'unsafe-eval'` | inline handlers on interactive notebook pages; Alpine.js and math.js evaluate expressions |
 | `style-src 'self' 'unsafe-inline'` | the many inline `style=""` attributes |
-| `img-src/media-src 'self' data: blob:` | clock canvas, jsPDF export |
+| `img-src/media-src 'self' data: blob:` | clock event card: image export (`data:`), logo graphic (`blob:`) |
 | `default-src/connect-src/font-src 'self'` | every asset is self-hosted |
 | `object-src 'none'`, `base-uri 'self'`, `frame-ancestors 'self'` | hardening |
 
@@ -451,21 +451,24 @@ The site is served by **GitHub Pages** (this repo's root, custom domain from
 GitHub Pages answers both `/foo` and `/foo.html` with a 200, so the redirects
 live in the Cloudflare dashboard (**Rules → Redirect Rules**), not in this repo.
 Each is a "Wildcard pattern" rule, status 301, "Preserve query string" on, and
-rule 7 must sit above rule 8:
+rule 8 must sit above rule 9:
 
 | # | Request URL | Target URL |
 |---|---|---|
 | 1 | `https://haraldrevery.com/notebook_pages/1dgraph` | `https://haraldrevery.com/h/1dgraph` |
 | 2 | `https://haraldrevery.com/notebook_pages/2dphaseportrait` | `https://haraldrevery.com/h/2dphaseportrait` |
-| 3 | `https://haraldrevery.com/notebook_pages/clock_and_date` | `https://haraldrevery.com/h/clock_and_date` |
-| 4 | `https://haraldrevery.com/notebook_pages/rvry_ascii` | `https://haraldrevery.com/rvry_ascii/rvry_ascii` |
-| 5 | `https://haraldrevery.com/notebook_pages/revery_notebook_info` | `https://haraldrevery.com/revery_notebook/` |
-| 6 | `https://haraldrevery.com/notebook_pages/things-to-do-with-llm` | `https://haraldrevery.com/notebook_pages/things-to-do-with-llms` |
-| 7 | `https://haraldrevery.com/*index.html` | `https://haraldrevery.com/${1}` |
-| 8 | `https://haraldrevery.com/*.html` | `https://haraldrevery.com/${1}` |
+| 3 | `https://haraldrevery.com/notebook_pages/clock_and_date` | `https://haraldrevery.com/clock/` |
+| 4 | `https://haraldrevery.com/h/clock_and_date` | `https://haraldrevery.com/clock/` |
+| 5 | `https://haraldrevery.com/notebook_pages/rvry_ascii` | `https://haraldrevery.com/rvry_ascii/rvry_ascii` |
+| 6 | `https://haraldrevery.com/notebook_pages/revery_notebook_info` | `https://haraldrevery.com/revery_notebook/` |
+| 7 | `https://haraldrevery.com/notebook_pages/things-to-do-with-llm` | `https://haraldrevery.com/notebook_pages/things-to-do-with-llms` |
+| 8 | `https://haraldrevery.com/*index.html` | `https://haraldrevery.com/${1}` |
+| 9 | `https://haraldrevery.com/*.html` | `https://haraldrevery.com/${1}` |
 
-Rules 1–6 are URLs that were once in the sitemap and have since moved; their
-`.html` forms go through rule 8 first and then land here. **Moving or renaming a
+Rules 1–7 are URLs that were once in the sitemap and have since moved; their
+`.html` forms go through rule 9 first and then land here. Until rule 4 is live,
+`h/clock_and_date.html` is a small meta-refresh page that forwards to `/clock/`;
+delete it once `curl -sI https://haraldrevery.com/h/clock_and_date` shows a 301. **Moving or renaming a
 published page means adding a row here**, or its old address becomes a 404.
 
 Check after any change: `curl -sI https://haraldrevery.com/about.html` must show

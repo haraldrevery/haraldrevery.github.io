@@ -130,9 +130,9 @@
 
         // List of available alarm sounds
         const alarmSoundList = [
-            '/audio/mp3/timer_alarm_1.mp3',
-            '/audio/mp3/timer_alarm_2.mp3',
-            '/audio/mp3/timer_alarm_3.mp3'
+            '/clock/audio/timer_alarm_1.mp3',
+            '/clock/audio/timer_alarm_2.mp3',
+            '/clock/audio/timer_alarm_3.mp3'
         ];
 
         function playRandomAlarmSound() {

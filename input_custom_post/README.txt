@@ -62,12 +62,10 @@ HERE ALSO     Page-builder exports. page_builder_app_v2 writes .html fragments
               emits its own date/<h1>/back-link block; everything else is the
               same file shape you would write by hand.
 
-NOT HERE      Complete standalone <html> documents — the browser apps
-              (rvry_ascii, clock_and_date, 1dgraph, 2dphaseportrait,
-              event_card, color_theme). Those genuinely need their own <head>
-              and their own scripts. They stay in input_custom_html_pages/ and
-              are copied verbatim, exactly as before. Nothing about that folder
-              changed, and it is not going away.
+NOT HERE      Complete standalone <html> documents — the browser apps.
+              Those genuinely need their own <head> and their own scripts.
+              They live outside the build in their own folders (rvry_ascii/,
+              revery_notebook/, color_theme_app/, clock/, h/).
 
 NOT HERE      Prose-first posts. Markdown in input_markdown/ is less work for
               an article that is mostly words, and it gets the image grid,

@@ -22,10 +22,12 @@ file contains and how much of the page it owns.
 | `input_custom_html_pages/` | `.html` **whole document** | itself | browser apps, one-offs |
 
 Only the last one freezes its own nav and footer, and it does so on purpose:
-`rvry_ascii.html`, `clock_and_date.html`, `1dgraph.html`,
-`2dphaseportrait.html`, `event_card.html` and `color_theme.html` are
-applications, not articles — they need their own `<head>` and their own scripts.
-Those files were not touched and are not going anywhere.
+whole-document pages need their own `<head>` and their own scripts. The
+browser apps that used to live there have since moved out of the build and are
+hand-maintained in their own folders: `rvry_ascii/`, `revery_notebook/`,
+`color_theme_app/`, `clock/` (clock, timer and event card), and `h/`
+(`1dgraph.html`, `2dphaseportrait.html`, the wallpapers).
+`input_custom_html_pages/color_theme.html` is a leftover `draft: true` copy.
 
 The four coexist because they are four independent producers of the same output
 directory, guarded by a slug-collision check (§4).
