@@ -1047,7 +1047,6 @@
         root.setAttribute('data-format', S.format);
         root.setAttribute('data-seconds', String(S.seconds));
         root.style.setProperty('--bg-opacity', String(S.bgOpacity));
-        app.classList.toggle('no-bg', S.bgOpacity === 0);
     }
     function syncSettingsUI() {
         $$('[data-set]').forEach(function (btn) {
@@ -1173,7 +1172,6 @@
             S.bgOpacity = clamp(Number(e.target.value) / 100, 0, 1);
             $('#bg-opacity-val').textContent = e.target.value + '%';
             root.style.setProperty('--bg-opacity', String(S.bgOpacity));
-            app.classList.toggle('no-bg', S.bgOpacity === 0);
             showBackground();
         });
         $('#bg-opacity').addEventListener('change', saveSettings);

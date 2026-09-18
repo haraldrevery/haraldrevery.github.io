@@ -110,20 +110,14 @@ body {
 .bg-stage { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 .bg-layer {
     position: absolute;
-    inset: -3%;
+    inset: 0;
     background-size: cover;
     background-position: center;
     filter: var(--photo-filter);
     opacity: 0;
     transition: opacity 1.6s ease;
-    animation: kenburns 80s ease-in-out infinite alternate;
 }
 .bg-layer.active { opacity: var(--bg-opacity); }
-.bg-layer:not(.active), .no-bg .bg-layer { animation-play-state: paused; }
-@keyframes kenburns {
-    from { transform: scale(1.03); }
-    to   { transform: scale(1.1) translate(-1.2%, .8%); }
-}
 .bg-scrim { position: absolute; inset: 0; background: var(--scrim); }
 
 /* ==========================================================================
@@ -618,18 +612,16 @@ body {
     height: 140px;
     padding: 0 var(--gutter) calc(16px + env(safe-area-inset-bottom)) 0;
 }
+/* Just the icon: no border or disc behind it, not even on hover. */
 .cog {
     width: 40px;
     height: 40px;
     color: var(--ink);
-    border: 1px solid var(--line);
-    background: var(--panel-bg);
-    -webkit-backdrop-filter: blur(18px);
-    backdrop-filter: blur(18px);
     opacity: 0;
     transform: translateY(6px);
-    transition: opacity .35s var(--ease), transform .35s var(--ease), background-color .2s;
+    transition: opacity .35s var(--ease), transform .35s var(--ease);
 }
+.cog:hover { background: none; }
 .cog svg { transition: transform .6s var(--ease); }
 .cog:hover svg, .cog[aria-expanded="true"] svg { transform: rotate(60deg); }
 .settings-trigger:hover .cog, .cog:focus-visible, .cog[aria-expanded="true"] { opacity: 1; transform: none; }
@@ -803,7 +795,6 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .bg-layer { animation: none; }
     .view.active, .face { animation: none !important; }
     .hg-svg { transition: none; }
     .app.ringing .face .time-btn, .app.ringing-timer #timer-display, .app.ringing-alarm #alarm-edit { animation: none; }
