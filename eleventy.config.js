@@ -631,9 +631,18 @@ module.exports = function(eleventyConfig) {
   });
 
   // 3. Filter: Readable Date
+  // Formatted in UTC, never the build machine's zone. A front matter
+  // `date: 2026-08-28` is UTC midnight, so local formatting printed "August 27"
+  // on any machine west of UTC. A release's raw JSON string goes through
+  // calendarDate() first: `new Date()` reads "2019-5-14" as LOCAL midnight but
+  // "2024-10-26" as UTC, so the two forms disagreed about the day in every zone
+  // except UTC.
   eleventyConfig.addFilter("readableDate", (dateObj) => {
-    return new Date(dateObj).toLocaleDateString("en-US", {
-      year: "numeric", month: "long", day: "numeric"
+    const dt = typeof dateObj === "string" && /^\s*\d{4}-\d{1,2}-\d{1,2}\s*$/.test(dateObj)
+      ? new Date(calendarDate(dateObj) + "T00:00:00Z")
+      : new Date(dateObj);
+    return dt.toLocaleDateString("en-US", {
+      year: "numeric", month: "long", day: "numeric", timeZone: "UTC"
     });
   });
 
@@ -672,7 +681,8 @@ module.exports = function(eleventyConfig) {
         // 2014-12-31. dateISO is the padded calendar string; dateUTC is that
         // same day pinned to UTC midnight, so it survives both formatters.
         // Use these two, never the raw d.date, anywhere a date is FORMATTED.
-        // d.date stays untouched for readableDate, which wants local parsing.
+        // The one exception is readableDate, which runs the raw string through
+        // calendarDate() itself.
         d.dateISO = d.date ? calendarDate(d.date) : "";
         d.dateUTC = d.dateISO ? new Date(d.dateISO + "T00:00:00Z") : null;
         d.year = d.dateISO ? Number(d.dateISO.slice(0, 4)) : "";

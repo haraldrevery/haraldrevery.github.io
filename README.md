@@ -66,7 +66,7 @@ For the text editor I used CodeMirror, markdown-it and KaTeX to get the markdown
 Personal setup for this project:
 * Windows 10 with Firefox, Edge Zen with JavaScript blocker
 * VS Code with the Live Server extension by Ritwick Dey
-* Tailwind CSS v4.1.18  (tailwindcss-windows-x64.exe renamed to tw.exe)
+* Tailwind CSS v4.3.1  (tailwindcss-windows-x64.exe renamed to tw.exe; same version as tailwindcss-linux-x64)
 
 On windows, be in the folder and run:
 

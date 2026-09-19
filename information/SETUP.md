@@ -76,15 +76,15 @@ its own output back in. Edit the Markdown, never the HTML — see
 
 **Nothing to install for a normal content change.** The repo ships with:
 
-- `eleventy-linux-x64` / `eleventy-win-x64.exe` — standalone Eleventy 3.1.2
-  (bundles the config, markdown-it, KaTeX, gray-matter). Gitignored because
-  each is ~95 MB and brushes GitHub's 100 MB file limit — they live in the zip
-  backups. Recompile with `eleventy_binary/compile.sh`; see
-  `eleventy_binary/README.md`.
-- `tailwindcss-linux-x64` / `tw.exe` — standalone Tailwind CSS v4. The Linux
-  binary currently reports **v4.3.1**; the root `README.md` still says v4.1.18,
-  and `tw.exe` may lag behind — check with `./tailwindcss-linux-x64 --help`.
-  Also gitignored (107 MB / 124 MB, over GitHub's limit), also in the zips.
+- `eleventy-linux-x64` / `eleventy-win-x64.exe` (+ `-arm64` builds) —
+  standalone Eleventy 3.1.2 (bundles the config, markdown-it, KaTeX,
+  gray-matter). Gitignored because each is ~95 MB and brushes GitHub's 100 MB
+  file limit; git carries one `.zip` per binary instead. Recompile with
+  `eleventy_binary/compile.sh`, then re-zip; see `eleventy_binary/README.md`.
+- `tailwindcss-linux-x64` / `tw.exe` — standalone Tailwind CSS **v4.3.1**, the
+  same version on both OSes (they produce byte-identical CSS; check with
+  `--help`). Also gitignored (over GitHub's limit); `tailwindcss-linux-x64.zip`
+  and `tw.zip` are committed.
 - `node_modules/` — **committed on purpose** (~27 MB, pure JS, cross-platform)
   so the site still builds with Node if the npm registry is ever down.
 

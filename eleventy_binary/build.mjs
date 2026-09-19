@@ -6,11 +6,21 @@
 // compiled bundle collapses to "/package.json" and fails. The plugin below
 // patches that one lookup to return the package.json embedded at compile time.
 
+import crypto from "node:crypto";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import eleventyPkg from "@11ty/eleventy/package.json";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
+
+// Fingerprint of the config being bundled, so a binary can tell when
+// eleventy.config.js on disk has moved on without it (runner.mjs warns). Must
+// normalise exactly like configHash() in runner.mjs.
+const configText = fs.readFileSync(path.join(here, "..", "eleventy.config.js"), "utf8");
+const configSha256 = crypto.createHash("sha256")
+  .update(configText.replace(/^﻿/, "").replace(/\r\n?/g, "\n").trimEnd())
+  .digest("hex");
 
 const eleventyPkgShim = {
   name: "eleventy-pkg-shim",
@@ -38,6 +48,7 @@ for (const [target, outfile] of [
   const result = await Bun.build({
     entrypoints: [path.join(here, "runner.mjs")],
     plugins: [eleventyPkgShim],
+    define: { BUNDLED_CONFIG_SHA256: JSON.stringify(configSha256) },
     compile: {
       target,
       outfile: path.join(here, outfile),
@@ -47,5 +58,5 @@ for (const [target, outfile] of [
     console.error(result.logs.join("\n"));
     process.exit(1);
   }
-  console.log(`Compiled ${target} -> ${path.resolve(here, outfile)}`);
+  console.log(`Compiled ${target} (Bun ${Bun.version}) -> ${path.resolve(here, outfile)}`);
 }
