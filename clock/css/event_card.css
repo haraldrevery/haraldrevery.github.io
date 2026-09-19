@@ -1,6 +1,6 @@
 /* Event card designer (/clock/). Loaded on demand together with
    js/event_card.js. Uses the theme tokens and control styles from clock.css,
-   so it follows the clock's dark / light / sepia theme. The card itself has
+   so it follows the clock's theme (custom colours included). The card itself has
    its own Dark / Light choice — that is the exported image, not this UI. */
 
 .ecm-overlay {
@@ -45,7 +45,7 @@
     padding: 10px 12px 10px 24px;
     border-bottom: 1px solid var(--line);
 }
-.ecm-header-title { font-size: .7rem; letter-spacing: .32em; text-transform: uppercase; color: var(--ink-dim); }
+.ecm-header-title { position: relative; top: var(--font-shift); font-size: var(--text-xs); letter-spacing: .32em; text-transform: uppercase; color: var(--ink-dim); }
 
 .ecm-body { display: grid; grid-template-columns: 1fr 1fr; flex: 1; min-height: 0; overflow: hidden; }
 .ecm-col-form {
@@ -63,7 +63,7 @@
 .ecm-label {
     display: block;
     margin-bottom: 8px;
-    font-size: .6rem;
+    font-size: .7rem;
     letter-spacing: .26em;
     text-transform: uppercase;
     color: var(--ink-dim);
@@ -87,7 +87,9 @@
 .ecm-input:focus, .ecm-textarea:focus { border-color: var(--ink-dim); background: var(--pressed); }
 .ecm-textarea { min-height: 96px; resize: vertical; line-height: 1.5; }
 
-/* Toggle rows reuse the segmented control look */
+/* Toggle rows reuse the segmented control look. No min-width: 0 on the
+   buttons, so a row that gets too narrow wraps instead of clipping labels.
+   Labels are moved down by --font-shift like the clock's own pills. */
 .ecm-toggle-row {
     display: flex;
     flex-wrap: wrap;
@@ -99,9 +101,8 @@
 }
 .ecm-toggle-btn {
     flex: 1;
-    min-width: 0;
-    padding: 9px 6px 9px calc(6px + .14em);
-    font-size: .66rem;
+    padding: calc(.7em + var(--font-shift)) .45em calc(.7em - var(--font-shift)) calc(.45em + .14em);
+    font-size: .7rem;
     line-height: 1;
     letter-spacing: .14em;
     text-transform: uppercase;
@@ -116,8 +117,8 @@
 /* Size list reuses the chip look */
 .ecm-formats { display: flex; flex-wrap: wrap; gap: 6px; }
 .ecm-fmt-btn {
-    padding: 8px 11px 8px calc(11px + .12em);
-    font-size: .64rem;
+    padding: calc(.62em + var(--font-shift)) .85em calc(.62em - var(--font-shift)) calc(.85em + .12em);
+    font-size: .7rem;
     line-height: 1;
     letter-spacing: .12em;
     text-transform: uppercase;
@@ -142,12 +143,12 @@
     transition: color .2s, background-color .2s;
 }
 .ecm-cal-nav-btn:hover { color: var(--ink); background: var(--hover); }
-.ecm-cal-month-label { font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; }
+.ecm-cal-month-label { position: relative; top: var(--font-shift); font-size: var(--text-xs); letter-spacing: .2em; text-transform: uppercase; }
 .ecm-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
-.ecm-cal-dow { padding: 4px 0; font-size: .56rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
+.ecm-cal-dow { padding: 4px 0; font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); }
 .ecm-cal-day {
-    padding: 6px 0;
-    font-size: .74rem;
+    padding: calc(.4em + var(--font-shift)) 0 calc(.4em - var(--font-shift));
+    font-size: var(--text-xs);
     color: var(--ink-dim);
     border: 1px solid transparent;
     border-radius: 8px;
@@ -174,7 +175,7 @@
 .ecm-color::-moz-color-swatch { border: 0; border-radius: 7px; }
 .ecm-slider-head { display: flex; align-items: baseline; justify-content: space-between; }
 .ecm-slider-head .ecm-label { margin-bottom: 10px; }
-.ecm-val { font-size: .64rem; color: var(--ink-dim); }
+.ecm-val { font-size: .7rem; color: var(--ink-dim); }
 .ecm-slider { width: 100%; margin: 0; accent-color: var(--ink); cursor: pointer; }
 
 /* Preview + export */

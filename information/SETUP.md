@@ -467,8 +467,11 @@ rule 8 must sit above rule 9:
 
 Rules 1–7 are URLs that were once in the sitemap and have since moved; their
 `.html` forms go through rule 9 first and then land here. Until rule 4 is live,
-`h/clock_and_date.html` is a small meta-refresh page that forwards to `/clock/`;
-delete it once `curl -sI https://haraldrevery.com/h/clock_and_date` shows a 301. **Moving or renaming a
+`h/clock_and_date.html` is a full, byte-identical copy of `clock/index.html`
+(h.html links to it), so every edit to one goes to the other too
+(`cp clock/index.html h/clock_and_date.html`). Once
+`curl -sI https://haraldrevery.com/h/clock_and_date` shows a 301, delete the copy
+and point h.html at `/clock/`. **Moving or renaming a
 published page means adding a row here**, or its old address becomes a 404.
 
 Check after any change: `curl -sI https://haraldrevery.com/about.html` must show

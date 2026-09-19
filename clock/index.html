@@ -40,7 +40,8 @@
     <link rel="stylesheet" href="/clock/css/clock.css">
 
     <!-- Apply saved look before first paint (no theme/face flash). clock.js
-         owns the settings; this only mirrors them onto <html>. -->
+         owns the settings; this only mirrors them onto <html>. The custom
+         colour fallbacks and luminance() are copies of the ones in clock.js. -->
     <script>
     (function () {
         var d = document.documentElement, s = null;
@@ -51,6 +52,22 @@
         var theme = s.theme || 'auto';
         if (theme === 'auto') theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         d.setAttribute('data-theme', theme);
+        if (theme === 'custom') {
+            var hex = /^#[0-9a-f]{6}$/i;
+            var bg = hex.test(s.customBg) ? s.customBg : '#14181f';
+            var ink = hex.test(s.customInk) ? s.customInk : '#ece6d9';
+            var luminance = function (c) {
+                var n = parseInt(c.slice(1), 16);
+                return [n >> 16, n >> 8 & 255, n & 255].reduce(function (sum, v, i) {
+                    v /= 255;
+                    v = v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4);
+                    return sum + v * [.2126, .7152, .0722][i];
+                }, 0);
+            };
+            d.style.setProperty('--custom-bg', bg);
+            d.style.setProperty('--custom-ink', ink);
+            d.setAttribute('data-tone', luminance(bg) < .179 ? 'dark' : 'light');
+        }
         if (face) d.setAttribute('data-face', face);
         if (s.size) d.setAttribute('data-size', s.size);
         if (s.seconds === false) d.setAttribute('data-seconds', 'false');
@@ -130,7 +147,7 @@
                             <rect id="hg-top-sand" x="-100" y="-240" width="200" height="240" clip-path="url(#hg-top-clip)"/>
                             <rect id="hg-bot-sand" x="-100" y="0" width="200" height="0" clip-path="url(#hg-bot-clip)"/>
                         </g>
-                        <rect id="hg-stream" x="-1.5" y="-10" width="3" height="20" fill="currentColor"/>
+                        <rect id="hg-stream" class="hg-stream" x="-1.5" y="-10" width="3" height="20" fill="currentColor"/>
                     </svg>
                     <button class="time-btn hg-time" data-goto="timer" data-i18n-title="set_timer" title="Set a timer">
                         <span class="digits" id="hg-time">00:00:00</span><span class="ampm" id="hg-ampm"></span>
@@ -162,8 +179,8 @@
                         <circle class="dial-ring dial-ring-inner" r="88"/>
                         <g id="analog-ticks"></g>
                         <g id="analog-numerals"></g>
-                        <line class="hand-h" id="analog-h" x1="0" y1="8" x2="0" y2="-52"/>
-                        <line class="hand-m" id="analog-m" x1="0" y1="10" x2="0" y2="-78"/>
+                        <line class="hand-h" id="analog-h" x1="0" y1="0" x2="0" y2="-52"/>
+                        <line class="hand-m" id="analog-m" x1="0" y1="0" x2="0" y2="-78"/>
                         <line class="hand-s sec-el" id="analog-s" x1="0" y1="14" x2="0" y2="-82"/>
                         <circle class="pin-outer" r="3.5"/>
                         <circle class="pin-inner" r="1.2"/>
@@ -219,10 +236,15 @@
                 <div class="big-numerals" id="timer-display" hidden>
                     <span class="digits" id="timer-digits">00:05:00</span>
                 </div>
+                <!-- Ring / hourglass face while a countdown runs (those two faces
+                     only); clock.js puts copies of the clock faces' SVGs in here. -->
+                <div class="timer-face" id="timer-face" hidden>
+                    <span class="tf-time digits" id="tf-digits">00:05:00</span>
+                </div>
 
                 <div class="progress" aria-hidden="true"><span id="timer-progress"></span></div>
 
-                <div class="presets">
+                <div class="presets" id="timer-presets">
                     <button class="chip" data-preset="60" data-i18n="preset_1m">1 min</button>
                     <button class="chip" data-preset="180" data-i18n="preset_3m">3 min</button>
                     <button class="chip" data-preset="300" data-i18n="preset_5m">5 min</button>
@@ -345,7 +367,13 @@
                 <button class="seg-btn" data-set="theme=dark" data-i18n="dark">Dark</button>
                 <button class="seg-btn" data-set="theme=light" data-i18n="light">Light</button>
                 <button class="seg-btn" data-set="theme=sepia" data-i18n="sepia">Sepia</button>
+                <button class="seg-btn" data-set="theme=custom" data-i18n="custom">Custom</button>
             </div>
+            <div class="custom-colors" id="custom-colors" hidden>
+                <label class="swatch"><input type="color" id="custom-bg" value="#14181f"><span data-i18n="custom_bg">Background</span></label>
+                <label class="swatch"><input type="color" id="custom-ink" value="#ece6d9"><span data-i18n="custom_ink">Text</span></label>
+            </div>
+            <p class="contrast-note" id="contrast-note" data-i18n="low_contrast" hidden>Low contrast: hard to read</p>
         </div>
 
         <div class="field">

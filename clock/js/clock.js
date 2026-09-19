@@ -30,6 +30,7 @@
     function writeJSON(key, value) {
         try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
     }
+    function setHidden(el, hidden) { if (el.hidden !== hidden) el.hidden = hidden; }
 
     // ======================================================================
     // Settings
@@ -39,7 +40,7 @@
     var FACES = ['ring', 'hourglass', 'mono', 'analog', 'celestial'];
     var DEFAULTS = {
         face: 'ring',
-        theme: 'auto',       // auto | dark | light | sepia
+        theme: 'auto',       // auto | dark | light | sepia | custom
         format: '24',        // 24 | 12
         seconds: true,
         size: 'm',           // s | m | l
@@ -47,8 +48,11 @@
         bg: 'p3',            // p1..p7 = bundled photo, u… = one you added
         bgOpacity: 0.25,
         bgCycle: false,
-        photos: []           // ids of added photos (the images are in IndexedDB)
+        photos: [],          // ids of added photos (the images are in IndexedDB)
+        customBg: '#14181f', // the custom theme's two colours; the same
+        customInk: '#ece6d9' // fallbacks are in index.html's pre-paint script
     };
+    var HEX = /^#[0-9a-f]{6}$/i;
 
     function loadSettings() {
         var s = readJSON(SETTINGS_KEY);
@@ -65,7 +69,9 @@
         }
         s = Object.assign({}, DEFAULTS, s);
         if (FACES.indexOf(s.face) < 0) s.face = DEFAULTS.face;
-        if (['auto', 'dark', 'light', 'sepia'].indexOf(s.theme) < 0) s.theme = 'auto';
+        if (['auto', 'dark', 'light', 'sepia', 'custom'].indexOf(s.theme) < 0) s.theme = 'auto';
+        if (!HEX.test(s.customBg)) s.customBg = DEFAULTS.customBg;
+        if (!HEX.test(s.customInk)) s.customInk = DEFAULTS.customInk;
         if (s.format !== '12') s.format = '24';
         if (['s', 'm', 'l'].indexOf(s.size) < 0) s.size = 'm';
         if (s.lang !== 'sv') s.lang = 'en';
@@ -88,6 +94,20 @@
     function resolvedTheme() {
         return S.theme === 'auto' ? (darkQuery.matches ? 'dark' : 'light') : S.theme;
     }
+    // WCAG relative luminance of a #rrggbb colour (copied into index.html's
+    // pre-paint script, which must reach the same dark/light answer).
+    function luminance(hex) {
+        var n = parseInt(hex.slice(1), 16);
+        return [n >> 16, n >> 8 & 255, n & 255].reduce(function (sum, v, i) {
+            v /= 255;
+            v = v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4);
+            return sum + v * [.2126, .7152, .0722][i];
+        }, 0);
+    }
+    function contrastRatio(a, b) {
+        var la = luminance(a), lb = luminance(b);
+        return (Math.max(la, lb) + .05) / (Math.min(la, lb) + .05);
+    }
 
     // ======================================================================
     // Language
@@ -109,7 +129,8 @@
             lap: 'Lap', laps_one: '1 lap', laps_many: '{n} laps', export_csv: 'Export .csv',
             settings: 'Settings', close: 'Close', face: 'Face', theme: 'Theme', background: 'Background',
             opacity: 'Opacity', format: 'Format', seconds: 'Seconds', size: 'Size', language: 'Language',
-            auto: 'Auto', dark: 'Dark', light: 'Light', sepia: 'Sepia',
+            auto: 'Auto', dark: 'Dark', light: 'Light', sepia: 'Sepia', custom: 'Custom',
+            custom_bg: 'Background', custom_ink: 'Text', low_contrast: 'Low contrast: hard to read',
             fmt_24: '24 h', fmt_12: '12 h', on: 'On', off: 'Off',
             size_s: 'S', size_m: 'M', size_l: 'L',
             cycle_locked: 'Fixed', cycle_auto: 'Cycle', next: 'Next',
@@ -135,7 +156,8 @@
             lap: 'Varv', laps_one: '1 varv', laps_many: '{n} varv', export_csv: 'Exportera .csv',
             settings: 'Inställningar', close: 'Stäng', face: 'Urtavla', theme: 'Tema', background: 'Bakgrund',
             opacity: 'Opacitet', format: 'Format', seconds: 'Sekunder', size: 'Storlek', language: 'Språk',
-            auto: 'Auto', dark: 'Mörk', light: 'Ljus', sepia: 'Sepia',
+            auto: 'Auto', dark: 'Mörk', light: 'Ljus', sepia: 'Sepia', custom: 'Egen',
+            custom_bg: 'Bakgrund', custom_ink: 'Text', low_contrast: 'Låg kontrast: svårläst',
             fmt_24: '24 h', fmt_12: '12 h', on: 'På', off: 'Av',
             size_s: 'S', size_m: 'M', size_l: 'L',
             cycle_locked: 'Fast', cycle_auto: 'Växla', next: 'Nästa',
@@ -329,27 +351,31 @@
         $('#' + id).textContent = text;
     }
 
-    // --- Hourglass: flips upright/inverted every hour, sand drains over the hour
-    var hg = { flips: -1, hour: -1, svg: $('#hg-svg'), top: $('#hg-top-sand'), bot: $('#hg-bot-sand'), stream: $('#hg-stream') };
-    function renderHourglass(now) {
-        var h = now.getHours();
-        if (hg.flips < 0) {
-            // First draw: snap to this hour's orientation without animating.
-            hg.flips = h % 2;
-            hg.svg.style.transition = 'none';
-            hg.svg.style.transform = 'rotate(' + hg.flips * 180 + 'deg)';
-            hg.svg.getBoundingClientRect();
-            hg.svg.style.transition = '';
-            hg.hour = h;
-        } else if (h !== hg.hour) {
-            hg.flips++;
-            hg.hour = h;
-            hg.svg.style.transform = 'rotate(' + hg.flips * 180 + 'deg)';
-        }
-        var progress = (now.getMinutes() * 60 + now.getSeconds()) / 3600;
+    // --- Hourglass ---------------------------------------------------------
+    // A glass is one SVG: the clock face's, or the timer face's copy (whose
+    // ids carry a prefix). flips counts half-turns; when it is odd the glass is
+    // upside down, so its local bottom chamber is the one on top.
+    function makeHourglass(prefix) {
+        return {
+            flips: -1, key: null,
+            svg: $('#' + prefix + 'hg-svg'),
+            top: $('#' + prefix + 'hg-top-sand'),
+            bot: $('#' + prefix + 'hg-bot-sand'),
+            stream: $('#' + prefix + 'hg-stream')
+        };
+    }
+    // Turn the glass to `flips` half-turns, animated or in one jump.
+    function turnHourglass(glass, flips, animate) {
+        glass.flips = flips;
+        if (!animate) glass.svg.style.transition = 'none';
+        glass.svg.style.transform = 'rotate(' + flips * 180 + 'deg)';
+        if (!animate) { glass.svg.getBoundingClientRect(); glass.svg.style.transition = ''; }
+    }
+    // progress: 0 = all the sand still on top, 1 = all of it run through.
+    function drawSand(glass, progress, flowing) {
         var H = 240, eased = Math.pow(progress, 3), left = H * (1 - eased), filled = H * eased;
         var topY, topH, botY, botH, streamY, streamH;
-        if (hg.flips % 2 === 0) {
+        if (glass.flips % 2 === 0) {
             topH = left; topY = -topH; botH = filled; botY = H - botH;
             streamY = -2; streamH = Math.max(0, botY - streamY);
         } else {
@@ -357,13 +383,75 @@
             topH = filled; topY = -H; botH = left; botY = 0;
             streamY = Math.min(-2, topY + topH); streamH = Math.max(0, 2 - streamY);
         }
-        hg.top.setAttribute('y', topY.toFixed(2));
-        hg.top.setAttribute('height', topH.toFixed(2));
-        hg.bot.setAttribute('y', botY.toFixed(2));
-        hg.bot.setAttribute('height', botH.toFixed(2));
-        hg.stream.setAttribute('y', streamY.toFixed(2));
-        hg.stream.setAttribute('height', progress > 0.999 ? '0' : streamH.toFixed(2));
-        hg.stream.classList.toggle('flowing', progress > 0.001 && progress < 0.999);
+        glass.top.setAttribute('y', topY.toFixed(2));
+        glass.top.setAttribute('height', topH.toFixed(2));
+        glass.bot.setAttribute('y', botY.toFixed(2));
+        glass.bot.setAttribute('height', botH.toFixed(2));
+        glass.stream.setAttribute('y', streamY.toFixed(2));
+        glass.stream.setAttribute('height', progress > 0.999 ? '0' : streamH.toFixed(2));
+        glass.stream.classList.toggle('flowing', flowing && progress > 0.001 && progress < 0.999);
+    }
+
+    // Clock face: upright on even hours, turned over on the hour, and the
+    // sand drains over the hour.
+    var hgClock = makeHourglass('');
+    function renderHourglass(now) {
+        var h = now.getHours();
+        if (hgClock.flips < 0) {
+            turnHourglass(hgClock, h % 2, false);   // first draw: no animation
+            hgClock.key = h;
+        } else if (h !== hgClock.key) {
+            hgClock.key = h;
+            turnHourglass(hgClock, hgClock.flips + 1, true);
+        }
+        drawSand(hgClock, (now.getMinutes() * 60 + now.getSeconds()) / 3600, true);
+    }
+
+    // --- Timer face --------------------------------------------------------
+    // Ring and hourglass show a running countdown in their own look: the
+    // timer view gets copies of the clock faces' SVGs, so the two can never
+    // drift apart. Every id in a copy gets a prefix, and so do url(#…)
+    // references to them (the hourglass's clip paths).
+    function cloneWithIds(el, prefix) {
+        var copy = el.cloneNode(true);
+        [copy].concat($$('*', copy)).forEach(function (n) {
+            if (n.id) n.id = prefix + n.id;
+            var clip = n.getAttribute('clip-path');
+            if (clip) n.setAttribute('clip-path', clip.replace('url(#', 'url(#' + prefix));
+        });
+        copy.style.transform = '';
+        return copy;
+    }
+    var tfArc = null, hgTimer = null, tfDigits = null;
+    function buildTimerFace() {
+        var box = $('#timer-face');
+        box.insertBefore(cloneWithIds($('.face-ring .ring-svg'), 'tf-'), box.firstChild);
+        box.insertBefore(cloneWithIds($('#hg-svg'), 'tf-'), box.firstChild);
+        tfArc = $('#tf-ring-arc');
+        hgTimer = makeHourglass('tf-');
+        tfDigits = digits($('#tf-digits'));
+    }
+    function timerHasFace() { return S.face === 'ring' || S.face === 'hourglass'; }
+    // progress: 0 = just started, 1 = time is up.
+    function renderTimerFace(progress, remaining) {
+        tfDigits(hms(ceilSec(remaining)));
+        if (S.face === 'ring') {
+            // The arc is the time left: it ends at 12 and its start runs clockwise.
+            tfArc.style.strokeDashoffset = (-RING_C * progress).toFixed(2);
+            tfArc.classList.toggle('tf-arc-done', progress >= 1);
+        } else {
+            if (hgTimer.flips < 0) turnHourglass(hgTimer, 0, false);
+            drawSand(hgTimer, progress, T.timer.status === 'running');
+        }
+    }
+    // A new countdown on the hourglass: turn the glass over, so the sand lying
+    // at the bottom from the last run ends up on top. Called right after the
+    // face is shown, so the turn animates from where the glass stood.
+    function turnTimerGlass() {
+        if (hgTimer.flips < 0) turnHourglass(hgTimer, 0, false);
+        hgTimer.svg.getBoundingClientRect();
+        turnHourglass(hgTimer, hgTimer.flips + 1, true);
+        drawSand(hgTimer, 0, true);
     }
 
     function renderFace(now) {
@@ -591,11 +679,12 @@
         var tm = T.timer, now = Date.now();
         if (ringing === 'timer') { dismiss(); return; }
         if (tm.status === 'done') tm.status = 'idle';
+        var fresh = tm.status === 'idle';
         if (tm.status === 'running') {
             tm.remaining = Math.max(0, tm.endAt - now);
             tm.status = 'paused';
         } else {
-            if (tm.status === 'idle') {
+            if (fresh) {
                 var ms = inputsToDuration();
                 if (ms < 1000) { timerInputs[1].focus(); return; }
                 tm.duration = ms;
@@ -609,6 +698,8 @@
         scheduleDue();
         heartbeat();
         renderTools();
+        if (fresh && S.face === 'hourglass') turnTimerGlass();
+        kick();
     }
     function timerReset() {
         if (ringing === 'timer') { dismiss(); return; }
@@ -631,15 +722,18 @@
         heartbeat();
         renderTools();
     }
+    // Idle: the number inputs and presets. Started: the ring or hourglass face
+    // when one of those is chosen, otherwise big numerals and a progress line.
     function renderTimer() {
-        var tm = T.timer, editing = tm.status === 'idle';
-        $('#timer-edit').hidden = !editing;
-        $('#timer-display').hidden = editing;
-        timerDigits(hms(ceilSec(timerRemaining())));
-        var bar = $('#timer-progress');
-        bar.parentNode.style.visibility = editing ? 'hidden' : '';
-        var p = editing ? 0 : 1 - timerRemaining() / (tm.duration || 1);
-        bar.style.transform = 'scaleX(' + clamp(p, 0, 1).toFixed(4) + ')';
+        var tm = T.timer, editing = tm.status === 'idle', faceOn = !editing && timerHasFace();
+        setHidden($('#timer-edit'), !editing);
+        setHidden($('#timer-display'), editing || faceOn);
+        setHidden($('#timer-face'), !faceOn);
+        setHidden($('#timer-presets'), faceOn);
+        var bar = $('#timer-progress').parentNode;
+        setHidden(bar, faceOn);
+        bar.style.visibility = editing ? 'hidden' : '';
+        tickTimer();
         var start = $('#timer-start');
         start.textContent = tm.status === 'running' ? t('btn_pause')
             : tm.status === 'paused' ? t('btn_resume')
@@ -649,6 +743,14 @@
         $$('[data-preset]').forEach(function (b) {
             b.setAttribute('aria-pressed', String(editing && Number(b.dataset.preset) * 1000 === inputsToDuration()));
         });
+    }
+    // The parts of the timer that move while it runs (every frame).
+    function tickTimer() {
+        var tm = T.timer, remaining = timerRemaining();
+        var progress = tm.status === 'idle' ? 0 : clamp(1 - remaining / (tm.duration || 1), 0, 1);
+        timerDigits(hms(ceilSec(remaining)));
+        $('#timer-progress').style.transform = 'scaleX(' + progress.toFixed(4) + ')';
+        if (tm.status !== 'idle' && timerHasFace()) renderTimerFace(progress, remaining);
     }
 
     // ======================================================================
@@ -813,6 +915,7 @@
     var frameRaf = 0, frameTimeout = 0;
     function needsSmoothFrames() {
         if (currentMode === 'stopwatch') return T.sw.running;
+        if (currentMode === 'timer') return T.timer.status === 'running' && timerHasFace();
         if (currentMode !== 'clock') return false;
         if (S.face === 'ring') return S.seconds;
         if (S.face === 'analog' || S.face === 'celestial') return S.seconds;
@@ -823,7 +926,7 @@
         frameTimeout = 0;
         var now = new Date();
         if (currentMode === 'clock') renderFace(now);
-        else if (currentMode === 'timer') renderTimer();
+        else if (currentMode === 'timer') tickTimer();
         else if (currentMode === 'alarm') renderAlarm();
         else renderStopwatch();
         renderChips();
@@ -1063,6 +1166,15 @@
 
     function applyRoot() {
         root.setAttribute('data-theme', resolvedTheme());
+        if (S.theme === 'custom') {
+            root.style.setProperty('--custom-bg', S.customBg);
+            root.style.setProperty('--custom-ink', S.customInk);
+            root.setAttribute('data-tone', luminance(S.customBg) < .179 ? 'dark' : 'light');
+        } else {
+            root.style.removeProperty('--custom-bg');
+            root.style.removeProperty('--custom-ink');
+            root.removeAttribute('data-tone');
+        }
         root.setAttribute('data-face', S.face);
         root.setAttribute('data-size', S.size);
         root.setAttribute('data-format', S.format);
@@ -1077,6 +1189,21 @@
         var pct = Math.round(S.bgOpacity * 100);
         $('#bg-opacity').value = pct;
         $('#bg-opacity-val').textContent = pct + '%';
+        var custom = S.theme === 'custom';
+        setHidden($('#custom-colors'), !custom);
+        setHidden($('#contrast-note'), !custom || contrastRatio(S.customBg, S.customInk) >= 4.5);
+        $('#custom-bg').value = S.customBg;
+        $('#custom-ink').value = S.customInk;
+    }
+    // A colour picked for the custom theme: shown live while the picker is
+    // dragged, saved once it is closed ("change").
+    function setCustomColor(key, value, save) {
+        if (!HEX.test(value)) return;
+        S[key] = value.toLowerCase();
+        S.theme = 'custom';
+        applyRoot();
+        syncSettingsUI();
+        if (save) saveSettings();
     }
     function applySetting(key, value) {
         if (key === 'seconds' || key === 'bgCycle') value = value === 'true';
@@ -1086,7 +1213,7 @@
         syncSettingsUI();
         if (key === 'lang') { applyLanguage(); renderLaps(); renderPhotoStrip(); }
         if (key === 'bgCycle') restartCycle();
-        if (key === 'face') hg.flips = -1;
+        if (key === 'face') hgClock.flips = -1;
         renderTools();
         kick();
     }
@@ -1200,6 +1327,11 @@
             if (e.target.files && e.target.files[0]) addPhoto(e.target.files[0]);
             e.target.value = '';
         });
+        [['#custom-bg', 'customBg'], ['#custom-ink', 'customInk']].forEach(function (pair) {
+            var input = $(pair[0]);
+            input.addEventListener('input', function () { setCustomColor(pair[1], input.value, false); });
+            input.addEventListener('change', function () { setCustomColor(pair[1], input.value, true); });
+        });
 
         // Timer
         timerInputs.forEach(function (el) { wireNumberInput(el, renderTimer); });
@@ -1258,6 +1390,7 @@
     buildRing();
     buildAnalog();
     buildCelestial();
+    buildTimerFace();
     applyRoot();
     applyLanguage();
     wire();

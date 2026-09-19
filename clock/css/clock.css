@@ -2,7 +2,8 @@
    Clock (/clock/) — self-contained styles, no main.css.
 
    Everything is driven by attributes on <html> that clock.js keeps in sync:
-     data-theme    dark | light | sepia        (resolved; "auto" never lands here)
+     data-theme    dark | light | sepia | custom  (resolved; "auto" never lands here)
+     data-tone     dark | light                   (custom theme only: how bright its background is)
      data-face     ring | hourglass | mono | analog | celestial
      data-size     s | m | l
      data-seconds  true | false
@@ -10,12 +11,21 @@
    Colours only ever come from the tokens below, so a new theme is one block.
    ========================================================================== */
 
+/* Both fonts carry two sets of vertical metrics that disagree (per 1024
+   units: hhea 651 / 393 / 122, OS/2 typo 614 / 410 / 122). Safari reads hhea,
+   Chrome and Firefox read typo, so the same CSS put text about .03em higher in
+   one than the other. Pinning the hhea numbers here makes them all agree
+   (Safari either honours these or already uses the same values), which is what
+   lets --font-center below be one number for every browser. */
 @font-face {
     font-family: 'HaraldText';
     src: url('/fonts/HaraldReveryTextFont.woff2') format('woff2'),
          url('/fonts/HaraldReveryTextFont.woff') format('woff');
     font-weight: 400;
     font-display: swap;
+    ascent-override: 63.57%;
+    descent-override: 38.38%;
+    line-gap-override: 11.91%;
 }
 @font-face {
     font-family: 'HaraldMono';
@@ -23,6 +33,9 @@
          url('/fonts/HaraldReveryMonoFont.woff') format('woff');
     font-weight: 400;
     font-display: swap;
+    ascent-override: 63.57%;
+    descent-override: 38.38%;
+    line-gap-override: 11.91%;
 }
 
 /* ---------- Reset ---------- */
@@ -36,12 +49,30 @@ svg { display: block; }
 
 /* ---------- Tokens ---------- */
 :root {
+    /* Same root size as the main site (theme.css --text-body), so rem means
+       the same thing here as everywhere else on haraldrevery.com. */
+    font-size: 1.22rem;
+    --text-xs: .75rem;           /* smallest UI text; the main site's text-xs */
     --mono: 'HaraldMono', ui-monospace, monospace;
     --text: 'HaraldText', Georgia, serif;
     --ease: cubic-bezier(.25, 1, .5, 1);
     --gutter: clamp(16px, 3vw, 32px);
     --face-scale: 1;
     --bg-opacity: .25;
+
+    /* Optical vertical centring for the site fonts.
+       Digits and capitals are .486em tall, stand on the baseline and have
+       nothing below it, while the font keeps a deep descent; with the metrics
+       pinned above, the baseline sits .126em below the middle of any line box.
+       So text is moved down by (--font-center × glyph height − .126em):
+         --font-center  which point of a glyph's own height lands on the middle
+                        of its box: 0 = baseline, .5 = the glyph's middle,
+                        1 = its top. Raise it to lower text, lower it to lift.
+       Set it here on :root only; --font-shift is worked out from it once. */
+    --font-center: .5;
+    --font-cap: .486em;
+    --font-baseline: .126em;
+    --font-shift: calc(var(--font-center) * var(--font-cap) - var(--font-baseline));
 }
 :root, :root[data-theme="dark"] {
     color-scheme: dark;
@@ -88,6 +119,34 @@ svg { display: block; }
     --photo-filter: sepia(.7) contrast(1.05) brightness(.58) saturate(1.15) hue-rotate(-8deg);
     --scrim: linear-gradient(180deg, rgba(27,20,13,.5) 0%, rgba(27,20,13,.08) 28%, rgba(27,20,13,.08) 72%, rgba(27,20,13,.62) 100%);
 }
+/* Custom: the two colours picked in Settings (clock.js sets --custom-bg and
+   --custom-ink on <html>); every other shade is mixed from them, in the same
+   proportions as the fixed themes. data-tone says whether the background is
+   dark or light, which decides the native controls, alert red and photo look. */
+:root[data-theme="custom"] {
+    --bg: var(--custom-bg, #14181f);
+    --ink: var(--custom-ink, #ece6d9);
+    --ink-dim: color-mix(in srgb, var(--ink) 57%, transparent);
+    --ink-faint: color-mix(in srgb, var(--ink) 30%, transparent);
+    --line: color-mix(in srgb, var(--ink) 14%, transparent);
+    --line-strong: color-mix(in srgb, var(--ink) 27%, transparent);
+    --hover: color-mix(in srgb, var(--ink) 7%, transparent);
+    --pressed: color-mix(in srgb, var(--ink) 13%, transparent);
+    --panel-bg: color-mix(in srgb, var(--bg) 78%, transparent);
+    --scrim: linear-gradient(180deg,
+        color-mix(in srgb, var(--bg) 52%, transparent) 0%,
+        color-mix(in srgb, var(--bg) 10%, transparent) 28%,
+        color-mix(in srgb, var(--bg) 10%, transparent) 72%,
+        color-mix(in srgb, var(--bg) 62%, transparent) 100%);
+    color-scheme: dark;
+    --alert: #ff6f61;
+    --photo-filter: grayscale(.2) brightness(.6) contrast(1.05);
+}
+:root[data-theme="custom"][data-tone="light"] {
+    color-scheme: light;
+    --alert: #c63b2e;
+    --photo-filter: grayscale(1) brightness(1.18) contrast(.82);
+}
 :root[data-size="s"] { --face-scale: .78; }
 :root[data-size="l"] { --face-scale: 1.18; }
 
@@ -126,13 +185,19 @@ body {
      .chip      small pill (presets, status, sizes)
      .seg-btn   option inside a .seg-group (aria-pressed="true" = chosen)
      .icon-btn  round icon
-   Letter-spaced caps leave trailing space after the last glyph, so the left
-   padding carries one extra --ls to keep the label optically centred.
+   Padding is in em so a pill grows with its label. Letter-spaced caps leave
+   trailing space after the last glyph, so the left padding carries one extra
+   --ls; and the label is moved down by --font-shift (more padding on top, less
+   below) so it sits in the optical middle of the pill.
    ========================================================================== */
+.btn, .chip, .seg-btn, .mode-btn {
+    padding: calc(var(--py) + var(--font-shift)) var(--px) calc(var(--py) - var(--font-shift)) calc(var(--px) + var(--ls));
+}
 .btn {
     --ls: .24em;
+    --py: 1em;
+    --px: 1.9em;
     min-width: 9.5rem;
-    padding: 15px 28px 15px calc(28px + var(--ls));
     font-size: .8rem;
     line-height: 1;
     letter-spacing: var(--ls);
@@ -153,8 +218,9 @@ body {
 
 .chip {
     --ls: .2em;
-    padding: 9px 13px 9px calc(13px + var(--ls));
-    font-size: .7rem;
+    --py: .7em;
+    --px: 1em;
+    font-size: var(--text-xs);
     line-height: 1;
     letter-spacing: var(--ls);
     text-transform: uppercase;
@@ -174,12 +240,15 @@ body {
     border-radius: 12px;
     background: var(--hover);
 }
+/* The settings panel is a size container; on a narrow phone the labels step
+   down a little so five of them still fit on one row. */
 .seg-btn {
-    --ls: .18em;
+    --ls: .14em;
+    --py: .78em;
+    --px: .4em;
     flex: 1;
     min-width: 0;
-    padding: 9px 6px 9px calc(6px + var(--ls));
-    font-size: .68rem;
+    font-size: clamp(.66rem, 4.1cqi, var(--text-xs));
     line-height: 1;
     letter-spacing: var(--ls);
     text-transform: uppercase;
@@ -227,12 +296,15 @@ body {
     align-items: center;
     gap: .7em;
 }
+/* Anything lined up with a label's middle (dots, rules) is moved up by
+   --font-shift, because the label itself was moved down by that much. */
 .status-chip::before {
     content: "";
     width: 5px; height: 5px;
     border-radius: 50%;
     background: currentColor;
     opacity: .7;
+    transform: translateY(calc(-1 * var(--font-shift)));
 }
 .status-chip.alert { color: var(--alert); border-color: currentColor; }
 
@@ -252,8 +324,9 @@ body {
 .app.chrome-top .modes, .modes:focus-within { opacity: 1; transform: none; }
 .mode-btn {
     --ls: .2em;
-    padding: 11px 16px 11px calc(16px + var(--ls));
-    font-size: .74rem;
+    --py: .8em;
+    --px: 1.1em;
+    font-size: var(--text-xs);
     line-height: 1;
     letter-spacing: var(--ls);
     text-transform: uppercase;
@@ -265,6 +338,9 @@ body {
 .mode-btn[aria-current="true"] { color: var(--ink); background: var(--pressed); }
 
 /* ---------- Stage & views ---------- */
+/* The stage is a size container: faces measure themselves against the space
+   that is really free (cqw / cqh = 1% of the stage's content box), not the
+   whole window. */
 .stage {
     position: absolute;
     inset: 0;
@@ -273,6 +349,7 @@ body {
     padding: calc(80px + env(safe-area-inset-top)) var(--gutter) calc(64px + env(safe-area-inset-bottom));
     overflow-y: auto;
     overscroll-behavior: contain;
+    container-type: size;
 }
 .view { display: none; min-width: 0; }
 .view.active { display: grid; place-items: center; animation: fade-up .5s var(--ease) both; }
@@ -282,7 +359,17 @@ body {
 }
 
 /* ---------- Shared face pieces ---------- */
-.face { display: none; width: 100%; height: 100%; min-height: 0; }
+/* Every round face is one square of --face-size: the largest square that fits
+   beside the face's own text rows (--face-info), times .8, times the size
+   setting (S .78 / M 1 / L 1.18, so L fills about 94% and never overflows). */
+.face {
+    --face-info: 0px;
+    --face-size: calc(min(100cqw, 100cqh - var(--face-info)) * .8 * var(--face-scale));
+    display: none;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+}
 :root[data-face="ring"] .face-ring,
 :root[data-face="hourglass"] .face-hourglass,
 :root[data-face="mono"] .face-mono,
@@ -317,7 +404,7 @@ body {
 .date-link {
     position: relative;
     padding: 4px 2px;
-    font-size: clamp(.66rem, 1.5vw, .92rem);
+    font-size: clamp(var(--text-xs), 1.5vw, .92rem);
     letter-spacing: .2em;
     text-transform: uppercase;
     color: var(--ink-dim);
@@ -336,7 +423,7 @@ body {
 .date-link:hover { color: var(--ink); }
 .date-link:hover::after { width: 60%; }
 .tz {
-    font-size: clamp(.56rem, 1.1vw, .74rem);
+    font-size: var(--text-xs);
     letter-spacing: .16em;
     text-transform: uppercase;
     color: var(--ink-faint);
@@ -344,24 +431,25 @@ body {
 .face-info { display: grid; justify-items: center; gap: .5rem; padding-top: 16px; }
 
 /* ---------- Face: Ring ---------- */
-.face-ring, .face-hourglass { grid-template-rows: 1fr auto; justify-items: center; align-items: center; }
-.ring-wrap, .hg-wrap { position: relative; aspect-ratio: 1; }
-.ring-wrap { width: calc(min(80vw, 60vh) * var(--face-scale)); }
+.face-ring, .face-hourglass { --face-info: 4rem; grid-template-rows: 1fr auto; justify-items: center; align-items: center; }
+.ring-wrap, .hg-wrap { position: relative; width: var(--face-size); aspect-ratio: 1; }
 .ring-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .ring-track { fill: none; stroke: currentColor; stroke-width: 1; opacity: .1; }
 .ring-arc { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; opacity: .5; }
 .tick-minor { stroke: currentColor; stroke-width: .9; opacity: .12; }
 .tick-major { stroke: currentColor; stroke-width: 1.8; opacity: .28; }
+/* Centred on the ring by its box, then moved by --font-shift so the digits
+   themselves (not the box, which has the font's deep descent in it) sit on
+   the centre. */
 .ring-time {
     position: absolute;
     left: 50%; top: 50%;
-    transform: translate(-50%, -46%);
-    font-size: calc(min(12.4vw, 9.6vh) * var(--face-scale));
+    transform: translate(-50%, calc(-50% + var(--font-shift)));
+    font-size: calc(var(--face-size) * .16);
 }
-:root[data-seconds="false"] .ring-time { font-size: calc(min(16vw, 12.5vh) * var(--face-scale)); }
+:root[data-seconds="false"] .ring-time { font-size: calc(var(--face-size) * .205); }
 
 /* ---------- Face: Hourglass ---------- */
-.hg-wrap { width: calc(min(80vw, 56vh) * var(--face-scale)); }
 .hg-svg {
     position: absolute; inset: 0;
     width: 100%; height: 100%;
@@ -369,26 +457,26 @@ body {
     opacity: .52;
     transition: transform .85s var(--ease);
 }
-#hg-stream { opacity: 0; transition: opacity .2s; }
-#hg-stream.flowing { opacity: 1; }
+.hg-stream { opacity: 0; transition: opacity .2s; }
+.hg-stream.flowing { opacity: 1; }
 .hg-time {
     position: absolute;
     left: 50%; top: 93%;
-    transform: translateX(-50%);
-    font-size: calc(min(5.2vw, 3.2vh) * var(--face-scale));
+    transform: translate(-50%, var(--font-shift));
+    font-size: calc(var(--face-size) * .057);
     color: var(--ink-dim);
 }
 
 /* ---------- Face: Mono ---------- */
 .face-mono { align-content: center; justify-items: center; gap: 36px; }
-.mono-time { font-size: calc(clamp(64px, 14vw, 210px) * var(--face-scale)); }
+.mono-time { position: relative; top: var(--font-shift); font-size: calc(clamp(64px, 14vw, 210px) * var(--face-scale)); }
 .mono-footer {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 18px;
     width: min(100%, 1000px);
-    font-size: clamp(.66rem, 1.5vw, .92rem);
+    font-size: clamp(var(--text-xs), 1.5vw, .92rem);
     letter-spacing: .26em;
     text-transform: uppercase;
     color: var(--ink-dim);
@@ -397,17 +485,39 @@ body {
 .mono-footer .left, .mono-footer .right { display: flex; align-items: center; gap: 14px; }
 .mono-footer .right { justify-content: flex-end; }
 .mono-footer .left::after,
-.mono-footer .right::before { content: ""; flex: 1; height: 1px; background: var(--line); }
+.mono-footer .right::before {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+    transform: translateY(calc(-1 * var(--font-shift)));
+}
 
 /* ---------- Face: Analog ---------- */
-.face-analog, .face-celestial { align-content: center; justify-items: center; gap: 26px; }
-.dial-wrap { width: calc(min(62vh, 72vw) * var(--face-scale)); max-width: 720px; aspect-ratio: 1; }
+.face-analog, .face-celestial { --face-info: 3rem; align-content: center; justify-items: center; gap: 26px; }
+.dial-wrap, .orbit-wrap { width: var(--face-size); aspect-ratio: 1; }
+.dial-wrap { container-type: inline-size; }
 .dial-wrap svg, .orbit-wrap svg { width: 100%; height: 100%; overflow: visible; }
 .dial-ring { fill: none; stroke: currentColor; stroke-width: .6; opacity: .7; }
 .dial-ring-inner { opacity: .2; }
 .dial-wrap .tick-hour { stroke: currentColor; stroke-width: 1.2; stroke-linecap: round; opacity: .85; }
 .dial-wrap .tick-min { stroke: currentColor; stroke-width: .5; stroke-linecap: round; opacity: .4; }
-.numeral { font-family: var(--mono); font-size: 15px; fill: currentColor; opacity: .78; text-anchor: middle; dominant-baseline: central; }
+/* On a small dial the fine ticks would come out thinner than a pixel. */
+@container (max-width: 340px) {
+    .dial-wrap .tick-min { stroke-width: .8; }
+    .dial-wrap .tick-hour { stroke-width: 1.5; }
+}
+/* Numerals stand on the alphabetic baseline at (x, y) and are moved down by
+   --font-center × their own height, so the chosen point of each digit lands on
+   (x, y) whatever the font's ascent and descent say. */
+.numeral {
+    font-family: var(--mono);
+    font-size: 15px;
+    fill: currentColor;
+    opacity: .78;
+    text-anchor: middle;
+    transform: translateY(calc(var(--font-center) * var(--font-cap)));
+}
 .hand-h, .hand-m, .hand-s { stroke: currentColor; stroke-linecap: round; }
 .hand-h { stroke-width: 4; }
 .hand-m { stroke-width: 2.4; }
@@ -416,7 +526,6 @@ body {
 .pin-inner { fill: var(--bg); }
 
 /* ---------- Face: Celestial ---------- */
-.orbit-wrap { width: calc(min(64vh, 76vw) * var(--face-scale)); max-width: 820px; aspect-ratio: 1; }
 .orbit-path { fill: none; stroke: currentColor; stroke-width: .4; stroke-dasharray: .6 1.6; opacity: .32; }
 .star { fill: currentColor; }
 .planet-h { fill: currentColor; }
@@ -431,13 +540,13 @@ body {
     display: flex;
     align-items: center;
     gap: 18px;
-    font-size: clamp(.66rem, 1.5vw, .92rem);
+    font-size: clamp(var(--text-xs), 1.5vw, .92rem);
     letter-spacing: .2em;
     color: var(--ink);
 }
 .cel-meta .time-btn { font-size: 1.1em; }
 .cel-meta .ampm { font-size: .7em; margin-left: .5em; }
-.dot { width: 4px; height: 4px; border-radius: 50%; background: var(--ink-faint); }
+.dot { width: 4px; height: 4px; border-radius: 50%; background: var(--ink-faint); transform: translateY(calc(-1 * var(--font-shift))); }
 
 :root[data-seconds="false"] .sec-el { display: none; }
 
@@ -458,21 +567,34 @@ body {
     justify-content: center;
     gap: 16px;
     width: 100%;
-    font-size: .74rem;
+    font-size: var(--text-xs);
     font-weight: 400;
     letter-spacing: .4em;
     text-transform: uppercase;
     color: var(--ink-faint);
 }
-.heading::before, .heading::after { content: ""; flex: 1; max-width: 160px; height: 1px; background: var(--line); }
+.heading::before, .heading::after {
+    content: "";
+    flex: 1;
+    max-width: 160px;
+    height: 1px;
+    background: var(--line);
+    transform: translateY(calc(-1 * var(--font-shift)));
+}
 
-/* The font's digits are only ~0.49em tall and sit on a deep descent, which
-   leaves ~0.37em of empty box below them; the negative margin evens it out. */
+/* The line box is 1em but the digits are only --font-cap tall. Moving the row
+   down by --font-shift puts them in the middle of that box, and the negative
+   margins then trim the empty space evenly above and below. The inputs take
+   the shift back as top padding (cancelled by a negative margin, so the row
+   is the same height with inputs or plain digits), which centres their
+   hover/focus fill on the digits too. */
 .big-numerals {
+    position: relative;
+    top: var(--font-shift);
     display: inline-flex;
     align-items: baseline;
     justify-content: center;
-    margin-bottom: -.22em;
+    margin-block: -.11em;
     font-size: clamp(64px, 13vw, 200px);
     line-height: 1;
     white-space: nowrap;
@@ -480,9 +602,14 @@ body {
 .big-numerals .colon { opacity: .5; padding: 0 .03em; }
 .big-numerals .cs { font-size: .2em; color: var(--ink-dim); margin-left: .4em; }
 
+/* An explicit height: Firefox lays text inputs out with line-height: normal
+   whatever line-height says, which made the row taller while editing and the
+   whole tool jump on Start. */
 .num-input {
     width: 2.25ch;
-    padding: 0;
+    height: calc(1em + 2 * var(--font-shift));
+    padding: calc(2 * var(--font-shift)) 0 0;
+    margin-top: calc(-2 * var(--font-shift));
     border: 0;
     border-radius: 14px;
     background: transparent;
@@ -509,7 +636,35 @@ body {
     transition: transform 1s linear;
 }
 
-.presets { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 640px; }
+/* Timer face: the clock's ring or hourglass while a countdown runs. clock.js
+   copies the clock face's own SVG in here, so the two always look alike. It
+   is sized like the clock faces, less the room the heading and buttons take. */
+.timer-face {
+    --tf-chrome: 9rem;           /* heading + buttons + gaps */
+    --tf-size: calc(min(100cqw, 100cqh - var(--tf-chrome)) * .8 * var(--face-scale));
+    position: relative;
+    width: var(--tf-size);
+    aspect-ratio: 1;
+    animation: face-in 1.2s var(--ease) both;
+}
+.timer-face > svg { display: none; }
+:root[data-face="ring"] .timer-face > .ring-svg,
+:root[data-face="hourglass"] .timer-face > .hg-svg { display: block; }
+.tf-time { position: absolute; left: 50%; line-height: 1; }
+:root[data-face="ring"] .tf-time {
+    top: 50%;
+    transform: translate(-50%, calc(-50% + var(--font-shift)));
+    font-size: max(var(--text-xs), calc(var(--tf-size) * .16));
+}
+:root[data-face="hourglass"] .tf-time {
+    top: 93%;
+    transform: translate(-50%, var(--font-shift));
+    font-size: max(var(--text-xs), calc(var(--tf-size) * .075));
+    color: var(--ink-dim);
+}
+.tf-arc-done { visibility: hidden; }   /* a zero-length round-capped dash would still draw a dot */
+
+.presets { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 760px; }
 .controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
 
 .tool-status {
@@ -545,7 +700,7 @@ body {
     gap: 12px;
     padding-bottom: 10px;
     border-bottom: 1px solid var(--line);
-    font-size: .64rem;
+    font-size: var(--text-xs);
     letter-spacing: .26em;
     text-transform: uppercase;
     color: var(--ink-faint);
@@ -597,6 +752,8 @@ body {
     to   { opacity: 1; transform: translate(-50%, 0); }
 }
 .ring-label {
+    position: relative;
+    top: var(--font-shift);
     font-size: .78rem;
     letter-spacing: .24em;
     text-transform: uppercase;
@@ -608,6 +765,7 @@ body {
 .ring-banner .btn { min-width: 0; }
 .app.ringing .ring-label,
 .app.ringing-timer #timer-display,
+.app.ringing-timer .tf-time,
 .app.ringing-alarm #alarm-edit,
 .app.ringing .face .time-btn {
     color: var(--alert);
@@ -669,7 +827,8 @@ body {
     right: var(--gutter);
     bottom: calc(68px + env(safe-area-inset-bottom));
     z-index: 40;
-    width: 360px;
+    container-type: inline-size;         /* see .seg-btn and .face-grid */
+    width: 400px;
     max-width: calc(100vw - 2 * var(--gutter));
     max-height: calc(100dvh - 84px - env(safe-area-inset-bottom));
     overflow-y: auto;
@@ -698,17 +857,20 @@ body {
     align-items: center;
     justify-content: space-between;
     margin: 0 -8px 6px 0;
-    font-size: .7rem;
+    font-size: var(--text-xs);
     letter-spacing: .32em;
     text-transform: uppercase;
     color: var(--ink-dim);
 }
-.field { display: grid; gap: 10px; padding: 14px 0; border-top: 1px solid var(--line); }
+.panel-head > span { position: relative; top: var(--font-shift); }
+/* minmax(0, …): a column never grows past the panel for a wide child (the
+   range input's default width, for one); the child shrinks instead. */
+.field { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 14px 0; border-top: 1px solid var(--line); }
 .panel-head + .field { border-top: 0; padding-top: 4px; }
-.field-pair { grid-template-columns: 1fr 1fr; gap: 14px; }
+.field-pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
 .field-pair > div { display: grid; gap: 10px; align-content: start; }
 .field-label, .sub-label {
-    font-size: .64rem;
+    font-size: var(--text-xs);
     letter-spacing: .3em;
     text-transform: uppercase;
     color: var(--ink-dim);
@@ -724,8 +886,8 @@ body {
     padding: 4px 2px;
     border: 1px solid var(--line);
     border-radius: 10px;
-    font-size: .52rem;
-    letter-spacing: .1em;
+    font-size: .7rem;
+    letter-spacing: .04em;
     text-transform: uppercase;
     color: var(--ink-dim);
     transition: color .2s, border-color .2s, background-color .2s;
@@ -735,6 +897,11 @@ body {
 .face-thumb .thumb-text { font-size: .72rem; letter-spacing: 0; line-height: 24px; }
 .face-thumb:hover { color: var(--ink); border-color: var(--line-strong); }
 .face-thumb[aria-pressed="true"] { color: var(--ink); border-color: var(--ink-dim); background: var(--pressed); }
+/* Five captions no longer fit on a phone-wide panel: three per row instead. */
+@container (max-width: 350px) {
+    .face-grid { grid-template-columns: repeat(3, 1fr); }
+    .face-thumb { aspect-ratio: auto; padding: 12px 2px; font-size: var(--text-xs); }
+}
 
 .photo-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 5px; }
 .photo-thumb {
@@ -779,6 +946,7 @@ body {
 .slider-row { display: flex; align-items: center; gap: 12px; }
 .slider-row input[type="range"] {
     flex: 1;
+    min-width: 0;                /* its default width is in em, too wide on a phone */
     height: 2px;
     margin: 0;
     -webkit-appearance: none;
@@ -802,28 +970,68 @@ body {
     border: 2px solid var(--bg);
     box-shadow: 0 0 0 1px var(--ink-dim);
 }
-.slider-row .val { min-width: 4ch; font-size: .72rem; letter-spacing: .1em; text-align: right; color: var(--ink-dim); }
+.slider-row .val { min-width: 4ch; font-size: var(--text-xs); letter-spacing: .1em; text-align: right; color: var(--ink-dim); }
+.slider-row .sub-label, .slider-row .val { position: relative; top: var(--font-shift); }
+
+/* Custom theme colours: two round swatches, shown while "Custom" is chosen.
+   The native colour input sits inside its label, so the whole pill opens it. */
+.custom-colors { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.swatch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 5px 12px 5px 5px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: var(--text-xs);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--ink-dim);
+    cursor: pointer;
+    transition: color .2s, border-color .2s;
+}
+.swatch:hover { color: var(--ink); border-color: var(--line-strong); }
+.swatch span { position: relative; top: var(--font-shift); overflow: hidden; text-overflow: ellipsis; }
+.swatch input[type="color"] {
+    flex: none;
+    width: 28px; height: 28px;
+    padding: 0;
+    border: 1px solid var(--line-strong);
+    border-radius: 50%;
+    background: none;
+    cursor: pointer;
+}
+.swatch input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.swatch input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 50%; }
+.swatch input[type="color"]::-moz-color-swatch { border: 0; border-radius: 50%; }
+.contrast-note { font-size: var(--text-xs); letter-spacing: .1em; color: var(--alert); }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 760px) {
     .frame-top { grid-template-columns: 1fr; justify-items: center; }
     .status { justify-self: center; order: 2; }
     .frame-top > div:last-child { display: none; }
-    .mode-btn { --ls: .14em; padding: 9px 10px 9px calc(10px + var(--ls)); font-size: .62rem; }
-    .stage { padding-top: calc(112px + env(safe-area-inset-top)); }
-    .btn { min-width: 8rem; padding-top: 14px; padding-bottom: 14px; }
+    .mode-btn { --ls: .14em; --py: .72em; --px: .8em; font-size: .66rem; }
+    .stage { padding-top: calc(120px + env(safe-area-inset-top)); }
+    .btn { --py: .9em; min-width: 8rem; }
 }
 @media (max-width: 760px) and (hover: none) {
     .site-link { display: none; }
 }
 @media (max-height: 640px) {
-    .stage { padding-top: calc(66px + env(safe-area-inset-top)); padding-bottom: 20px; }
+    .stage { padding-top: calc(76px + env(safe-area-inset-top)); padding-bottom: 20px; }
     .tool { gap: 20px; }
     .big-numerals { font-size: clamp(56px, 11vw, 150px); }
+    /* Too short for heading + face + buttons: the face drops the heading. */
+    .tool:has(> .timer-face:not([hidden])) .heading { display: none; }
+    .timer-face { --tf-chrome: 4.5rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .view.active, .face { animation: none !important; }
     .hg-svg { transition: none; }
-    .app.ringing .face .time-btn, .app.ringing-timer #timer-display, .app.ringing-alarm #alarm-edit { animation: none; }
+    .app.ringing .face .time-btn, .app.ringing-timer #timer-display, .app.ringing-timer .tf-time, .app.ringing-alarm #alarm-edit { animation: none; }
+    .timer-face { animation: none; }
 }
