@@ -37,15 +37,22 @@
 
     <link rel="preload" href="/fonts/HaraldReveryMonoFont.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/HaraldReveryTextFont.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="stylesheet" href="/clock/css/clock.css">
+    <!-- ?v= on the clock's CSS/JS: Cloudflare and browsers keep these files for
+         months, so a changed file only reaches visitors under a new version.
+         Change the date in both places whenever clock.css, clock.js,
+         event_card.css or event_card.js change (clock.js passes it on to the
+         event card files). -->
+    <link rel="stylesheet" href="/clock/css/clock.css?v=20260919">
 
     <!-- Apply saved look before first paint (no theme/face flash). clock.js
          owns the settings; this only mirrors them onto <html>. The custom
-         colour fallbacks and luminance() are copies of the ones in clock.js. -->
+         colour fallbacks and luminance() are copies of the ones in clock.js.
+         clock-settings is the key's name before 2026-09, read only until
+         clock.js has moved it. -->
     <script>
     (function () {
         var d = document.documentElement, s = null;
-        try { s = JSON.parse(localStorage.getItem('clock-settings')); } catch (e) {}
+        try { s = JSON.parse(localStorage.getItem('rvry-clock-settings') || localStorage.getItem('clock-settings')); } catch (e) {}
         s = s || {};
         var face = s.face;
         if (!face) { try { if (localStorage.getItem('clock-anim') === 'hourglass') face = 'hourglass'; } catch (e) {} }
@@ -611,6 +618,6 @@
     </div>
 </template>
 
-<script src="/clock/js/clock.js" defer></script>
+<script src="/clock/js/clock.js?v=20260919" defer></script>
 </body>
 </html>

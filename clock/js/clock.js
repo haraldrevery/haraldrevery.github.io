@@ -1,13 +1,15 @@
 /* ==========================================================================
    Clock (/clock/) — faces, timer, alarm, stopwatch, settings, backgrounds.
 
-   Storage (listed in input_legal/legal.md):
-     localStorage "clock-settings"  preferences, written only when you change one
-     localStorage "clock-timers"    running timer / armed alarm / stopwatch, so a
-                                    reload keeps them
-     IndexedDB    "clock-photos"    background photos you add yourself
+   Storage (listed in input_legal/legal.md; see KEYS below):
+     localStorage "rvry-clock-settings"   preferences, written only when you change one
+     localStorage "rvry-clock-timers"     running timer and armed alarm, so a reload keeps them
+     localStorage "rvry-clock-stopwatch"  stopwatch, laps with their notes, the Undo copy
+     IndexedDB    "rvry-clock-photos"     background photos you add yourself
    Photos never go in localStorage: it is shared with Revery Notebook's
-   autosave and holds only ~5 MB for the whole site.
+   autosave and holds only ~5 MB for the whole site. Every open tab listens
+   for the others' writes and takes them over (see wire()), so a tab left open
+   in the background never saves an older copy back over newer data.
 
    Timing: timers and alarms are absolute timestamps. One setTimeout aimed at
    the next due moment fires them, so they ring in a background tab (where
@@ -32,11 +34,57 @@
     }
     function setHidden(el, hidden) { if (el.hidden !== hidden) el.hidden = hidden; }
 
+    // Asset version: this script's own ?v= from index.html. Cloudflare and
+    // browsers keep CSS/JS for months, so a changed file only reaches visitors
+    // under a new ?v=; the event card files loaded later reuse it.
+    var ASSET_V = (function () {
+        var m = document.currentScript && /[?&]v=([^&]+)/.exec(document.currentScript.src);
+        return m ? '?v=' + m[1] : '';
+    }());
+
+    // ======================================================================
+    // Storage names
+    // ======================================================================
+    // rvry-clock-*, like the rest of the site's storage (but never plain
+    // rvry-settings: the ASCII tool uses that). Until 2026-09 the names were
+    // clock-*, with timer, alarm and stopwatch in one key. migrateStorage()
+    // writes the new keys first and removes an old one only after that worked,
+    // so a full or blocked localStorage loses nothing: the next visit retries.
+    var KEYS = {
+        settings: 'rvry-clock-settings',
+        timers: 'rvry-clock-timers',
+        stopwatch: 'rvry-clock-stopwatch'
+    };
+    var PHOTO_DB = 'rvry-clock-photos', OLD_PHOTO_DB = 'clock-photos';
+    function migrateStorage() {
+        try {
+            var oldS = localStorage.getItem('clock-settings');
+            if (oldS !== null) {
+                if (localStorage.getItem(KEYS.settings) === null) localStorage.setItem(KEYS.settings, oldS);
+                localStorage.removeItem('clock-settings');
+            }
+        } catch (e) {}
+        try {
+            var oldT = localStorage.getItem('clock-timers');
+            if (oldT !== null) {
+                var o = null;
+                try { o = JSON.parse(oldT); } catch (e) {}
+                o = o || {};
+                if (localStorage.getItem(KEYS.timers) === null) {
+                    localStorage.setItem(KEYS.timers, JSON.stringify({ timer: o.timer, alarm: o.alarm }));
+                }
+                if (localStorage.getItem(KEYS.stopwatch) === null && o.sw) {
+                    localStorage.setItem(KEYS.stopwatch, JSON.stringify(o.sw));
+                }
+                localStorage.removeItem('clock-timers');
+            }
+        } catch (e) {}
+    }
+    migrateStorage();
+
     // ======================================================================
     // Settings
     // ======================================================================
-    var SETTINGS_KEY = 'clock-settings';
-    var TIMERS_KEY = 'clock-timers';
     var FACES = ['ring', 'hourglass', 'mono', 'analog', 'celestial'];
     var DEFAULTS = {
         face: 'ring',
@@ -55,7 +103,7 @@
     var HEX = /^#[0-9a-f]{6}$/i;
 
     function loadSettings() {
-        var s = readJSON(SETTINGS_KEY);
+        var s = readJSON(KEYS.settings);
         var migrated = false;
         if (!s) {
             // First visit since the redesign: carry over the old single-value keys.
@@ -82,13 +130,13 @@
         if (!Array.isArray(s.photos)) s.photos = [];
         if (typeof s.bg !== 'string') s.bg = DEFAULTS.bg;
         if (migrated) {
-            writeJSON(SETTINGS_KEY, s);
+            writeJSON(KEYS.settings, s);
             try { localStorage.removeItem('clock-lang'); localStorage.removeItem('clock-anim'); } catch (e) {}
         }
         return s;
     }
     var S = loadSettings();
-    function saveSettings() { writeJSON(SETTINGS_KEY, S); }
+    function saveSettings() { writeJSON(KEYS.settings, S); }
 
     var darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
     function resolvedTheme() {
@@ -118,7 +166,7 @@
             mode_clock: 'Clock', mode_timer: 'Timer', mode_alarm: 'Alarm', mode_stopwatch: 'Stopwatch',
             timer_heading: 'Countdown', alarm_heading: 'Alarm', sw_heading: 'Stopwatch',
             btn_start: 'Start', btn_pause: 'Pause', btn_resume: 'Resume', btn_reset: 'Reset',
-            btn_lap: 'Lap', btn_arm: 'Arm', btn_disarm: 'Disarm', btn_dismiss: 'Dismiss',
+            btn_lap: 'Lap', btn_arm: 'Arm', btn_disarm: 'Disarm', btn_dismiss: 'Dismiss', btn_undo: 'Undo',
             preset_1m: '1 min', preset_3m: '3 min', preset_5m: '5 min', preset_10m: '10 min',
             preset_15m: '15 min', preset_25m: '25 min', preset_45m: '45 min', preset_1h: '1 hour',
             hours: 'Hours', minutes: 'Minutes', seconds_unit: 'Seconds',
@@ -127,6 +175,7 @@
             left_min: '{m} min', left_hm: '{h} h {m} min', left_now: 'less than a minute',
             ring_timer: 'Time is up', ring_alarm: 'Alarm · {time}',
             lap: 'Lap', laps_one: '1 lap', laps_many: '{n} laps', export_csv: 'Export .csv',
+            lap_note: 'Add a note', lap_note_for: 'Note for lap {n}',
             settings: 'Settings', close: 'Close', face: 'Face', theme: 'Theme', background: 'Background',
             opacity: 'Opacity', format: 'Format', seconds: 'Seconds', size: 'Size', language: 'Language',
             auto: 'Auto', dark: 'Dark', light: 'Light', sepia: 'Sepia', custom: 'Custom',
@@ -145,7 +194,7 @@
             mode_clock: 'Klocka', mode_timer: 'Timer', mode_alarm: 'Larm', mode_stopwatch: 'Tidtagarur',
             timer_heading: 'Nedräkning', alarm_heading: 'Larm', sw_heading: 'Tidtagarur',
             btn_start: 'Starta', btn_pause: 'Paus', btn_resume: 'Fortsätt', btn_reset: 'Nollställ',
-            btn_lap: 'Varv', btn_arm: 'Aktivera', btn_disarm: 'Avaktivera', btn_dismiss: 'Stäng av',
+            btn_lap: 'Varv', btn_arm: 'Aktivera', btn_disarm: 'Avaktivera', btn_dismiss: 'Stäng av', btn_undo: 'Ångra',
             preset_1m: '1 min', preset_3m: '3 min', preset_5m: '5 min', preset_10m: '10 min',
             preset_15m: '15 min', preset_25m: '25 min', preset_45m: '45 min', preset_1h: '1 timme',
             hours: 'Timmar', minutes: 'Minuter', seconds_unit: 'Sekunder',
@@ -154,6 +203,7 @@
             left_min: '{m} min', left_hm: '{h} h {m} min', left_now: 'mindre än en minut',
             ring_timer: 'Tiden är ute', ring_alarm: 'Larm · {time}',
             lap: 'Varv', laps_one: '1 varv', laps_many: '{n} varv', export_csv: 'Exportera .csv',
+            lap_note: 'Lägg till en anteckning', lap_note_for: 'Anteckning för varv {n}',
             settings: 'Inställningar', close: 'Stäng', face: 'Urtavla', theme: 'Tema', background: 'Bakgrund',
             opacity: 'Opacitet', format: 'Format', seconds: 'Sekunder', size: 'Storlek', language: 'Språk',
             auto: 'Auto', dark: 'Mörk', light: 'Ljus', sepia: 'Sepia', custom: 'Egen',
@@ -505,22 +555,70 @@
     // ======================================================================
     // Timer / alarm / stopwatch state
     // ======================================================================
-    var T = (function () {
-        var saved = readJSON(TIMERS_KEY) || {};
+    // atBoot: the page is just opening. Then a finished timer is cleared, and
+    // something that came due while the page was closed rings if it was only
+    // just now, otherwise it is quietly let go.
+    function loadTimers(atBoot) {
+        var saved = readJSON(KEYS.timers) || {};
         var timer = Object.assign({ status: 'idle', duration: 5 * 60000, endAt: 0, remaining: 0 }, saved.timer);
         var alarm = Object.assign({ h: 7, m: 0, armed: false, fireAt: 0 }, saved.alarm);
-        var sw = Object.assign({ running: false, startedAt: 0, elapsed: 0, laps: [] }, saved.sw);
         if (['idle', 'running', 'paused', 'done'].indexOf(timer.status) < 0) timer.status = 'idle';
-        if (timer.status === 'done') timer.status = 'idle';
-        if (!Array.isArray(sw.laps)) sw.laps = [];
-        // Something that came due while the page was closed: ring if it was
-        // only just now, otherwise quietly let it go.
-        var now = Date.now(), GRACE = 10 * 60000;
-        if (timer.status === 'running' && timer.endAt <= now - GRACE) timer.status = 'idle';
-        if (alarm.armed && alarm.fireAt <= now - GRACE) alarm.armed = false;
-        return { timer: timer, alarm: alarm, sw: sw };
-    }());
-    function saveTimers() { writeJSON(TIMERS_KEY, T); }
+        if (atBoot) {
+            var now = Date.now(), GRACE = 10 * 60000;
+            if (timer.status === 'done') timer.status = 'idle';
+            if (timer.status === 'running' && timer.endAt <= now - GRACE) timer.status = 'idle';
+            if (alarm.armed && alarm.fireAt <= now - GRACE) alarm.armed = false;
+        }
+        return { timer: timer, alarm: alarm };
+    }
+
+    // Stopwatch laps are { n: lap number, t: total ms, s: the lap's own ms,
+    // note }. Keeping n and s on each lap means both stay right after the
+    // oldest lap is dropped at LAP_MAX. Before notes existed a lap was just its
+    // total, so plain numbers are converted here.
+    var LAP_MAX = 999, NOTE_MAX = 60;
+    function isMs(v) { return typeof v === 'number' && isFinite(v) && v >= 0; }
+    function normalizeLaps(list) {
+        var out = [];
+        (Array.isArray(list) ? list : []).forEach(function (lap) {
+            if (isMs(lap)) lap = { t: lap };
+            if (!lap || !isMs(lap.t)) return;
+            var prev = out[out.length - 1], prevN = prev ? prev.n : 0;
+            out.push({
+                n: Math.floor(lap.n) > prevN ? Math.floor(lap.n) : prevN + 1,
+                t: lap.t,
+                s: isMs(lap.s) ? lap.s : Math.max(0, lap.t - (prev ? prev.t : 0)),
+                note: typeof lap.note === 'string' ? lap.note.slice(0, NOTE_MAX) : ''
+            });
+        });
+        return out.slice(-LAP_MAX);
+    }
+    // undo: what the last Reset cleared ({ elapsed, laps }), until Undo is
+    // used or a new run starts.
+    function loadStopwatch() {
+        var saved = readJSON(KEYS.stopwatch) || {};
+        var sw = {
+            running: saved.running === true && isMs(saved.startedAt),
+            startedAt: isMs(saved.startedAt) ? saved.startedAt : 0,
+            elapsed: isMs(saved.elapsed) ? saved.elapsed : 0,
+            laps: normalizeLaps(saved.laps),
+            undo: null
+        };
+        if (saved.undo && typeof saved.undo === 'object') {
+            sw.undo = { elapsed: isMs(saved.undo.elapsed) ? saved.undo.elapsed : 0, laps: normalizeLaps(saved.undo.laps) };
+        }
+        return sw;
+    }
+
+    var T = loadTimers(true);
+    T.sw = loadStopwatch();
+    function saveTimers() { writeJSON(KEYS.timers, { timer: T.timer, alarm: T.alarm }); }
+    var swSaveId = 0;
+    function saveStopwatch() {
+        clearTimeout(swSaveId);
+        swSaveId = 0;
+        writeJSON(KEYS.stopwatch, T.sw);
+    }
 
     var ringing = null;          // null | 'timer' | 'alarm'
     var ringingAlarmText = '';
@@ -807,56 +905,140 @@
     // ======================================================================
     var swDigits = digits($('#sw-digits'));
     var swCs = digits($('#sw-cs'));
+    var lapList = $('#sw-laps');
+    // The left button turns from Lap into Reset the moment you pause, so a
+    // tap meant as one more Lap would reset; for this long it does nothing.
+    var RESET_GUARD = 600, swPausedAt = 0;
     function swElapsed() { return T.sw.running ? T.sw.elapsed + (Date.now() - T.sw.startedAt) : T.sw.elapsed; }
+    function swCanUndo() {
+        var sw = T.sw;
+        return !!sw.undo && !sw.running && sw.elapsed === 0 && !sw.laps.length;
+    }
     function swStartPause() {
         var sw = T.sw, now = Date.now();
-        if (sw.running) { sw.elapsed += now - sw.startedAt; sw.running = false; }
-        else { sw.startedAt = now; sw.running = true; }
-        saveTimers();
+        if (sw.running) {
+            sw.elapsed += now - sw.startedAt;
+            sw.running = false;
+            swPausedAt = now;
+            setTimeout(renderStopwatch, RESET_GUARD + 20);
+        } else {
+            if (sw.elapsed === 0) sw.undo = null;   // a new run: the last reset is let go
+            sw.startedAt = now;
+            sw.running = true;
+        }
+        saveStopwatch();
         heartbeat();
         renderTools();
         kick();
     }
+    // The left button: Lap while running, Reset when paused, Undo right after
+    // a reset.
     function swLapReset() {
-        var sw = T.sw;
-        if (sw.running) {
-            sw.laps.push(swElapsed());
-            if (sw.laps.length > 999) sw.laps.shift();
-        } else {
-            sw.elapsed = 0;
-            sw.laps = [];
+        if (T.sw.running) swLap();
+        else if (swCanUndo()) swUndo();
+        else if (Date.now() - swPausedAt >= RESET_GUARD) swReset();
+    }
+    function swLap() {
+        var sw = T.sw, last = sw.laps[sw.laps.length - 1], total = swElapsed();
+        var lap = { n: last ? last.n + 1 : 1, t: total, s: total - (last ? last.t : 0), note: '' };
+        sw.laps.push(lap);
+        // One new row on top instead of a rebuild, so a note being typed in
+        // another row keeps its focus.
+        lapList.insertBefore(lapRow(lap), lapList.firstChild);
+        if (sw.laps.length > LAP_MAX) {
+            sw.laps.shift();
+            lapList.removeChild(lapList.lastChild);
         }
-        saveTimers();
+        saveStopwatch();
+        renderStopwatch();
+    }
+    // What Reset clears is kept (and saved, so a reload doesn't lose it) as
+    // the Undo copy: Ctrl/Cmd+Z or the Undo button bring it back.
+    function swReset() {
+        var sw = T.sw;
+        sw.undo = { elapsed: sw.elapsed, laps: sw.laps };
+        sw.elapsed = 0;
+        sw.laps = [];
+        saveStopwatch();
         renderLaps();
         renderTools();
     }
+    function swUndo() {
+        if (!swCanUndo()) return;
+        var sw = T.sw;
+        sw.elapsed = sw.undo.elapsed;
+        sw.laps = sw.undo.laps;
+        sw.undo = null;
+        saveStopwatch();
+        renderLaps();
+        renderTools();
+    }
+
+    // --- Laps ----------------------------------------------------------------
+    // Each row: "Lap 03", an editable note, the lap's own time, the total.
+    function lapRow(lap) {
+        var li = document.createElement('li');
+        li.dataset.n = lap.n;
+        var note = document.createElement('input');
+        note.className = 'note';
+        note.type = 'text';
+        note.maxLength = NOTE_MAX;
+        note.defaultValue = lap.note;          // the last committed text; Escape goes back to it
+        note.placeholder = t('lap_note');
+        note.spellcheck = false;
+        note.autocomplete = 'off';
+        note.setAttribute('aria-label', t('lap_note_for', { n: lap.n }));
+        [[t('lap') + ' ' + pad(lap.n), 'idx'], null, [swText(lap.s), 'lap'], [swText(lap.t), 'total']].forEach(function (c) {
+            if (!c) { li.appendChild(note); return; }
+            var span = document.createElement('span');
+            span.className = c[1];
+            span.textContent = c[0];
+            li.appendChild(span);
+        });
+        return li;
+    }
+    function lapByN(n) {
+        var laps = T.sw.laps, i = laps.length ? n - laps[0].n : -1;
+        if (laps[i] && laps[i].n === n) return laps[i];
+        for (i = 0; i < laps.length; i++) if (laps[i].n === n) return laps[i];
+        return null;
+    }
+    // A full rebuild (load, language, reset, undo, another tab's change). A
+    // note being typed keeps its text, caret and focus, and its text wins.
     function renderLaps() {
-        var list = $('#sw-laps'), laps = T.sw.laps;
-        list.textContent = '';
-        for (var i = laps.length - 1; i >= 0; i--) {
-            var li = document.createElement('li');
-            var lapMs = laps[i] - (i ? laps[i - 1] : 0);
-            [[t('lap') + ' ' + pad(i + 1), 'idx'], [swText(lapMs), 'lap'], [swText(laps[i]), 'total']].forEach(function (c) {
-                var span = document.createElement('span');
-                span.className = c[1];
-                span.textContent = c[0];
-                li.appendChild(span);
-            });
-            list.appendChild(li);
+        var a = document.activeElement, keep = null;
+        if (a && a.classList.contains('note') && lapList.contains(a)) {
+            keep = { n: Number(a.parentNode.dataset.n), before: a.defaultValue, value: a.value, from: a.selectionStart, to: a.selectionEnd };
+        }
+        var frag = document.createDocumentFragment();
+        for (var i = T.sw.laps.length - 1; i >= 0; i--) frag.appendChild(lapRow(T.sw.laps[i]));
+        lapList.textContent = '';
+        lapList.appendChild(frag);
+        var lap = keep && lapByN(keep.n), input = lap && lapList.querySelector('li[data-n="' + keep.n + '"] .note');
+        if (input) {
+            input.defaultValue = keep.before;
+            lap.note = input.value = keep.value;
+            input.focus({ preventScroll: true });
+            input.setSelectionRange(keep.from, keep.to);
         }
     }
     function swText(ms) { return hms(ms) + '.' + pad(Math.floor((ms % 1000) / 10)); }
+    // RFC 4180: a cell with a comma, quote or line break goes in quotes.
+    function csvCell(v) {
+        v = String(v);
+        return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+    }
     // One row per lap plus a final "total" row with the full elapsed time
-    // (the stopwatch may be running or paused past the last lap).
+    // (the stopwatch may be running or paused past the last lap). The BOM
+    // makes Excel read the file as UTF-8, so å ä ö in notes survive.
     function swExportCsv() {
-        var laps = T.sw.laps, total = swElapsed(), prev = 0;
-        var rows = [['lap', 'lap_time', 'total_time', 'lap_ms', 'total_ms']];
-        laps.forEach(function (ms, i) {
-            rows.push([i + 1, swText(ms - prev), swText(ms), ms - prev, ms]);
-            prev = ms;
+        var total = swElapsed();
+        var rows = [['lap', 'note', 'lap_time', 'total_time', 'lap_ms', 'total_ms']];
+        T.sw.laps.forEach(function (lap) {
+            rows.push([lap.n, lap.note, swText(lap.s), swText(lap.t), lap.s, lap.t]);
         });
-        rows.push(['total', '', swText(total), '', total]);
-        var csv = rows.map(function (r) { return r.join(','); }).join('\r\n') + '\r\n';
+        rows.push(['total', '', '', swText(total), '', total]);
+        var csv = '﻿' + rows.map(function (r) { return r.map(csvCell).join(','); }).join('\r\n') + '\r\n';
         var d = new Date();
         var a = document.createElement('a');
         a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
@@ -868,11 +1050,11 @@
         var ms = swElapsed();
         swDigits(hms(ms));
         swCs('.' + pad(Math.floor((ms % 1000) / 10)));
-        var sw = T.sw, start = $('#sw-start'), lap = $('#sw-lap');
-        start.textContent = sw.running ? t('btn_pause') : sw.elapsed > 0 ? t('btn_resume') : t('btn_start');
+        var sw = T.sw, start = $('#sw-start'), lap = $('#sw-lap'), undo = swCanUndo();
+        setText(start, sw.running ? t('btn_pause') : sw.elapsed > 0 ? t('btn_resume') : t('btn_start'));
         start.dataset.variant = sw.running ? '' : 'primary';
-        lap.textContent = sw.running ? t('btn_lap') : t('btn_reset');
-        lap.disabled = !sw.running && sw.elapsed === 0;
+        setText(lap, sw.running ? t('btn_lap') : undo ? t('btn_undo') : t('btn_reset'));
+        lap.disabled = !sw.running && !undo && (sw.elapsed === 0 || Date.now() - swPausedAt < RESET_GUARD);
         var n = sw.laps.length;
         $('#sw-log-head').hidden = ms === 0 && !n;
         setText($('#sw-lap-count'), n ? t(n === 1 ? 'laps_one' : 'laps_many', { n: n }) : '');
@@ -1015,16 +1197,22 @@
     }
 
     // --- IndexedDB for added photos ---------------------------------------
+    // create false: only open a database that already exists. Opening one
+    // that doesn't would make it; aborting that first upgrade prevents it.
+    function openPhotoDb(name, create) {
+        return new Promise(function (resolve, reject) {
+            var req = indexedDB.open(name, 1);
+            req.onupgradeneeded = function () {
+                if (!create) { req.transaction.abort(); return; }
+                req.result.createObjectStore('photos', { keyPath: 'id' });
+            };
+            req.onsuccess = function () { resolve(req.result); };
+            req.onerror = function () { reject(req.error); };
+        });
+    }
     var dbPromise = null;
     function db() {
-        if (!dbPromise) {
-            dbPromise = new Promise(function (resolve, reject) {
-                var req = indexedDB.open('clock-photos', 1);
-                req.onupgradeneeded = function () { req.result.createObjectStore('photos', { keyPath: 'id' }); };
-                req.onsuccess = function () { resolve(req.result); };
-                req.onerror = function () { reject(req.error); };
-            });
-        }
+        if (!dbPromise) dbPromise = openPhotoDb(PHOTO_DB, true);
         return dbPromise;
     }
     function idb(mode, fn) {
@@ -1036,11 +1224,35 @@
             });
         });
     }
+    // Photos added before the storage rename are in the old database: copy
+    // them over, and delete the old database only once the copy is committed
+    // (if anything fails it stays for the next visit to try again).
+    var photosMigrated = false;
+    function migrateOldPhotos() {
+        photosMigrated = true;
+        return openPhotoDb(OLD_PHOTO_DB, false).then(function (old) {
+            return new Promise(function (resolve, reject) {
+                var tx = old.transaction('photos', 'readonly'), req = tx.objectStore('photos').getAll();
+                tx.oncomplete = function () { old.close(); resolve(req.result || []); };
+                tx.onerror = function () { old.close(); reject(tx.error); };
+            });
+        }).then(function (rows) {
+            if (rows.length) return idb('readwrite', function (store) { rows.forEach(function (r) { store.put(r); }); });
+        }).then(function () {
+            indexedDB.deleteDatabase(OLD_PHOTO_DB);
+        }).catch(function () {});
+    }
     function loadUserPhotos() {
         // Only touch IndexedDB if a photo was ever added, so a plain visit
         // creates no database.
         if (userPhotosLoaded || !S.photos.length) { userPhotosLoaded = true; return Promise.resolve(); }
-        return idb('readonly', function (store) { return store.getAll(); }).then(function (rows) {
+        function readAll() { return idb('readonly', function (store) { return store.getAll(); }); }
+        return readAll().then(function (rows) {
+            var have = {};
+            (rows || []).forEach(function (r) { have[r.id] = true; });
+            var missing = S.photos.some(function (id) { return !have[id]; });
+            return missing && !photosMigrated ? migrateOldPhotos().then(readAll) : rows;
+        }).then(function (rows) {
             var byId = {};
             (rows || []).forEach(function (r) { byId[r.id] = r; });
             userPhotos = S.photos.filter(function (id) { return byId[id]; }).map(function (id) { return byId[id]; });
@@ -1205,6 +1417,19 @@
         syncSettingsUI();
         if (save) saveSettings();
     }
+    // Another tab saved settings: take them over, so this tab's next save
+    // doesn't put back its older copy (and, say, drop a photo added there).
+    function adoptSettings() {
+        var before = S;
+        S = loadSettings();
+        applyRoot();
+        if (before.lang !== S.lang) { applyLanguage(); renderLaps(); }
+        if (before.face !== S.face) hgClock.flips = -1;
+        if (before.bgCycle !== S.bgCycle) restartCycle();
+        if (before.photos.join() !== S.photos.join()) { userPhotosLoaded = false; userPhotos = []; }
+        syncSettingsUI();
+        loadUserPhotos().then(function () { renderPhotoStrip(); showBackground(); });
+    }
     function applySetting(key, value) {
         if (key === 'seconds' || key === 'bgCycle') value = value === 'true';
         S[key] = value;
@@ -1228,11 +1453,11 @@
         cardState = 'loading';
         var link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = '/clock/css/event_card.css';
+        link.href = '/clock/css/event_card.css' + ASSET_V;
         link.onload = link.onerror = function () {
             document.body.appendChild($('#ecm-template').content.cloneNode(true));
             var s = document.createElement('script');
-            s.src = '/clock/js/event_card.js';
+            s.src = '/clock/js/event_card.js' + ASSET_V;
             s.onload = function () { cardState = 'ready'; window.EventCard.open(); };
             s.onerror = function () { cardState = 'none'; };
             document.body.appendChild(s);
@@ -1353,12 +1578,57 @@
         $('#sw-start').addEventListener('click', swStartPause);
         $('#sw-lap').addEventListener('click', swLapReset);
         $('#sw-export').addEventListener('click', swExportCsv);
+        // Lap notes: saved a moment after typing stops, and at once when the
+        // field is left (Enter leaves it too). Escape puts back the last
+        // committed text, which the field keeps as its defaultValue.
+        function setNote(input) {
+            var lap = lapByN(Number(input.parentNode.dataset.n));
+            if (lap) lap.note = input.value.slice(0, NOTE_MAX);
+        }
+        lapList.addEventListener('input', function (e) {
+            if (!e.target.classList.contains('note')) return;
+            setNote(e.target);
+            clearTimeout(swSaveId);
+            swSaveId = setTimeout(saveStopwatch, 400);
+        });
+        function commitNote(input) {
+            input.defaultValue = input.value;
+            if (swSaveId) saveStopwatch();
+        }
+        lapList.addEventListener('focusout', function (e) {
+            if (e.target.classList.contains('note')) commitNote(e.target);
+        });
+        lapList.addEventListener('keydown', function (e) {
+            if (!e.target.classList.contains('note')) return;
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                commitNote(e.target);
+                e.target.blur();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();                   // the page's own Escape handling skips it
+                e.target.value = e.target.defaultValue;
+                setNote(e.target);
+                saveStopwatch();
+                e.target.blur();
+            }
+        });
+        window.addEventListener('pagehide', function () { if (swSaveId) saveStopwatch(); });
         // Ringing
         $('#ring-dismiss').addEventListener('click', dismiss);
 
         document.addEventListener('keydown', function (e) {
-            if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+            if (e.defaultPrevented) return;
             var cardOpen = $('#ecm-overlay.active');
+            // Ctrl+Z / Cmd+Z undoes a stopwatch reset. Not while typing in a
+            // field (that is the field's own undo), nor under the event card.
+            if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
+                if (currentMode === 'stopwatch' && !cardOpen && !isTyping(e.target) && swCanUndo()) {
+                    e.preventDefault();
+                    swUndo();
+                }
+                return;
+            }
+            if (e.metaKey || e.ctrlKey || e.altKey) return;
             if (e.key === 'Escape') {
                 if (cardOpen) return;                 // event_card.js closes itself
                 if (panelOpen) { closePanel(true); return; }
@@ -1376,6 +1646,34 @@
         });
 
         darkQuery.addEventListener('change', function () { if (S.theme === 'auto') applyRoot(); });
+
+        // Another tab (or window) wrote one of the clock's keys: take its
+        // version. Each tab keeps everything in memory and saves it whole, so
+        // without this a tab left open in the background would later write
+        // its older copy back (a second tab arming an alarm used to wipe the
+        // laps saved by the first).
+        window.addEventListener('storage', function (e) {
+            if (e.storageArea !== localStorage) return;
+            if (e.key === KEYS.stopwatch) {
+                T.sw = loadStopwatch();
+                renderLaps();
+            } else if (e.key === KEYS.timers) {
+                var fresh = loadTimers(false);
+                T.timer = fresh.timer;
+                T.alarm = fresh.alarm;
+                // Dismissed, reset or restarted over there: stop ringing here too.
+                if (ringing === 'timer' && T.timer.status !== 'done') { ringing = null; stopSound(); renderRinging(); }
+                if (T.timer.status === 'idle' && timerInputs.indexOf(document.activeElement) < 0) durationToInputs(T.timer.duration);
+                scheduleDue();
+            } else if (e.key === KEYS.settings) {
+                adoptSettings();
+            } else {
+                return;
+            }
+            heartbeat();
+            renderTools();
+            kick();
+        });
 
         // Back in view: catch up on anything that came due, restart drawing.
         function resume() { checkDue(); heartbeat(); kick(); }

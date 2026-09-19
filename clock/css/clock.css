@@ -690,8 +690,9 @@ body {
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
     align-content: start;
-    width: min(520px, 100%);
+    width: min(560px, 100%);
     contain: size;
+    container-type: inline-size;         /* see the lap rows below */
 }
 .sw-log-head {
     display: flex;
@@ -717,9 +718,14 @@ body {
     scrollbar-width: thin;
     scrollbar-color: var(--line-strong) transparent;
 }
+/* Row: "Lap 03" · note · the lap's own time · total. The note is a plain
+   text field that reads as text until it is hovered or focused. The times
+   get fixed, right-aligned columns: every row is its own grid, and the
+   font's narrow '1' would otherwise make them line up differently per row. */
 .laps li {
     display: grid;
-    grid-template-columns: 5em 1fr auto;
+    grid-template-columns: 4.6em minmax(0, 1fr) 6.4em 6.4em;
+    align-items: baseline;
     gap: 14px;
     padding: 10px 2px;
     border-bottom: 1px solid var(--line);
@@ -727,6 +733,41 @@ body {
 }
 .laps .idx { color: var(--ink-faint); }
 .laps .lap { color: var(--ink); }
+.laps .lap, .laps .total { text-align: right; white-space: nowrap; }
+.laps .note {
+    min-width: 0;
+    width: 100%;
+    margin: -5px 0;
+    padding: 5px 8px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    font: inherit;
+    letter-spacing: .04em;
+    text-transform: none;
+    text-overflow: ellipsis;
+    color: var(--ink);
+    caret-color: var(--ink-dim);
+    user-select: text;
+    transition: background-color .2s;
+}
+.laps .note:hover { background: var(--hover); }
+.laps .note:focus { outline: none; background: var(--pressed); }
+.laps .note::placeholder { color: var(--ink-faint); opacity: 1; }
+/* With a mouse the "Add a note" hint only shows on the row you point at;
+   touch screens keep it, as there is nothing to hover. */
+@media (hover: hover) {
+    .laps .note::placeholder { opacity: 0; }
+    .laps li:hover .note::placeholder, .laps .note:focus::placeholder { opacity: 1; }
+}
+/* Too narrow for four columns: the note gets a line of its own. */
+@container (max-width: 460px) {
+    .laps li { grid-template-columns: 1fr 6.4em 6.4em; grid-template-areas: "idx lap total" "note note note"; row-gap: 8px; }
+    .laps .idx { grid-area: idx; }
+    .laps .lap { grid-area: lap; }
+    .laps .total { grid-area: total; }
+    .laps .note { grid-area: note; margin: 0; }
+}
 
 /* ---------- Ringing ---------- */
 .ring-banner {
