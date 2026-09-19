@@ -4,7 +4,7 @@
    Storage (listed in input_legal/legal.md; see KEYS below):
      localStorage "rvry-clock-settings"   preferences, written only when you change one
      localStorage "rvry-clock-timers"     running timer and armed alarm, so a reload keeps them
-     localStorage "rvry-clock-stopwatch"  stopwatch, laps with their notes, the Undo copy
+     localStorage "rvry-clock-stopwatch"  stopwatch, laps (notes, time of day), the Undo copy
      IndexedDB    "rvry-clock-photos"     background photos you add yourself
    Photos never go in localStorage: it is shared with Revery Notebook's
    autosave and holds only ~5 MB for the whole site. Every open tab listens
@@ -573,9 +573,11 @@
     }
 
     // Stopwatch laps are { n: lap number, t: total ms, s: the lap's own ms,
-    // note }. Keeping n and s on each lap means both stay right after the
-    // oldest lap is dropped at LAP_MAX. Before notes existed a lap was just its
-    // total, so plain numbers are converted here.
+    // c: the moment Lap was pressed (epoch ms, null on laps taken before
+    // 2026-09-20), note }. Keeping n and s on each lap means both stay right
+    // after the oldest lap is dropped at LAP_MAX. Before notes existed a lap
+    // was just its total, so plain numbers are converted here. Every field is
+    // copied over by name: one left out here is lost at the next reload.
     var LAP_MAX = 999, NOTE_MAX = 60;
     function isMs(v) { return typeof v === 'number' && isFinite(v) && v >= 0; }
     function normalizeLaps(list) {
@@ -588,19 +590,22 @@
                 n: Math.floor(lap.n) > prevN ? Math.floor(lap.n) : prevN + 1,
                 t: lap.t,
                 s: isMs(lap.s) ? lap.s : Math.max(0, lap.t - (prev ? prev.t : 0)),
+                c: isMs(lap.c) ? lap.c : null,
                 note: typeof lap.note === 'string' ? lap.note.slice(0, NOTE_MAX) : ''
             });
         });
         return out.slice(-LAP_MAX);
     }
-    // undo: what the last Reset cleared ({ elapsed, laps }), until Undo is
-    // used or a new run starts.
+    // pausedAt: when it was last paused (epoch ms), for the CSV's total row
+    // and the Reset guard. undo: what the last Reset cleared ({ elapsed,
+    // laps }), until Undo is used or a new run starts.
     function loadStopwatch() {
         var saved = readJSON(KEYS.stopwatch) || {};
         var sw = {
             running: saved.running === true && isMs(saved.startedAt),
             startedAt: isMs(saved.startedAt) ? saved.startedAt : 0,
             elapsed: isMs(saved.elapsed) ? saved.elapsed : 0,
+            pausedAt: isMs(saved.pausedAt) ? saved.pausedAt : 0,
             laps: normalizeLaps(saved.laps),
             undo: null
         };
@@ -908,8 +913,17 @@
     var lapList = $('#sw-laps');
     // The left button turns from Lap into Reset the moment you pause, so a
     // tap meant as one more Lap would reset; for this long it does nothing.
-    var RESET_GUARD = 600, swPausedAt = 0;
-    function swElapsed() { return T.sw.running ? T.sw.elapsed + (Date.now() - T.sw.startedAt) : T.sw.elapsed; }
+    var RESET_GUARD = 600;
+    // now: pass the Date.now() that is also stored with the result, so the two agree.
+    function swElapsed(now) {
+        var sw = T.sw;
+        return sw.running ? sw.elapsed + ((now || Date.now()) - sw.startedAt) : sw.elapsed;
+    }
+    // A pause "in the future" (the computer's clock was set back since) doesn't count.
+    function swJustPaused() {
+        var ago = Date.now() - T.sw.pausedAt;
+        return ago >= 0 && ago < RESET_GUARD;
+    }
     function swCanUndo() {
         var sw = T.sw;
         return !!sw.undo && !sw.running && sw.elapsed === 0 && !sw.laps.length;
@@ -919,7 +933,7 @@
         if (sw.running) {
             sw.elapsed += now - sw.startedAt;
             sw.running = false;
-            swPausedAt = now;
+            sw.pausedAt = now;
             setTimeout(renderStopwatch, RESET_GUARD + 20);
         } else {
             if (sw.elapsed === 0) sw.undo = null;   // a new run: the last reset is let go
@@ -936,11 +950,11 @@
     function swLapReset() {
         if (T.sw.running) swLap();
         else if (swCanUndo()) swUndo();
-        else if (Date.now() - swPausedAt >= RESET_GUARD) swReset();
+        else if (!swJustPaused()) swReset();
     }
     function swLap() {
-        var sw = T.sw, last = sw.laps[sw.laps.length - 1], total = swElapsed();
-        var lap = { n: last ? last.n + 1 : 1, t: total, s: total - (last ? last.t : 0), note: '' };
+        var sw = T.sw, last = sw.laps[sw.laps.length - 1], now = Date.now(), total = swElapsed(now);
+        var lap = { n: last ? last.n + 1 : 1, t: total, s: total - (last ? last.t : 0), c: now, note: '' };
         sw.laps.push(lap);
         // One new row on top instead of a rebuild, so a note being typed in
         // another row keeps its focus.
@@ -1023,27 +1037,37 @@
         }
     }
     function swText(ms) { return hms(ms) + '.' + pad(Math.floor((ms % 1000) / 10)); }
+    function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+    // Local date and time of a moment, "2026-09-19 14:33:11.25" (always 24 h:
+    // it sorts as text and spreadsheets read it as a date-time). '' if unknown.
+    function clockStamp(ms) {
+        if (!ms) return '';
+        var d = new Date(ms);
+        return ymd(d) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()) +
+            '.' + pad(Math.floor(d.getMilliseconds() / 10));
+    }
     // RFC 4180: a cell with a comma, quote or line break goes in quotes.
     function csvCell(v) {
         v = String(v);
         return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
     }
     // One row per lap plus a final "total" row with the full elapsed time
-    // (the stopwatch may be running or paused past the last lap). The BOM
-    // makes Excel read the file as UTF-8, so å ä ö in notes survive.
+    // (the stopwatch may be running or paused past the last lap). clock_time
+    // is when Lap was pressed; on the total row, now if running, else when
+    // it was paused. The BOM makes Excel read the file as UTF-8, so å ä ö in
+    // notes survive.
     function swExportCsv() {
-        var total = swElapsed();
-        var rows = [['lap', 'note', 'lap_time', 'total_time', 'lap_ms', 'total_ms']];
+        var now = Date.now(), total = swElapsed(now);
+        var rows = [['lap', 'note', 'lap_time', 'total_time', 'clock_time', 'lap_ms', 'total_ms']];
         T.sw.laps.forEach(function (lap) {
-            rows.push([lap.n, lap.note, swText(lap.s), swText(lap.t), lap.s, lap.t]);
+            rows.push([lap.n, lap.note, swText(lap.s), swText(lap.t), clockStamp(lap.c), lap.s, lap.t]);
         });
-        rows.push(['total', '', '', swText(total), '', total]);
-        var csv = '﻿' + rows.map(function (r) { return r.map(csvCell).join(','); }).join('\r\n') + '\r\n';
-        var d = new Date();
+        rows.push(['total', '', '', swText(total), clockStamp(T.sw.running ? now : T.sw.pausedAt), '', total]);
+        var csv = '\uFEFF' + rows.map(function (r) { return r.map(csvCell).join(','); }).join('\r\n') + '\r\n';
+        var d = new Date(now);
         var a = document.createElement('a');
         a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-        a.download = 'stopwatch_' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
-            '_' + pad(d.getHours()) + '-' + pad(d.getMinutes()) + '.csv';
+        a.download = 'stopwatch_' + ymd(d) + '_' + pad(d.getHours()) + '-' + pad(d.getMinutes()) + '.csv';
         a.click();
     }
     function renderStopwatch() {
@@ -1054,7 +1078,7 @@
         setText(start, sw.running ? t('btn_pause') : sw.elapsed > 0 ? t('btn_resume') : t('btn_start'));
         start.dataset.variant = sw.running ? '' : 'primary';
         setText(lap, sw.running ? t('btn_lap') : undo ? t('btn_undo') : t('btn_reset'));
-        lap.disabled = !sw.running && !undo && (sw.elapsed === 0 || Date.now() - swPausedAt < RESET_GUARD);
+        lap.disabled = !sw.running && !undo && (sw.elapsed === 0 || swJustPaused());
         var n = sw.laps.length;
         $('#sw-log-head').hidden = ms === 0 && !n;
         setText($('#sw-lap-count'), n ? t(n === 1 ? 'laps_one' : 'laps_many', { n: n }) : '');
