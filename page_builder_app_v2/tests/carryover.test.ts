@@ -4,11 +4,11 @@
  *
  * Ported from v1's svg-modal.test.ts and word-faq.test.ts. Everything else in
  * those files tested code that no longer exists (ui/dom.ts modals, the v1 block
- * renderer) or is already covered here — the FAQ half by prose-parity and lint.
+ * renderer) or is already covered here — the FAQ half by render and lint.
  *
- * Worth having as direct tests rather than leaning on prose-parity: these are
- * the fiddliest transforms in the codebase, and parity only exercises the paths
- * the sample data happens to hit. The theming edge cases below had NO coverage.
+ * Worth having as direct tests: these are the fiddliest transforms in the
+ * codebase, and rendering whole blocks only exercises the paths the sample data
+ * happens to hit. The theming edge cases below had NO coverage.
  *
  * The svg tests read the repo's REAL files, so they also catch a logo being
  * re-exported from Illustrator in a shape the recolouring cannot handle.

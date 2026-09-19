@@ -7,7 +7,6 @@
  * Kept in the repo because it is the fastest way to eyeball real export output
  * without launching the app; it is not imported by anything.
  */
-import { readFileSync } from "fs";
 import type { Data } from "@measured/puck";
 import { config } from "../src/puck/config";
 import { DEFAULT_HERO, DEFAULT_META } from "../src/puck/PageRoot";
@@ -15,7 +14,6 @@ import { exportText } from "../src/export/export";
 import { renderExportContent, renderExportHero } from "../src/export/renderExport";
 
 const SITE = "https://haraldrevery.com";
-const shell = readFileSync(new URL("../shell.html", import.meta.url).pathname, "utf8");
 
 const photo = (n: string, alt: string, w: number, h: number) => ({
   full: `/photos/2025galdhoepiggen/${n}.jpg`,
@@ -135,7 +133,6 @@ const data = {
 
 process.stdout.write(
   exportText({
-    shell,
     data,
     config,
     siteUrl: SITE,

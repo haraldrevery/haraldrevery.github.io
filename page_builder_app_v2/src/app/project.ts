@@ -11,10 +11,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { Data } from "@measured/puck";
 import { config } from "../puck/config";
-import {
-  assembleDocument, assembleStandalone, exportText, slugify, humanDate,
-} from "../export/export";
-import { renderExportContent, renderExportHero, renderExportHeader } from "../export/renderExport";
+import { assembleDocument, assembleStandalone, exportText, slugify } from "../export/export";
+import { renderExportContent, renderExportHero } from "../export/renderExport";
 import { lintPage, type LintIssue } from "../export/lint";
 import { collectSvgSrcs } from "../export/collect";
 import {
@@ -110,12 +108,12 @@ export interface ExportBundle {
   issues: LintIssue[];
 }
 
-/// The three markup slots, rendered in the order the page presents them.
-/// Shared by buildExport and buildPreview so neither can drift from the other.
+/// The two rendered parts of the fragment, in page order. Shared by every
+/// builder below so none can drift from the others. (The page header is not
+/// one of them: the layout adds it — see "WHO OWNS WHAT" in export.ts.)
 function renderParts(data: Data) {
   return {
     heroHtml: renderExportHero(data),
-    headerHtml: renderExportHeader(data, humanDate),
     contentHtml: renderExportContent(data),
   };
 }
@@ -126,9 +124,11 @@ const pageSlug = (data: Data, slugOverride?: string) =>
 
 /// Render + lint, without writing anything. Split out so the UI can show the
 /// page check and ask for confirmation before touching the repo.
+///
+/// No shell parameter: the published page never touches shell.html, so a
+/// missing or stale shell can only affect Preview, never Export.
 export async function buildExport(
   data: Data,
-  shell: string,
   siteUrl: string,
   slugOverride?: string,
 ): Promise<ExportBundle> {
@@ -142,17 +142,14 @@ export async function buildExport(
   await refreshDownloadHashes(data, config);
 
   const slug = pageSlug(data, slugOverride);
-  const { heroHtml, headerHtml, contentHtml } = renderParts(data);
+  const { heroHtml, contentHtml } = renderParts(data);
 
-  const contents = exportText({
-    shell, data, config, siteUrl, slug, heroHtml, contentHtml, headerHtml,
-  });
+  const contents = exportText({ data, config, siteUrl, slug, heroHtml, contentHtml });
 
-  // The header's <h1> is part of the outline, so the check must see it in the
-  // same order the page renders: hero, then header, then content.
+  // In page order. lintPage adds the layout header's <h1> itself.
   const issues = lintPage({
     data, config,
-    html: `${heroHtml}\n${headerHtml}\n${contentHtml}`,
+    html: `${heroHtml}\n${contentHtml}`,
     missingFiles: await findMissingMedia(data, config),
   });
 
@@ -166,12 +163,12 @@ export async function buildExport(
 // ------------------------------------------------------------------ preview
 
 /*
- * Render the page exactly as it will be PUBLISHED, for /__pb/preview.
+ * Render the page as it will be PUBLISHED, for /__pb/preview.
  *
  * assembleDocument, not exportText: exportText prepends the YAML front matter,
- * which Eleventy strips before copying the body to notebook_pages/. Previewing
- * the exported *file* would put raw YAML at the top of the page; previewing the
- * document gives byte-for-byte what ends up on the site.
+ * which Eleventy strips, and leaves the header, the ending, the nav and the
+ * footer to the layout. assembleDocument puts the fragment in shell.html,
+ * which the site build renders from those same layouts.
  *
  * prefetchSvgs is kept — it only warms a read cache, and without it every themed
  * svg renders its "[svg … not loaded]" placeholder.

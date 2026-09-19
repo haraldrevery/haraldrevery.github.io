@@ -5,23 +5,27 @@ Desktop app (Tauri v2) for building Notebook pages visually, rewritten on
 fonts**, and finished pages export into `input_custom_post/` where Eleventy
 picks them up.
 
-**Exports are body FRAGMENTS, not whole documents.** Eleventy wraps each one in
-`eleventy_settings/base.njk`, which supplies the `<head>`, `nav.njk` and
-`footer.njk` at build time — so a nav or footer change reaches every page ever
-exported, on the next build, with nothing to keep in sync. `shell.html` used to
-hold this app's own copy of that chrome and silently drifted out of date; it is
-now GENERATED build output (see "Preview") and is only used for the in-app
-preview. `input_custom_html_pages/` still exists, for complete standalone
-documents such as the browser apps — this app no longer writes there.
+**Exports are body FRAGMENTS, not whole documents** — hero, content and JSON-LD,
+nothing else. Eleventy wraps each one in `eleventy_settings/post_body.njk` and
+`base.njk`, which supply the `<head>`, `nav.njk`, `footer.njk` and the post
+furniture (the date/`<h1>`/back-link header and the closing date rule +
+"← NOTEBOOK FRONT PAGE" link) at build time — so a change to any of them
+reaches every page ever exported, on the next build, with nothing to keep in
+sync. See "Who owns the page furniture". `shell.html` used to hold this app's
+own copy of that chrome and silently drifted out of date; it is now GENERATED
+build output (see "Preview"). `input_custom_html_pages/` still exists, for
+complete standalone documents such as the browser apps — this app does not
+write there.
 
-v1 lives on untouched in `../page_builder/` and still builds. This is a separate
-app with its own binary, config dir and project folder — see "Coexistence".
+v1 (`page_builder/`) was removed on 2026-09-12; see "v1".
 
 ## Run it
 
 ```bash
-./page_builder_v2_app        # prebuilt binary at the repo root (Linux)
+./page_builder_v2            # prebuilt binary at the repo root (Linux)
 ```
+
+On Windows, `page_builder_v2.exe` at the repo root.
 
 No runtime dependencies. The app finds the repo automatically when the binary is
 at the repo root (or anywhere inside it); run from elsewhere and it asks once,
@@ -32,16 +36,16 @@ then remembers.
 ```bash
 bun install
 bun run build                # typecheck + vite
-bunx tauri dev               # dev app (port 5174 — v1 uses 5173)
+bunx tauri dev               # dev app (port 5174)
 bunx tauri build --no-bundle # release binary
-bun test tests               # 282 tests (see Tests: v1 deps required)
+bun test tests               # 293 tests (see Tests)
 ```
 
 **Use `bunx tauri build`, not `cargo build`.** Plain cargo produces a binary that
 tries to load `devUrl` and shows "Could not connect to localhost".
 
-Copy the result to the repo root as `page_builder_v2_app` (the obvious name
-`page_builder_app_v2` is taken by this source folder).
+Copy `src-tauri/target/release/page_builder_v2` to the repo root (the binary is
+named after `productName` in `tauri.conf.json`).
 
 ### Building the Windows .exe
 
@@ -68,7 +72,7 @@ Check with `cargo --version` and `bun --version`.
 cd page_builder_app_v2
 bun install
 bunx tauri build --no-bundle
-copy src-tauri\target\release\page_builder_v2.exe ..\page_builder_v2_app.exe
+copy src-tauri\target\release\page_builder_v2.exe ..\page_builder_v2.exe
 ```
 
 - `bun install` is required: `node_modules/` is gitignored, though `bun.lock`
@@ -79,11 +83,12 @@ copy src-tauri\target\release\page_builder_v2.exe ..\page_builder_v2_app.exe
 - `--no-bundle` skips the MSI/NSIS installer. This is a plain portable .exe;
   `bundle.active` is false in `tauri.conf.json` anyway.
 - The .exe is named after `productName` in `tauri.conf.json`
-  (`page_builder_v2`), which is why the copy renames it — the repo root uses
-  `page_builder_v2_app.exe`, matching the Linux `page_builder_v2_app` and v1's
-  `page_builder_app.exe`.
+  (`page_builder_v2`), matching the Linux `page_builder_v2` at the repo root.
+- **Rebuild it whenever the Linux binary is rebuilt.** The two drift apart
+  otherwise, and an export from an out-of-date build can be in an older format
+  — see "Known gaps".
 
-**Check it works:** double-click `page_builder_v2_app.exe` at the repo root. It
+**Check it works:** double-click `page_builder_v2.exe` at the repo root. It
 should find the repo automatically (it looks for `eleventy.config.js` +
 `eleventy_settings/` in its own ancestors) and open with the block palette on
 the left. If it asks you to locate the folder, point it at the repo once and it
@@ -92,15 +97,14 @@ remembers.
 Then commit it — both binaries live at the repo root, ~7 MB each:
 
 ```bat
-git add ..\page_builder_v2_app.exe
+git add ..\page_builder_v2.exe
 ```
 
 Everything else is OS-agnostic. Paths are stored repo-relative and the export
 pipeline is pure string work, so a page exported on Windows is byte-identical to
 one exported on Linux.
 
-**To run the dev app instead** (`bunx tauri dev`): it serves on port 5174, so v1
-on 5173 can run at the same time.
+**To run the dev app instead** (`bunx tauri dev`): it serves on port 5174.
 
 ## Why the rewrite
 
@@ -132,9 +136,10 @@ plumbing went away.
   document, wherever the native Save dialog is pointed. See "Standalone HTML
   export" below. This is the side errand, not the publishing path.
 - Export writes `input_custom_post/<slug>.html`: YAML front matter plus the body
-  fragment — hero, content, date block and back link, and nothing else. Eleventy
+  fragment — hero, content column and JSON-LD, and nothing else. Eleventy
   renders it through `post_body.njk` and `base.njk` to
-  `notebook_pages/<slug>.html`.
+  `notebook_pages/<slug>.html`, and those add the header and the ending (see
+  "Who owns the page furniture"). Export never reads `shell.html`.
   The extension is `.html` even though `html` is not in Eleventy's
   `templateFormats`: `eleventy.config.js` reads the folder itself and registers
   each file with `addTemplate()` under a virtual `.njk` input path, passing
@@ -142,10 +147,9 @@ plumbing went away.
   parsed as a template — which is what lets a page contain `{{`, `{%` or KaTeX
   braces such as `\frac{{a}}{{b}}` without breaking the build.
   `input_custom_post/_template.html` is the regression fixture for that.
-  Export also writes `header: false`, because this app emits its own
-  date/`<h1>`/back-link block and `post_body.njk` would otherwise emit a second
-  one. This folder used to be `input_build_page/`, whose files had to be `.njk`;
-  the two folders were redundant and it was removed.
+  A page with a hero also gets `header: false`, because the hero carries its own
+  `<h1>` and back link. This folder used to be `input_build_page/`, whose files
+  had to be `.njk`; the two folders were redundant and it was removed.
   Two front-matter flags are read by `base.njk`, not by this app: `navScroll`
   (adds `.navi_mechanic` and loads `navbar_scroll_min.js` together) and
   `customJsonLd` (suppresses base.njk's Article block so this page's own
@@ -163,6 +167,37 @@ plumbing went away.
   unquoted date containing `": "` makes gray-matter throw and stops the whole
   site build. The page check warns on both a missing date (Eleventy silently
   substitutes the build date) and a non-ISO one.
+
+## Who owns the page furniture
+
+Every notebook post carries the same furniture: the date/`<h1>`/back-link
+**header** at the top, and the **ending** — the date rule and the
+"← NOTEBOOK FRONT PAGE" link — at the bottom. It is defined ONCE, as macros in
+`eleventy_settings/post_chrome.njk`, and used by:
+
+| | |
+|---|---|
+| `post.njk` | markdown posts |
+| `post_body.njk` | block posts in `input_custom_post/` — hand-written or exported from here |
+| `eleventy_njk/_builder_shell.njk` | this app's `shell.html`: Preview, Export HTML… and the editor's header |
+
+**This app emits none of it.** Exports are hero + content + JSON-LD. The only
+decision it makes is whether the layout's header appears at all, in
+`layoutAddsHeader` (`src/export/export.ts`): yes, unless the page has a hero,
+which carries its own `<h1>` and back link — so a hero page exports
+`header: false`. The front matter, the preview, the editor and the page check
+all ask that one function.
+
+Until 2026-09-19 the split was different: exports carried their own header and
+ending, `header: false` only switched off the layout's header, and every
+published builder page showed the ending twice. Two guards keep that from
+coming back:
+
+- `eleventy.config.js` stops the build, naming the file, if a body in
+  `input_custom_post/` carries its own "← NOTEBOOK FRONT PAGE" link. That
+  catches an export from an out-of-date build of this app (see "Known gaps").
+- `tests/site-build.test.tsx` builds a small real site from pages exported by
+  this code and checks the published result, and that the preview matches it.
 
 ## Two rules that constrain everything
 
@@ -296,54 +331,46 @@ the field appears unlabelled.
 - `<Puck data>` is **initial** state, copied into Puck's store on mount. Changing
   it afterwards does not re-sync; loading a project remounts Puck via `key`.
 
-## Coexistence with v1
+## v1
 
-Everything is isolated so a v2 bug cannot damage v1:
+v1 (`page_builder/`) was removed on 2026-09-12 (commit `8d32c4d`); its source
+is in the git history, which is where the "Transcribed from
+page_builder/src/…" notes in `src/` point. What remains of the split:
 
-| | v1 | v2 |
-|---|---|---|
-| source | `page_builder/` | `page_builder_app_v2/` |
-| binary | `page_builder_app` | `page_builder_v2_app` |
-| dev port | 5173 | 5174 |
-| config | `~/.config/page_builder/` | `~/.config/page_builder_v2/` |
-| projects | `page_builder/projects/` | `page_builder_app_v2/projects/` |
-| `shell.html` | its own, hand-maintained | GENERATED build output, preview only |
-
-The export target is no longer shared: v1 still writes whole documents to
-`input_custom_html_pages/`, v2 writes body fragments to `input_custom_post/`. Both
-are front ends for the same Eleventy input.
-
-**Project formats are incompatible.** v1 stores `{version:1, meta, blocks}`, v2
-stores `{version:2, exportSlug, data}` where `data` is Puck's. v2 refuses to open
-a v1 file rather than silently mangling it.
+- this app's config dir is `~/.config/page_builder_v2/`, and its dev port 5174,
+  both chosen so the two could run side by side;
+- **project formats are incompatible.** v1 stored `{version:1, meta, blocks}`,
+  v2 stores `{version:2, exportSlug, data}` where `data` is Puck's. v2 refuses
+  to open a v1 file rather than silently mangling it.
 
 ## Tests
 
 ```bash
 bun install                      # in THIS folder
-(cd ../page_builder && bun install)   # and in v1 — see below
-bun test tests                   # 282 tests
+bun test tests                   # 293 tests
 ```
 
-`prose-parity.test.tsx` imports v1's real renderer from `../page_builder/src/`,
-so it resolves v1's own `markdown-it` out of v1's `node_modules/`. Both folders
-gitignore `node_modules/`, so on a fresh clone the suite fails with
-`Cannot find package 'markdown-it'` until v1 has been installed too. That is the
-cost of testing against the real v1 renderer rather than a copy of it; the rest
-of the suite has no such dependency.
+`site-build.test.tsx` also needs the repo root's `node_modules/` (committed, so
+nothing to install) — it runs the site's own Eleventy.
 
+- `site-build.test.tsx` — **the boundary test.** Builds a small real site with
+  the repo's `eleventy.config.js` and layouts, from pages exported by this code
+  plus a hand-written and a markdown post, and checks the PUBLISHED output: one
+  header, one ending, one `<h1>`, balanced `<div>`s (footer inside
+  `.bg-topology-map`), that the preview matches the published page, and that an
+  old-format export stops the build. Every other test sees one side only; the
+  duplicate ending lived between them.
 - `render.test.tsx` — **the class-coverage guard** (greps the real `main.css`)
   and the one-gap-per-block rule, iterated over the whole registry.
-- `prose-parity.test.tsx` — renders each block with **v1's actual renderer** and
-  diffs. This is what proves the port rather than arguing it. Delete this file if
-  v1 is ever removed; the guards above stand on their own.
 - `format.test.ts` — the formatter is lossless, and never reflows an inline run.
 - `collect.test.ts` — tree collectors, including that content in a hidden
   `count:1` column slot is excluded from JSON-LD and lint but never lost.
-- `export.test.tsx` — frontmatter quoting, JSON-LD, placeholder substitution.
+- `export.test.tsx` — frontmatter quoting, JSON-LD, placeholder substitution,
+  and that a fragment carries none of the layout's furniture.
 - `lint.test.tsx` — heading outline and SEO checks.
-- `preview.test.tsx` — that the preview equals the export minus its front matter,
-  and that rendering one does not mutate the project.
+- `preview.test.tsx` — that the preview contains the export minus its front
+  matter, shows the header and ending once, refuses an out-of-date shell, and
+  that rendering one does not mutate the project.
 - `regressions.test.tsx` — one describe per fixed defect, named for the symptom
   rather than the fix, so a failure says what broke for the user.
 
@@ -357,9 +384,15 @@ to a file read.
 full-screen iframe pointed at `http://127.0.0.1:<port>/__pb/preview`.
 
 - `buildPreview` (`src/app/project.ts`) calls **`assembleDocument`, not
-  `exportText`** — the difference is the YAML front matter, which Eleventy strips
-  before copying the body to `notebook_pages/`. Previewing the exported *file*
-  would put raw YAML at the top of the page.
+  `exportText`**. The exported *file* is YAML front matter plus a fragment;
+  `assembleDocument` puts the fragment into `shell.html`, which the site build
+  renders from the same `base.njk` and `post_chrome.njk` as the published page.
+  It fills `{{TITLE}}`, `{{DATE}}`, `{{DATE_ISO}}` and `{{CONTENT}}` in one pass,
+  and keeps the `<!--pb:header-->` region only when `layoutAddsHeader` says so.
+- A shell without that region predates this app's export format (the site has
+  not been built since this app was updated). Preview and Export HTML… refuse
+  it with "run the Eleventy build" rather than showing a page with no header and
+  no ending. Export is unaffected — it never reads the shell.
 - It deliberately skips `revalidateThumbs` and `refreshDownloadHashes`. Both
   mutate `data` in place, so reusing `buildExport` here would mean that merely
   *looking* at a page silently edits the project and flips the dirty flag. A
@@ -508,8 +541,8 @@ archive copies and for handing a page to someone; it does not publish anything.
 - No slug prompt and no page-check gate. The dialog is the name prompt, and the
   check panel is on screen anyway; blocking an archive copy on a missing meta
   description would be ceremony for a file Eleventy never sees.
-- The BODY is byte-identical to the fragment export (`tests/standalone.test.tsx`
-  asserts it), so this is not a second render path.
+- The fragment inside it is byte-identical to the export
+  (`tests/standalone.test.tsx` asserts it), so this is not a second render path.
 
 **Caveat:** `og:image` still comes from the shell (`/opengraphimg.jpg`), not from
 the page's card image. base.njk builds it with the `imageMeta` filter, which
@@ -546,9 +579,11 @@ actually on disk (`src/export/fixups.ts`):
 
 **The shell is generated; there is nothing to keep fresh.** `shell.html` is
 build output, written by `eleventy_njk/_builder_shell.njk` from the same
-`nav.njk` / `footer.njk` / `base.njk` every other page uses, so every site build
-refreshes it. It is used ONLY for the in-app preview — export does not touch it.
-Do not edit it; edit the partials.
+`base.njk` / `nav.njk` / `footer.njk` / `post_chrome.njk` every post uses, so
+every site build refreshes it. It is used for Preview, Export HTML… and the
+editor's page header — Export does not touch it. The app reads it on startup
+and again on every Preview, so a site build made while the app is open reaches
+the editor at the next Preview. Do not edit it; edit the partials.
 
 This replaces the old shell-freshness badge, which diffed `shell.html` against
 `input_custom_html_pages/galdhopiggen.html` — itself a builder-produced page
@@ -617,17 +652,21 @@ history through a 300ms debounce), and the Rust tests in `embedded_text.rs`.
 
 ## Known gaps
 
-- **`page_builder_v2.exe` is STALE and must be rebuilt on Windows.** It still
-  writes whole documents to `input_custom_html_pages/`. That degrades to the old
-  behaviour rather than breaking — the pages still publish, with frozen chrome —
-  but nothing from the fragment pipeline reaches them. There is no cross-compile
-  path (the MSVC linker only exists on Windows), so see "Building the Windows
-  .exe" above and rebuild it there. The Linux `page_builder_v2` is current.
-- **Preview still is not the Eleventy build.** It renders the published document
-  faithfully, but front matter is omitted (Eleventy strips it anyway), so
-  mistakes in `date:`/`tags:` — which drive the Notebook and tag collections —
-  do not surface there. The page check is the tool for that. Styling is also
-  only as fresh as the last Tailwind build.
+- **`page_builder_v2.exe` predates the 2026-09-19 export format and must be
+  rebuilt on Windows.** Its exports still carry their own header and ending.
+  The Eleventy build refuses them with a message naming the file, so nothing
+  broken is published — but nothing it exports builds until it is rebuilt. Its
+  Preview also shows the new shell's `{{DATE}}` tokens unfilled. There is no
+  cross-compile path (the MSVC linker only exists on Windows), so see
+  "Building the Windows .exe" above and rebuild it there. The Linux
+  `page_builder_v2` is current.
+- **Preview still is not the Eleventy build.** Its page body matches the
+  published one (`site-build.test.tsx`), but the `<head>` is the shell's, and
+  front matter is omitted, so mistakes in `date:`/`tags:` — which drive the
+  Notebook and tag collections — do not surface there. The page check is the
+  tool for that. An untitled page previews with "Untitled" as its heading
+  where the published page has none (the page check warns about the missing
+  title). Styling is only as fresh as the last Tailwind build.
 - Splitting is TOP-LEVEL only: a block already inside a column cannot be split
   again, because Columns is not in `EMBEDDABLE` and nesting columns in columns
   has no markup in the site's vocabulary.

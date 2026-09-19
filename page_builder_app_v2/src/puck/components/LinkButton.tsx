@@ -35,9 +35,9 @@ export type LinkAlign = "left" | "center" | "right";
  *
  * main.css `.extra_fade_effect` (1.2s from page load) is what music.html puts
  * on the MORE button — and it is deliberately NOT an option here, because
- * assembleFragment already wraps ALL exported content in `extra_fade_effect`
- * (export.ts:282). A second copy nested inside it starts at the same moment and
- * would change nothing on screen.
+ * the content column already wraps ALL exported content in `extra_fade_effect`
+ * (contentColumnClass in export.ts). A second copy nested inside it starts at
+ * the same moment and would change nothing on screen.
  *
  * `.extra_fade_effect_long` IS worth offering: the same 1.2s fade, delayed by
  * 2.8s, so the button arrives after the copy around it has settled. Both are

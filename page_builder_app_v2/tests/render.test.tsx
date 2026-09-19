@@ -57,8 +57,8 @@ function sample(type: BlockType) {
 }
 
 /// Renders through contentConfig (passthrough root), because these tests assert
-/// on the markup that goes into shell.html's {{CONTENT}} slot — PageRoot's
-/// bg-topology-map / page-container chrome comes from the shell, not from here.
+/// on the blocks themselves — the markup that goes inside the exported content
+/// column. PageRoot's chrome is editor-only and is not rendered here.
 function html(content: ReturnType<typeof sample>[]): string {
   const data = { root: { props: {} }, content } as unknown as Data;
   return renderToStaticMarkup(<Render config={contentConfig} data={data} />);
@@ -122,8 +122,8 @@ describe("vertical spacing", () => {
   });
 
   test('spacing "none" drops the gap class rather than emitting mb-0', () => {
-    // Prose blocks wrap in <article>, non-prose in <section> — verified against
-    // v1's renderer in prose-parity.test.tsx.
+    // Prose blocks wrap in <article>, non-prose in <section> (the shapes v1's
+    // renderer emitted, which the published pages carry).
     const out = html([{ type: "Heading", props: { ...sample("Heading").props, spacing: "none" } }]);
     expect(out).not.toContain("mb-0");
     expect(out).toContain('<article class="prose dark:prose-invert max-w-none">');

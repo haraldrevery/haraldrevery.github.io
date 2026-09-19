@@ -30,8 +30,7 @@ import { useEffect, useMemo, useState } from "react";
 import { usePuck, type Data } from "@measured/puck";
 import { config } from "../puck/config";
 import { lintPage, type LintIssue } from "../export/lint";
-import { renderExportContent, renderExportHero, renderExportHeader } from "../export/renderExport";
-import { humanDate } from "../export/export";
+import { renderExportContent, renderExportHero } from "../export/renderExport";
 import { findMissingMedia } from "../export/fixups";
 
 /// Long enough that a normal typing burst collapses into one run, short enough
@@ -48,11 +47,7 @@ const RECHECK_DELAY_MS = 300;
  */
 export function runPageCheck(data: Data, missingFiles: string[] = []): LintIssue[] {
   try {
-    const html = [
-      renderExportHero(data),
-      renderExportHeader(data, humanDate),
-      renderExportContent(data),
-    ].join("\n");
+    const html = `${renderExportHero(data)}\n${renderExportContent(data)}`;
     return lintPage({ data, config, html, missingFiles });
   } catch (e) {
     // A half-typed markdown block must never take the panel down with it.

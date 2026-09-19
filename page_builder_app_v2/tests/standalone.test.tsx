@@ -46,7 +46,7 @@ const mk = (over = {}): Data =>
 
 const input = (data: Data, slug?: string) => ({
   shell, data, config, siteUrl: SITE, slug,
-  heroHtml: "", contentHtml: "<p>body</p>", headerHtml: "<h1>Galdhøpiggen</h1>",
+  heroHtml: "", contentHtml: "<p>body</p>",
 });
 
 describe("retargetHead", () => {
@@ -146,6 +146,6 @@ describe("assembleStandalone", () => {
     expect(out.trimStart().startsWith("<!DOCTYPE html>")).toBe(true);
     expect(out).toContain("</html>");
     // and no placeholder is left behind
-    expect(out).not.toMatch(/\{\{[A-Z]+\}\}/);
+    expect(out).not.toMatch(/\{\{[A-Z_]+\}\}/);
   });
 });

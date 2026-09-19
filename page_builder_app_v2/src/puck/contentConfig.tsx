@@ -3,8 +3,8 @@
  * is a passthrough instead of PageRoot.
  *
  * The editor needs PageRoot so the preview shows blocks inside the site's
- * bg-topology-map / page-container chrome. The export must NOT include it:
- * assembleFragment emits the page-container wrapper itself and base.njk supplies
+ * bg-topology-map / content-column chrome. The export must NOT include it:
+ * assembleFragment emits the content column itself and base.njk supplies
  * bg-topology-map at build time, so rendering PageRoot here would nest a second
  * copy of both inside the first.
  *

@@ -12,10 +12,13 @@ import { config } from "../src/puck/config";
 import { DEFAULT_HERO, DEFAULT_META } from "../src/puck/PageRoot";
 import {
   frontmatterYaml, slugify, humanDate, splitTags,
-  resolveSchemaType, jsonld, assembleDocument, exportText,
+  resolveSchemaType, jsonld, assembleDocument, exportText, contentColumnClass,
 } from "../src/export/export";
-import { renderExportContent, renderExportHero, renderExportHeader } from "../src/export/renderExport";
+import { renderExportContent, renderExportHero } from "../src/export/renderExport";
 import { lintPage } from "../src/export/lint";
+import { setShell } from "../src/export/shellStore";
+import { PageRoot } from "../src/puck/PageRoot";
+import { renderToStaticMarkup } from "react-dom/server";
 
 const SITE = "https://haraldrevery.com";
 const shell = readFileSync(new URL("../shell.html", import.meta.url).pathname, "utf8");
@@ -55,10 +58,8 @@ describe("frontmatter", () => {
         'tags: ["photography"]\n' +
         'image: "/notebook_thumbnails/g_min.jpg"\n' +
         'description: "Photos from a hike."\n' +
-        // post_body.njk skips its own date/<h1>/back-link block when this is
-        // set. The page emits that block itself (staticHeader), or carries a
-        // hero that does; without the flag the published page gets two.
-        'header: false\n' +
+        // No `header: false`: post_body.njk adds the date/<h1>/back-link
+        // header to a page without a hero. See the next test.
         // base.njk suppresses its own articleLd block when this is set, so the
         // page's resolved schema type (BlogPosting/ImageGallery/FAQPage) wins.
         'customJsonLd: true\n' +
@@ -79,6 +80,15 @@ describe("frontmatter", () => {
     for (const t of ["2024", "No", "On", "2025-01-01"]) {
       expect(frontmatterYaml(meta({ title: t }))).toContain(`title: "${t}"`);
     }
+  });
+
+  test("header: false is written for a hero page, and only for one", () => {
+    // post_body.njk adds the date/<h1>/back-link header unless told not to. A
+    // hero carries its own title and back link, so only a hero page opts out.
+    const fm = (root: any) =>
+      exportText({ data: mk([], root), config, siteUrl: SITE, slug: "t", heroHtml: "", contentHtml: "" });
+    expect(fm({ hasHero: true, hero: { ...DEFAULT_HERO, title: "T" } })).toContain("\nheader: false\n");
+    expect(fm({ hasHero: false })).not.toContain("header:");
   });
 
   test("draft only appears when set", () => {
@@ -147,7 +157,7 @@ describe("assembleDocument", () => {
     expect(out.match(/Body copy here\./g)?.length).toBe(1);
   });
 
-  test("no hero -> static back link, no nav reveal", () => {
+  test("no hero -> the layout's header and its back link, no nav reveal", () => {
     const out = build(mk([text("t", "x")]));
     expect(out).toContain("← Back to Notebook");
     expect(out).not.toContain("navi_mechanic");
@@ -156,8 +166,9 @@ describe("assembleDocument", () => {
 
   test("the back link sits UNDER the title, inside the bordered header block", () => {
     // Order, not just presence: the whole point of the layout is that the page
-    // announces itself before it offers the way out. eleventy_settings/post.njk
-    // must render markdown posts the same way.
+    // announces itself before it offers the way out. The header comes from the
+    // shell, i.e. from eleventy_settings/post_chrome.njk, which markdown posts
+    // use too.
     const out = build(mk([text("t", "x")], { meta: { ...DEFAULT_META, title: "The Title" } }));
     // Scope to the header block — the title also appears in the frontmatter,
     // <title> and the og/twitter meta tags, all of which precede it.
@@ -169,14 +180,6 @@ describe("assembleDocument", () => {
     expect(out).not.toContain('<div class="mb-8">');
   });
 
-  test("a page with no title keeps the standalone back link", () => {
-    // Nothing to sit under, so the mb-16 wrapper still has to be there or the
-    // link collides with the first content block.
-    const out = build(mk([text("t", "x")], { meta: { ...DEFAULT_META, title: "" } }));
-    expect(out).toContain('<div class="mb-16">');
-    expect(out).not.toContain("border-b border-neutral-200");
-  });
-
   test("hero -> its own fade-in back link only, plus the nav reveal", () => {
     const data = mk([text("t", "x")], { hasHero: true, hero: { ...DEFAULT_HERO, title: "T" } });
     const out = build(data);
@@ -186,13 +189,12 @@ describe("assembleDocument", () => {
     // nav.njk + base.njk add .navi_mechanic and the script at build time.
     expect(out).not.toContain("navi_mechanic");
     const fm = exportText({
-      shell, data, config, siteUrl: SITE, slug: "t",
+      data, config, siteUrl: SITE, slug: "t",
       heroHtml: renderExportHero(data),
-      headerHtml: renderExportHeader(data, humanDate),
       contentHtml: renderExportContent(data),
     });
     expect(fm).toContain("navScroll: true");
-    // exactly one back link — never the static one as well
+    // exactly one back link — the shell's header region is dropped
     expect(out.match(/← Back to Notebook/g)?.length).toBe(1);
     expect(out).toContain("extra_fade_effect_long");
   });
@@ -229,7 +231,7 @@ describe("exportText", () => {
   test("is frontmatter, a blank line, then the document", () => {
     const data = mk([text("t", "Body.")]);
     const out = exportText({
-      shell, data, config, siteUrl: SITE, slug: "t",
+      data, config, siteUrl: SITE, slug: "t",
       heroHtml: "", contentHtml: renderExportContent(data),
     });
     expect(out.startsWith("---\n")).toBe(true);
@@ -241,19 +243,41 @@ describe("exportText", () => {
     expect(body).not.toContain("<!DOCTYPE");
     expect(body).not.toContain("<nav");
     expect(body).not.toContain("<footer");
-    expect(body).toContain('<div  class="page-container pt-24 pb-12 extra_fade_effect">');
+    expect(body).toContain('<div class="page-container extra_fade_effect">');
+  });
+
+  /*
+   * THE regression. The layout (post_body.njk, via post_chrome.njk) adds the
+   * header and the ending; a fragment that carries either shows it twice once
+   * published — which every export did until 2026-09-19. tests/site-build.test.tsx
+   * proves the published result; this pins the builder's half of the contract.
+   */
+  test("carries none of the layout's furniture, with or without a hero", () => {
+    for (const root of [{ hasHero: false }, { hasHero: true, hero: { ...DEFAULT_HERO, title: "T" } }]) {
+      const data = mk([text("t", "Body.")], root);
+      const out = exportText({
+        data, config, siteUrl: SITE, slug: "t",
+        heroHtml: renderExportHero(data), contentHtml: renderExportContent(data),
+      });
+      expect(out).not.toContain("NOTEBOOK FRONT PAGE");
+      expect(out).not.toContain("<hr");
+      expect(out).not.toContain("<time");
+      expect(out).not.toContain("mb-8 pb-8 border-b");
+      // the only back link and <h1> a fragment may carry are its hero's
+      expect(out.match(/← Back to Notebook/g)?.length ?? 0).toBe(root.hasHero ? 1 : 0);
+      expect(out.match(/<h1/g)?.length ?? 0).toBe(root.hasHero ? 1 : 0);
+    }
   });
 });
 
 describe("a page with no hero still gets a title", () => {
-  // Markdown posts get their title from eleventy_settings/post.njk:29-36.
-  // Builder pages ARE the whole document and bypass that layout, so without
-  // this the h1 lived only in the hero and a hero-less page had no title at all.
+  // The layout's header (post_chrome.njk) supplies the date, the <h1> and the
+  // back link, as it does for markdown posts. The preview takes it from the
+  // shell, rendered from those same macros.
   const build = (data: Data, slug = "t") =>
     assembleDocument({
       shell, data, config, siteUrl: SITE, slug,
       heroHtml: renderExportHero(data),
-      headerHtml: renderExportHeader(data, humanDate),
       contentHtml: renderExportContent(data),
     });
 
@@ -262,7 +286,8 @@ describe("a page with no hero still gets a title", () => {
     expect(out).toContain('<h1 class="text-5xl md:text-6xl text-zinc-900 dark:text-white mt-4 mb-4 uppercase tracking-wider">');
     expect(out).toContain("Galdhøpiggen");
     expect(out).toContain('<div class="mb-8 pb-8 border-b border-neutral-200 dark:border-neutral-800">');
-    expect(out).toContain('datetime="2025-08-17"');
+    // isoStamp, as the layout stamps it
+    expect(out).toContain('datetime="2025-08-17T00:00:00.000Z"');
     expect(out).toContain("August 17, 2025");
     // exactly one back link, and exactly one h1
     expect(out.match(/← Back to Notebook/g)?.length).toBe(1);
@@ -270,14 +295,10 @@ describe("a page with no hero still gets a title", () => {
   });
 
   test("satisfies the page check's H1 requirement", () => {
-    // The header's <h1> is a real heading on the page, so the outline scan has
-    // to see it — the check runs on hero + header + content, in page order.
+    // The layout's <h1> is a real heading on the page, so the outline scan has
+    // to count it even though no rendered fragment contains it.
     const data = mk([text("t", "Body with no heading.")]);
-    const html = [
-      renderExportHero(data),
-      renderExportHeader(data, humanDate),
-      renderExportContent(data),
-    ].join("\n");
+    const html = `${renderExportHero(data)}\n${renderExportContent(data)}`;
     const messages = lintPage({ data, config, html }).map((i) => i.message);
     expect(messages.some((m) => m.includes("No H1"))).toBe(false);
     expect(messages.some((m) => m.includes("No headings"))).toBe(false);
@@ -285,11 +306,7 @@ describe("a page with no hero still gets a title", () => {
 
   test("but an untitled page still warns — there is no h1 to find", () => {
     const data = mk([text("t", "Body.")], { meta: { ...DEFAULT_META, date: "2025-08-17" } });
-    const html = [
-      renderExportHero(data),
-      renderExportHeader(data, humanDate),
-      renderExportContent(data),
-    ].join("\n");
+    const html = `${renderExportHero(data)}\n${renderExportContent(data)}`;
     const messages = lintPage({ data, config, html }).map((i) => i.message);
     expect(messages.some((m) => m.includes("No headings"))).toBe(true);
   });
@@ -303,29 +320,47 @@ describe("a page with no hero still gets a title", () => {
     expect(out).not.toContain("mb-8 pb-8 border-b");
   });
 
-  test("no title -> just the plain back link, as before", () => {
-    const data = mk([text("t", "x")], { meta: { ...DEFAULT_META, date: "2025-08-17" } });
-    const out = build(data);
-    expect(out).toContain('<div class="mb-16">');
-    expect(out).not.toContain("mb-8 pb-8 border-b");
-    expect(out.match(/<h1/g) ?? []).toHaveLength(0);
-  });
-
-  test("every class in the header exists in the compiled CSS", () => {
-    // The header is built as a STRING in export.ts, so render.test.tsx's
-    // class-coverage guard does not see it.
+  test("the content column uses only classes the compiled CSS has", () => {
+    // The page header is layout markup now, compiled by the site's own Tailwind
+    // build. What this app still emits around the blocks is the column.
     const css =
       readFileSync(new URL("../../main.css", import.meta.url).pathname, "utf8") +
       readFileSync(new URL("../../prose.css", import.meta.url).pathname, "utf8");
-    const out = build(mk([text("t", "x")]));
-    const header = out.slice(out.indexOf('<div class="mb-8">'), out.indexOf("{{CONTENT}}") + 1);
     const esc = (c: string) => c.replace(/([:\/\[\].])/g, "\\$1");
-    const missing: string[] = [];
-    for (const m of header.matchAll(/class="([^"]+)"/g)) {
-      for (const c of m[1].split(/\s+/)) {
-        if (c && !css.includes("." + esc(c))) missing.push(c);
+    for (const hasHero of [false, true]) {
+      for (const c of contentColumnClass(hasHero).split(/\s+/)) {
+        expect(css.includes("." + esc(c))).toBe(true);
       }
     }
-    expect(missing).toEqual([]);
+  });
+});
+
+describe("the editor shows the layout's header", () => {
+  // PageRoot takes it from the shell rather than keeping its own copy, so the
+  // editor, the preview and the published page all show post_chrome.njk's.
+  const root = (props: any) =>
+    renderToStaticMarkup(<PageRoot {...props}><p>block</p></PageRoot>);
+
+  test("from the shell, for a page without a hero", () => {
+    setShell(shell);
+    const out = root({ meta: meta({ title: "Editor Title" }), hasHero: false });
+    expect(out).toContain("mb-8 pb-8 border-b");
+    expect(out).toContain("Editor Title");
+    expect(out).toContain('<div class="page-container extra_fade_effect"><p>block</p></div>');
+  });
+
+  test("not at all for a hero page, whose content column keeps pt-24", () => {
+    setShell(shell);
+    const out = root({ meta: meta(), hasHero: true, hero: { ...DEFAULT_HERO, title: "H" } });
+    expect(out).not.toContain("mb-8 pb-8 border-b");
+    expect(out).toContain('<div class="page-container pt-24 extra_fade_effect">');
+  });
+
+  test("and simply leaves it out until the shell has been read", () => {
+    setShell("");
+    const out = root({ meta: meta(), hasHero: false });
+    expect(out).not.toContain("border-b");
+    expect(out).toContain("<p>block</p>");
+    setShell(shell);
   });
 });

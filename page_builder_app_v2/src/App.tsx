@@ -16,9 +16,18 @@ import { PreviewModal } from "./app/PreviewModal";
 import { useSaveShortcut, useTextUndoShim } from "./app/keyboard";
 import {
   PROJECT_VERSION, buildExport, buildPreview, buildStandalone, listProjects, loadProject,
-  readShell, saveHtmlDocument, saveProject, setPreviewHtml, writeExport,
+  readShell as readShellFile, saveHtmlDocument, saveProject, setPreviewHtml, writeExport,
   type ProjectFileV2, type ProjectInfo,
 } from "./app/project";
+import { setShell } from "./export/shellStore";
+
+/// Every read of shell.html also refreshes the editor's copy (shellStore), so a
+/// site build made while the app is open reaches the editor's page header too.
+const readShell = async () => {
+  const shell = await readShellFile();
+  setShell(shell);
+  return shell;
+};
 
 const EMPTY: Data = { root: { props: {} }, content: [] } as unknown as Data;
 
@@ -130,6 +139,15 @@ export default function App() {
    * located: a draft is not actionable in an app that cannot open or export
    * anything, and the boot screen is already showing that as the real problem.
    */
+  /*
+   * The editor shows the layout's page header from shell.html (PageRoot), so
+   * read it as soon as the repo is located. A failure is left for Preview to
+   * report: the editor just shows no header, and Preview names the problem.
+   */
+  useEffect(() => {
+    if (cfg?.repoRoot) void readShell().catch(() => {});
+  }, [cfg?.repoRoot]);
+
   const checkedRecovery = useRef(false);
   useEffect(() => {
     if (!cfg?.repoRoot || checkedRecovery.current) return;
@@ -244,8 +262,7 @@ export default function App() {
   const runExport = async (slugInput: string, skipWarnings: boolean) => {
     setBusy("Rendering…");
     try {
-      const shell = await readShell();
-      const bundle = await buildExport(liveData.current, shell, cfg!.siteUrl, slugInput);
+      const bundle = await buildExport(liveData.current, cfg!.siteUrl, slugInput);
 
       const warns = bundle.issues.filter((i) => i.severity === "warn").map((i) => i.message);
       if (warns.length && !skipWarnings) {

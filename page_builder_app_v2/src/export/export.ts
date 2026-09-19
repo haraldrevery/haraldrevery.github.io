@@ -3,26 +3,32 @@
  *
  *   exportText          YAML front matter + the body FRAGMENT. What Export
  *                       writes to input_custom_post/; Eleventy strips the front
- *                       matter, wraps the body in base.njk and emits
- *                       notebook_pages/<slug>.html.
+ *                       matter, wraps the body in post_body.njk + base.njk and
+ *                       emits notebook_pages/<slug>.html.
  *   assembleDocument    the same fragment inside shell.html. PREVIEW only.
  *   assembleStandalone  assembleDocument with the head retargeted at this page.
  *                       What "Export HTML…" saves.
  *
- * Only the first of those publishes anything. shell.html is not part of the
- * publishing path at all — it is generated build output, and the <head>, nav
- * and footer of a published page come from base.njk at BUILD time.
+ * Only the first of those publishes anything, and it does not read shell.html.
+ *
+ * WHO OWNS WHAT
+ * The fragment is hero + content + JSON-LD, and nothing else. The page
+ * furniture — the date/<h1>/back-link header and the closing date rule +
+ * "← NOTEBOOK FRONT PAGE" link — belongs to the layout (post_chrome.njk, used
+ * by post_body.njk), exactly as for a hand-written post. This app holds no copy
+ * of that markup: the preview and the editor take it from shell.html, which the
+ * site build renders from the same macros. eleventy.config.js refuses a body
+ * that brings its own ending, which is what exports did before 2026-09-19.
  *
  * Ported from v1's src/export.ts. The pure helpers (yamlValue, frontmatterYaml,
- * slugify, humanDate, resolveSchemaType, jsonld, assembleDocument) are
- * unchanged; only the places that inspected a Block[] now take Puck `Data` and
- * go through src/export/collect.ts.
+ * slugify, humanDate, resolveSchemaType, jsonld) are unchanged; only the
+ * places that inspected a Block[] now take Puck `Data` and go through
+ * src/export/collect.ts.
  */
 import type { Config, Data } from "@measured/puck";
 import { renderMarkdown } from "../markdown";
 import { collectStats } from "./collect";
 import type { PageMeta, SchemaChoice, RootProps } from "../puck/PageRoot";
-import { staticHeader } from "../puck/components/Hero";
 
 export type { PageMeta, SchemaChoice };
 
@@ -70,6 +76,35 @@ export function splitTags(tags: string | undefined | null): string[] {
 export const isIsoDate = (d: string | undefined | null): boolean =>
   /^\d{4}-\d{2}-\d{2}$/.test(String(d ?? "").trim());
 
+/// The layout's `datetime` value for a date — mirrors isoStamp in
+/// eleventy.config.js, including "" for no date or an unparseable one.
+export function isoStamp(dateStr: string | undefined | null): string {
+  const s = String(dateStr ?? "").trim();
+  if (!s) return "";
+  const dt = new Date(s);
+  return Number.isNaN(dt.getTime()) ? "" : dt.toISOString();
+}
+
+/*
+ * Does the LAYOUT add the date/<h1>/back-link header to this page?
+ *
+ * Yes, unless the page has a hero: the hero carries the <h1> and its own
+ * back link, so the header would be a second copy, and the export tells
+ * post_body.njk to leave it out with `header: false`. Every consumer of that
+ * decision asks here — the front matter, the preview, the editor and the page
+ * check's heading outline — so they cannot disagree about it.
+ */
+export const layoutAddsHeader = (root: Partial<RootProps>): boolean => !root.hasHero;
+
+/*
+ * The column the content blocks sit in. Only a hero page gets `pt-24`: without
+ * a hero, the layout's header block above already brings that gap. No bottom
+ * padding — every block owns the margin below itself (BlockShell), and the
+ * layout's ending brings its own gap above the date rule.
+ */
+export const contentColumnClass = (hasHero: boolean): string =>
+  `page-container${hasHero ? " pt-24" : ""} extra_fade_effect`;
+
 /// Always double-quote. Deciding *when* to quote is what kept going wrong: a
 /// bare value breaks on ':' and '#', on indicator characters (* & ! % @ ` | >),
 /// and on implicit typing — "2024" becomes a number, "No"/"Yes"/"On" become
@@ -85,7 +120,7 @@ function yamlValue(v: string): string {
   return `"${body}"`;
 }
 
-export function frontmatterYaml(meta: PageMeta, navScroll = false): string {
+export function frontmatterYaml(meta: PageMeta, navScroll = false, header = true): string {
   const lines = ["---"];
   lines.push(`title: ${yamlValue(meta.title || "")}`);
   /*
@@ -124,12 +159,11 @@ export function frontmatterYaml(meta: PageMeta, navScroll = false): string {
    */
   if (navScroll) lines.push("navScroll: true");
   /*
-   * header: false - this page supplies its own date/<h1>/back-link block, from
-   * staticHeader() below (or from its hero, which carries both). Without this
-   * flag eleventy_settings/post_body.njk emits that block too and the published
-   * page gets two of each. Not optional: every export needs it.
+   * header: false - read by post_body.njk: leave out the date/<h1>/back-link
+   * header, because this page's hero already carries a title and a back link.
+   * Pass `header` from layoutAddsHeader; see there.
    */
-  lines.push("header: false");
+  if (!header) lines.push("header: false");
   lines.push("customJsonLd: true");
   lines.push("---");
   return lines.join("\n");
@@ -244,113 +278,137 @@ export function jsonld(
 
 // ------------------------------------------------------------------ assembly
 
-export interface AssembleInput {
-  shell: string;
+/// What the fragment is made from. Deliberately no shell: the published page
+/// never touches shell.html, so Export cannot fail or differ because of it.
+export interface FragmentInput {
   data: Data;
   config: Config;
   siteUrl: string;
-  /// Pre-rendered markup for the content placeholders.
+  /// Pre-rendered markup (renderExport.tsx).
   heroHtml: string;
   contentHtml: string;
-  /// The {{BACKLINK}} slot. Optional so callers that do not build it still get
-  /// the correct default.
-  headerHtml?: string;
   slug?: string;
 }
 
+/// The fragment plus the generated shell it is previewed in.
+export interface DocumentInput extends FragmentInput {
+  shell: string;
+}
+
 /*
- * The published BODY FRAGMENT: everything that used to sit between the nav and
- * the footer in shell.html, and nothing else.
+ * The published BODY FRAGMENT: hero, the content column, and this page's
+ * JSON-LD. Nothing else — see "WHO OWNS WHAT" at the top of this file.
  *
- * This is what export writes to input_custom_post/. The document around it —
- * <!DOCTYPE>, <head>, nav, footer — comes from eleventy_settings/base.njk at
- * BUILD time, so a nav or footer change reaches every exported page on the next
- * build. The old exporter filled shell.html, which carried its own frozen copy
- * of the chrome and drifted out of sync with the site.
- *
- * base.njk supplies the <div class="bg-topology-map"> wrapper, so this starts at
- * the hero. The markup below is otherwise byte-for-byte the old shell body.
+ * This is what export writes to input_custom_post/. base.njk supplies the
+ * document and the <div class="bg-topology-map"> wrapper, post_body.njk the
+ * header (unless `header: false`) and the ending, so this starts at the hero.
  */
-export function assembleFragment(i: AssembleInput): string {
+export function assembleFragment(i: FragmentInput): string {
   const root = (i.data.root?.props ?? {}) as Partial<RootProps>;
   const meta = (root.meta ?? {}) as PageMeta;
-  const hasHero = !!root.hasHero;
 
   const s = i.slug || slugify(meta.title);
   const canonical = `${i.siteUrl}/notebook_pages/${s}`;
 
-  // Hero pages carry their own fade-in back link AND their own <h1>, so they
-  // get nothing here — never show two back links or two titles.
-  const backlink = i.headerHtml ?? (hasHero ? "" : staticHeader(meta, humanDate(meta.date)));
-
   return `${i.heroHtml}
-
-<!-- start margins -->
-<div  class="page-container pt-24 pb-12 extra_fade_effect">
-
-${backlink}
 
 <!-- ====================================================================== -->
 <!-- Content starts here -->
+<div class="${contentColumnClass(!!root.hasHero)}">
+
 ${i.contentHtml}
+
+</div>
 <!-- Content stops here -->
 <!-- ====================================================================== -->
-
-<!-- ====================================================================== -->
-<!-- Date -->
-<!-- ====================================================================== -->
- <div class="pt-24">
-  <hr>
-  <div class="py-2">
-    <time class="text-sm font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider" datetime="${escAttr(meta.date || "")}">
-    ${escAttr(humanDate(meta.date))}
-    </time>
-  </div>
-</div>
-
-<!-- End margins -->
-</div>
-
-  <!-- Go back link -->
-  <div class="page-container pt-6">
-        <a href="/notebook.html" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">
-          ← NOTEBOOK FRONT PAGE
-        </a>
-      </div>
 
 ${jsonld(meta, i.data, i.config, canonical, i.siteUrl)}
 `;
 }
 
+export function exportText(i: FragmentInput): string {
+  const root = (i.data.root?.props ?? {}) as Partial<RootProps>;
+  const meta = (root.meta ?? {}) as PageMeta;
+  const navScroll = !!root.hasHero && !!root.hero?.navReveal;
+  return frontmatterYaml(meta, navScroll, layoutAddsHeader(root)) + "\n" + assembleFragment(i);
+}
+
+// ------------------------------------------------------------------- shell
+
+/// The header region in shell.html (eleventy_njk/_builder_shell.njk). Kept for
+/// a page the layout gives a header, dropped for a hero page.
+const SHELL_HEADER = /<!--pb:header-->([\s\S]*?)<!--\/pb:header-->/;
+
 /*
- * PREVIEW ONLY (/__pb/preview). Wraps the fragment in page_builder_app_v2/
- * shell.html, which is GENERATED by eleventy_njk/_builder_shell.njk from the
- * same nav.njk / footer.njk / base.njk the published page uses — so preview and
- * published output match by construction and the shell can never go stale.
- *
- * Export does NOT go through here; it writes the fragment and lets Eleventy do
- * the wrapping.
+ * shell.html is generated by the site build, and a builder newer than the last
+ * build would otherwise preview a page with no header and no ending and say
+ * nothing. The header region only exists in shells rendered from the template
+ * that also carries the ending, so its absence is the tell.
  */
-export function assembleDocument(i: AssembleInput): string {
-  const meta = ((i.data.root?.props ?? {}) as Partial<RootProps>).meta ?? ({} as PageMeta);
-  const title = (meta.title || "").trim();
-  const repl: Record<string, string> = {
-    TITLE: escAttr(title || "Untitled"),
-    CONTENT: assembleFragment(i),
+function checkShell(shell: string): void {
+  if (!shell.includes("{{CONTENT}}") || !SHELL_HEADER.test(shell)) {
+    throw new Error(
+      "page_builder_app_v2/shell.html is out of date — it predates the page " +
+        "header and ending this app previews with. Run the Eleventy build (it " +
+        "regenerates the shell), then try again.",
+    );
+  }
+}
+
+/// The values the shell's tokens stand for, formatted as the layout formats
+/// them (readableDate, isoStamp).
+function shellTokens(meta: PageMeta): Record<string, string> {
+  return {
+    TITLE: escAttr((meta.title || "").trim() || "Untitled"),
+    DATE: escAttr(humanDate(meta.date)),
+    DATE_ISO: escAttr(isoStamp(meta.date)),
   };
-  // Single pass. A sequential split/join re-scanned each substituted value with
-  // every later key, so a title containing "{{CONTENT}}" spliced the whole page
-  // body into the meta tags. Unknown tokens pass through untouched.
-  return i.shell.replace(/\{\{(\w+)\}\}/g, (m, k: string) =>
+}
+
+/*
+ * Single pass. A sequential split/join re-scanned each substituted value with
+ * every later key, so a title containing "{{CONTENT}}" spliced the whole page
+ * body into the meta tags. Unknown tokens pass through untouched.
+ */
+function fillTokens(text: string, repl: Record<string, string>): string {
+  return text.replace(/\{\{(\w+)\}\}/g, (m, k: string) =>
     Object.prototype.hasOwnProperty.call(repl, k) ? repl[k] : m,
   );
 }
 
-export function exportText(i: AssembleInput): string {
+/*
+ * PREVIEW ONLY (/__pb/preview). Wraps the fragment in page_builder_app_v2/
+ * shell.html, which is GENERATED by eleventy_njk/_builder_shell.njk from the
+ * same base.njk and post_chrome.njk the published page uses — so the header,
+ * the ending, the nav and the footer are the real ones, and the preview
+ * matches the published page by construction (tests/site-build.test.tsx
+ * checks that against a real Eleventy build).
+ *
+ * Export does NOT go through here; it writes the fragment and lets Eleventy do
+ * the wrapping.
+ */
+export function assembleDocument(i: DocumentInput): string {
+  checkShell(i.shell);
   const root = (i.data.root?.props ?? {}) as Partial<RootProps>;
   const meta = (root.meta ?? {}) as PageMeta;
-  const navScroll = !!root.hasHero && !!root.hero?.navReveal;
-  return frontmatterYaml(meta, navScroll) + "\n" + assembleFragment(i);
+  // The region goes BEFORE the tokens are filled, so nothing in the page
+  // content can be mistaken for the markers.
+  const shell = i.shell.replace(SHELL_HEADER, (_m, header: string) =>
+    layoutAddsHeader(root) ? header : "",
+  );
+  return fillTokens(shell, { ...shellTokens(meta), CONTENT: assembleFragment(i) });
+}
+
+/*
+ * The layout's header for this page, for the EDITOR (PageRoot), which shows it
+ * above the blocks the way the published page will. "" when the layout adds no
+ * header, or when the shell has none to give (not loaded yet, or out of date —
+ * Preview reports that case).
+ */
+export function shellHeader(shell: string, root: Partial<RootProps>): string {
+  if (!layoutAddsHeader(root)) return "";
+  const m = SHELL_HEADER.exec(shell);
+  return m ? fillTokens(m[1], shellTokens((root.meta ?? {}) as PageMeta)) : "";
 }
 
 /*
@@ -368,12 +426,14 @@ export function exportText(i: AssembleInput): string {
  * is not harmless in a file the user saves and may hand to someone or archive,
  * so the head is retargeted here.
  *
- * NB this is the ONLY place the exporter rewrites markup it did not generate.
- * The published page never comes through here — Eleventy builds that head from
+ * NB apart from assembleDocument keeping or dropping the shell's marked header
+ * region, this is the ONLY place the exporter rewrites markup it did not
+ * generate — and the only one that matches tags by pattern rather than by an
+ * explicit marker. The published page never comes through here — Eleventy builds that head from
  * base.njk with the page's real front matter, which is why the fragment export
  * needs none of this.
  */
-export function assembleStandalone(i: AssembleInput): string {
+export function assembleStandalone(i: DocumentInput): string {
   const meta = ((i.data.root?.props ?? {}) as Partial<RootProps>).meta ?? ({} as PageMeta);
   const slug = i.slug || slugify(meta.title);
   return retargetHead(

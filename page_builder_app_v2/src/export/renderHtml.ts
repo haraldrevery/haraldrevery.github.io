@@ -1,6 +1,6 @@
 /*
  * React-to-HTML artifacts that have to be cleaned up before the markup is
- * written into shell.html.
+ * exported.
  */
 
 /*
@@ -10,8 +10,8 @@
  * fetchPriority="low" suppress it, which is why gallery images (all lazy) are
  * unaffected and the hero cover photo is not.
  *
- * That link cannot stay. It is emitted into shell.html's {{HERO}} / {{CONTENT}}
- * slots, i.e. inside <body>, where <link> without itemprop is not valid HTML5 —
+ * That link cannot stay. The hero and the content are the page BODY, where
+ * <link> without itemprop is not valid HTML5 —
  * and it buys nothing, since the <img> it preloads is the very next element.
  * v1 never emitted one, so leaving it in would also mean a spurious diff on
  * every hero page.

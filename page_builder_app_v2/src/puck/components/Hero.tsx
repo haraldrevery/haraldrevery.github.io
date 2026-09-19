@@ -1,18 +1,22 @@
 /*
- * Full-viewport page opener. Transcribed from
- * page_builder/src/blocks/render.ts:509-619 — v1's single largest renderer
- * (114 lines of nested conditional string assembly).
+ * Full-viewport page opener. Transcribed from v1's render.ts (its single
+ * largest renderer: 114 lines of nested conditional string assembly).
  *
- * The hero is NOT a body block. It lives in Puck's root props and renders into
- * shell.html's {{HERO}} slot, before the page container. That placement is why
- * v1 needed a "hero is always first" invariant duplicated across addBlock,
- * moveBlock, reorderBlock and normalize — as a root field there is exactly one,
- * it is always first, and it cannot be dragged or nested. See PageRoot.tsx.
+ * The hero is NOT a body block. It lives in Puck's root props and is rendered
+ * on its own (renderExportHero), ahead of the content column. That placement
+ * is why v1 needed a "hero is always first" invariant duplicated across
+ * addBlock, moveBlock, reorderBlock and normalize — as a root field there is
+ * exactly one, it is always first, and it cannot be dragged or nested. See
+ * PageRoot.tsx.
+ *
+ * A hero carries the page's <h1> and its own back link, which is why a hero
+ * page exports `header: false` (layoutAddsHeader in export.ts): the layout's
+ * header would be a second title and a second back link.
  *
  * Built only from classes already in main.css (release-hero, bg-dot-grid,
- * extra_fade_effect, word_animation, #scroll-prompt). Zero JS; the only
- * exception is the shell-level navi_mechanic nav-reveal fallback script, which
- * export.ts wires up from `navReveal`.
+ * extra_fade_effect, word_animation, #scroll-prompt). Zero JS; the nav reveal
+ * (`navReveal`) is not markup here but `navScroll: true` in the front matter,
+ * which base.njk turns into .navi_mechanic and its script.
  */
 import type { CSSProperties, ReactNode } from "react";
 import { wrapPlainWords } from "../../blocks/wordAnimate";
@@ -51,59 +55,6 @@ export interface HeroProps {
 const escText = (s: unknown) =>
   String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-/*
- * Takes its own indent because it is emitted at two different depths — on its
- * own inside STATIC_BACKLINK, and one level deeper inside the header block.
- * These pages are committed to git, so a hardcoded indent would leave the
- * deeper copy visibly ragged. Layout matches eleventy_settings/post.njk.
- */
-const backlinkA = (pad: string) =>
-  `<a href="/notebook.html" class="inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider">\n${pad}   ← Back to Notebook\n${pad}</a>`;
-
-/// The shell's normal static back link, used when there is NO hero AND the page
-/// has no title to sit under. With a hero, the hero renders the one-and-only
-/// fade-in version instead. The mb-16 wrapper is what separates it from the
-/// first content block — the inline-flex <a> carries no margin of its own.
-export const STATIC_BACKLINK = `<div class="mb-16">\n   ${backlinkA("   ")}\n</div>`;
-
-/*
- * The header a page gets when it has NO hero: the date, the title, then the
- * back link — all inside one bordered block, exactly as markdown posts render
- * them.
- *
- * The back link sits UNDER the title rather than above it, so the first thing
- * on the page is the page's own name and the way out is offered after it. Both
- * this and post.njk have to move together or the two page kinds diverge.
- *
- * Without this a hero-less page has no title at all — the h1 lived only in the
- * hero, so the page check's "No H1" warning had no natural way to be satisfied
- * and the page read as a body with no heading. Markdown posts get this block
- * from eleventy_settings/post.njk:29-36; builder pages bypass that layout
- * entirely (they ARE the whole document), so it has to be emitted here.
- *
- * Spacing follows post.njk when the header is present: the h1's mb-4 sets the
- * gap down to the link and the block's pb-8 carries it to the rule, so the
- * link needs no wrapper of its own. With no title there is nothing to sit
- * under and nothing to separate, so the back link keeps its original mb-16.
- */
-export function staticHeader(meta: { title?: string; date?: string }, dateHuman: string): string {
-  const title = (meta.title ?? "").trim();
-  if (!title) return STATIC_BACKLINK;
-
-  const time = dateHuman
-    ? `\n    <time class="text-sm font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider" datetime="${escapeAttr(meta.date ?? "")}">\n      ${escText(dateHuman)}\n    </time>`
-    : "";
-
-  return (
-    `<div class="mb-8 pb-8 border-b border-neutral-200 dark:border-neutral-800">${time}\n` +
-    `    <h1 class="text-5xl md:text-6xl text-zinc-900 dark:text-white mt-4 mb-4 uppercase tracking-wider">\n` +
-    `      ${escText(title)}\n` +
-    `    </h1>\n` +
-    `    ${backlinkA("    ")}\n` +
-    `</div>`
-  );
-}
-
 const BACKLINK_CLASS =
   "extra_fade_effect_long inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider";
 
@@ -134,8 +85,8 @@ export function Hero(p: HeroProps): ReactNode {
             style={{ zIndex: -2, WebkitMaskImage: maskImage, maskImage } as CSSProperties}
             // Spread as a plain lowercase attribute, NOT React's fetchPriority
             // prop. The prop makes React 19 hoist a <link rel="preload"> into
-            // the output — which would land inside shell.html's {{HERO}} slot,
-            // in the body — and emit camelCase `fetchPriority` in the HTML.
+            // the output — which would land in the page body, where <link> is
+            // not valid — and emit camelCase `fetchPriority` in the HTML.
             {...{ fetchpriority: "high" }}
           />
           <div className="absolute inset-0" style={{ zIndex: -1, background: scrim }} />

@@ -1,26 +1,26 @@
 /*
- * React tree -> the two HTML fragments shell.html needs.
+ * React tree -> the two HTML fragments the export is made of.
  *
  * `Render` comes from @measured/puck/rsc: a pure tree walk with no client
  * hooks, which sets puck.isEditing = false on every component. That is the
  * right renderer for producing a string.
  *
- * Hero and content are rendered SEPARATELY because assembleFragment interleaves
- * them: the hero sits OUTSIDE the page container, the content inside it, with
- * the back link and the date block between. (There is no {{HERO}} placeholder
- * any more — the fragment export replaced it; shell.html now carries only
- * {{TITLE}} and {{CONTENT}}, and is used for preview and the standalone HTML
- * export.) Content therefore goes through contentConfig, whose root render is a
- * passthrough: the bg-topology-map / page-container chrome comes from
- * assembleFragment and base.njk, and rendering PageRoot here would nest a
- * second copy inside it.
+ * Hero and content are rendered SEPARATELY because assembleFragment puts the
+ * hero OUTSIDE the content column and the blocks inside it. Content therefore
+ * goes through contentConfig, whose root render is a passthrough: the column
+ * comes from assembleFragment and bg-topology-map from base.njk, and rendering
+ * PageRoot here would nest a second copy inside them.
+ *
+ * There is deliberately no header renderer. The date/<h1>/back-link header is
+ * the layout's (post_chrome.njk), not this app's — see "WHO OWNS WHAT" in
+ * export.ts.
  */
 import { renderToStaticMarkup } from "react-dom/server";
 import { Render } from "@measured/puck/rsc";
 import type { Data } from "@measured/puck";
 import { contentConfig } from "../puck/contentConfig";
-import { Hero, staticHeader } from "../puck/components/Hero";
-import { DEFAULT_HERO, DEFAULT_META, type RootProps } from "../puck/PageRoot";
+import { Hero } from "../puck/components/Hero";
+import { DEFAULT_HERO, type RootProps } from "../puck/PageRoot";
 import { stripReactPreloads } from "./renderHtml";
 import { formatHtml } from "./format";
 
@@ -31,19 +31,6 @@ export function renderExportContent(data: Data): string {
   // `data` is the generic Puck Data; contentConfig is typed against this app's
   // component map, so the cast is the boundary between the two.
   return toHtml(<Render config={contentConfig} data={data as never} />);
-}
-
-/*
- * The {{BACKLINK}} slot: a back link, plus the date and title header when there
- * is no hero. Its <h1> is part of the document outline, so the page check has to
- * scan it too — it is emitted here rather than inline in assembleDocument so
- * both callers see the same string.
- */
-export function renderExportHeader(data: Data, humanDate: (d: string) => string): string {
-  const root = (data.root?.props ?? {}) as Partial<RootProps>;
-  if (root.hasHero) return "";
-  const meta = { ...DEFAULT_META, ...root.meta };
-  return staticHeader(meta, humanDate(meta.date));
 }
 
 export function renderExportHero(data: Data): string {

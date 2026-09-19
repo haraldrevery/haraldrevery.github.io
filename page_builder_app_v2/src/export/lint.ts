@@ -10,13 +10,14 @@
  *
  * headingIssues deliberately runs on the RENDERED HTML rather than the tree, so
  * markdown '#' headings inside a Text block, standalone Heading blocks, column
- * content and raw HTML are all covered by the same scan. That HTML must include
- * the header (renderExportHeader): on a page with no hero, it carries the page
- * title as the H1.
+ * content and raw HTML are all covered by the same scan. On a page with no
+ * hero the H1 is not in that HTML at all: the layout's header adds it, from
+ * the page title (post_chrome.njk, which skips it for an empty title).
+ * lintPage puts it in front of the scan in the same place.
  */
 import type { Config, Data } from "@measured/puck";
 import { collectA11yIssues } from "./collect";
-import { splitTags, isIsoDate } from "./export";
+import { splitTags, isIsoDate, layoutAddsHeader } from "./export";
 import { hasSvgText } from "../blocks/svgStore";
 import type { PageMeta } from "../puck/PageRoot";
 import type { RootProps } from "../puck/PageRoot";
@@ -107,8 +108,8 @@ export function headingIssues(
 export interface LintInput {
   data: Data;
   config: Config;
-  /// The rendered export markup: hero, header, then content — the H1 lives in
-  /// the hero or the header, and has to count in the outline.
+  /// The rendered export markup, hero then content. The layout's header H1 is
+  /// added by lintPage, not by the caller.
   html: string;
   /// Root-absolute paths the page publishes that are not on disk
   /// (findMissingMedia in fixups.ts). The lookup needs the backend, so the
@@ -122,11 +123,13 @@ export function lintPage({ data, config, html, missingFiles = [] }: LintInput): 
   const meta = (root.meta ?? {}) as PageMeta;
   const hasContent = (data.content ?? []).length > 0 || !!root.hasHero;
 
-  // Name the field that actually produces the H1 (Hero.tsx or staticHeader).
+  // Name the field that actually produces the H1: the hero's, or the page
+  // title the layout's header prints.
   const h1Source = root.hasHero
     ? "the hero's “Title (h1)” field"
     : "the Title under Page / SEO";
-  issues.push(...headingIssues(html, hasContent, h1Source));
+  const layoutH1 = layoutAddsHeader(root) && (meta.title ?? "").trim() ? "<h1>page title</h1>\n" : "";
+  issues.push(...headingIssues(layoutH1 + html, hasContent, h1Source));
 
   // The hero-count check is gone: hasHero is a boolean, so "N heroes" cannot
   // happen. Its content checks still apply.

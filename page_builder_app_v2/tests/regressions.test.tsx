@@ -10,8 +10,7 @@ import { DEFAULT_HERO, DEFAULT_META } from "../src/puck/PageRoot";
 import {
   exportText, frontmatterYaml, splitTags, isIsoDate, assembleDocument,
 } from "../src/export/export";
-import { renderExportContent, renderExportHero, renderExportHeader } from "../src/export/renderExport";
-import { humanDate } from "../src/export/export";
+import { renderExportContent, renderExportHero } from "../src/export/renderExport";
 import { lintPage } from "../src/export/lint";
 import { runPageCheck } from "../src/app/PageCheck";
 import { wrapHtmlWords } from "../src/blocks/wordAnimate";
@@ -27,9 +26,8 @@ const mk = (content: any[] = [], root: any = {}): Data =>
 
 const fullExport = (data: Data) =>
   exportText({
-    shell, data, config, siteUrl: SITE, slug: "x",
+    data, config, siteUrl: SITE, slug: "x",
     heroHtml: renderExportHero(data),
-    headerHtml: renderExportHeader(data, humanDate),
     contentHtml: renderExportContent(data),
   });
 
@@ -46,7 +44,7 @@ describe("a brand-new page can be previewed and exported", () => {
   test("exportText does not throw on root.props = {}", () => {
     expect(() => fullExport(EMPTY)).not.toThrow();
     // A body fragment now, not a document — base.njk adds the doctype.
-    expect(fullExport(EMPTY)).toContain('class="page-container pt-24 pb-12');
+    expect(fullExport(EMPTY)).toContain('class="page-container extra_fade_effect"');
   });
 
   test("splitTags tolerates undefined and null", () => {
@@ -218,11 +216,7 @@ describe("the page check still checks the same things after debouncing", () => {
     });
     const direct = lintPage({
       data, config,
-      html: [
-        renderExportHero(data),
-        renderExportHeader(data, humanDate),
-        renderExportContent(data),
-      ].join("\n"),
+      html: `${renderExportHero(data)}\n${renderExportContent(data)}`,
     });
     expect(runPageCheck(data)).toEqual(direct);
   });

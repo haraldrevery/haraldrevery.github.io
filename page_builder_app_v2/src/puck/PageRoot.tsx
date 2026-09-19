@@ -11,21 +11,24 @@
  *   - Meta edits ride Puck's history for free, so v1's manual "re-render the
  *     meta form after undo" (main.ts:227) is gone too.
  *
- * The chrome mirrors shell.html:110-126 from <div class="bg-topology-map">
- * inward. The fixed <nav> (shell.html:56-107) is deliberately NOT rendered: it
+ * The chrome mirrors the published page from <div class="bg-topology-map">
+ * inward: the hero, or else the layout's date/<h1>/back-link header — taken
+ * from the generated shell, so it is the layout's own markup, not a copy —
+ * then the content column. The fixed <nav> is deliberately NOT rendered: it
  * is `fixed top-0 z-[200]` and would sit on top of Puck's drop targets and
- * selection overlays. `pt-24` stays so content geometry matches the real page.
- * Preview fidelity is "content region accurate, page chrome omitted" — the
- * authoritative check is the Eleventy build in a real browser.
+ * selection overlays. Neither is the closing date rule; Preview shows the
+ * whole page. Editor fidelity is "content region accurate, page chrome
+ * omitted" — the authoritative check is Preview, or the Eleventy build.
  *
  * EDITOR ONLY. The export does not render this component at all: assembleFragment
- * emits the page-container wrapper itself and base.njk supplies bg-topology-map
- * at build time, so the export renders content through contentConfig
- * (passthrough root) and the hero separately.
+ * emits the content column itself and the layout supplies the rest at build
+ * time, so the export renders content through contentConfig (passthrough root)
+ * and the hero separately.
  */
 import type { ReactNode } from "react";
-import { Hero, staticHeader, type HeroProps } from "./components/Hero";
-import { humanDate } from "../export/export";
+import { Hero, type HeroProps } from "./components/Hero";
+import { contentColumnClass, shellHeader } from "../export/export";
+import { useShell } from "../export/shellStore";
 import { EMPTY_IMAGE } from "./fields/mediaField";
 
 export type SchemaChoice = "auto" | "blogposting" | "article" | "imagegallery" | "faqpage";
@@ -85,19 +88,12 @@ export function PageRoot({
   hero,
   children,
 }: Partial<RootProps> & { children?: ReactNode }) {
-  const m = { ...DEFAULT_META, ...meta };
+  const header = shellHeader(useShell(), { meta: { ...DEFAULT_META, ...meta }, hasHero });
   return (
     <div className="bg-topology-map">
       {hasHero && <Hero {...{ ...DEFAULT_HERO, ...hero }} id="hero" />}
-      <div className="page-container pt-24 pb-12 extra_fade_effect">
-        {/* Mirrors the {{BACKLINK}} slot so the editor shows the same header the
-            export writes — otherwise a hero-less page looks title-less here and
-            gains a title on publish. */}
-        {!hasHero && (
-          <div dangerouslySetInnerHTML={{ __html: staticHeader(m, humanDate(m.date)) }} />
-        )}
-        {children}
-      </div>
+      {header && <div dangerouslySetInnerHTML={{ __html: header }} />}
+      <div className={contentColumnClass(!!hasHero)}>{children}</div>
     </div>
   );
 }
