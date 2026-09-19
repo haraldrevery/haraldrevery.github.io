@@ -7,28 +7,40 @@ customJsonLd: true
 ---
 {#
   GENERATED FILE — page_builder_app_v2/shell.html is build output, not a source.
-  Edit nav.njk / footer.njk / base.njk instead; this template just wraps a
-  placeholder body in the real chrome and every site build refreshes it.
+  Edit nav.njk / footer.njk / base.njk / post_chrome.njk instead; every site
+  build refreshes it.
 
-  It exists solely so the page builder's in-app PREVIEW (/__pb/preview) shows
-  the same chrome the published page will get. Export does NOT use it: the
-  builder writes a body fragment to input_build_page/ and Eleventy wraps it with
-  base.njk at build time.
+  It exists solely so the page builder's PREVIEW (/__pb/preview), its
+  "Export HTML…" copy and its editor show the chrome the published page will
+  get. Export does NOT use it: the builder writes a body fragment to
+  input_custom_post/ and Eleventy wraps it with post_body.njk + base.njk at
+  build time.
 
-  Before this file, shell.html was a hand-maintained copy of the nav and footer,
-  and it silently drifted — every exported page carried a duplicate .main-nav,
-  which disables the site's view transitions. A generated shell cannot drift.
+  The body below mirrors post_body.njk — header, content, ending, in that
+  order, from the same post_chrome.njk macros — so preview and published page
+  match by construction. Reorder one, reorder the other. The builder's
+  tests/site-build.test.tsx builds both from these templates and compares them.
 
-  Two tokens survive for the builder to fill, wrapped in {% raw %} so Nunjucks
-  emits them literally instead of trying to resolve them:
-    {{TITLE}}   - from the front matter above, so it lands inside <title>
-    {{CONTENT}} - the whole body fragment
+  Tokens the builder fills in, in a single pass (export.ts, assembleDocument):
+    {{TITLE}}      page title, also in <title> and the og/twitter tags
+    {{DATE}}       the date as readableDate prints it
+    {{DATE_ISO}}   the date as isoStamp prints it, for datetime=""
+    {{CONTENT}}    the exported body fragment
+  and one marked region:
+    <!--pb:header--> … <!--/pb:header-->   the header. Kept for a page without
+                   a hero, removed for one with (it exports `header: false`).
+  The builder refuses a shell without that region: it means shell.html predates
+  this template, and the fix is to run the Eleventy build.
 
   KNOWN, DELIBERATE PREVIEW DIFFERENCE: the shell is rendered without
   `navScroll`, so the preview always shows the nav bar. A page that sets
-  `navScroll: true` gets the hide-then-reveal nav once published. Preview
-  already differs from the published page in other ways (see buildPreview in
-  src/app/project.ts, which skips the SHA and thumbnail revalidation), so this
-  is consistent with how preview is treated.
+  `navScroll: true` gets the hide-then-reveal nav once published.
 #}
+{% from "post_chrome.njk" import postHeaderBlock, postEnding %}
+<!--pb:header-->
+{{ postHeaderBlock("{{TITLE}}", "{{DATE_ISO}}", "{{DATE}}") }}
+<!--/pb:header-->
+
 {% raw %}{{CONTENT}}{% endraw %}
+
+{{ postEnding("{{DATE_ISO}}", "{{DATE}}") }}

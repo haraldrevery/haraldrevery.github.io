@@ -59,7 +59,7 @@ Two separate build tools, deliberately kept independent:
 | Tool | Input | Output |
 |---|---|---|
 | **Tailwind** (standalone binary) | `input.css`, `input_prose.css`, `theme.css` | `main.css`, `main_max.css`, `prose.css`, `prose_max.css` |
-| **Eleventy** (standalone binary or Node) | `.njk` templates, `input_markdown/`, `input_custom_html_pages/`, `input_release/`, `input_legal/` | `notebook.html`, `notebook_pages/`, `discography.html`, `release/`, `sitemap.xml`, `legal.html`, `licence/` |
+| **Eleventy** (standalone binary or Node) | `.njk` templates, `input_markdown/`, `input_custom_post/`, `input_custom_html_pages/`, `input_release/`, `input_legal/` | `notebook.html`, `notebook_pages/`, `discography.html`, `release/`, `sitemap.xml`, `legal.html`, `licence/` |
 
 Hand-written pages (`index.html`, `music.html`, `about.html`, `contact.html`,
 `download.html`, `404.html`) are **not** touched by Eleventy — they are listed
@@ -95,8 +95,9 @@ afterwards.
 Optional, only for the side apps:
 - **Python 3 + matplotlib + numpy** — the background SVG generators
   (`svg/svg_generator/`). These do need pip, unlike everything else here.
-- **Rust + Bun** — only to rebuild the page builder (`page_builder/`). Running
-  the prebuilt `page_builder_app` at the repo root needs neither.
+- **Rust + Bun** — only to rebuild the page builder (`page_builder_app_v2/`).
+  Running the prebuilt `page_builder_v2` / `page_builder_v2.exe` at the repo
+  root needs neither.
 - **Bun** — only to recompile the Eleventy binaries.
 
 ---
@@ -133,7 +134,8 @@ website_v2_123/
 │
 ├── input_markdown/                          # SOURCE: markdown notebook posts
 │   └── input_markdown.11tydata.js           #   draft handling + auto permalink/layout
-├── input_custom_html_pages/                 # SOURCE: hand-built HTML notebook posts
+├── input_custom_post/                       # SOURCE: block posts (.html fragments), hand-written or page-builder
+├── input_custom_html_pages/                 # SOURCE: whole-document HTML pages (legacy)
 ├── input_release/                           # SOURCE: one .json/.jsonc per release
 ├── input_legal/                             # SOURCE: the legal page
 │   ├── legal.md                             #   the prose (sections 1-10)
@@ -155,7 +157,7 @@ website_v2_123/
 │   audio/, video/, svg/, graphics/,
 │   artcover/, notebook_thumbnails/
 │
-├── page_builder/                            # Tauri app: builds custom HTML pages
+├── page_builder_app_v2/                     # Tauri app: builds block posts
 ├── revery_notebook/                         # standalone markdown editor
 ├── color_theme_app/                         # standalone color theme tool
 ├── eleventy_binary/                         # compile scripts for the binaries
@@ -246,17 +248,27 @@ build time: `<h2>`/`<h3>` get unique `id`s and a nested outline panel appears,
 toggled by a pure-CSS checkbox in the corner. No JavaScript. It hides itself
 automatically on posts with fewer than 2 headings.
 
-### HTML posts (`input_custom_html_pages/`)
+### Block posts (`input_custom_post/`)
 
-For interactive pages (graphs, clocks, galleries) that need real markup. Write
-a full HTML body with YAML frontmatter on top; on build, Eleventy's
+For posts built from HTML blocks (galleries, heroes, columns, video). Each file
+is YAML frontmatter plus a BODY fragment; `post_body.njk` and `base.njk` add
+the `<head>`, the nav, the footer, and the post header and ending
+(`post_chrome.njk`, the same ones markdown posts get). Never write the header
+or the "← NOTEBOOK FRONT PAGE" ending into the file — the build stops if a
+body carries its own ending. Reference: `input_custom_post/README.txt`.
+
+Easiest route: use the **page builder** (`page_builder_app_v2/`, prebuilt as
+`page_builder_v2` / `page_builder_v2.exe`) — a desktop app with a live preview
+in the real site CSS. It assembles a page from blocks, picks media from the
+repo, and exports straight into `input_custom_post/`.
+
+### Whole-document pages (`input_custom_html_pages/`)
+
+Legacy. A full HTML document with YAML frontmatter on top; on build, Eleventy's
 `eleventy.before` hook strips the frontmatter and copies the file to
-`notebook_pages/`, while the frontmatter feeds the notebook card.
-
-Easiest route: use the **page builder** (`page_builder/`) — a desktop app with
-a live click-to-edit preview that renders in the real site CSS. It assembles a
-page from blocks (text, galleries, image, video, audio), picks media from the
-repo, and exports straight into `input_custom_html_pages/`.
+`notebook_pages/` verbatim, while the frontmatter feeds the notebook card.
+These pages carry their OWN copy of the nav and footer, so nav or footer
+changes never reach them — prefer `input_custom_post/` for anything new.
 
 ---
 
@@ -348,6 +360,7 @@ Same for a sidecar with no local text file and no `licenseUrl`.
 | Content type | How to mark a draft | Result |
 |---|---|---|
 | `input_markdown/*.md` | `draft: true` in frontmatter | no page rendered; excluded from index, tag pages, sitemap |
+| `input_custom_post/*.html` | `draft: true` in frontmatter | no page rendered; excluded from collections |
 | `input_custom_html_pages/*.html` | `draft: true` in frontmatter | not copied to `notebook_pages/`; excluded from collections |
 | `input_release/*` | prefix filename with `_` | skipped by the releases collection |
 
@@ -498,7 +511,7 @@ The Tailwind and Eleventy binaries are gitignored (GitHub's 100 MB file limit)
 
 | Folder | What it is |
 |---|---|
-| `page_builder/` | Tauri v2 + TypeScript desktop app that assembles notebook pages from content blocks and exports to `input_custom_html_pages/`. Prebuilt as `page_builder_app` at the repo root. See its README. |
+| `page_builder_app_v2/` | Tauri v2 + TypeScript (Puck) desktop app that assembles notebook pages from content blocks and exports body fragments to `input_custom_post/`. Prebuilt as `page_builder_v2` (Linux) and `page_builder_v2.exe` (Windows, rebuilt on Windows) at the repo root. See its README. |
 | `revery_notebook/` | Standalone markdown editor (CodeMirror, markdown-it, KaTeX, highlight.js, DOMPurify) for drafting posts. |
 | `color_theme_app/` | Standalone React tool for picking and generating theme colors. |
 | `eleventy_binary/` | `compile.sh` + `build.mjs` — cross-compiles both Eleventy binaries with Bun. |
@@ -525,7 +538,7 @@ chmod +x eleventy-linux-x64 tailwindcss-linux-x64 dev.sh
 **A post doesn't show on the notebook index**
 Check `draft: true` isn't set; check the frontmatter is valid YAML between
 `---` fences; check `date` is `YYYY-MM-DD`; check the file is in
-`input_markdown/` or `input_custom_html_pages/`.
+`input_markdown/`, `input_custom_post/` or `input_custom_html_pages/`.
 
 **A release doesn't show**
 Filename starts with `_` (that's the draft mechanism), or the JSON is invalid —

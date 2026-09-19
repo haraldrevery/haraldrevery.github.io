@@ -15,9 +15,8 @@ const matter = require("gray-matter");
 //
 // There used to be a fifth, input_build_page/, holding page-builder exports as
 // .njk body fragments. input_custom_post/ does the same job with .html files
-// and a nicer layout, so the two were redundant and it was removed. The page
-// builder still has to be pointed here; until it is, .eleventyignore carries a
-// tombstone entry so a stale build of that app cannot break this one.
+// and a nicer layout, so the two were redundant and it was removed; the page
+// builder exports to input_custom_post/.
 const HTML_PAGES_DIR = "./input_custom_html_pages";  // standalone .html apps + one-offs
 const MARKDOWN_DIR = "input_markdown";               // matched as a substring of inputPath
 const CUSTOM_POST_DIR = "input_custom_post";         // .html block posts, hand-written or exported
@@ -399,6 +398,17 @@ module.exports = function(eleventyConfig) {
   // rebuilds normally. Same tradeoff the reference site documents for its own
   // slug registry; the standalone binaries have no watch mode, so this affects
   // `npm start` only.
+  //
+  // THE BODY MUST NOT CARRY THE PAGE ENDING
+  // post_body.njk closes every post here with the date rule and the
+  // "← NOTEBOOK FRONT PAGE" link (post_chrome.njk), so a body that brings its
+  // own shows both. Page-builder exports did exactly that until 2026-09-19, and
+  // an out-of-date build of the builder still does — the Windows .exe can only
+  // be rebuilt on Windows, so the two builder binaries drift apart. Stop here,
+  // naming the file, rather than publish the duplicate. Comments are stripped
+  // first, so a note that merely MENTIONS the link (_new_post.html has one) is
+  // not a match. The link text is post_chrome.njk's; change both together.
+  const OWN_ENDING = /<a\b[^>]*\bhref="\/notebook\.html"[^>]*>\s*←\s*NOTEBOOK FRONT PAGE\s*<\/a>/i;
   if (fs.existsSync(CUSTOM_POST_DIR)) {
     const seen = new Map();
     for (const file of fs.readdirSync(CUSTOM_POST_DIR).filter((f) => f.endsWith(".html")).sort()) {
@@ -414,6 +424,15 @@ module.exports = function(eleventyConfig) {
         throw new Error(`${inputPath}: could not parse its front matter — ${e.message}`);
       }
       if (parsed.data.draft === true) continue;
+      if (OWN_ENDING.test(parsed.content.replace(/<!--[\s\S]*?-->/g, ""))) {
+        throw new Error(
+          `${inputPath} carries its own "← NOTEBOOK FRONT PAGE" ending, and ` +
+          `post_body.njk adds one, so the page would show it twice. Exported by ` +
+          `the page builder: that build of the builder is out of date — rebuild ` +
+          `it (page_builder_app_v2/README.md) and export the page again. Written ` +
+          `by hand: delete the ending; the layout adds it.`
+        );
+      }
       if (seen.has(slug)) {
         throw new Error(`Slug collision inside ${CUSTOM_POST_DIR}/: ${seen.get(slug)} and ${file}`);
       }

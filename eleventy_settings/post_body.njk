@@ -2,30 +2,32 @@
 layout: base.njk
 ---
 {#
-  Layout for input_custom_post/ — hand-written HTML block posts.
+  Layout for input_custom_post/ — block posts, hand-written OR exported by the
+  page builder (page_builder_app_v2). Both kinds are the same thing: YAML front
+  matter plus a BODY fragment.
 
-  Sits between base.njk and a raw body fragment. base.njk supplies <!DOCTYPE>,
-  the <head>, nav.njk and footer.njk; this file adds the furniture every notebook
-  post carries — the date, the <h1>, and the back links — so a hand-author writes
-  the BODY ONLY and still gets a page that matches the rest of the Notebook.
+  Sits between base.njk and that fragment. base.njk supplies <!DOCTYPE>, the
+  <head>, nav.njk and footer.njk; this file adds the furniture every notebook
+  post carries — the date/title/back-link header and the closing date rule +
+  "← NOTEBOOK FRONT PAGE" link, both from post_chrome.njk — so a body never
+  carries any of it. eleventy.config.js stops the build if one carries the
+  ending, because this file would add a second.
 
   WHY THIS IS NOT post.njk
   post.njk wraps everything in `.post-container > .prose`, which is correct for
   markdown and wrong for blocks: a full-bleed hero cannot escape a max-width
   column. Here {{ content }} is emitted at FULL WIDTH and each block brings its
-  own container. That is the one real difference; the header and footer blocks
-  below are copied from post.njk deliberately so the two page kinds look
-  identical. Change one, change the other.
+  own container. That is the one real difference; the header and the ending
+  are the same macros post.njk uses, so the two page kinds cannot drift apart.
 
-  A third copy of that header block lives in the page builder, at
-  page_builder_app_v2/src/puck/components/Hero.tsx (staticHeader). Builder pages
-  go to input_build_page/ and use base.njk directly, so they emit it themselves.
-  If those pages ever move to this layout, delete staticHeader rather than
-  keeping two.
+  eleventy_njk/_builder_shell.njk renders the same header and ending around a
+  {{CONTENT}} token, in the same order as below, for the page builder's
+  preview. Reorder one, reorder the other.
 
   FRONT MATTER THIS LAYOUT READS
-    header: false   omit the date/title/back-link block entirely, for a page
-                    that opens on its own hero and carries its own title.
+    header: false   omit the date/title/back-link header, for a page that opens
+                    on its own hero and carries its own title and back link.
+                    The page builder writes it for exactly those pages.
     outline: true   add the "On this page" panel, built from the h2/h3 in the
                     body. Off by default: addAnchors rewrites every heading in
                     the fragment, including ones inside a hero, which is rarely
@@ -33,6 +35,9 @@ layout: base.njk
   Everything else (title, date, tags, image, description, navScroll,
   customJsonLd) is read by base.njk, not here.
 #}
+{% from "post_chrome.njk" import postHeaderBlock, postEnding %}
+{% set dateIso = date | isoStamp %}
+{% set dateHuman = date | readableDate %}
 
 {% if outline %}
 {% set body = content | addAnchors %}
@@ -56,38 +61,11 @@ layout: base.njk
 {% endif %}
 
 {% if header != false %}
-{# Date, title, then the back link — the link sits UNDER the title so the first
-   thing on the page is the page's own name. Identical to post.njk. #}
-<div class="post-container pt-24 extra_fade_effect">
-    <div class="mb-8 pb-8 border-b border-neutral-200 dark:border-neutral-800">
-        <time class="text-sm font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider" datetime="{{ date | isoStamp }}">
-            {{ date | readableDate }}
-        </time>
-        <h1 class="text-5xl md:text-6xl text-zinc-900 dark:text-white mt-4 mb-4 uppercase tracking-wider">
-            {{ title }}
-        </h1>
-        <a href="/notebook.html" class="inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider">
-           ← Back to Notebook
-        </a>
-    </div>
-</div>
+{{ postHeaderBlock(title, dateIso, dateHuman) }}
 {% endif %}
 
 {# FULL WIDTH on purpose — see the note at the top. Each block supplies its own
    container: .post-container for a text column, nothing for a full-bleed one. #}
 {{ body | safe }}
 
-<div class="post-container pt-24">
-  <hr>
-  <div class="py-2">
-    <time class="text-sm font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wider" datetime="{{ date | isoStamp }}">
-        {{ date | readableDate }}
-    </time>
-  </div>
-</div>
-
-<div class="post-container pt-6 pb-12">
-    <a href="/notebook.html" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">
-      ← NOTEBOOK FRONT PAGE
-    </a>
-</div>
+{{ postEnding(dateIso, dateHuman) }}

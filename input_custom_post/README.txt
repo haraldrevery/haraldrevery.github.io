@@ -6,8 +6,11 @@ One .html file per post. Each is YAML front matter followed by a raw HTML BODY
 FRAGMENT — the blocks that make up the article, and nothing else.
 
 THE CHROME IS NOT IN THESE FILES, and must not be. Eleventy wraps each one in
-eleventy_settings/post_body.njk, which adds the date, the <h1> and the back
-links, and under that eleventy_settings/base.njk, which supplies <!DOCTYPE>,
+eleventy_settings/post_body.njk, which adds the date/<h1>/back-link header and
+the closing date rule + "← NOTEBOOK FRONT PAGE" link (both defined once, in
+eleventy_settings/post_chrome.njk — the build STOPS if a body carries its own
+ending, because the page would show two), and under that
+eleventy_settings/base.njk, which supplies <!DOCTYPE>,
 the entire <head> (title, description, Open Graph, Twitter, canonical, JSON-LD
 — all derived from the front matter below), eleventy_settings/nav.njk and
 eleventy_settings/footer.njk.
@@ -58,9 +61,10 @@ div's closing tag.
 HERE          Notebook posts written by hand out of HTML blocks.
 
 HERE ALSO     Page-builder exports. page_builder_app_v2 writes .html fragments
-              into this folder. They carry `header: false`, because the app
-              emits its own date/<h1>/back-link block; everything else is the
-              same file shape you would write by hand.
+              into this folder, the same file shape you would write by hand:
+              hero and blocks, no header, no ending. A page with a hero also
+              carries `header: false`, because the hero has its own title and
+              back link.
 
 NOT HERE      Complete standalone <html> documents — the browser apps.
               Those genuinely need their own <head> and their own scripts.

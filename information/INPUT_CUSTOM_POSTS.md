@@ -46,7 +46,9 @@ input_custom_post/
 ```
 
 Eleventy wraps each file in `eleventy_settings/post_body.njk`, which adds the
-date, the `<h1>` and the back links, and under that `base.njk`, which supplies
+date/`<h1>`/back-link header and the closing date rule + "← NOTEBOOK FRONT
+PAGE" link (both from `post_chrome.njk`, shared with markdown posts — see §7),
+and under that `base.njk`, which supplies
 `<!DOCTYPE>`, the whole `<head>` (title, description, OG, Twitter, canonical,
 JSON-LD — all from the front matter), `nav.njk` and `footer.njk`.
 
@@ -274,19 +276,16 @@ before deleting the original.
 fragments and did the same job this folder does, so the two were redundant. It
 has been removed from `eleventy.config.js`, both Tailwind `@source` lists,
 `healthcheck.sh` and the docs; the page builder (`commands.rs`, `project.ts`,
-`export.ts`) now writes `.html` into `input_custom_post/` and sets
-`header: false`, because it emits its own date/`<h1>`/back-link block and
-`post_body.njk` would otherwise emit a second one. Its 270 tests pass and
-`cargo check` is clean, but **the app binary still has to be rebuilt** — see
-that project's README.
+`export.ts`) now writes `.html` into `input_custom_post/`. (At the time it also
+emitted its own date/`<h1>`/back-link block and ending — see §7 for why that
+changed.)
 
-`.eleventyignore` carries a tombstone entry for `input_build_page/`. That is
-deliberate: an old build of the page builder still writes `.njk` there, and a
-`.njk` under the input root IS a template — `{% ... %}` fails the build with
-`unknown block tag`, and `{{ ... }}` renders as empty, so a KaTeX
-`\frac{{a}}{{b}}` would publish as `\frac`. Verified both. The ignore line makes
-a stray export inert instead. Delete it once every machine is running a rebuilt
-app.
+`.eleventyignore` used to carry a tombstone entry for `input_build_page/`,
+because an old build of the page builder still wrote `.njk` there, and a `.njk`
+under the input root IS a template: `{% ... %}` fails the build and `{{ ... }}`
+renders as empty. Both builder binaries have since been rebuilt against
+`input_custom_post/` (checked in the binaries themselves), so the entry was
+removed on 2026-09-19.
 
 **`website_hrldthrslnd/` broke the build.** It is a whole other Eleventy project;
 its `eleventy_njk/*.njk` use filters only its own config defines, so Eleventy
@@ -297,3 +296,40 @@ picked them up as input and died with `filter not found: absolute`. It is now in
 `discography.html` — extensionless `/release/<slug>` links where only
 `/release/<slug>.html` exists. Unrelated to any of this, but it is the reason
 the healthcheck currently exits 1.
+
+---
+
+## 7. 2026-09-19: the page furniture has one owner
+
+**The bug.** Every page exported from the page builder published with the
+closing date rule and "← NOTEBOOK FRONT PAGE" link TWICE. The builder wrote its
+own header and ending into the fragment; `post_body.njk` added its ending
+unconditionally, and `header: false` only switched off the layout's header.
+Nothing caught it: the builder's tests checked the fragment alone, and its
+preview shell was rendered with `base.njk` directly, skipping `post_body.njk`,
+so the preview showed one ending while the site showed two.
+
+**Also found.** The same header/ending markup existed in three places
+(`post.njk`, `post_body.njk`, the builder's `Hero.tsx`/`export.ts`) and had
+already drifted: `post.njk` carried a stray `</div>` that closed
+`.bg-topology-map` early on every markdown post, so the NOTEBOOK link and the
+footer sat outside the page's background wrapper.
+
+**The fix.**
+
+| File | Change |
+|---|---|
+| `eleventy_settings/post_chrome.njk` | NEW. `postHeader`, `postHeaderBlock`, `postEnding` macros — the only copy of that markup |
+| `post.njk`, `post_body.njk` | use the macros; the stray `</div>` is gone |
+| `eleventy_njk/_builder_shell.njk` | renders the same macros around `{{CONTENT}}`, header in a `<!--pb:header-->` region |
+| `eleventy.config.js` | stops the build if an `input_custom_post/` body carries its own "← NOTEBOOK FRONT PAGE" link (an export from an out-of-date builder) — **binaries recompiled** |
+| page builder | exports hero + content + JSON-LD only; `header: false` only for hero pages; preview and editor take the header and ending from `shell.html`; Export no longer reads `shell.html` at all |
+| `page_builder_app_v2/tests/site-build.test.tsx` | NEW. Builds a real site from exported pages and checks the published output, including preview = published |
+
+Markdown posts changed only by the removed `</div>` (verified by diffing every
+generated page against a build from before the change). One unification: the
+NOTEBOOK link no longer has `pb-12` under it on block posts — markdown posts
+never had it, and the macro follows the markdown pages, which are the live ones.
+
+**Still to do by hand:** rebuild `page_builder_v2.exe` on Windows. Until then
+its exports are refused by the build with a message naming the file.

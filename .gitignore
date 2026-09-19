@@ -16,7 +16,7 @@ Desktop.ini
 npm-debug.log*
 *.log
 
-# Python bytecode (page_builder/)
+# Python bytecode
 __pycache__/
 *.pyc
 
