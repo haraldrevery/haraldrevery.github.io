@@ -65,6 +65,9 @@ In accordance with the Swedish Electronic Communications Act, we provide informa
 | rvry-clock-timers | LocalStorage | Strictly Necessary: keeps a running timer or an armed alarm on the clock page when you reload it. | Persistent |
 | rvry-clock-stopwatch | LocalStorage | Strictly Necessary: keeps the clock page's stopwatch — its time, laps and the notes you type on them — when you reload it, plus what the last Reset cleared, so it can be undone until the stopwatch is started again. | Persistent |
 | rvry-clock-photos | IndexedDB | Strictly Necessary: stores photos you add yourself as a clock background. They never leave your browser; remove them with the ✕ on each photo in the clock settings. | Persistent |
+| rvry-clock-card | LocalStorage | Strictly Necessary: keeps the event card you are making on the clock page (opened by clicking the date) — its text, date, layout and a list of the images you added — so it is still there when you come back. | Persistent |
+| rvry-clock-card-templates | LocalStorage | Strictly Necessary: the event card templates you save yourself on the clock page. | Persistent |
+| rvry-clock-card-images | IndexedDB | Strictly Necessary: stores images you add to an event card on the clock page. They never leave your browser; remove them with the ✕ on each image in the card's background picker. | Persistent |
 | rvry-reading-width | LocalStorage | Strictly Necessary: remembers the reading-column width you chose with the width button on notebook articles. | Persistent |
 
 This site sets no cookies of its own and uses no analytics or visitor tracking. The technical storage listed above is used only on the interactive pages and notebook articles named above, and only to remember a setting you chose yourself. It stays in your browser and is never transmitted to us. The site-wide light/dark appearance follows your operating system or browser setting and is not stored at all.

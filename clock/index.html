@@ -37,11 +37,11 @@
 
     <link rel="preload" href="/fonts/HaraldReveryMonoFont.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/HaraldReveryTextFont.woff2" as="font" type="font/woff2" crossorigin>
-    <!-- ?v= on the clock's CSS/JS: Cloudflare and browsers keep these files for
-         months, so a changed file only reaches visitors under a new version.
-         Change the date in both places whenever clock.css, clock.js,
-         event_card.css or event_card.js change (clock.js passes it on to the
-         event card files). -->
+    <!-- Cloudflare and browsers keep the clock's CSS/JS for months, so a
+         changed file only reaches returning visitors under a new ?v=. Change
+         the date here whenever clock.css changes. clock.js below has no ?v=
+         (a Cloudflare purge is used instead); if it gets one again, clock.js
+         passes it on to js/card.js. card.js pins its own card.css version. -->
     <link rel="stylesheet" href="/clock/css/clock.css?v=20260919">
 
     <!-- Apply saved look before first paint (no theme/face flash). clock.js
@@ -438,8 +438,12 @@
     <audio id="alarm-sound" preload="none"></audio>
 </div>
 
-<!-- Event card designer. Inert until the date is clicked for the first time;
-     clock.js then loads event_card.css + event_card.js and clones this in. -->
+<!-- The OLD event card designer, kept only for browsers that still have the
+     clock.js from before 2026-09-23 cached: that version clones this template
+     and loads event_card.css + event_card.js. The current clock.js loads
+     js/card.js instead, which builds its own markup. Delete this template and
+     both event_card files once that old clock.js has aged out of caches
+     (it is cached for up to 186 days, so after about April 2027). -->
 <template id="ecm-template">
     <div class="ecm-overlay" id="ecm-overlay">
         <div class="ecm-modal" role="dialog" aria-modal="true" aria-labelledby="ecm-title-label">

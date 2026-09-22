@@ -1586,23 +1586,20 @@
     // ======================================================================
     // Event card (loaded on first use)
     // ======================================================================
+    // card.js builds its own markup and loads its own stylesheet, so the two
+    // always match. The <template id="ecm-template"> and event_card.js/.css
+    // are left only for browsers still running the clock.js from before
+    // 2026-09-23, which loads those instead.
     var cardState = 'none';   // none | loading | ready
     function openCard() {
-        if (cardState === 'ready') { window.EventCard.open(); return; }
+        if (cardState === 'ready') { window.RvryCard.open(); return; }
         if (cardState === 'loading') return;
         cardState = 'loading';
-        var link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = '/clock/css/event_card.css' + ASSET_V;
-        link.onload = link.onerror = function () {
-            document.body.appendChild($('#ecm-template').content.cloneNode(true));
-            var s = document.createElement('script');
-            s.src = '/clock/js/event_card.js' + ASSET_V;
-            s.onload = function () { cardState = 'ready'; window.EventCard.open(); };
-            s.onerror = function () { cardState = 'none'; };
-            document.body.appendChild(s);
-        };
-        document.head.appendChild(link);
+        var s = document.createElement('script');
+        s.src = '/clock/js/card.js' + ASSET_V;
+        s.onload = function () { cardState = 'ready'; window.RvryCard.open(); };
+        s.onerror = function () { cardState = 'none'; s.remove(); };
+        document.body.appendChild(s);
     }
 
     // ======================================================================
@@ -1758,7 +1755,7 @@
 
         document.addEventListener('keydown', function (e) {
             if (e.defaultPrevented) return;
-            var cardOpen = $('#ecm-overlay.active');
+            var cardOpen = $('#card-overlay.active');
             // Ctrl+Z / Cmd+Z undoes a stopwatch reset. Not while typing in a
             // field (that is the field's own undo), nor under the event card.
             if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
@@ -1770,7 +1767,7 @@
             }
             if (e.metaKey || e.ctrlKey || e.altKey) return;
             if (e.key === 'Escape') {
-                if (cardOpen) return;                 // event_card.js closes itself
+                if (cardOpen) return;                 // card.js closes itself
                 if (panelOpen) { closePanel(true); return; }
                 if (ringing) dismiss();
                 return;
