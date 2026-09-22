@@ -405,45 +405,161 @@
     // A glass is one SVG: the clock face's, or the timer face's copy (whose
     // ids carry a prefix). flips counts half-turns; when it is odd the glass is
     // upside down, so its local bottom chamber is the one on top.
+    //
+    // The sand behaves like the sand in a real, round glass: its level follows
+    // the volume that has run through (half the time is half the sand), it
+    // fills most of one bulb, the top sinks into a funnel over the neck and the
+    // bottom piles up into a cone. Distances are in the SVG's units.
+    var sandShapes = (function () {
+        var H = 240, FILL = .86, REPOSE = .58, FUNNEL = .3;
+        // R[a]: half-width of a bulb at a whole units from the neck, from the
+        // wall curve in index.html (M -90 -240 C -90 -100, -4 -60, -3 0; the
+        // bottom bulb is its mirror image). Change the glass there, change
+        // these numbers too.
+        var R = [], as = [], xs = [], i, a, k;
+        for (i = 600; i >= 0; i--) {
+            var t = i / 600, u = 1 - t;
+            as.push(240 * u * u * u + 300 * u * u * t + 180 * u * t * t);
+            xs.push(90 * u * u * u + 270 * u * u * t + 12 * u * t * t + 3 * t * t * t);
+        }
+        for (a = 0, k = 0; a <= H; a++) {
+            while (as[k + 1] < a) k++;
+            R.push(xs[k] + (xs[k + 1] - xs[k]) * (a - as[k]) / (as[k + 1] - as[k]));
+        }
+        function r(a) {
+            if (a <= 0) return R[0];
+            if (a >= H) return R[H];
+            var j = Math.floor(a);
+            return R[j] + (R[j + 1] - R[j]) * (a - j);
+        }
+        // Volume from a0 to a1 of sand whose radius there is width(a) (without
+        // the π: only ratios matter).
+        function volume(a0, a1, width) {
+            var v = 0, n = Math.max(1, Math.ceil(a1 - a0)), h = (a1 - a0) / n;
+            for (var j = 0; j < n; j++) { var w = width(a0 + (j + .5) * h); v += w * w * h; }
+            return v;
+        }
+        var SAND_V = volume(0, H, r) * FILL;
+        // Top: the sand stands L above the neck, with a funnel in the middle
+        // whose rim is the wall. It forms over the first part of the run.
+        function funnel(L, p) {
+            return Math.max(0, Math.min(L - 3, FUNNEL * r(L) * Math.min(1, p / .15)));
+        }
+        function topVolume(L, p) {
+            var D = funnel(L, p), W = r(L);
+            return volume(0, L, function (a) {
+                var w = r(a), hole = D > 0 ? W * (a - L + D) / D : 0;
+                return hole <= 0 ? w : hole >= w ? 0 : Math.sqrt(w * w - hole * hole);
+            });
+        }
+        // Bottom, by one number s: up to 1 a cone grows on the floor until it
+        // reaches the walls; from 1 to 2 the level M rises with the cone on it.
+        function heap(s) {
+            var M = s <= 1 ? H : H * (2 - s), B = r(M) * .96 * Math.min(1, s);
+            return { M: M, B: B, P: Math.max(0, Math.min(REPOSE * B, M - 3)) };
+        }
+        function bottomVolume(s) {
+            var h = heap(s), peak = h.M - h.P;
+            return volume(h.M, H, r) + (h.P > 0 ? volume(peak, h.M, function (a) {
+                return Math.min(r(a), h.B * (a - peak) / h.P);
+            }) : 0);
+        }
+        function solve(f, target, hi) {
+            var lo = 0;
+            for (var j = 0; j < 20; j++) {
+                var mid = (lo + hi) / 2;
+                if (f(mid) < target) lo = mid; else hi = mid;
+            }
+            return (lo + hi) / 2;
+        }
+        function n1(n) { return n.toFixed(1); }
+        // progress 0..1 -> path data for both chambers, the glass upright, and
+        // how far down the stream falls. The paths overshoot the walls; the
+        // bulbs' clip paths trim them.
+        return function (p) {
+            var out = { top: 'M0 0', bottom: 'M0 0', landing: H };
+            if (p < .9999) {
+                var L = solve(function (L) { return topVolume(L, p); }, SAND_V * (1 - p), H);
+                var D = funnel(L, p), W = r(L) + 1, tip = D - L;
+                var c = Math.min(10, W * .3), cy = tip - D * c / W;   // round off the funnel's point
+                out.top = 'M-100 ' + n1(-L) + 'H' + n1(-W) + 'L' + n1(-c) + ' ' + n1(cy) +
+                    'Q0 ' + n1(tip) + ' ' + n1(c) + ' ' + n1(cy) + 'L' + n1(W) + ' ' + n1(-L) + 'H100V2H-100Z';
+            }
+            if (p > .0001) {
+                var hp = heap(solve(bottomVolume, SAND_V * p, 2));
+                var peak = hp.M - hp.P, b = Math.max(hp.B, .01);
+                var e = Math.min(8, b * .25), ey = peak + hp.P * e / b;   // round off the cone's point
+                out.bottom = 'M-100 ' + n1(hp.M) + 'H' + n1(-b) + 'L' + n1(-e) + ' ' + n1(ey) +
+                    'Q0 ' + n1(peak) + ' ' + n1(e) + ' ' + n1(ey) + 'L' + n1(b) + ' ' + n1(hp.M) + 'H100V242H-100Z';
+                out.landing = peak;
+            }
+            return out;
+        };
+    }());
+
     function makeHourglass(prefix) {
-        return {
+        var glass = {
             flips: -1, key: null,
+            still: 0,                        // Date.now() until which the sand is left alone
+            drawnAt: -1, drawnFlip: false,   // what drawSand last drew
             svg: $('#' + prefix + 'hg-svg'),
-            top: $('#' + prefix + 'hg-top-sand'),
-            bot: $('#' + prefix + 'hg-bot-sand'),
+            top: sandPath($('#' + prefix + 'hg-top-sand')),
+            bot: sandPath($('#' + prefix + 'hg-bot-sand')),
             stream: $('#' + prefix + 'hg-stream')
         };
+        glass.sand = glass.top.parentNode;
+        glass.stream.setAttribute('x', '-1');
+        glass.stream.setAttribute('y', '-2');
+        glass.stream.setAttribute('width', '2');
+        return glass;
     }
-    // Turn the glass to `flips` half-turns, animated or in one jump.
+    // index.html keeps the <rect>s that scripts before 2026-09-22 drew the
+    // sand with: clock.js has no ?v=, so a browser can hold an old copy for
+    // months and that copy must still find them. The sand is now a <path>.
+    function sandPath(rect) {
+        if (rect.tagName !== 'rect') return rect;
+        var path = document.createElementNS(SVGNS, 'path');
+        path.id = rect.id;
+        path.setAttribute('clip-path', rect.getAttribute('clip-path'));
+        rect.parentNode.replaceChild(path, rect);
+        return path;
+    }
+    // Turn the glass to `flips` half-turns, animated or in one jump. While it
+    // turns, the sand stays where it lay (all run through, in the chamber
+    // that is going up) and only settles once the turn is over.
     function turnHourglass(glass, flips, animate) {
+        if (animate) { glass.still = 0; drawSand(glass, 1, false); }
         glass.flips = flips;
         if (!animate) glass.svg.style.transition = 'none';
         glass.svg.style.transform = 'rotate(' + flips * 180 + 'deg)';
         if (!animate) { glass.svg.getBoundingClientRect(); glass.svg.style.transition = ''; }
+        else glass.still = Date.now() + parseFloat(getComputedStyle(glass.svg).transitionDuration) * 1000;
     }
     // progress: 0 = all the sand still on top, 1 = all of it run through.
+    // The sand is always worked out upright; in an upside-down glass it is
+    // mirrored, clip paths and all, so it still lies at the bottom.
     function drawSand(glass, progress, flowing) {
-        var H = 240, eased = Math.pow(progress, 3), left = H * (1 - eased), filled = H * eased;
-        var topY, topH, botY, botH, streamY, streamH;
-        if (glass.flips % 2 === 0) {
-            topH = left; topY = -topH; botH = filled; botY = H - botH;
-            streamY = -2; streamH = Math.max(0, botY - streamY);
-        } else {
-            // Rotated 180°: local bottom is the visual top, so swap the roles.
-            topH = filled; topY = -H; botH = left; botY = 0;
-            streamY = Math.min(-2, topY + topH); streamH = Math.max(0, 2 - streamY);
+        if (Date.now() < glass.still) return;
+        // 3600 steps: one per second on the clock face, too fine to see on a
+        // timer. The timer face asks every frame; most frames change nothing.
+        var q = Math.round(clamp(progress, 0, 1) * 3600) / 3600, flip = glass.flips % 2 === 1;
+        if (q !== glass.drawnAt || flip !== glass.drawnFlip) {
+            glass.drawnAt = q;
+            glass.drawnFlip = flip;
+            var s = sandShapes(q);
+            glass.top.setAttribute('d', s.top);
+            glass.bot.setAttribute('d', s.bottom);
+            glass.stream.setAttribute('height', q > .999 ? '0' : (s.landing + 2).toFixed(1));
+            [glass.sand, glass.stream].forEach(function (el) {
+                if (flip) el.setAttribute('transform', 'scale(1 -1)');
+                else el.removeAttribute('transform');
+            });
         }
-        glass.top.setAttribute('y', topY.toFixed(2));
-        glass.top.setAttribute('height', topH.toFixed(2));
-        glass.bot.setAttribute('y', botY.toFixed(2));
-        glass.bot.setAttribute('height', botH.toFixed(2));
-        glass.stream.setAttribute('y', streamY.toFixed(2));
-        glass.stream.setAttribute('height', progress > 0.999 ? '0' : streamH.toFixed(2));
         glass.stream.classList.toggle('flowing', flowing && progress > 0.001 && progress < 0.999);
     }
 
-    // Clock face: upright on even hours, turned over on the hour, and the
-    // sand drains over the hour.
+    // Clock face: turned over on the hour (at first shown upright on even
+    // hours), and the sand runs through over the hour.
     var hgClock = makeHourglass('');
     function renderHourglass(now) {
         var h = now.getHours();
