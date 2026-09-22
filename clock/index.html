@@ -42,7 +42,7 @@
          the date here whenever clock.css changes. clock.js below has no ?v=
          (a Cloudflare purge is used instead); if it gets one again, clock.js
          passes it on to js/card.js. card.js pins its own card.css version. -->
-    <link rel="stylesheet" href="/clock/css/clock.css?v=20260919">
+    <link rel="stylesheet" href="/clock/css/clock.css?v=20260922">
 
     <!-- Apply saved look before first paint (no theme/face flash). clock.js
          owns the settings; this only mirrors them onto <html>. The custom
@@ -431,6 +431,16 @@
                     <button class="seg-btn" data-set="lang=en" lang="en">EN</button>
                     <button class="seg-btn" data-set="lang=sv" lang="sv">SV</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Hidden until clock.js shows it: an older cached clock.js doesn't
+             know this setting, and would show a switch that does nothing. -->
+        <div class="field" id="perf-field" hidden>
+            <span class="field-label" data-i18n="perf">Performance</span>
+            <div class="seg-group">
+                <button class="seg-btn" data-set="perf=full" data-i18n="perf_full">Full</button>
+                <button class="seg-btn" data-set="perf=low" data-i18n="perf_low" data-i18n-title="perf_low_hint" title="Less motion and no blur: easier on older devices and the battery">Low</button>
             </div>
         </div>
     </aside>

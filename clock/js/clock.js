@@ -14,7 +14,10 @@
    Timing: timers and alarms are absolute timestamps. One setTimeout aimed at
    the next due moment fires them, so they ring in a background tab (where
    requestAnimationFrame is paused). Drawing uses rAF only for faces that
-   actually move smoothly; everything else redraws once per second.
+   actually move smoothly; everything else redraws once per second. What the
+   browser can animate by itself (the celestial seconds planet, its sky's
+   turning, twinkling and shooting stars) it does, so that face needs no rAF.
+   Settings > Performance > Low turns all smooth motion and blur off.
    ========================================================================== */
 (function () {
     'use strict';
@@ -33,6 +36,25 @@
         try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
     }
     function setHidden(el, hidden) { if (el.hidden !== hidden) el.hidden = hidden; }
+    // Runs one part of the page on its own: if it throws, the error is
+    // reported (once per function) and the rest carries on, above all the
+    // timer and the alarm.
+    var failed = {};
+    function safely(fn, arg) {
+        try { return fn(arg); } catch (e) {
+            if (!failed[fn.name]) { failed[fn.name] = true; console.error(e); }
+        }
+    }
+    // Repeatable pseudo-random numbers 0..1: the same seed gives the same
+    // sky (mulberry32; a plain LCG would line the stars up in rows).
+    function seeded(a) {
+        return function () {
+            a = a + 0x6D2B79F5 | 0;
+            var t = Math.imul(a ^ a >>> 15, 1 | a);
+            t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+            return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        };
+    }
 
     // Asset version: this script's own ?v= from index.html. Cloudflare and
     // browsers keep CSS/JS for months, so a changed file only reaches visitors
@@ -98,7 +120,8 @@
         bgCycle: false,
         photos: [],          // ids of added photos (the images are in IndexedDB)
         customBg: '#14181f', // the custom theme's two colours; the same
-        customInk: '#ece6d9' // fallbacks are in index.html's pre-paint script
+        customInk: '#ece6d9', // fallbacks are in index.html's pre-paint script
+        perf: 'full'         // full | low (no smooth motion, twinkling or blur)
     };
     var HEX = /^#[0-9a-f]{6}$/i;
 
@@ -122,6 +145,7 @@
         if (!HEX.test(s.customInk)) s.customInk = DEFAULTS.customInk;
         if (s.format !== '12') s.format = '24';
         if (['s', 'm', 'l'].indexOf(s.size) < 0) s.size = 'm';
+        if (s.perf !== 'low') s.perf = 'full';
         if (s.lang !== 'sv') s.lang = 'en';
         s.seconds = s.seconds !== false;
         s.bgCycle = s.bgCycle === true;
@@ -187,6 +211,8 @@
             photo_failed: 'That image could not be read.',
             face_ring: 'Ring', face_hourglass: 'Hourglass', face_mono: 'Mono', face_analog: 'Analog', face_celestial: 'Celestial',
             set_timer: 'Set a timer', make_card: 'Create an event card',
+            perf: 'Performance', perf_full: 'Full', perf_low: 'Low',
+            perf_low_hint: 'Less motion and no blur: easier on older devices and the battery',
             week: 'Week'
         },
         sv: {
@@ -215,6 +241,8 @@
             photo_failed: 'Bilden kunde inte läsas.',
             face_ring: 'Ring', face_hourglass: 'Timglas', face_mono: 'Mono', face_analog: 'Analog', face_celestial: 'Himmelsk',
             set_timer: 'Ställ in en timer', make_card: 'Skapa ett eventkort',
+            perf: 'Prestanda', perf_full: 'Full', perf_low: 'Låg',
+            perf_low_hint: 'Mindre rörelse och ingen oskärpa: skonsammare mot äldre enheter och batteriet',
             week: 'Vecka'
         }
     };
@@ -388,6 +416,51 @@
         }
     }
 
+    // The celestial seconds planet goes on a layer of its own, which the
+    // browser turns (Web Animations), so the face needs no drawing every
+    // frame. The layer is only the strip from the centre up to the planet,
+    // measured from the planet in index.html, and turns about its bottom.
+    // Browsers without el.animate() keep it in the face's SVG, drawn every
+    // frame as before.
+    var celSec = null;               // { layer, anim } once built
+    function buildCelSeconds() {
+        if (!Element.prototype.animate) return;
+        var g = $('#cel-s'), dot = $('.planet-s', g);
+        var r = Number(dot.getAttribute('r')), top = -Number(dot.getAttribute('cy')) + r + 2, half = r + 2;
+        var layer = document.createElement('div');
+        layer.className = 'cel-sec sec-el';
+        // viewBox units are the face's (200 across = 100%), so 1 unit = .5%
+        layer.style.cssText = 'left:' + (50 - half / 2) + '%;width:' + half + '%;top:' + (50 - top / 2) + '%;height:' + top / 2 + '%';
+        svgEl('svg', { viewBox: -half + ' ' + -top + ' ' + 2 * half + ' ' + top, 'aria-hidden': 'true' }, layer).appendChild(g);
+        $('.orbit-wrap').appendChild(layer);
+        celSec = { layer: layer, anim: null };
+    }
+    // Called every frame (once a second on this face): runs the planet's
+    // turn while the face shows it and stops it otherwise. The browser's
+    // animation clock drifts from Date after the computer sleeps or the
+    // clock is set, so each call puts it back if it is off by more than 40 ms.
+    // Low performance: no animation, a step once a second.
+    function driveCelSeconds(now) {
+        if (!celSec) return;
+        var shown = currentMode === 'clock' && S.face === 'celestial' && S.seconds;
+        var anim = celSec.anim, ms = now.getSeconds() * 1000 + now.getMilliseconds();
+        if (!shown || S.perf === 'low') {
+            if (anim) { anim.cancel(); celSec.anim = null; }
+            if (shown) celSec.layer.style.transform = 'rotate(' + now.getSeconds() * 6 + 'deg)';
+            return;
+        }
+        if (!anim) {
+            celSec.layer.style.transform = '';
+            anim = celSec.anim = celSec.layer.animate(
+                [{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }],
+                { duration: 60000, iterations: Infinity });
+            anim.currentTime = ms;
+            return;
+        }
+        var off = (((anim.currentTime || 0) - ms) % 60000 + 60000) % 60000;
+        if (Math.min(off, 60000 - off) > 40) anim.currentTime = ms;
+    }
+
     var faceDigits = {
         ring: digits($('#ring-time')),
         hourglass: digits($('#hg-time')),
@@ -559,8 +632,8 @@
     }
 
     // Clock face: turned over on the hour (at first shown upright on even
-    // hours), and the sand runs through over the hour.
-    var hgClock = makeHourglass('');
+    // hours), and the sand runs through over the hour. Made at boot.
+    var hgClock = null;
     function renderHourglass(now) {
         var h = now.getHours();
         if (hgClock.flips < 0) {
@@ -597,7 +670,8 @@
         hgTimer = makeHourglass('tf-');
         tfDigits = digits($('#tf-digits'));
     }
-    function timerHasFace() { return S.face === 'ring' || S.face === 'hourglass'; }
+    // (Not if buildTimerFace failed: then big numerals, as for the other faces.)
+    function timerHasFace() { return !!hgTimer && (S.face === 'ring' || S.face === 'hourglass'); }
     // progress: 0 = just started, 1 = time is up.
     function renderTimerFace(progress, remaining) {
         tfDigits(hms(ceilSec(remaining)));
@@ -622,7 +696,8 @@
 
     function renderFace(now) {
         var face = S.face, c = clockParts(now), d = dateStrings(now);
-        var sec = now.getSeconds() + now.getMilliseconds() / 1000;
+        // Low performance draws once a second, so everything moves in whole seconds.
+        var sec = now.getSeconds() + (S.perf === 'low' ? 0 : now.getMilliseconds() / 1000);
         var minF = now.getMinutes() + sec / 60;
         var hourF = (now.getHours() % 12) + minF / 60;
 
@@ -661,7 +736,7 @@
         } else if (face === 'celestial') {
             $('#cel-h').setAttribute('transform', 'rotate(' + (hourF * 30).toFixed(3) + ')');
             $('#cel-m').setAttribute('transform', 'rotate(' + (minF * 6).toFixed(3) + ')');
-            $('#cel-s').setAttribute('transform', 'rotate(' + (sec * 6).toFixed(3) + ')');
+            if (!celSec) $('#cel-s').setAttribute('transform', 'rotate(' + (sec * 6).toFixed(3) + ')');
             faceDigits.celestial(c.text);
             setText($('#cel-ampm'), c.ampm);
             setDate('cel-date', d.celestial);
@@ -917,7 +992,7 @@
         scheduleDue();
         heartbeat();
         renderTools();
-        if (fresh && S.face === 'hourglass') turnTimerGlass();
+        if (fresh && S.face === 'hourglass' && timerHasFace()) turnTimerGlass();
         kick();
     }
     function timerReset() {
@@ -1236,23 +1311,31 @@
     var currentMode = 'clock';
     var frameRaf = 0, frameTimeout = 0;
     function needsSmoothFrames() {
+        // The stopwatch's hundredths are what it is for: smooth in every mode.
         if (currentMode === 'stopwatch') return T.sw.running;
+        if (S.perf === 'low') return false;
         if (currentMode === 'timer') return T.timer.status === 'running' && timerHasFace();
         if (currentMode !== 'clock') return false;
-        if (S.face === 'ring') return S.seconds;
-        if (S.face === 'analog' || S.face === 'celestial') return S.seconds;
+        if (S.face === 'celestial') return S.seconds && !celSec;   // see buildCelSeconds
+        if (S.face === 'ring' || S.face === 'analog') return S.seconds;
         return false;
     }
+    // Each part on its own (see safely), so one that fails never stops the loop.
     function frame() {
         frameRaf = 0;
         frameTimeout = 0;
         var now = new Date();
+        safely(drawView, now);
+        safely(driveCelSeconds, now);
+        safely(updateSky);
+        scheduleFrame();
+    }
+    function drawView(now) {
         if (currentMode === 'clock') renderFace(now);
         else if (currentMode === 'timer') tickTimer();
         else if (currentMode === 'alarm') renderAlarm();
         else renderStopwatch();
         renderChips();
-        scheduleFrame();
     }
     function scheduleFrame() {
         if (frameRaf || frameTimeout || document.hidden) return;
@@ -1282,6 +1365,117 @@
         $$('.mode-btn').forEach(function (b) { b.setAttribute('aria-current', String(b.dataset.mode === mode)); });
         renderTools();
         kick();
+    }
+
+    // ======================================================================
+    // Sky (celestial face): a disc of stars behind the dial
+    // ======================================================================
+    // A little larger than the face (1.4 times: .sky in clock.css), turning
+    // very slowly (.sky-turn: once in 30 minutes, the other way round from
+    // the planets, as the northern sky does). It takes over from the face's
+    // own fixed stars. Made the first time the celestial face is shown, so
+    // no other face pays for it; drawn in the face's units, so it grows and
+    // shrinks with the face and a resize needs nothing.
+    // The still stars are one SVG, painted once, and the turning is the
+    // browser's. Every fifth star is a small element whose opacity the
+    // browser animates (.tw), and a shooting star is one element the browser
+    // moves (Web Animations) and then removes, on a layer that doesn't turn.
+    // None of it runs through this script per frame. Low performance and
+    // "reduce motion" keep the sky still, with no shooting stars; a hidden
+    // face or tab animates nothing.
+    var SKY_R = 140;                 // in face units (the face is 200 across)
+    var sky = null, skyOn = false, meteorId = 0;
+    var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    function buildSky() {
+        var rand = seeded(7), wrap = $('.orbit-wrap'), turn = document.createElement('div');
+        sky = document.createElement('div');
+        sky.className = 'sky';
+        sky.setAttribute('aria-hidden', 'true');
+        turn.className = 'sky-turn';
+        sky.appendChild(turn);
+        var still = svgEl('svg', { viewBox: [-SKY_R, -SKY_R, 2 * SKY_R, 2 * SKY_R].join(' ') }, turn);
+        function pct(v) { return ((v + SKY_R) / (2 * SKY_R) * 100).toFixed(2) + '%'; }
+        for (var i = 0; i < 160; i++) {
+            // Even over the disc (none on the core), fading out towards its rim.
+            var d = SKY_R * Math.sqrt(rand()), a = rand() * 2 * Math.PI;
+            var x = Math.cos(a) * d, y = Math.sin(a) * d;
+            var b = rand() * rand();                     // brightness: mostly faint, a few bright
+            var f = clamp((SKY_R - d) / 45, 0, 1), fade = f * f * (3 - 2 * f);
+            if (d < 26) continue;
+            if (i % 5 || d > 100) {
+                svgEl('circle', { cx: x.toFixed(2), cy: y.toFixed(2), r: (.25 + b * .6).toFixed(2), opacity: ((.2 + b * .6) * fade).toFixed(2) }, still);
+                continue;
+            }
+            var tw = document.createElement('i'), size = ((.9 + b * 1.2) / (2 * SKY_R) * 100).toFixed(2) + '%';
+            tw.className = 'tw';
+            tw.style.cssText = 'left:' + pct(x) + ';top:' + pct(y) + ';width:' + size + ';height:' + size +
+                ';animation-duration:' + (2.5 + rand() * 5).toFixed(2) + 's;animation-delay:-' + (rand() * 8).toFixed(2) + 's';
+            turn.appendChild(tw);
+        }
+        wrap.insertBefore(sky, wrap.firstChild);
+        $('#cel-stars').setAttribute('hidden', '');
+    }
+    // Called every frame (once a second on this face): builds the sky when
+    // it is first needed, clears it when it goes, and keeps one shooting
+    // star waiting while it may have them.
+    function updateSky() {
+        var on = currentMode === 'clock' && S.face === 'celestial';
+        if (on && !sky) buildSky();
+        if (!sky) return;
+        if (on !== skyOn) {
+            skyOn = on;
+            if (!on) $$('.meteor', sky).forEach(function (el) { el.remove(); });
+        }
+        var lively = on && S.perf !== 'low' && !reducedMotion.matches;
+        if (lively && !meteorId) scheduleMeteor();
+        else if (!lively && meteorId) { clearTimeout(meteorId); meteorId = 0; }
+    }
+
+    // Peak nights of the main meteor showers (month, day; they shift by a day
+    // or so from year to year): shooting stars come twice as often then.
+    var SHOWERS = [[1, 3], [4, 22], [5, 6], [8, 12], [10, 21], [11, 17], [12, 13]];
+    function showerNight(d) {
+        return SHOWERS.some(function (p) {
+            return Math.abs(d - new Date(d.getFullYear(), p[0] - 1, p[1], 12)) < 1.5 * 86400000;
+        });
+    }
+    // One every 15-75 s.
+    function scheduleMeteor() {
+        var wait = (15 + Math.random() * 60) * 1000 / (showerNight(new Date()) ? 2 : 1);
+        meteorId = setTimeout(function () {
+            meteorId = 0;
+            // Not while nobody would see it: a hidden tab, or under the event card.
+            if (!document.hidden && !$('#card-overlay.active')) safely(shootStar);
+            safely(updateSky);
+        }, wait);
+    }
+    // In px within the sky's box: it starts somewhere in the middle of the
+    // disc, and its flight is cut short if it would leave the stars.
+    function shootStar() {
+        var R = sky.offsetWidth / 2;
+        var len = R * (.15 + Math.random() * .15), travel = R * (.35 + Math.random() * .25);
+        var a = (18 + Math.random() * 37) * Math.PI / 180;      // falling, 18-55° below level
+        if (Math.random() < .5) a = Math.PI - a;                // to the left or to the right
+        var r0 = R * .55 * Math.sqrt(Math.random()), b0 = Math.random() * 2 * Math.PI;
+        var x = R + Math.cos(b0) * r0, y = R + Math.sin(b0) * r0;
+        while (Math.hypot(x + Math.cos(a) * travel - R, y + Math.sin(a) * travel - R) > R * .85) travel *= .85;
+        var dx = Math.cos(a) * travel, dy = Math.sin(a) * travel, deg = (a * 180 / Math.PI).toFixed(1);
+        // The element's right end is the head (transform-origin in clock.css):
+        // it is put at the point reached so far and turned about that end, so
+        // the tail trails behind it.
+        function at(f, stretch) {
+            return 'translate(' + (x + dx * f - len).toFixed(1) + 'px,' + (y + dy * f).toFixed(1) + 'px) ' +
+                'rotate(' + deg + 'deg) scaleX(' + stretch + ')';
+        }
+        var el = document.createElement('i');
+        el.className = 'meteor';
+        el.style.width = len.toFixed(0) + 'px';
+        sky.appendChild(el);
+        el.animate([
+            { transform: at(0, .15), opacity: 0 },
+            { transform: at(.25, .8), opacity: 1, offset: .25 },
+            { transform: at(1, 1), opacity: 0 }
+        ], { duration: 450 + Math.random() * 450 }).onfinish = function () { el.remove(); };
     }
 
     // ======================================================================
@@ -1531,6 +1725,7 @@
         root.setAttribute('data-size', S.size);
         root.setAttribute('data-format', S.format);
         root.setAttribute('data-seconds', String(S.seconds));
+        root.setAttribute('data-perf', S.perf);
         root.style.setProperty('--bg-opacity', String(S.bgOpacity));
     }
     function syncSettingsUI() {
@@ -1564,7 +1759,7 @@
         S = loadSettings();
         applyRoot();
         if (before.lang !== S.lang) { applyLanguage(); renderLaps(); }
-        if (before.face !== S.face) hgClock.flips = -1;
+        if (before.face !== S.face && hgClock) hgClock.flips = -1;
         if (before.bgCycle !== S.bgCycle) restartCycle();
         if (before.photos.join() !== S.photos.join()) { userPhotosLoaded = false; userPhotos = []; }
         syncSettingsUI();
@@ -1578,7 +1773,7 @@
         syncSettingsUI();
         if (key === 'lang') { applyLanguage(); renderLaps(); renderPhotoStrip(); }
         if (key === 'bgCycle') restartCycle();
-        if (key === 'face') hgClock.flips = -1;
+        if (key === 'face' && hgClock) hgClock.flips = -1;
         renderTools();
         kick();
     }
@@ -1783,6 +1978,11 @@
         });
 
         darkQuery.addEventListener('change', function () { if (S.theme === 'auto') applyRoot(); });
+        reducedMotion.addEventListener('change', function () { safely(updateSky); });
+        // index.html hides the Performance field: a clock.js from before it
+        // (cached for months) would show a switch that does nothing.
+        var perfField = $('#perf-field');
+        if (perfField) perfField.hidden = false;
 
         // Another tab (or window) wrote one of the clock's keys: take its
         // version. Each tab keeps everything in memory and saves it whole, so
@@ -1822,10 +2022,10 @@
     // ======================================================================
     // Boot
     // ======================================================================
-    buildRing();
-    buildAnalog();
-    buildCelestial();
-    buildTimerFace();
+    // Each face is built on its own (see safely): one that fails stays blank,
+    // and the timer, alarm and stopwatch still work.
+    hgClock = safely(makeHourglass, '');
+    [buildRing, buildAnalog, buildCelestial, buildCelSeconds, buildTimerFace].forEach(function (build) { safely(build); });
     applyRoot();
     applyLanguage();
     wire();

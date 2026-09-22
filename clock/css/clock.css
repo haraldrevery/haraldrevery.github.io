@@ -8,6 +8,7 @@
      data-size     s | m | l
      data-seconds  true | false
      data-mode     clock | timer | alarm | stopwatch
+     data-perf     full | low                     (Settings > Performance)
    Colours only ever come from the tokens below, so a new theme is one block.
    ========================================================================== */
 
@@ -526,6 +527,47 @@ body {
 .pin-inner { fill: var(--bg); }
 
 /* ---------- Face: Celestial ---------- */
+/* .cel-sec: the seconds planet's own layer, placed and sized by clock.js
+   (buildCelSeconds), turning about the face's centre at its bottom. */
+.orbit-wrap { position: relative; }
+.orbit-wrap > svg { position: relative; }   /* the dial, over the sky */
+.cel-sec { position: absolute; transform-origin: 50% 100%; }
+
+/* The sky behind the dial (clock.js builds it, see "Sky" there): a disc 1.4
+   times the face, whose stars fade out towards its rim. Only transform and
+   opacity animate in it, which browsers do without repainting. No opacity on
+   .sky itself: the browser would then redraw the whole disc as one group on
+   every frame of every twinkle. On light backgrounds the stars are the ink
+   colour, a little fainter.
+   Where there is no room around the face for the whole disc (a phone, size
+   L), the face clips it instead of letting it make the page scroll; the cut
+   falls where the stars have faded. (hidden: for browsers without clip.) */
+.face-celestial { overflow: hidden; overflow: clip; }
+.sky { position: absolute; inset: -20%; pointer-events: none; color: var(--ink); }
+:root[data-theme="light"] .sky, :root[data-tone="light"] .sky { color: color-mix(in srgb, var(--ink) 60%, transparent); }
+.sky-turn { position: absolute; inset: 0; animation: sky-turn 1800s linear infinite; }
+@keyframes sky-turn { to { transform: rotate(-360deg); } }
+.sky svg { fill: currentColor; }
+.tw {
+    position: absolute;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 4px currentColor;
+    opacity: .5;
+    animation: twinkle 4s ease-in-out infinite alternate;   /* duration and delay: per star */
+}
+@keyframes twinkle { from { opacity: .08; } to { opacity: .95; } }
+/* Under the open event card the sky is blurred anyway; don't make the blur redo itself. */
+:root:has(#card-overlay.active) :is(.tw, .sky-turn) { animation-play-state: paused; }
+.meteor {
+    position: absolute;
+    left: 0; top: 0;
+    height: 1.5px;
+    border-radius: 1px;
+    background: linear-gradient(90deg, transparent, currentColor);
+    transform-origin: 100% 50%;          /* the head; clock.js moves and turns it */
+    opacity: 0;                          /* until its animation starts */
+}
 .orbit-path { fill: none; stroke: currentColor; stroke-width: .4; stroke-dasharray: .6 1.6; opacity: .32; }
 .star { fill: currentColor; }
 .planet-h { fill: currentColor; }
@@ -1070,9 +1112,22 @@ body {
     .timer-face { --tf-chrome: 4.5rem; }
 }
 
+/* ---------- Performance: Low (Settings) ----------
+   For older phones and computers, and the battery. clock.js stops the smooth
+   motion and the shooting stars; here the sky stops turning and twinkling,
+   and the glass surfaces lose their blur (a blur is worked out again
+   whenever what lies behind it changes) and turn nearly opaque instead. */
+:root[data-perf="low"] { --panel-bg: color-mix(in srgb, var(--bg) 92%, transparent); }
+:root[data-perf="low"] :is(.btn, .status-chip, .modes, .ring-banner, .settings-panel, .card-overlay) {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+:root[data-perf="low"] :is(.tw, .sky-turn) { animation: none; }
+
 @media (prefers-reduced-motion: reduce) {
     .view.active, .face { animation: none !important; }
     .hg-svg { transition: none; }
     .app.ringing .face .time-btn, .app.ringing-timer #timer-display, .app.ringing-timer .tf-time, .app.ringing-alarm #alarm-edit { animation: none; }
     .timer-face { animation: none; }
+    .sky-turn, .tw { animation: none !important; }
 }
