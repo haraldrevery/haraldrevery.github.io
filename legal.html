@@ -175,21 +175,33 @@
 <td>Persistent</td>
 </tr>
 <tr>
-<td>rvry-clock-card</td>
+<td>rvry-clock-card-v2</td>
 <td>LocalStorage</td>
-<td>Strictly Necessary: keeps the event card you are making on the clock page (opened by clicking the date) — its text, date, layout and a list of the images you added — so it is still there when you come back.</td>
+<td>Strictly Necessary: keeps the event card you are making on the clock page (opened by clicking the date) — its text, date, layout, text layers and a list of the images and fonts you added — so it is still there when you come back.</td>
 <td>Persistent</td>
 </tr>
 <tr>
-<td>rvry-clock-card-templates</td>
+<td>rvry-clock-card-templates-v2</td>
 <td>LocalStorage</td>
 <td>Strictly Necessary: the event card templates you save yourself on the clock page.</td>
+<td>Persistent</td>
+</tr>
+<tr>
+<td>rvry-clock-card, rvry-clock-card-templates</td>
+<td>LocalStorage</td>
+<td>Strictly Necessary: the same, saved by the first version of the event card (September 2026). They are only read, to carry your card and templates over to the current version.</td>
 <td>Persistent</td>
 </tr>
 <tr>
 <td>rvry-clock-card-images</td>
 <td>IndexedDB</td>
 <td>Strictly Necessary: stores images you add to an event card on the clock page. They never leave your browser; remove them with the ✕ on each image in the card's background picker.</td>
+<td>Persistent</td>
+</tr>
+<tr>
+<td>rvry-clock-card-fonts</td>
+<td>IndexedDB</td>
+<td>Strictly Necessary: stores fonts you add to an event card on the clock page. They never leave your browser; remove one with the bin button next to the font.</td>
 <td>Persistent</td>
 </tr>
 <tr>
