@@ -4109,6 +4109,10 @@ iframe.wait-autoplay {
 .faq-icon {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+.faq-toggle:focus-visible ~ .faq-question label {
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
+}
 .faq-toggle:checked ~ .faq-question {
   background-color: rgba(0, 0, 0, 0.02);
 }

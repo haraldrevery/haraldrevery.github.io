@@ -24,6 +24,9 @@ download.html
 # can never retrigger the watcher (see the search-index.json note below).
 eleventy_njk/download_hashes.json
 
+# Content-date cache written by eleventy_njk/sitemap.11tydata.js. Same reason.
+eleventy_njk/sitemap_dates.json
+
 # GENERATED from eleventy_njk/discography.njk. Same reason as index.html above.
 discography.html
 

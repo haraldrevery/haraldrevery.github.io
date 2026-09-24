@@ -1,0 +1,30 @@
+{
+  "/": {
+    "lastmod": "2026-09-07",
+    "fingerprint": "1802a5c5ff03074a97529a4a82c82fd80c78200a1f45982070bb2612ef213829"
+  },
+  "/about": {
+    "lastmod": "2026-09-13",
+    "fingerprint": "e6e7c3b90fd828314f5ccdde92482da475cdc4a53f6b74b413a442b157d399b5"
+  },
+  "/contact": {
+    "lastmod": "2026-09-07",
+    "fingerprint": "c29c74f4b1f0c79e3c0027579c9558c2a07dcf8660bfbf5a29949cfbc37cac9d"
+  },
+  "/download": {
+    "lastmod": "2026-09-07",
+    "fingerprint": "927452008378409c44d6867fd4150d2b09ab3071830054195fa11fc74df33a8f"
+  },
+  "/legal": {
+    "lastmod": "2026-09-24",
+    "fingerprint": "04c8639346f402382ab5f3587866e1c60c9b16872bce5910298d01d63f715059"
+  },
+  "/music": {
+    "lastmod": "2026-09-07",
+    "fingerprint": "21fce80d750f5332ebc35e7f9277744f96ee3832486bcc0d50b4a896f5e0caeb"
+  },
+  "/notebook": {
+    "lastmod": "2026-08-27",
+    "fingerprint": "b6f8af7b528bd01cab2e18b4ba30538513f181933336143656ca513ca1497121"
+  }
+}

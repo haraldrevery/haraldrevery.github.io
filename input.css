@@ -2484,6 +2484,18 @@ iframe.wait-autoplay {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Markup (about.njk): input.faq-toggle, then h3.faq-question > label, then
+   div.faq-answer, all siblings in that order. The h3 IS .faq-question so the
+   label can sit inside it: a heading inside a <label> is invalid HTML, and
+   Firefox Reader View dropped the questions. Every rule here matches on those
+   class names and that sibling order, so keep both. The checkbox is .sr-only,
+   not .hidden: display:none took it out of the tab order, and keyboard users
+   could not open an answer. Space toggles it; this shows where the focus is. */
+.faq-toggle:focus-visible ~ .faq-question label {
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
+}
+
 /* Optional: Add subtle background change when expanded */
 .faq-toggle:checked ~ .faq-question {
   background-color: rgba(0, 0, 0, 0.02);

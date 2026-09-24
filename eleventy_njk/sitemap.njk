@@ -3,46 +3,66 @@ permalink: /sitemap.xml
 eleventyExcludeFromCollections: true
 site_url: "https://haraldrevery.com"
 # Pages that are not in a collection, so they must be listed here. `loc` matches
-# each page's <link rel="canonical">. `file` is the SOURCE whose mtime gives
-# <lastmod> — for a generated page that is its .njk, never the built output:
-# Eleventy rewrites output on every build, which would churn <lastmod> forever.
+# each page's <link rel="canonical">.
+#
+# <lastmod> is the date the page's CONTENT last changed, from two things:
+#   sources  what the page's text is built from. When their content changes,
+#            the page gets that build's date (sitemap.11tydata.js explains how,
+#            and why not file modification times). Never nav/footer/base: chrome
+#            every page shares is not a content change.
+#   newest   collections the page LISTS; their newest item date counts too, so
+#            the home page moves when a post or release is added.
+# The later of the two wins. A new hand-written page must be added here with its
+# sources, or it is missing from the sitemap.
 staticPages:
   - loc: "/"
-    file: "eleventy_njk/home.njk"
+    sources: ["eleventy_njk/home.njk"]
+    newest: [notebook_posts, releases]
     changefreq: weekly
     priority: "1.0"
   - loc: "/music"
-    file: "eleventy_njk/music.njk"
+    sources: ["eleventy_njk/music.njk"]
     changefreq: weekly
     priority: "0.9"
   - loc: "/about"
-    file: "eleventy_njk/about.njk"
+    sources: ["eleventy_njk/about.njk"]
     changefreq: monthly
     priority: "0.8"
   - loc: "/contact"
-    file: "eleventy_njk/contact.njk"
+    sources: ["eleventy_njk/contact.njk"]
     changefreq: monthly
     priority: "0.8"
   - loc: "/notebook"
-    file: "notebook.html"
+    sources: ["eleventy_njk/blog.njk"]
+    newest: [notebook_posts]
     changefreq: weekly
     priority: "0.8"
   - loc: "/download"
-    file: "download.html"
+    # The file list is scanned off disk; its output is what visitors see change.
+    sources: ["eleventy_njk/download.njk", { data: "eleventy_njk/download.11tydata.js" }]
     changefreq: monthly
     priority: "0.6"
   - loc: "/legal"
-    file: "legal.html"
+    sources:
+      - "input_legal/legal.md"
+      - "input_legal/input_legal.11tydata.js"
+      - "input_legal/licenses"
+      - "eleventy_settings/legal.njk"
+      - "eleventy_settings/license_blocks.njk"
     changefreq: yearly
     priority: "0.5"
 ---
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 {%- for sp in staticPages %}
+{%- set dates = [] %}
+{%- set own = sitemapLastmod(sp.loc, sp.sources) %}
+{%- if own %}{% set pushed = dates.push(own) %}{% endif %}
+{%- for c in (sp.newest or []) %}{% if collections[c] and collections[c].length %}{% set pushed = dates.push(collections[c] | newestDate | isoDate) %}{% endif %}{% endfor %}
   <url>
     <loc>{{ site_url }}{{ sp.loc }}</loc>
-    <lastmod>{{ sp.file | fileModDate | isoDate }}</lastmod>
-    <changefreq>{{ sp.changefreq }}</changefreq>
+{% if dates.length %}    <lastmod>{{ dates | sort | last }}</lastmod>
+{% endif %}    <changefreq>{{ sp.changefreq }}</changefreq>
     <priority>{{ sp.priority }}</priority>
   </url>
 {%- endfor %}
@@ -72,7 +92,7 @@ staticPages:
 {#- <lastmod> for a generated index is the newest date of what it LISTS, never
     buildDate: buildDate changes every day the site is rebuilt, which rewrites
     sitemap.xml with no content change (git churn) and trains crawlers to
-    distrust the field. Same rule as the staticPages `file` mtimes above. -#}
+    distrust the field. Same rule as the staticPages content dates above. -#}
 {%- for t in collections.paginatedTagData %}
   <url>
     <loc>{{ site_url }}/notebook_pages/tag-{{ t.tag | slugify }}{% if t.pageNumber > 0 %}-page-{{ t.pageNumber + 1 }}{% endif %}</loc>
