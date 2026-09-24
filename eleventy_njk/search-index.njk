@@ -9,31 +9,31 @@ staticEntries:
     title: "Home"
     description: "Music, notes and interactive experiments by Harald Revery."
     tags: ["site"]
-  - url: "/music.html"
+  - url: "/music"
     title: "Music"
     description: "Listen to releases, singles and albums by Harald Revery."
     tags: ["site", "music"]
-  - url: "/discography.html"
+  - url: "/discography"
     title: "Discography"
     description: "Every release by Harald Revery, newest first."
     tags: ["site", "music"]
-  - url: "/notebook.html"
+  - url: "/notebook"
     title: "Notebook"
     description: "Personal notes, essays and interactive experiments on music, mathematics, physics and photography."
     tags: ["site"]
-  - url: "/about.html"
+  - url: "/about"
     title: "About"
     description: "About Harald Revery."
     tags: ["site"]
-  - url: "/contact.html"
+  - url: "/contact"
     title: "Contact"
     description: "Get in touch with Harald Revery."
     tags: ["site"]
-  - url: "/download.html"
+  - url: "/download"
     title: "Download"
     description: "Wallpapers, packs and other free downloads."
     tags: ["site"]
-  - url: "/legal.html"
+  - url: "/legal"
     title: "Legal"
     description: "Licensing, privacy and terms for haraldrevery.com."
     tags: ["site"]
@@ -47,12 +47,11 @@ staticEntries:
   Every string value must go through `| dump | safe` — dump alone gets
   HTML-entity-escaped by Nunjucks autoescape and corrupts the JSON.
 
-  URLs are the real file names ("/music.html"), the same as every other
-  internal link (nav.njk). The live site 301-redirects /foo.html to /foo (a
-  Cloudflare Redirect Rule, see information/SETUP.md "Deploying"), but a local
-  preview (VS Code Live Server) only finds /foo.html — a clean URL there is a
-  404. The canonical, sitemap and JSON-LD carry the clean URL, so search
-  engines still see one address.
+  URLs are clean ("/music", "/notebook_pages/x" via cleanUrl), the same as
+  every internal link and every canonical, sitemap <loc> and JSON-LD url: one
+  address per page. GitHub Pages and the Eleventy dev server (`npm start`)
+  serve /foo from foo.html; VS Code Live Server does not, so clicking through
+  the site there 404s (use `npm start` to preview navigation).
 
   To REMOVE search: delete this file (and the other files listed in search.njk),
   plus the generated /search-index.json at the repo root.
@@ -63,9 +62,9 @@ staticEntries:
 {"url":{{ p.url | dump | safe }},"title":{{ p.title | dump | safe }},"type":"page","date":"","description":{{ p.description | truncate(160) | dump | safe }},"tags":{{ p.tags | dump | safe }}}
 {%- endfor %}
 {%- for post in collections.notebook_posts %}{{ comma() }}
-{"url":{{ post.url | dump | safe }},"title":{{ post.data.title | dump | safe }},"type":"post","date":"{{ (post.data.updated or post.date) | isoDate }}","description":{{ (post.data.description or "") | truncate(160) | dump | safe }},"tags":{{ (post.data.tags or []) | dump | safe }}}
+{"url":{{ post.url | cleanUrl | dump | safe }},"title":{{ post.data.title | dump | safe }},"type":"post","date":"{{ (post.data.updated or post.date) | isoDate }}","description":{{ (post.data.description or "") | truncate(160) | dump | safe }},"tags":{{ (post.data.tags or []) | dump | safe }}}
 {%- endfor %}
 {%- for r in collections.releases %}{{ comma() }}
-{"url":{{ r.url | dump | safe }},"title":{{ r.name | dump | safe }},"type":"release","date":"{{ r.year }}","description":{{ (r.introduction or "") | truncate(160) | dump | safe }},"tags":{{ (r.genres or []) | dump | safe }}}
+{"url":{{ r.url | cleanUrl | dump | safe }},"title":{{ r.name | dump | safe }},"type":"release","date":"{{ r.year }}","description":{{ (r.introduction or "") | truncate(160) | dump | safe }},"tags":{{ (r.genres or []) | dump | safe }}}
 {%- endfor %}
 ]

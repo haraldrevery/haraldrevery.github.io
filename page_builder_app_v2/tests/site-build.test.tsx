@@ -195,6 +195,16 @@ describe("the published site", () => {
     expect(count(html, /← Back to Notebook/g)).toBe(backLinks);
   });
 
+  // The site links clean URLs (/notebook), the same address as each page's
+  // canonical. Comments are not counted: hand-written's is a /notebook.html
+  // fixture on purpose.
+  test.each(["plain", "hero", "untitled", "hand-written", "markdown-post"])(
+    "%s: no link to /notebook.html",
+    (slug) => {
+      expect(count(published(slug), /href="\/notebook\.html"/g)).toBe(0);
+    },
+  );
+
   test("a hero page gets no layout header — the hero is its header", () => {
     expect(published("hero")).not.toContain("mb-8 pb-8 border-b");
     expect(published("plain")).toContain("mb-8 pb-8 border-b");
@@ -233,5 +243,18 @@ describe("a body that carries its own ending", () => {
     expect(r.log).toContain("old-export.html");
     expect(r.log).toContain("NOTEBOOK FRONT PAGE");
     expect(r.log).toContain("export the page again");
+  });
+});
+
+describe("an ending copied by hand from a clean-URL page", () => {
+  const copied = makeSite({
+    "copied-ending.html": OLD_EXPORT.replace('href="/notebook.html"', 'href="/notebook"'),
+  });
+  const r = build(copied);
+
+  test("stops the build too", () => {
+    expect(r.ok).toBe(false);
+    expect(r.log).toContain("copied-ending.html");
+    expect(r.log).toContain("NOTEBOOK FRONT PAGE");
   });
 });

@@ -320,8 +320,17 @@ foreach ($r in $refs) {
     $clean = $url.Split('#')[0].Split('?')[0]        # drop #fragment and ?query
     if (-not $clean) { continue }
 
-    $res = Test-Ref (Resolve-RefPath $r.File $clean)
+    $path = Resolve-RefPath $r.File $clean
+    $res = Test-Ref $path
     if ($res.Status -eq 'exact') { continue }
+    # GitHub Pages serves /foo from foo.html, so a clean link (/about,
+    # /h/1dgraph - canonicals and redirect stubs use them) is a hit when
+    # <path>.html exists. Same rule as the shell twin.
+    if ($res.Status -eq 'missing') {
+        $asHtml = Test-Ref ($path + '.html')
+        if ($asHtml.Status -eq 'exact' -and $asHtml.IsFile) { continue }
+        if ($asHtml.Status -eq 'case') { $res = $asHtml }
+    }
 
     # One line per finding - Write-Section counts findings by list length, and
     # the shell twin counts them with wc -l, so a two-line entry here would

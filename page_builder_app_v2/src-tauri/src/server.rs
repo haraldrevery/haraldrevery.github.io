@@ -134,11 +134,22 @@ fn parse_range(req: &tiny_http::Request, len: u64) -> Option<(u64, u64)> {
 
 fn serve_static(req: tiny_http::Request, root: &std::path::Path, path: &str) {
     let rel = path.trim_start_matches('/');
-    let rel = if rel.is_empty() { "index.html" } else { rel };
     if rel.split(['/', '\\']).any(|c| c == "..") {
         let _ = req.respond(html_response("403".into(), 403));
         return;
     }
+    // GitHub Pages' lookup, so the site's clean links (/music, /notebook,
+    // /notebook_pages/x) work in the preview exactly as they do live: "" and
+    // "dir/" serve dir/index.html, and a path that is not a file is tried
+    // again as <path>.html (music.html wins over the music/ folder, as live).
+    let rel = if rel.is_empty() || rel.ends_with('/') {
+        format!("{rel}index.html")
+    } else if !root.join(rel).is_file() && root.join(format!("{rel}.html")).is_file() {
+        format!("{rel}.html")
+    } else {
+        rel.to_string()
+    };
+    let rel = rel.as_str();
     let file = root.join(rel);
     let (file, meta) = match fs::canonicalize(&file).ok().and_then(|f| {
         let m = fs::metadata(&f).ok()?;
@@ -299,6 +310,46 @@ mod tests {
         // Static serving is untouched, and the jail still holds.
         assert!(get(port, "/main.css").contains("body{}"));
         assert!(get(port, "/../../etc/passwd").starts_with("HTTP/1.1 403"));
+
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    /// The site links clean URLs (/music, /notebook_pages/x). GitHub Pages
+    /// serves them from x.html, preferring music.html over a music/ folder;
+    /// the preview must answer the same way or every nav link in it 404s.
+    #[test]
+    fn clean_urls_resolve_like_github_pages() {
+        let dir = std::env::temp_dir().join("pb_server_clean_urls");
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("music")).unwrap();
+        fs::create_dir_all(dir.join("clock")).unwrap();
+        fs::create_dir_all(dir.join("notebook_pages")).unwrap();
+        fs::write(dir.join("index.html"), "HOME").unwrap();
+        fs::write(dir.join("music.html"), "MUSIC PAGE").unwrap();
+        fs::write(dir.join("music").join("a.mp3"), "MP3").unwrap();
+        fs::write(dir.join("clock").join("index.html"), "CLOCK").unwrap();
+        fs::write(dir.join("notebook_pages").join("post.html"), "POST").unwrap();
+
+        let root: SharedRoot = Arc::new(RwLock::new(Some(dir.clone())));
+        let port = start(root, Arc::new(RwLock::new(None)));
+
+        let ok = |path: &str, body: &str| {
+            let r = get(port, path);
+            assert!(r.starts_with("HTTP/1.1 200"), "{path}: {r}");
+            assert!(r.ends_with(body), "{path}: {r}");
+        };
+        ok("/", "HOME");
+        ok("/music", "MUSIC PAGE"); // the page, not the folder of the same name
+        ok("/music.html", "MUSIC PAGE");
+        ok("/music/a.mp3", "MP3");
+        ok("/clock/", "CLOCK");
+        ok("/notebook_pages/post", "POST");
+        ok("/notebook_pages/post?t=1", "POST");
+        assert!(get(port, "/music").contains("text/html"));
+        // No page and no index.html: still a 404.
+        assert!(get(port, "/nope").starts_with("HTTP/1.1 404"));
+        assert!(get(port, "/music/").starts_with("HTTP/1.1 404"));
+        assert!(get(port, "/../index").starts_with("HTTP/1.1 403"));
 
         let _ = fs::remove_dir_all(&dir);
     }

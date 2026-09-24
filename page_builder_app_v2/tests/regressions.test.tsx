@@ -44,7 +44,7 @@ describe("a brand-new page can be previewed and exported", () => {
   test("exportText does not throw on root.props = {}", () => {
     expect(() => fullExport(EMPTY)).not.toThrow();
     // A body fragment now, not a document — base.njk adds the doctype.
-    expect(fullExport(EMPTY)).toContain('class="page-container extra_fade_effect"');
+    expect(fullExport(EMPTY)).toContain('class="page-container fade_effect"');
   });
 
   test("splitTags tolerates undefined and null", () => {

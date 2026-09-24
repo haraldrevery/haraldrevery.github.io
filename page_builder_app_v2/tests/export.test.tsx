@@ -196,7 +196,7 @@ describe("assembleDocument", () => {
     expect(fm).toContain("navScroll: true");
     // exactly one back link — the shell's header region is dropped
     expect(out.match(/← Back to Notebook/g)?.length).toBe(1);
-    expect(out).toContain("extra_fade_effect_long");
+    expect(out).toContain("fade_effect_long");
   });
 
   test("canonical drops the .html extension", () => {
@@ -243,7 +243,7 @@ describe("exportText", () => {
     expect(body).not.toContain("<!DOCTYPE");
     expect(body).not.toContain("<nav");
     expect(body).not.toContain("<footer");
-    expect(body).toContain('<div class="page-container extra_fade_effect">');
+    expect(body).toContain('<div class="page-container fade_effect">');
   });
 
   /*
@@ -346,14 +346,14 @@ describe("the editor shows the layout's header", () => {
     const out = root({ meta: meta({ title: "Editor Title" }), hasHero: false });
     expect(out).toContain("mb-8 pb-8 border-b");
     expect(out).toContain("Editor Title");
-    expect(out).toContain('<div class="page-container extra_fade_effect"><p>block</p></div>');
+    expect(out).toContain('<div class="page-container fade_effect"><p>block</p></div>');
   });
 
   test("not at all for a hero page, whose content column keeps pt-24", () => {
     setShell(shell);
     const out = root({ meta: meta(), hasHero: true, hero: { ...DEFAULT_HERO, title: "H" } });
     expect(out).not.toContain("mb-8 pb-8 border-b");
-    expect(out).toContain('<div class="page-container pt-24 extra_fade_effect">');
+    expect(out).toContain('<div class="page-container pt-24 fade_effect">');
   });
 
   test("and simply leaves it out until the shell has been read", () => {

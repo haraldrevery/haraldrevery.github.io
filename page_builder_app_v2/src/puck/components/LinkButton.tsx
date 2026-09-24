@@ -33,13 +33,13 @@ export type LinkAlign = "left" | "center" | "right";
 /*
  * Reveal timing.
  *
- * main.css `.extra_fade_effect` (1.2s from page load) is what music.html puts
+ * main.css `.fade_effect` (1.2s from page load) is what music.html puts
  * on the MORE button — and it is deliberately NOT an option here, because
- * the content column already wraps ALL exported content in `extra_fade_effect`
+ * the content column already wraps ALL exported content in `fade_effect`
  * (contentColumnClass in export.ts). A second copy nested inside it starts at
  * the same moment and would change nothing on screen.
  *
- * `.extra_fade_effect_long` IS worth offering: the same 1.2s fade, delayed by
+ * `.fade_effect_long` IS worth offering: the same 1.2s fade, delayed by
  * 2.8s, so the button arrives after the copy around it has settled. Both are
  * neutralised in edit mode by SiteFrame's FRAME_CSS, so the block stays visible
  * while you work and plays for real under Puck's preview mode (Ctrl/Cmd+I).
@@ -48,7 +48,7 @@ export type LinkReveal = "none" | "delayed";
 
 const REVEAL_CLASS: Record<LinkReveal, string> = {
   none: "",
-  delayed: "extra_fade_effect_long",
+  delayed: "fade_effect_long",
 };
 
 /// The anchor is `inline-block`, so text-align on the wrapper positions it. No

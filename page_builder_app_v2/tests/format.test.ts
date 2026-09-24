@@ -82,13 +82,13 @@ describe("formatHtml is lossless", () => {
 
   test("a two-column block", () => {
     assertLossless(
-      '<section class="extra_fade_effect mb-16"><div class="grid md:grid-cols-2 gap-16 items-center" style="row-gap:2rem"><div><div class="prose dark:prose-invert max-w-none"><p>Left.</p></div></div><div><div class="prose dark:prose-invert max-w-none"><h2>Right</h2></div></div></div></section>',
+      '<section class="fade_effect mb-16"><div class="grid md:grid-cols-2 gap-16 items-center" style="row-gap:2rem"><div><div class="prose dark:prose-invert max-w-none"><p>Left.</p></div></div><div><div class="prose dark:prose-invert max-w-none"><h2>Right</h2></div></div></div></section>',
     );
   });
 
   test("a full hero", () => {
     assertLossless(
-      '<section class="release-hero"><div class="release-hero__backdrop" style="background-image:url(&#x27;/photos/a_min.jpg&#x27;)"></div><div class="release-hero__scrim"></div><div class="page-container release-hero__inner"><div class="extra_fade_effect"><p class="release-hero__kicker">K</p><h1 class="release-hero__title">T</h1><p class="release-hero__tagline">L</p></div></div></section>',
+      '<section class="release-hero"><div class="release-hero__backdrop" style="background-image:url(&#x27;/photos/a_min.jpg&#x27;)"></div><div class="release-hero__scrim"></div><div class="page-container release-hero__inner"><div class="fade_effect"><p class="release-hero__kicker">K</p><h1 class="release-hero__title">T</h1><p class="release-hero__tagline">L</p></div></div></section>',
     );
   });
 

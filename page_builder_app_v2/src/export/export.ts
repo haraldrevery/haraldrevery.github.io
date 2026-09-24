@@ -103,7 +103,7 @@ export const layoutAddsHeader = (root: Partial<RootProps>): boolean => !root.has
  * layout's ending brings its own gap above the date rule.
  */
 export const contentColumnClass = (hasHero: boolean): string =>
-  `page-container${hasHero ? " pt-24" : ""} extra_fade_effect`;
+  `page-container${hasHero ? " pt-24" : ""} fade_effect`;
 
 /// Always double-quote. Deciding *when* to quote is what kept going wrong: a
 /// bare value breaks on ':' and '#', on indicator characters (* & ! % @ ` | >),

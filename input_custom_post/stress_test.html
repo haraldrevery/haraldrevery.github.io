@@ -50,7 +50,7 @@ draft: true
   SET draft: true BEFORE PUSHING, or this ships to the live site.
 -->
 
-<div class="post-container extra_fade_effect">
+<div class="post-container fade_effect">
 
   <!-- ===== Text — the workhorse prose block =====
        ONE <article class="prose"> holding headings, copy and rules together.
@@ -61,7 +61,7 @@ draft: true
     <h2>Text block</h2>
     <p>
       Body copy, with <strong>bold</strong>, <em>italic</em>,
-      <a href="/notebook.html">an internal link</a>,
+      <a href="/notebook">an internal link</a>,
       <a href="https://example.com" target="_blank" rel="noopener noreferrer">an external one</a>
       and <code>inline_code()</code>.
     </p>
@@ -278,7 +278,7 @@ if (x) console.log("fenced code block");</code></pre>
        blocks, so the row gap is pinned tighter inline (md:gap-* is not in the
        compiled CSS). Children carry NO spacing class of their own — the
        section owns the gap — and nested prose is a <div>, not an <article>. -->
-  <section class="extra_fade_effect mb-16">
+  <section class="fade_effect mb-16">
     <div class="grid md:grid-cols-2 gap-16 items-center" style="row-gap:2rem">
       <div>
         <div class="prose dark:prose-invert max-w-none">
@@ -411,7 +411,7 @@ if (x) console.log("fenced code block");</code></pre>
         <span class="sr-only">Example two</span>
         <div class="w-8 h-8 flex items-center justify-center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v10M7 12h10"></path></svg></div>
       </a>
-      <a class="transition-opacity duration-300 hover:opacity-50" href="/music.html">
+      <a class="transition-opacity duration-300 hover:opacity-50" href="/music">
         <span class="sr-only">Music</span>
         <div class="w-8 h-8 flex items-center justify-center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v10M7 12h10"></path></svg></div>
       </a>
@@ -523,15 +523,15 @@ if (x) console.log("fenced code block");</code></pre>
        Character for character the anchor on index.html and music.html. The
        anchor is inline-block, so text-align on the WRAPPER positions it —
        there is no flex row, because justify-end is not in the compiled CSS
-       and text-right is. extra_fade_effect_long delays the reveal by 2.8s. -->
+       and text-right is. fade_effect_long delays the reveal by 2.8s. -->
   <section class="mb-16">
-    <div><a href="/music.html" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">LEFT →</a></div>
+    <div><a href="/music" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">LEFT →</a></div>
   </section>
   <section class="mb-16">
-    <div class="text-center"><a href="/about.html" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">CENTRED →</a></div>
+    <div class="text-center"><a href="/about" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">CENTRED →</a></div>
   </section>
   <section class="mb-16">
-    <div class="text-right extra_fade_effect_long"><a href="/discography.html" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">RIGHT, DELAYED →</a></div>
+    <div class="text-right fade_effect_long"><a href="/discography" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">RIGHT, DELAYED →</a></div>
   </section>
 
   <!-- ===== The spacing scale =====

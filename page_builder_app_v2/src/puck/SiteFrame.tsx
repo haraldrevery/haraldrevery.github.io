@@ -37,8 +37,8 @@ const usePuckState = createUsePuck();
 /// so Puck's built-in Ctrl/Cmd+I plays the real animations — that IS v1's
 /// edit/preview mode toggle, for free.
 const FRAME_CSS = `
-html.pb-editing .extra_fade_effect,
-html.pb-editing .extra_fade_effect_long,
+html.pb-editing .fade_effect,
+html.pb-editing .fade_effect_long,
 html.pb-editing .word_animation,
 html.pb-editing #scroll-prompt {
   animation: none !important;

@@ -65,7 +65,7 @@ For the text editor I used CodeMirror, markdown-it and KaTeX to get the markdown
 
 Personal setup for this project:
 * Windows 10 with Firefox, Edge Zen with JavaScript blocker
-* VS Code with the Live Server extension by Ritwick Dey
+* VS Code with the Live Server extension by Ritwick Dey (fine for looking at one page; but the site links clean URLs like `/about`, which Live Server cannot resolve, so clicking between pages there 404s. To click through the site locally, use `npm start` (http://localhost:8080), which serves `/about` from `about.html` the way GitHub Pages does)
 * Tailwind CSS v4.3.1  (tailwindcss-windows-x64.exe renamed to tw.exe; same version as tailwindcss-linux-x64)
 
 On windows, be in the folder and run:

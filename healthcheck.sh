@@ -246,11 +246,16 @@ while IFS=$'\t' read -r f line url; do
     fi
 
     [ -e "$path" ] && continue
+    # GitHub Pages serves /foo from foo.html, so a clean link (/about,
+    # /h/1dgraph - canonicals and redirect stubs use them) is a hit when
+    # <path>.html exists. A trailing-slash /foo/ already passed as a directory.
+    [ -f "$path.html" ] && continue
 
     # Exists under different casing? Fine on Windows, 404 on GitHub Pages.
     # One line per finding - section() counts findings with wc -l, so a
     # two-line entry here reported (and charged to the error count) double.
     hit=$(resolve_ci "$path")
+    [ -z "$hit" ] && hit=$(resolve_ci "$path.html")
     if [ -n "$hit" ]; then
         printf '%s:%s  %s  ->  exists as %s\n' "$f" "$line" "$url" "${hit#./}" >> "$TMP/case"
     else
@@ -394,6 +399,8 @@ sort -u -o "$TMP/live_tags"  "$TMP/live_tags"
 
 for f in notebook_pages/*.html; do
     [ -f "$f" ] || continue
+    # Moved-page stubs from eleventy_njk/redirects.njk have no source by design.
+    grep -qi 'http-equiv="refresh"' "$f" && continue
     b=$(basename "$f" .html)
     case "$b" in
         notebook-page-*)  # index pagination - driven by post count, not by a source

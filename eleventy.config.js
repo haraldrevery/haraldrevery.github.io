@@ -408,7 +408,9 @@ module.exports = function(eleventyConfig) {
   // naming the file, rather than publish the duplicate. Comments are stripped
   // first, so a note that merely MENTIONS the link (_new_post.html has one) is
   // not a match. The link text is post_chrome.njk's; change both together.
-  const OWN_ENDING = /<a\b[^>]*\bhref="\/notebook\.html"[^>]*>\s*←\s*NOTEBOOK FRONT PAGE\s*<\/a>/i;
+  // Either href form: old builder exports say /notebook.html, and an ending
+  // copied by hand from a page linking the clean /notebook must be caught too.
+  const OWN_ENDING = /<a\b[^>]*\bhref="\/notebook(?:\.html)?"[^>]*>\s*←\s*NOTEBOOK FRONT PAGE\s*<\/a>/i;
   if (fs.existsSync(CUSTOM_POST_DIR)) {
     const seen = new Map();
     for (const file of fs.readdirSync(CUSTOM_POST_DIR).filter((f) => f.endsWith(".html")).sort()) {
@@ -481,127 +483,29 @@ module.exports = function(eleventyConfig) {
 
   eleventyConfig.setLibrary("md", markdownLibrary);
 
-  // 2. Collection: Get all posts from input_markdown folder AND input_custom_html_pages folder
-  eleventyConfig.addCollection("notebook_posts", function(collectionApi) {
-    // Get markdown posts from input_markdown directory (filter out drafts)
-    const markdownPosts = collectionApi.getAll().filter(item => {
-        return isTemplatePost(item);
-    });
-    
-    // Get HTML files from input_custom_html_pages directory (as virtual items for the collection)
-    let htmlPosts = [];
-    const htmlPagesDir = HTML_PAGES_DIR;
-    
-    if (fs.existsSync(htmlPagesDir)) {
-      const files = fs.readdirSync(htmlPagesDir).filter(file => file.endsWith('.html'));
-      
-      htmlPosts = files.map(file => {
-        const filePath = path.join(htmlPagesDir, file);
-        const content = fs.readFileSync(filePath, 'utf8');
-        const parsed = matter(content);
-        
-        // Skip files with draft: true
-        if (parsed.data.draft === true) {
-          return null;
-        }
-        
-        const postDate = parsed.data.date
-          ? new Date(parsed.data.date)
-          : fallbackPostDate(filePath, file);
+  // 2. Collections: the notebook's posts and its tags.
+  //
+  // input_custom_html_pages/ files are not templates (the eleventy.before hook
+  // copies them verbatim), so each becomes a virtual item shaped like an
+  // Eleventy one. Read here once, for all three collections below: they used to
+  // carry three copies of this reader, and a fix to one never reached the others.
+  // `inputPath` is only there so a build error can name the file.
+  const htmlPagePosts = () => {
+    if (!fs.existsSync(HTML_PAGES_DIR)) return [];
+    return fs.readdirSync(HTML_PAGES_DIR)
+      .filter(file => file.endsWith('.html'))
+      .map(file => {
+        const filePath = path.join(HTML_PAGES_DIR, file);
+        const parsed = matter(fs.readFileSync(filePath, 'utf8'));
+        if (parsed.data.draft === true) return null;   // Skip files with draft: true
 
-        // Create a virtual collection item that looks like a real Eleventy item
-        const item = {
-          url: parsed.data.permalink || `/notebook_pages/${file}`,
-          data: {
-            title: parsed.data.title || "Untitled",
-            date: postDate,
-            tags: parsed.data.tags || [],
-            image: parsed.data.image || null,
-            description: parsed.data.description || null
-          },
-          date: postDate
-        };
-
-        return item;
-      }).filter(item => item !== null); // Remove null items (drafts)
-    }
-    
-    // Combine both arrays and sort by date (newest first)
-    return [...markdownPosts, ...htmlPosts].sort((a, b) => b.date - a.date);
-  });
-
-  // NEW: Collection for all unique tags
-  eleventyConfig.addCollection("allTags", function(collectionApi) {
-    const tagSet = new Set();
-    
-    // Get all notebook posts (filter out drafts)
-    const posts = collectionApi.getAll().filter(item => {
-      return isTemplatePost(item);
-    });
-    
-    // Also check input_custom_html_pages for tags
-    const htmlPagesDir = HTML_PAGES_DIR;
-    if (fs.existsSync(htmlPagesDir)) {
-      const files = fs.readdirSync(htmlPagesDir).filter(file => file.endsWith('.html'));
-      
-      files.forEach(file => {
-        const filePath = path.join(htmlPagesDir, file);
-        const content = fs.readFileSync(filePath, 'utf8');
-        const parsed = matter(content);
-        
-        // Skip files with draft: true
-        if (parsed.data.draft === true) {
-          return;
-        }
-        
-        if (parsed.data.tags && Array.isArray(parsed.data.tags)) {
-          parsed.data.tags.forEach(tag => tagSet.add(tag));
-        }
-      });
-    }
-    
-    // Collect tags from markdown posts
-    posts.forEach(item => {
-      if (item.data.tags && Array.isArray(item.data.tags)) {
-        item.data.tags.forEach(tag => tagSet.add(tag));
-      }
-    });
-    
-    // Return sorted array of tags
-    return Array.from(tagSet).sort();
-  });
-
-  // NEW: Collection for paginated tag data
-  eleventyConfig.addCollection("paginatedTagData", function(collectionApi) {
-    const allTags = [];
-    const tagSet = new Set();
-    const allPosts = collectionApi.getAll().filter(item => {
-      return isTemplatePost(item);
-    });
-    
-    // Also check input_custom_html_pages
-    const htmlPagesDir = HTML_PAGES_DIR;
-    let htmlPosts = [];
-    
-    if (fs.existsSync(htmlPagesDir)) {
-      const files = fs.readdirSync(htmlPagesDir).filter(file => file.endsWith('.html'));
-      
-      htmlPosts = files.map(file => {
-        const filePath = path.join(htmlPagesDir, file);
-        const content = fs.readFileSync(filePath, 'utf8');
-        const parsed = matter(content);
-        
-        // Skip files with draft: true
-        if (parsed.data.draft === true) {
-          return null;
-        }
-        
         const postDate = parsed.data.date
           ? new Date(parsed.data.date)
           : fallbackPostDate(filePath, file);
 
         return {
           url: parsed.data.permalink || `/notebook_pages/${file}`,
+          inputPath: filePath,
           data: {
             title: parsed.data.title || "Untitled",
             date: postDate,
@@ -611,41 +515,83 @@ module.exports = function(eleventyConfig) {
           },
           date: postDate
         };
-      }).filter(item => item !== null); // Remove null items (drafts)
-    }
-    
-    const combinedPosts = [...allPosts, ...htmlPosts].sort((a, b) => b.date - a.date);
-    
-    // Collect all tags
-    combinedPosts.forEach(post => {
-      if (post.data.tags && Array.isArray(post.data.tags)) {
-        post.data.tags.forEach(tag => tagSet.add(tag));
+      })
+      .filter(item => item !== null);
+  };
+
+  // Every published post (template posts + the virtual items), newest first.
+  const allNotebookPosts = (collectionApi) => [
+    ...collectionApi.getAll().filter(isTemplatePost),
+    ...htmlPagePosts(),
+  ].sort((a, b) => b.date - a.date);
+
+  // Tags are grouped by the URL they publish to, notebook_pages/tag-<slug>.html,
+  // not by spelling. Grouping by spelling put "Photography" and "photography"
+  // in two groups that both wrote tag-photography.html, and Eleventy stopped the
+  // whole build with a DuplicatePermalinkOutputError naming only blog-tag.njk.
+  // Now a difference in case or surrounding space is one tag, shown lowercase
+  // (the chips are uppercased by CSS anyway). Two genuinely different tags that
+  // still share a slug ("c++" and "c#" both slugify to "c"), or a tag with no
+  // URL-safe characters at all, stop the build with a message naming the posts.
+  const tagGroups = (posts) => {
+    const groups = new Map();   // slug -> { tag, slug, posts }
+    const where = (post) => post.inputPath || post.url;
+    for (const post of posts) {
+      const raw = post.data.tags;
+      const tags = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+      const counted = new Set();   // a post listing one tag twice is one post
+      for (const t of tags) {
+        const tag = String(t).trim().toLowerCase();
+        const slug = slugify(tag);
+        if (!slug) {
+          throw new Error(
+            `${where(post)}: the tag "${t}" has no letters or digits a URL can use ` +
+            `(slugify keeps a-z, 0-9, "_" and "-"), so it has no tag page to go to. Rename it.`
+          );
+        }
+        let g = groups.get(slug);
+        if (!g) {
+          g = { tag, slug, posts: [] };
+          groups.set(slug, g);
+        } else if (g.tag !== tag) {
+          throw new Error(
+            `The tags "${g.tag}" (${where(g.posts[0])}) and "${tag}" (${where(post)}) ` +
+            `both publish to notebook_pages/tag-${slug}.html. Use one spelling for both.`
+          );
+        }
+        if (!counted.has(slug)) { g.posts.push(post); counted.add(slug); }
       }
-    });
-    
-    // For each tag, create paginated data
+    }
+    return [...groups.values()].sort((a, b) => (a.tag < b.tag ? -1 : a.tag > b.tag ? 1 : 0));
+  };
+
+  eleventyConfig.addCollection("notebook_posts", function(collectionApi) {
+    return allNotebookPosts(collectionApi);
+  });
+
+  // Every tag in use, sorted, one entry per tag page.
+  eleventyConfig.addCollection("allTags", function(collectionApi) {
+    return tagGroups(allNotebookPosts(collectionApi)).map(g => g.tag);
+  });
+
+  // One entry per tag page (a tag with more than postsPerPage posts gets several).
+  eleventyConfig.addCollection("paginatedTagData", function(collectionApi) {
+    const allTags = [];
     const postsPerPage = 40;
-    Array.from(tagSet).sort().forEach(tag => {
-      const taggedPosts = combinedPosts.filter(post => {
-        return post.data.tags && post.data.tags.includes(tag);
-      });
-      
-      const totalPages = Math.ceil(taggedPosts.length / postsPerPage);
-      
+    for (const { tag, posts } of tagGroups(allNotebookPosts(collectionApi))) {
+      const totalPages = Math.ceil(posts.length / postsPerPage);
       for (let i = 0; i < totalPages; i++) {
         const startIdx = i * postsPerPage;
-        const endIdx = startIdx + postsPerPage;
         allTags.push({
           tag: tag,
-          posts: taggedPosts.slice(startIdx, endIdx),
+          posts: posts.slice(startIdx, startIdx + postsPerPage),
           pageNumber: i,
           totalPages: totalPages,
           isFirstPage: i === 0,
           isLastPage: i === totalPages - 1
         });
       }
-    });
-    
+    }
     return allTags;
   });
 
@@ -671,9 +617,14 @@ module.exports = function(eleventyConfig) {
   });
 
   // NEW: Filter to get posts by tag
+  // Matches on the slug, like tagGroups above, so "Photography" finds posts
+  // tagged "photography" (collections.allTags holds the lowercase form).
   eleventyConfig.addFilter("filterByTag", (posts, tag) => {
+    const want = slugify(String(tag).trim().toLowerCase());
     return posts.filter(post => {
-      return post.data.tags && post.data.tags.includes(tag);
+      const t = post.data.tags;
+      return (Array.isArray(t) ? t : (t ? [t] : []))
+        .some(x => slugify(String(x).trim().toLowerCase()) === want);
     });
   });
 
@@ -729,8 +680,10 @@ module.exports = function(eleventyConfig) {
 
   // Strip a trailing ".html" so every emitted URL (canonical, og:url, sitemap
   // <loc>) is the clean URL. GitHub Pages answers both /foo and /foo.html with
-  // a 200; a Cloudflare Redirect Rule in front of it 301s /foo.html -> /foo so
-  // only the clean one survives (information/SETUP.md, "Deploying"). Leaves "/"
+  // a 200. A Cloudflare Redirect Rule 301ing /foo.html -> /foo is DOCUMENTED in
+  // information/SETUP.md ("Deploying") but was NOT live when checked on
+  // 2026-09-24 (curl -sI https://haraldrevery.com/about.html -> 200), so today
+  // only the canonical tag tells crawlers which of the two to keep. Leaves "/"
   // and already-clean URLs untouched.
   eleventyConfig.addFilter("cleanUrl", (url) => {
     return typeof url === "string" ? url.replace(/\.html$/, "") : url;
@@ -872,11 +825,9 @@ module.exports = function(eleventyConfig) {
   // script-safe MusicAlbum string built entirely from the input_release JSON,
   // linked to the canonical artist entity via byArtist @id. Emit with `| safe`.
   eleventyConfig.addFilter("musicAlbumLd", (release) => {
-    // Clean URL, matching <link rel="canonical"> and the sitemap <loc>.
-    // The live site 301s /foo.html -> /foo (Cloudflare Redirect Rule, see the
-    // cleanUrl filter), so a schema.org `url` still carrying ".html" names a
-    // redirect rather than the canonical page (articleLd already strips it;
-    // these two had drifted).
+    // Clean URL, matching <link rel="canonical"> and the sitemap <loc>, so a
+    // schema.org `url` never names the non-canonical ".html" twin (see the
+    // cleanUrl filter; articleLd already strips it - these two had drifted).
     const url = SITE_ORIGIN + String(release.url || "").replace(/\.html$/, "");
     const relTypeMap = { Single: "SingleRelease", EP: "EPRelease" };
     const obj = {
@@ -893,8 +844,12 @@ module.exports = function(eleventyConfig) {
     if (datePublished) obj.datePublished = datePublished;
     if (Array.isArray(release.genres) && release.genres.length) obj.genre = release.genres;
 
-    const links = release.streaming ? Object.values(release.streaming).filter(Boolean) : [];
-    if (links.length) obj.sameAs = links;
+    // No `sameAs` from release.streaming. Those links are the ARTIST's profile
+    // pages (open.spotify.com/artist/..., music.apple.com/.../artist/...), and
+    // sameAs asserts "this entity IS that page" - every release was claiming to
+    // be the artist. The artist's sameAs list lives on the MusicGroup in
+    // index.html. If per-release links (a Spotify /album/ URL, say) are ever
+    // added, give them their own field and emit that here, never `streaming`.
 
     const tracks = Array.isArray(release.tracklist) ? release.tracklist : [];
     if (tracks.length) {

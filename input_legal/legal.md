@@ -38,7 +38,7 @@ Information provided in accordance with the Swedish Electronic Commerce Act (200
 **Site Owner:** Harald Mark Thirslund  
 **Trading As:** Harald Revery™  
 **Location:** Gothenburg, Sweden  
-**Contact:** [Contact Page](/contact.html) or [contact@haraldrevery.com](mailto:contact@haraldrevery.com)
+**Contact:** [Contact Page](/contact) or [contact@haraldrevery.com](mailto:contact@haraldrevery.com)
 
 ## 2\. Intellectual Property Rights
 
@@ -58,7 +58,7 @@ In accordance with the Swedish Electronic Communications Act, we provide informa
 
 | Name | Type | Purpose | Duration |
 | --- | --- | --- | --- |
-| rvry-theme | LocalStorage | Strictly Necessary: remembers your light/dark preference in the ASCII tool ([/notebook_pages/rvry_ascii](/rvry_ascii/rvry_ascii.html)). | Persistent |
+| rvry-theme | LocalStorage | Strictly Necessary: remembers your light/dark preference in the ASCII tool ([/notebook_pages/rvry_ascii](/rvry_ascii/rvry_ascii)). | Persistent |
 | rvry-tab | LocalStorage | Strictly Necessary: remembers the last tab you had open in the ASCII tool. | Persistent |
 | rvry-settings | LocalStorage | Strictly Necessary: remembers the settings you chose in the ASCII tool. | Persistent |
 | rvry-clock-settings | LocalStorage | Strictly Necessary: remembers the look you chose on the clock page ([/clock/](/clock/)) — face, theme (including colours you picked), language, time format and background. | Persistent |
@@ -207,7 +207,7 @@ We reserve the right to modify, suspend, or discontinue any part of this website
 The music available on this website is provided for **personal, non-commercial streaming only**. By accessing the audio player and streaming music on this site, you agree to the following:
 
 - **No Downloading or Redistribution:** You may not download, extract, copy, redistribute, or share the audio files made available through the streaming player. The music is intended solely for online listening through the website's interface. Nothing in this clause limits any mandatory right you may have under applicable copyright law, including the private copying exception under 12 § of the Swedish Copyright Act (1960:729).
-- **Download Section (Personal Use):** Files offered in the [Download section](/download.html) of this website — such as wallpapers — are provided free of charge for your personal, non-commercial use, and are exempt from the no-downloading rule above. You may download them, keep them, and use them privately, for example as a wallpaper on your own devices. You may not sell, redistribute, republish, or bundle them, use them for any commercial purpose, or present them as your own work. Where a downloaded file is supplied with its own licence or readme, that document governs; otherwise these terms apply.
+- **Download Section (Personal Use):** Files offered in the [Download section](/download) of this website — such as wallpapers — are provided free of charge for your personal, non-commercial use, and are exempt from the no-downloading rule above. You may download them, keep them, and use them privately, for example as a wallpaper on your own devices. You may not sell, redistribute, republish, or bundle them, use them for any commercial purpose, or present them as your own work. Where a downloaded file is supplied with its own licence or readme, that document governs; otherwise these terms apply.
 - **No Commercial Use:** You may not use the music streamed on this website for any commercial purpose, including but not limited to: advertising, public performances, film/video production, or any revenue-generating activity, without obtaining explicit written permission and proper licensing from Harald Mark Thirslund.
 - **Personal Use Only:** The streaming service is provided for your personal enjoyment. You may not publicly broadcast, perform, or display the music to audiences.
 - **Technical Limitations:** The website's audio player is provided as a convenience for promotional and demonstration purposes. We do not guarantee uninterrupted access to streaming services, compatibility with all devices or browsers, or any specific audio quality.

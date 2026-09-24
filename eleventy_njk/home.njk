@@ -168,7 +168,7 @@ eleventyExcludeFromCollections: true
                      Discover the evolution of Harald Revery's soundscape. Tracks tailormade made for unforgettable raves and festivals. Beyond his signature productions lies a collection of singular tracks that capture a wide range of sonics. Whether built for the peak-time dancefloor or a moment of quiet reflection, these pieces are designed to soundtrack the many chapters of life.
                   </p>
   <div class="pt-6">
-        <a href="music.html" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">
+        <a href="/music" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">
           MUSIC →
         </a>
       </div>
@@ -207,7 +207,7 @@ eleventyExcludeFromCollections: true
                  Beyond the strobe lights, the deep beats, and the driving melodies lies the vision that brings the rave to life. From the first note to the final drop, discover the artist behind the mixer.
   </p>
   <div class="pt-6">
-        <a href="about.html" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">
+        <a href="/about" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">
           ABOUT →
         </a>
       </div>
@@ -225,7 +225,7 @@ eleventyExcludeFromCollections: true
                 {# The logo mark and the compass rose as a pair, sized by .symbol-pair
                    in input.css. Only one .page-container wrapper: the old markup
                    nested two, compounding to ~56% of an already-halved column. #}
-                <div class="symbol-pair extra_fade_effect">
+                <div class="symbol-pair fade_effect">
 
                   <!-- Decorative logo mark: draws in, fills, fades out, loops; grows on hover
                        (pure CSS, see input.css). The wrapper is the hover target. -->
@@ -290,11 +290,11 @@ eleventyExcludeFromCollections: true
                                No nested .page-container here: it is 75% inside an
                                already-halved column, which the compass could absorb but
                                four cards cannot. #}
-                            <div class="extra_fade_effect">
+                            <div class="fade_effect">
                               <div class="grid grid-cols-2 gap-4 md:gap-6">
                                 {%- for post in collections.notebook_posts | limit(4) %}
                                 <article class="group">
-                                  <a href="{{ post.url }}" class="block">
+                                  <a href="{{ post.url | cleanUrl }}" class="block">
                                     <div class="aspect-video bg-neutral-200 dark:bg-neutral-800 rounded-lg overflow-hidden mb-3">
                                       {% if post.data.image %}
                                       <img src="{{ post.data.image }}" alt="{{ post.data.title }}"
@@ -331,7 +331,7 @@ eleventyExcludeFromCollections: true
                           Read the thoughs and ideas, explore the Harald Revery side projects and the other endeavours outside the music.
                         </p>
                       <div class="pt-6">
-                          <a href="notebook.html" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">
+                          <a href="/notebook" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">
                           NOTEBOOK →
                         </a>
                       </div>

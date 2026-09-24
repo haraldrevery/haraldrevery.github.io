@@ -440,7 +440,7 @@ export const config: Config<{ components: Components; root: RootProps }> = {
         label: { type: "text", label: "Label (the site writes these in CAPS)" },
         href: {
           type: "text",
-          label: "Link target (music.html, /notebook.html, https://…)",
+          label: "Link target (/music, /notebook, https://…)",
         },
         arrow: onOff("Trailing arrow"),
         align: {

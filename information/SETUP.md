@@ -413,10 +413,10 @@ no manual editing. It covers:
 - every notebook post, every tag page
 - the discography and every release page
 
-URLs are emitted **without** the `.html` suffix via the `cleanUrl` filter,
-matching the clean URLs the live site redirects to (a Cloudflare Redirect Rule
-301s `/foo.html` → `/foo`; see Deploying). Keep each page's
-`<link rel="canonical">` consistent with this.
+URLs are emitted **without** the `.html` suffix via the `cleanUrl` filter.
+Keep each page's `<link rel="canonical">` consistent with this. The Cloudflare
+Redirect Rule meant to 301 `/foo.html` → `/foo` (see Deploying) was **not live**
+when checked on 2026-09-24, so both forms currently answer 200.
 
 **When you add a new hand-written page, add it to `sitemap.njk`'s
 `staticPages` list** — Eleventy ignores those pages, so it cannot discover
@@ -461,34 +461,45 @@ The site is served by **GitHub Pages** (this repo's root, custom domain from
 `CNAME`) with **Cloudflare** in front as proxy/CDN. `_headers` and
 `wrangler.jsonc` are Cloudflare Pages/Workers files and do nothing here.
 
-GitHub Pages answers both `/foo` and `/foo.html` with a 200, so the redirects
-live in the Cloudflare dashboard (**Rules → Redirect Rules**), not in this repo.
-Each is a "Wildcard pattern" rule, status 301, "Preserve query string" on, and
-rule 8 must sit above rule 9:
+GitHub Pages answers both `/foo` and `/foo.html` with a 200 and cannot send a
+real 301 itself. Redirects therefore come in two kinds.
+
+**Moved pages: stub pages generated from the repo.** Every address that was
+once published and has since moved is listed in `eleventy_njk/redirects.njk`,
+which writes a small page at the old address: an instant meta refresh plus a
+canonical to the new one, which Google treats as a permanent redirect. **Moving
+or renaming a published page means adding a row there**, or its old address
+becomes a 404. Live since the build of 2026-09-24:
+
+| Old address | New address |
+|---|---|
+| `/notebook_pages/1dgraph` | `/h/1dgraph` |
+| `/notebook_pages/2dphaseportrait` | `/h/2dphaseportrait` |
+| `/notebook_pages/clock_and_date` | `/clock/` |
+| `/notebook_pages/rvry_ascii` | `/rvry_ascii/rvry_ascii` |
+| `/notebook_pages/revery_notebook_info` | `/revery_notebook/` |
+| `/notebook_pages/things-to-do-with-llm` | `/notebook_pages/things-to-do-with-llms` |
+
+`/h/clock_and_date` is deliberately not in that list: `h/clock_and_date.html` is
+kept as a full, byte-identical copy of `clock/index.html` (its canonical points
+at `/clock/`; h.html links to it), so every edit to one goes to the other too
+(`cp clock/index.html h/clock_and_date.html`).
+
+**`.html` → clean URL: Cloudflare only, NOT live.** This cannot be done from the
+repo, because the `.html` file *is* the page. It needs two rules in the
+Cloudflare dashboard (**Rules → Redirect Rules**), each a "Wildcard pattern"
+rule, status 301, "Preserve query string" on, rule A above rule B:
 
 | # | Request URL | Target URL |
 |---|---|---|
-| 1 | `https://haraldrevery.com/notebook_pages/1dgraph` | `https://haraldrevery.com/h/1dgraph` |
-| 2 | `https://haraldrevery.com/notebook_pages/2dphaseportrait` | `https://haraldrevery.com/h/2dphaseportrait` |
-| 3 | `https://haraldrevery.com/notebook_pages/clock_and_date` | `https://haraldrevery.com/clock/` |
-| 4 | `https://haraldrevery.com/h/clock_and_date` | `https://haraldrevery.com/clock/` |
-| 5 | `https://haraldrevery.com/notebook_pages/rvry_ascii` | `https://haraldrevery.com/rvry_ascii/rvry_ascii` |
-| 6 | `https://haraldrevery.com/notebook_pages/revery_notebook_info` | `https://haraldrevery.com/revery_notebook/` |
-| 7 | `https://haraldrevery.com/notebook_pages/things-to-do-with-llm` | `https://haraldrevery.com/notebook_pages/things-to-do-with-llms` |
-| 8 | `https://haraldrevery.com/*index.html` | `https://haraldrevery.com/${1}` |
-| 9 | `https://haraldrevery.com/*.html` | `https://haraldrevery.com/${1}` |
+| A | `https://haraldrevery.com/*index.html` | `https://haraldrevery.com/${1}` |
+| B | `https://haraldrevery.com/*.html` | `https://haraldrevery.com/${1}` |
 
-Rules 1–7 are URLs that were once in the sitemap and have since moved; their
-`.html` forms go through rule 9 first and then land here. Until rule 4 is live,
-`h/clock_and_date.html` is a full, byte-identical copy of `clock/index.html`
-(h.html links to it), so every edit to one goes to the other too
-(`cp clock/index.html h/clock_and_date.html`). Once
-`curl -sI https://haraldrevery.com/h/clock_and_date` shows a 301, delete the copy
-and point h.html at `/clock/`. **Moving or renaming a
-published page means adding a row here**, or its old address becomes a 404.
-
-Check after any change: `curl -sI https://haraldrevery.com/about.html` must show
-`301` and `location: https://haraldrevery.com/about`.
+As of 2026-09-24 neither exists: `curl -sI https://haraldrevery.com/about.html`
+answers `200`. Until they do, every page is reachable at two addresses and only
+its `<link rel="canonical">` says which one counts. Once added, that command must
+show `301` and `location: https://haraldrevery.com/about`, and the stubs above
+keep working (`/notebook_pages/1dgraph.html` → `/notebook_pages/1dgraph` → stub).
 
 There is **no CI build**, so generated output must be committed:
 `main.css`, `main_max.css`, `prose.css`, `prose_max.css`, `notebook.html`,

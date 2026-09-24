@@ -29,7 +29,7 @@ eleventyComputed:
                 </p>
 
             <div class="mt-6">
-                <a href="/notebook.html" class="text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors uppercase tracking-wider">
+                <a href="/notebook" class="text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors uppercase tracking-wider">
                     ← Back to All Notes
                 </a>
             </div>
@@ -37,7 +37,7 @@ eleventyComputed:
     </div>
 </section>
 
-<section class="py-12 pb-24 extra_fade_effect">
+<section class="py-12 pb-24 fade_effect">
     <div class="page-container">
         <div class="max-w-6xl mx-auto">
             <h3 class="text-3xl text-zinc-900 dark:text-white uppercase tracking-wide mb-12">{{ tagData.tag }} Notes</h3>
@@ -48,7 +48,7 @@ eleventyComputed:
                 <article class="group">
                     
                     {# 1. Make the image block clickable #}
-                    <a href="{{ post.url }}" class="block">
+                    <a href="{{ post.url | cleanUrl }}" class="block">
                         <div class="aspect-video bg-neutral-200 dark:bg-neutral-800 rounded-lg overflow-hidden mb-4">
                             {% if post.data.image %}
                                 <img src="{{ post.data.image }}" alt="{{ post.data.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
@@ -63,12 +63,12 @@ eleventyComputed:
                         {# 2. Tag links (now perfectly valid HTML) #}
                         <div class="flex flex-wrap gap-2 mb-3">
                             {% for tag in post.data.tags %}
-                                <a href="/notebook_pages/tag-{{ tag | slugify }}.html" class="px-3 pt-1 pb-0.5 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-xs uppercase tracking-widest rounded hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">{{ tag }}</a>
+                                <a href="/notebook_pages/tag-{{ tag | slugify }}" class="px-3 pt-1 pb-0.5 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-xs uppercase tracking-widest rounded hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">{{ tag }}</a>
                             {% endfor %}
                         </div>
                     
                     {# 3. Make the title clickable #}
-                    <a href="{{ post.url }}" class="block">
+                    <a href="{{ post.url | cleanUrl }}" class="block">
                         <h4 class="text-xl text-zinc-900 dark:text-white mb-3 uppercase tracking-wide group-hover:text-neutral-500 dark:group-hover:text-neutral-400 transition-colors">
                             {{ post.data.title }}
                         </h4>
@@ -96,9 +96,9 @@ eleventyComputed:
                 {% if not tagData.isFirstPage %}
                 {% set prevPageNum = tagData.pageNumber %}
                 {% if prevPageNum > 1 %}
-                {% set prevPageUrl = "/notebook_pages/tag-" + (tagData.tag | slugify) + "-page-" + prevPageNum + ".html" %}
+                {% set prevPageUrl = "/notebook_pages/tag-" + (tagData.tag | slugify) + "-page-" + prevPageNum %}
                 {% else %}
-                {% set prevPageUrl = "/notebook_pages/tag-" + (tagData.tag | slugify) + ".html" %}
+                {% set prevPageUrl = "/notebook_pages/tag-" + (tagData.tag | slugify) %}
                 {% endif %}
                 <a href="{{ prevPageUrl }}" class="px-6 py-3 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono uppercase tracking-widest rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">
                     ← 
@@ -115,7 +115,7 @@ eleventyComputed:
 
                 {% if not tagData.isLastPage %}
                 {% set nextPageNum = tagData.pageNumber + 2 %}
-                {% set nextPageUrl = "/notebook_pages/tag-" + (tagData.tag | slugify) + "-page-" + nextPageNum + ".html" %}
+                {% set nextPageUrl = "/notebook_pages/tag-" + (tagData.tag | slugify) + "-page-" + nextPageNum %}
                 <a href="{{ nextPageUrl }}" class="px-6 py-3 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono uppercase tracking-widest rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">
                      →
                 </a>

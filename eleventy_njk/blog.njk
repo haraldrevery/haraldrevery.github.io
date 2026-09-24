@@ -40,10 +40,10 @@ eleventyComputed:
 </section>
 
 {# relative z-20 lifts this section above the later card section — the
-   extra_fade_effect animation creates stacking contexts, so without it the
+   fade_effect animation creates stacking contexts, so without it the
    search dropdown paints underneath the post thumbnails. #}
 <section class="relative z-20">
-    <div class="page-container extra_fade_effect">
+    <div class="page-container fade_effect">
         <div class="max-w-6xl mx-auto">
 
             <div class="-mt-16">
@@ -52,7 +52,7 @@ eleventyComputed:
 
             <div class="flex flex-wrap justify-center gap-3">
                 {% for tag in collections.allTags %}
-                <a href="/notebook_pages/tag-{{ tag | slugify }}.html" class="px-4 pt-2 pb-1 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-sm uppercase tracking-widest rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">
+                <a href="/notebook_pages/tag-{{ tag | slugify }}" class="px-4 pt-2 pb-1 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-sm uppercase tracking-widest rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">
                     {{ tag }}
                 </a>
                 {% endfor %}
@@ -69,7 +69,7 @@ eleventyComputed:
 
 
 
-<section class="py-12 pb-24 extra_fade_effect">
+<section class="py-12 pb-24 fade_effect">
     <div class="page-container">
         <div class="max-w-6xl mx-auto">
             <h3 class="text-3xl text-zinc-900 dark:text-white uppercase tracking-wide mb-12">Recent Notes</h3>
@@ -80,7 +80,7 @@ eleventyComputed:
                 <article class="group">
                     
                     {# 1. Make the image block clickable #}
-                    <a href="{{ post.url }}" class="block">
+                    <a href="{{ post.url | cleanUrl }}" class="block">
                         <div class="aspect-video bg-neutral-200 dark:bg-neutral-800 rounded-lg overflow-hidden mb-4">
                             {% if post.data.image %}
                                 <img src="{{ post.data.image }}" alt="{{ post.data.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
@@ -95,12 +95,12 @@ eleventyComputed:
                         {# 2. Tag links (now perfectly valid HTML) #}
                         <div class="flex flex-wrap gap-2 mb-3">
                             {% for tag in post.data.tags %}
-                                <a href="/notebook_pages/tag-{{ tag | slugify }}.html" class="px-3 pt-1 pb-0.5 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-xs uppercase tracking-widest rounded hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">{{ tag }}</a>
+                                <a href="/notebook_pages/tag-{{ tag | slugify }}" class="px-3 pt-1 pb-0.5 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono text-xs uppercase tracking-widest rounded hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">{{ tag }}</a>
                             {% endfor %}
                         </div>
                                             
                     {# 3. Make the title clickable #}
-                    <a href="{{ post.url }}" class="block">
+                    <a href="{{ post.url | cleanUrl }}" class="block">
                         <h4 class="text-xl text-zinc-900 dark:text-white mb-3 uppercase tracking-wide group-hover:text-neutral-500 dark:group-hover:text-neutral-400 transition-colors">
                             {{ post.data.title }}
                         </h4>
@@ -126,7 +126,7 @@ eleventyComputed:
             {% if pagination.href.previous or pagination.href.next %}
             <div class="mt-16 flex items-center justify-center gap-4">
                 {% if pagination.href.previous %}
-                <a href="{{ pagination.href.previous }}" class="px-6 py-3 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono uppercase tracking-widest rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">
+                <a href="{{ pagination.href.previous | cleanUrl }}" class="px-6 py-3 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono uppercase tracking-widest rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">
                     ← 
                 </a>
                 {% else %}
@@ -140,7 +140,7 @@ eleventyComputed:
                 </span>
 
                 {% if pagination.href.next %}
-                <a href="{{ pagination.href.next }}" class="px-6 py-3 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono uppercase tracking-widest rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">
+                <a href="{{ pagination.href.next | cleanUrl }}" class="px-6 py-3 bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono uppercase tracking-widest rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-700 transition-colors">
                      →
                 </a>
                 {% else %}

@@ -844,23 +844,39 @@ nav {
 
 
 
-/* A container to just put fading elements in */
-@keyframes extra_fade_effect {
+/* A container to just put fading elements in.
+
+   NAMING: never give a content wrapper a class (or id) containing "extra",
+   "header", "footer", "menu", "sidebar", "comment", "banner", "social",
+   "related", "popup" or "pagination". Firefox Reader View (Readability.js)
+   deletes such elements outright as "unlikely content", with everything inside
+   them. This class was called extra_fade_effect until 2026-09-24, and that
+   took the About page's Logo section and whole FAQ out of Reader View. Words
+   like "hidden", "media", "meta", "share" or "tags" in a class only lower an
+   element's score, but that was enough to drop the FAQ items (overflow-hidden),
+   so they use overflow-clip instead.
+
+   The extra_* selectors below are a legacy alias for pages exported by a page
+   builder build older than 2026-09-24 (page_builder_v2.exe until it is rebuilt
+   on Windows). Do not use them in new markup. */
+@keyframes fade_effect {
     from { opacity: 0; }
     to   { opacity: 1; }
   }
 
+  .fade_effect,
   .extra_fade_effect {
-    animation: extra_fade_effect 1.2s ease-in forwards;
+    animation: fade_effect 1.2s ease-in forwards;
     opacity: 0;
   }
 
 
 
-  /* extra_fade_effect_long: identical fade to .extra_fade_effect (shares its
-     keyframe), just delayed. */
+  /* fade_effect_long: identical fade to .fade_effect (shares its keyframe),
+     just delayed. */
+  .fade_effect_long,
   .extra_fade_effect_long {
-    animation: extra_fade_effect 1.2s ease-in forwards;
+    animation: fade_effect 1.2s ease-in forwards;
     opacity: 0;
     animation-delay: 2.8s; /* 2800ms delay */
   }

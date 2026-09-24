@@ -72,7 +72,7 @@ export function Columns({
     );
 
   return (
-    <BlockShell spacing={spacing} extra="extra_fade_effect">
+    <BlockShell spacing={spacing} extra="fade_effect">
       {inner}
     </BlockShell>
   );

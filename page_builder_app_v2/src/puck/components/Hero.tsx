@@ -14,7 +14,7 @@
  * header would be a second title and a second back link.
  *
  * Built only from classes already in main.css (release-hero, bg-dot-grid,
- * extra_fade_effect, word_animation, #scroll-prompt). Zero JS; the nav reveal
+ * fade_effect, word_animation, #scroll-prompt). Zero JS; the nav reveal
  * (`navReveal`) is not markup here but `navScroll: true` in the front matter,
  * which base.njk turns into .navi_mechanic and its script.
  */
@@ -56,7 +56,7 @@ const escText = (s: unknown) =>
   String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 const BACKLINK_CLASS =
-  "extra_fade_effect_long inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider";
+  "fade_effect_long inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider";
 
 export function Hero(p: HeroProps): ReactNode {
   const center = p.align === "center";
@@ -129,7 +129,7 @@ export function Hero(p: HeroProps): ReactNode {
     const w = Math.max(5, Math.min(100, Math.round(p.svgWidthPct || 40)));
     svg = (
       <div
-        className={`mx-auto${fade ? " extra_fade_effect" : ""}`}
+        className={`mx-auto${fade ? " fade_effect" : ""}`}
         style={{
           width: `${w}%`,
           ...(p.svgX || p.svgY
@@ -150,7 +150,7 @@ export function Hero(p: HeroProps): ReactNode {
   ) : null;
 
   // `fade` animates the whole text box unless the words animate individually.
-  const textBoxCls = fade && !words ? "extra_fade_effect" : undefined;
+  const textBoxCls = fade && !words ? "fade_effect" : undefined;
 
   const sectionCls = "release-hero" + (p.background === "dots" ? " bg-dot-grid" : "");
   // The cover tint follows the PHOTO, not the site theme: the scrim makes the
@@ -201,7 +201,7 @@ export function Hero(p: HeroProps): ReactNode {
               zIndex: 20,
             }}
           >
-            <a href="/notebook.html" className={BACKLINK_CLASS}>
+            <a href="/notebook" className={BACKLINK_CLASS}>
               ← Back to Notebook
             </a>
           </div>

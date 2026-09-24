@@ -39,14 +39,14 @@
         {{ title }}
     </h1>
     {%- endif %}
-    <a href="/notebook.html" class="inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider">
+    <a href="/notebook" class="inline-flex items-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors font-mono text-sm uppercase tracking-wider">
        ← Back to Notebook
     </a>
 </div>
 {% endmacro %}
 
 {% macro postHeaderBlock(title, dateIso, dateHuman) %}
-<div class="post-container pt-24 extra_fade_effect">
+<div class="post-container pt-24 fade_effect">
     {{ postHeader(title, dateIso, dateHuman) }}
 </div>
 {% endmacro %}
@@ -62,7 +62,7 @@
 </div>
 
 <div class="post-container pt-6">
-    <a href="/notebook.html" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">
+    <a href="/notebook" class="inline-block border-b-2 border-black dark:border-white pb-1 hover:opacity-50 transition text-lg tracking-widest">
       ← NOTEBOOK FRONT PAGE
     </a>
 </div>

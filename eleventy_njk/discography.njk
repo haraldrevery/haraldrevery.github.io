@@ -52,7 +52,7 @@ eleventyExcludeFromCollections: true
 
 <!-- Hero -->
 <section class="py-12 pt-48">
-    <div class="page-container extra_fade_effect">
+    <div class="page-container fade_effect">
         <p class="font-mono text-sm uppercase tracking-eyebrow opacity-50 mb-4">Discography</p>
         <h1 class="text-4xl md:text-6xl uppercase tracking-wider font-normal">Releases</h1>
         <p class="mt-6 text-lg opacity-70 max-w-2xl">
@@ -64,13 +64,13 @@ eleventyExcludeFromCollections: true
 
 <!-- Release grid -->
 <section class="py-12">
-    <div class="page-container extra_fade_effect">
+    <div class="page-container fade_effect">
         {% if collections.releases.length %}
         <div class="grid grid-cols-3 md:grid-cols-6 gap-4 md:gap-6 relative z-10">
             {% for r in collections.releases %}
             {#- Real file name, like every other internal link (nav.njk). Only the
                 canonical, sitemap and JSON-LD use the clean URL. #}
-            <a href="{{ r.url }}" class="disc-tile group" aria-label="{{ r.name }} — {{ r.type }}">
+            <a href="{{ r.url | cleanUrl }}" class="disc-tile group" aria-label="{{ r.name }} — {{ r.type }}">
                 <img src="{{ r.artcoverMin }}" alt="{{ r.name }} cover art" loading="lazy">
                 <span class="disc-tile__overlay">
                     <span class="disc-tile__type">{{ r.type }}</span>

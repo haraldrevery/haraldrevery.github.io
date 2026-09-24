@@ -56,7 +56,7 @@ eleventyExcludeFromCollections: true
             dark:border-white/10 dark:bg-neutral-950/90">
     
     <div class="page-container nav-desktop:h-13 h-18 flex items-center justify-between relative">
-        <a href="/index.html" class="flex items-center group z-[250] translate-y-[14%]">
+        <a href="/" class="flex items-center group z-[250] translate-y-[14%]">
             <svg class="mr-4 fill-current h-[0.96em] w-auto text-neutral-900 dark:text-white group-hover:text-neutral-500 dark:group-hover:text-neutral-300 transition-colors -translate-y-[24%]" 
                 viewBox="0 0 1080 1080">
                 <path d="M477.9,730c-31.9-13.7-62.4-30.2-91-49.1c-33.4-22-64.5-47.4-92.6-75.7c-32.8-32.9-61.8-69.7-86.1-109.7 C160,416.5,130.1,325,124.3,227C171.2,144.6,246,80,335.8,46c-34.2,56.8-57.7,120.8-67.8,189.2c-3.7,24.8-5.6,50.1-5.6,75.8 c0,109.4,34.1,210.9,92.3,294.3c10,14.4,20.8,28.2,32.2,41.4C413.8,678,444.4,706,477.9,730z"/>
@@ -68,11 +68,11 @@ eleventyExcludeFromCollections: true
         </a>
 
         <div class="hidden nav-desktop:flex items-center gap-5 font-mono text-[1.2rem] uppercase tracking-nav text-neutral-500  dark:text-neutral-400 translate-y-[10%]">
-            <a href="/index.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Home</a>
-            <a href="/music.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Music</a>
-            <a href="/about.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">About</a>
-            <a href="/notebook.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Notebook</a>            
-            <a href="/contact.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Contact</a>
+            <a href="/" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Home</a>
+            <a href="/music" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Music</a>
+            <a href="/about" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">About</a>
+            <a href="/notebook" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Notebook</a>            
+            <a href="/contact" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Contact</a>
 
         </div>
 
@@ -93,11 +93,11 @@ eleventyExcludeFromCollections: true
             
             <div class="page-container h-full flex flex-col justify-center">
                 <nav class="main-nav flex flex-col pt-42 py-10 text-center gap-10 text-neutral-900 dark:text-white font-mono text-xl uppercase tracking-nav-menu">
-                    <a href="/index.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Home</a>
-                    <a href="/music.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Music</a>
-                    <a href="/about.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors ">About</a>
-                    <a href="/contact.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Contact</a>
-                    <a href="/notebook.html" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Notebook</a>  
+                    <a href="/" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Home</a>
+                    <a href="/music" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Music</a>
+                    <a href="/about" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors ">About</a>
+                    <a href="/contact" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors">Contact</a>
+                    <a href="/notebook" class="hover:text-neutral-800 dark:hover:text-neutral-100 transition-colors">Notebook</a>  
                 </nav>
             </div>
         </div>
@@ -288,7 +288,7 @@ eleventyExcludeFromCollections: true
 
 <!-- Music download sections — one per subfolder of music/ -->
 {% for section in musicSections %}
-<section class="page-container py-20 border-t border-zinc-200 dark:border-white/10 extra_fade_effect">
+<section class="page-container py-20 border-t border-zinc-200 dark:border-white/10 fade_effect">
     <h2 class="text-2xl font-brand uppercase tracking-widest mb-10 text-zinc-900 dark:text-white">
         {{ section.title }}
     </h2>
@@ -311,7 +311,7 @@ The flac files are also available to download on the <a href="https://odysee.com
 
 <!-- Other downloads — one section per subfolder of download/ -->
 {% for section in downloadSections %}
-<section class="page-container py-20 border-t border-zinc-200 dark:border-white/10 extra_fade_effect">
+<section class="page-container py-20 border-t border-zinc-200 dark:border-white/10 fade_effect">
     <h2 class="text-2xl font-brand uppercase tracking-widest mb-10 text-zinc-900 dark:text-white">
         {{ section.title }}
     </h2>
@@ -330,7 +330,7 @@ The flac files are also available to download on the <a href="https://odysee.com
         <p class="font-mono text-black dark:text-white leading-none text-base uppercase tracking-widest">
           Revery Division
         </p>
-        <p class="mt-2 text-3xl text-black dark:text-white"><a href="h.html" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors ">½</a></p>
+        <p class="mt-2 text-3xl text-black dark:text-white"><a href="/h" class="hover:text-neutral-500 dark:hover:text-neutral-300 transition-colors ">½</a></p>
         <p class="text-sm text-gray-600 dark:text-gray-300">
           Gothenburg, Sweden
         </p>
@@ -339,11 +339,11 @@ The flac files are also available to download on the <a href="https://odysee.com
       <div class="flex text-gray-600 dark:text-gray-300 flex-wrap justify-center items-center gap-2 text-sm uppercase tracking-widest font-mono opacity-70">
         <a href="#top" class="hover:opacity-50 transition-opacity">↑ Back to top</a>
         <span class="text-gray-400">|</span>
-        <a href="/contact.html" class="hover:opacity-50 transition-opacity">Contact</a>
+        <a href="/contact" class="hover:opacity-50 transition-opacity">Contact</a>
         <span class="text-gray-400">|</span>
-        <a href="/download.html" class="hover:opacity-50 transition-opacity">Download</a>        
+        <a href="/download" class="hover:opacity-50 transition-opacity">Download</a>        
         <span class="text-gray-400">|</span>
-        <a href="/legal.html" class="hover:opacity-50 transition-opacity">Legal</a>
+        <a href="/legal" class="hover:opacity-50 transition-opacity">Legal</a>
 
       </div>
 
