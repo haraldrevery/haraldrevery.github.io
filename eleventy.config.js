@@ -392,6 +392,13 @@ module.exports = function(eleventyConfig) {
   // permalink or pick a different layout. templateEngineOverride is applied
   // AFTER the spread on purpose — it is not a knob.
   //
+  // `date` is applied after the spread too. The page builder writes a blank
+  // date field as `date: ` (YAML null), and a null spread over the fallback
+  // replaced it: the post printed "January 1, 1970" with datetime="", lost
+  // og:type article, and took the BUILD time as its collection date, so it
+  // jumped to the top of the Notebook and moved in the feed, sitemap and
+  // search index on every build.
+  //
   // KNOWN LIMITATION (--watch / --serve only): this runs once, when the config
   // is loaded. A post ADDED while `npm start` is running is not registered and
   // will not appear until the watcher is restarted. Editing an existing post
@@ -442,9 +449,9 @@ module.exports = function(eleventyConfig) {
       eleventyConfig.addTemplate(`${CUSTOM_POST_DIR}/${slug}.njk`, parsed.content, {
         layout: "post_body.njk",
         permalink: `notebook_pages/${slug}.html`,
-        date: parsed.data.date || fallbackPostDate(inputPath, file),
         tags: [],
         ...parsed.data,
+        date: parsed.data.date || fallbackPostDate(inputPath, file),
         templateEngineOverride: false,
       });
     }
@@ -503,13 +510,21 @@ module.exports = function(eleventyConfig) {
           ? new Date(parsed.data.date)
           : fallbackPostDate(filePath, file);
 
+        // Always an array. Eleventy turns `tags: photography` into
+        // ["photography"] for real templates, but these items never pass
+        // through Eleventy, and blog.njk / blog-tag.njk loop over the value:
+        // a bare string printed one tag link per letter (/tag-p, /tag-h, ...),
+        // every one a 404, with no build error.
+        const rawTags = parsed.data.tags;
+        const tags = Array.isArray(rawTags) ? rawTags : (rawTags ? [rawTags] : []);
+
         return {
           url: parsed.data.permalink || `/notebook_pages/${file}`,
           inputPath: filePath,
           data: {
             title: parsed.data.title || "Untitled",
             date: postDate,
-            tags: parsed.data.tags || [],
+            tags,
             image: parsed.data.image || null,
             description: parsed.data.description || null
           },

@@ -7,6 +7,10 @@
     "lastmod": "2026-09-13",
     "fingerprint": "e6e7c3b90fd828314f5ccdde92482da475cdc4a53f6b74b413a442b157d399b5"
   },
+  "/clock/": {
+    "lastmod": "2026-09-24",
+    "fingerprint": "952e0e3ca5455d57f19c655affa1595a467a21a2f6ebf5bc90a7f4e482fbfb5a"
+  },
   "/contact": {
     "lastmod": "2026-09-07",
     "fingerprint": "c29c74f4b1f0c79e3c0027579c9558c2a07dcf8660bfbf5a29949cfbc37cac9d"
@@ -14,6 +18,14 @@
   "/download": {
     "lastmod": "2026-09-07",
     "fingerprint": "927452008378409c44d6867fd4150d2b09ab3071830054195fa11fc74df33a8f"
+  },
+  "/h/1dgraph": {
+    "lastmod": "2026-09-24",
+    "fingerprint": "55e8f014c4ebb903f8d2912d0d66916826b11533d1b7883523462bcd877a81ab"
+  },
+  "/h/2dphaseportrait": {
+    "lastmod": "2026-09-24",
+    "fingerprint": "f7a35cc21770e351f7823d4201282e7cdbcf1d809a31d82ec1a00a2a8555e8c2"
   },
   "/legal": {
     "lastmod": "2026-09-24",
@@ -26,5 +38,13 @@
   "/notebook": {
     "lastmod": "2026-08-27",
     "fingerprint": "b6f8af7b528bd01cab2e18b4ba30538513f181933336143656ca513ca1497121"
+  },
+  "/revery_notebook/": {
+    "lastmod": "2026-09-24",
+    "fingerprint": "39590a2d3a42b76de352f97f754dc44afe80ea80e7dedcb4c6dc0f1ffa61fb43"
+  },
+  "/rvry_ascii/rvry_ascii": {
+    "lastmod": "2026-09-24",
+    "fingerprint": "3ca3f9e21d164c56c51087deaf12d0332018b69ab6229009686d5004e985cb52"
   }
 }

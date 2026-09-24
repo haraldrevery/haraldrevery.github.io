@@ -51,6 +51,29 @@ staticPages:
       - "eleventy_settings/license_blocks.njk"
     changefreq: yearly
     priority: "0.5"
+  # Standalone apps. Each is where one of redirects.njk's old /notebook_pages/
+  # addresses now points, so each is a permanent page that should be listed.
+  # Their text is the page itself; the JS/CSS behind them is not a content change.
+  - loc: "/clock/"
+    sources: ["clock/index.html"]
+    changefreq: monthly
+    priority: "0.6"
+  - loc: "/h/1dgraph"
+    sources: ["h/1dgraph.html"]
+    changefreq: monthly
+    priority: "0.5"
+  - loc: "/h/2dphaseportrait"
+    sources: ["h/2dphaseportrait.html"]
+    changefreq: monthly
+    priority: "0.5"
+  - loc: "/revery_notebook/"
+    sources: ["revery_notebook/index.html"]
+    changefreq: monthly
+    priority: "0.5"
+  - loc: "/rvry_ascii/rvry_ascii"
+    sources: ["rvry_ascii/rvry_ascii.html"]
+    changefreq: monthly
+    priority: "0.5"
 ---
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

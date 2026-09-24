@@ -4,4 +4,27 @@ Disallow: /admin/
 Disallow: /private/
 Disallow: /*.pdf$
 
+# Build inputs, tooling and scratch pages. GitHub Pages publishes the whole
+# repo, so these are reachable, but none is a page of the site: raw post
+# sources (front matter as text), templates, test pages, the page builder and
+# node_modules. No live page loads anything from them (checked 2026-09-25), so
+# blocking them cannot hide an asset a crawler needs to render a page.
+Disallow: /input_custom_post/
+Disallow: /input_custom_html_pages/
+Disallow: /input_markdown/
+Disallow: /input_release/
+Disallow: /input_legal/
+Disallow: /notebook_templates/
+Disallow: /test_pages/
+Disallow: /page_builder_app_v2/
+Disallow: /eleventy_binary/
+Disallow: /eleventy_njk/
+Disallow: /eleventy_settings/
+Disallow: /css_bkup/
+Disallow: /information/
+Disallow: /node_modules/
+Disallow: /template.html
+Disallow: /legal_old_copy.html
+Disallow: /index_noscript_pagespeed.html
+
 Sitemap: https://haraldrevery.com/sitemap.xml

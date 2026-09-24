@@ -11,7 +11,7 @@ import type { Data } from "@measured/puck";
 import { config } from "../src/puck/config";
 import { DEFAULT_HERO, DEFAULT_META } from "../src/puck/PageRoot";
 import {
-  frontmatterYaml, slugify, humanDate, splitTags,
+  frontmatterYaml, slugify, resolveSlug, humanDate, splitTags,
   resolveSchemaType, jsonld, assembleDocument, exportText, contentColumnClass,
 } from "../src/export/export";
 import { renderExportContent, renderExportHero } from "../src/export/renderExport";
@@ -35,6 +35,22 @@ describe("slug and date helpers", () => {
     expect(slugify("Galdhøpiggen: a hike!")).toBe("galdhøpiggen-a-hike");
     expect(slugify("")).toBe("untitled");
     expect(slugify("  --- ")).toBe("untitled");
+  });
+
+  test("resolveSlug cleans a typed file name the way it cleans a title", () => {
+    // The prompt says "File name": the .html, a space and capitals are all
+    // natural to type, and each used to reach the published URL as typed.
+    expect(resolveSlug("My Trip.html", "Ignored")).toBe("my-trip");
+    expect(resolveSlug("  notes.HTM ", "Ignored")).toBe("notes");
+    expect(resolveSlug("a/b\\c", "Ignored")).toBe("abc");
+    // Blank, or nothing left once ".html" is dropped: the title decides.
+    expect(resolveSlug("", "Galdhøpiggen: a hike!")).toBe("galdhøpiggen-a-hike");
+    expect(resolveSlug(".html", "Title")).toBe("title");
+    expect(resolveSlug(undefined, undefined)).toBe("untitled");
+    // A slug saved by an earlier export must come back unchanged.
+    for (const s of ["galdhopiggen", "2015to2023", "my_post", "a-b-c"]) {
+      expect(resolveSlug(s, "Other")).toBe(s);
+    }
   });
 
   test("humanDate formats ISO dates and passes anything else through", () => {

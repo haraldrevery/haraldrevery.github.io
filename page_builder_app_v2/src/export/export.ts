@@ -52,6 +52,21 @@ export function slugify(text: string): string {
   return s || "untitled";
 }
 
+/*
+ * The page's slug: the name typed in the export prompt, else the title.
+ *
+ * The typed name goes through slugify too. The prompt is labelled "File name",
+ * so "My Trip.html" is a natural answer, and used as typed it published
+ * input_custom_post/My Trip.html.html, whose URL, canonical and sitemap entry
+ * all carried the space, the capitals and a stray ".html". A trailing .html is
+ * dropped first because slugify would otherwise glue it on as "triphtml".
+ * slugify is idempotent, so a slug saved by an earlier export is unchanged.
+ */
+export function resolveSlug(typed: string | undefined | null, title: string | undefined | null): string {
+  const name = String(typed ?? "").trim().replace(/\.html?$/i, "").trim();
+  return slugify(name || String(title ?? ""));
+}
+
 export function humanDate(dateStr: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec((dateStr || "").trim());
   if (!m) return dateStr || "";

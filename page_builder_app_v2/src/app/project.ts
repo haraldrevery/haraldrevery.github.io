@@ -11,7 +11,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { Data } from "@measured/puck";
 import { config } from "../puck/config";
-import { assembleDocument, assembleStandalone, exportText, slugify } from "../export/export";
+import { assembleDocument, assembleStandalone, exportText, resolveSlug } from "../export/export";
 import { renderExportContent, renderExportHero } from "../export/renderExport";
 import { lintPage, type LintIssue } from "../export/lint";
 import { collectSvgSrcs } from "../export/collect";
@@ -119,8 +119,7 @@ function renderParts(data: Data) {
 }
 
 const pageSlug = (data: Data, slugOverride?: string) =>
-  slugOverride?.trim() ||
-  slugify(((data.root?.props ?? {}) as Partial<RootProps>).meta?.title ?? "");
+  resolveSlug(slugOverride, ((data.root?.props ?? {}) as Partial<RootProps>).meta?.title);
 
 /// Render + lint, without writing anything. Split out so the UI can show the
 /// page check and ask for confirmation before touching the repo.

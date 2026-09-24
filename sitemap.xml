@@ -43,6 +43,36 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://haraldrevery.com/clock/</loc>
+    <lastmod>2026-09-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://haraldrevery.com/h/1dgraph</loc>
+    <lastmod>2026-09-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://haraldrevery.com/h/2dphaseportrait</loc>
+    <lastmod>2026-09-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://haraldrevery.com/revery_notebook/</loc>
+    <lastmod>2026-09-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://haraldrevery.com/rvry_ascii/rvry_ascii</loc>
+    <lastmod>2026-09-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://haraldrevery.com/notebook_pages/things-to-do-with-llms</loc>
     <lastmod>2026-08-28</lastmod>
     <changefreq>monthly</changefreq>
