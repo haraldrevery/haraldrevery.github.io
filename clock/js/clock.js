@@ -1376,24 +1376,34 @@
     // own fixed stars. Made the first time the celestial face is shown, so
     // no other face pays for it; drawn in the face's units, so it grows and
     // shrinks with the face and a resize needs nothing.
-    // The still stars are one SVG, painted once, and the turning is the
-    // browser's. Every fifth star is a small element whose opacity the
+    // Two layers, for depth: the fainter half of the still stars lies
+    // further back and turns a little slower (.sky-far), the rest and the
+    // twinkling stars in front. Which layer a star goes to draws no random
+    // number of its own, so the sky itself is the same as with one layer.
+    // The still stars of a layer are one SVG, painted once, and the turning
+    // is the browser's. Every fifth star is a small element whose opacity the
     // browser animates (.tw), and a shooting star is one element the browser
     // moves (Web Animations) and then removes, on a layer that doesn't turn.
     // None of it runs through this script per frame. Low performance and
     // "reduce motion" keep the sky still, with no shooting stars; a hidden
     // face or tab animates nothing.
     var SKY_R = 140;                 // in face units (the face is 200 across)
-    var sky = null, skyOn = false, meteorId = 0;
+    var sky = null, skyOn = false, meteorId = 0, skyTurns = [];
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     function buildSky() {
-        var rand = seeded(7), wrap = $('.orbit-wrap'), turn = document.createElement('div');
+        var rand = seeded(7), wrap = $('.orbit-wrap');
         sky = document.createElement('div');
         sky.className = 'sky';
         sky.setAttribute('aria-hidden', 'true');
-        turn.className = 'sky-turn';
-        sky.appendChild(turn);
-        var still = svgEl('svg', { viewBox: [-SKY_R, -SKY_R, 2 * SKY_R, 2 * SKY_R].join(' ') }, turn);
+        function layer(cls) {
+            var el = document.createElement('div');
+            el.className = cls;
+            sky.appendChild(el);
+            return el;
+        }
+        var box = { viewBox: [-SKY_R, -SKY_R, 2 * SKY_R, 2 * SKY_R].join(' ') };
+        var far = svgEl('svg', box, layer('sky-turn sky-far'));     // back to front
+        var turn = layer('sky-turn'), still = svgEl('svg', box, turn);
         function pct(v) { return ((v + SKY_R) / (2 * SKY_R) * 100).toFixed(2) + '%'; }
         for (var i = 0; i < 160; i++) {
             // Even over the disc (none on the core), fading out towards its rim.
@@ -1403,7 +1413,7 @@
             var f = clamp((SKY_R - d) / 45, 0, 1), fade = f * f * (3 - 2 * f);
             if (d < 26) continue;
             if (i % 5 || d > 100) {
-                svgEl('circle', { cx: x.toFixed(2), cy: y.toFixed(2), r: (.25 + b * .6).toFixed(2), opacity: ((.2 + b * .6) * fade).toFixed(2) }, still);
+                svgEl('circle', { cx: x.toFixed(2), cy: y.toFixed(2), r: (.25 + b * .6).toFixed(2), opacity: ((.2 + b * .6) * fade).toFixed(2) }, b < .2 ? far : still);
                 continue;
             }
             var tw = document.createElement('i'), size = ((.9 + b * 1.2) / (2 * SKY_R) * 100).toFixed(2) + '%';
@@ -1426,9 +1436,25 @@
             skyOn = on;
             if (!on) $$('.meteor', sky).forEach(function (el) { el.remove(); });
         }
+        if (on) phaseSky();
         var lively = on && S.perf !== 'low' && !reducedMotion.matches;
         if (lively && !meteorId) scheduleMeteor();
         else if (!lively && meteorId) { clearTimeout(meteorId); meteorId = 0; }
+    }
+    // The browser starts a layer's turn afresh whenever the face is shown
+    // again (or motion comes back on), which would put the sky back where it
+    // began each time. Instead each new turn is set to where the layer would
+    // be had it been turning since midnight (UTC; a day holds a whole number
+    // of turns of either layer, see .sky in clock.css). A turn that was only
+    // paused, under the event card, carries on from where it stopped.
+    // Browsers without getAnimations() start from the beginning, as before.
+    function phaseSky() {
+        $$('.sky-turn', sky).forEach(function (layer, i) {
+            var anim = layer.getAnimations ? layer.getAnimations()[0] : null;
+            if (!anim || anim === skyTurns[i]) return;
+            skyTurns[i] = anim;
+            anim.currentTime = Date.now() % 86400000;
+        });
     }
 
     // Peak nights of the main meteor showers (month, day; they shift by a day

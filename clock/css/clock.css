@@ -541,11 +541,16 @@ body {
    colour, a little fainter.
    Where there is no room around the face for the whole disc (a phone, size
    L), the face clips it instead of letting it make the page scroll; the cut
-   falls where the stars have faded. (hidden: for browsers without clip.) */
+   falls where the stars have faded. (hidden: for browsers without clip.)
+   The stars are two layers turning the same way, for depth: the far one
+   (.sky-far, the fainter stars) at 3/4 the speed of the near one. clock.js
+   sets each layer's angle from the time since midnight, so both durations
+   must divide a day (86400 s) evenly; otherwise that angle jumps at midnight. */
 .face-celestial { overflow: hidden; overflow: clip; }
 .sky { position: absolute; inset: -20%; pointer-events: none; color: var(--ink); }
 :root[data-theme="light"] .sky, :root[data-tone="light"] .sky { color: color-mix(in srgb, var(--ink) 60%, transparent); }
 .sky-turn { position: absolute; inset: 0; animation: sky-turn 1800s linear infinite; }
+.sky-far { animation-duration: 2400s; }
 @keyframes sky-turn { to { transform: rotate(-360deg); } }
 .sky svg { fill: currentColor; }
 .tw {
