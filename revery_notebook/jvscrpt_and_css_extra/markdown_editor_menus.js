@@ -16,7 +16,8 @@ window.centerHeaders = true; // Center align headings in preview
 let mobileView = false;
 let readerMode = false;
 let outlineVisible = false; // Outline navigation panel (toggled via Settings)
-let themeMode = 'system'; // 'system', 'light', 'dark', 'paper', 'forest'
+let themeMode = 'system'; // 'system', 'light', 'dark', 'paper', 'forest', 'custom'
+let customTheme = null;   // last SAVED custom palette {base, hue, tint, accent} (markdown_editor_theme.js)
 
 let uiSize  = 140; // UI menu font scale in %, applied to <html> (90–200 in 10% steps)
 let editorTextSize = 150; // Editor textarea font scale in %
@@ -33,6 +34,8 @@ let selectedBackground = 'bg_6'; // Active background image key
 let slowHardwareMode = false;    // One switch for older machines — see setSlowHardwareMode
 let backgroundOpacity = null;    // null = per-theme CSS default; number 0.01–1 overrides
 let livePreviewMode = false;     // Obsidian-style in-editor rendering — see setLivePreviewMode
+let yamlPropsCollapsed = false;  // live preview's Properties sheet folded — see setYamlPropsCollapsed
+window.yamlPropsCollapsed = false; // Mirror read by the live preview when it builds the sheet
 const CUSTOM_BG_KEY = 'revery_custom_bg'; // data: URL of an imported background (outside the settings JSON)
 const CUSTOM_LOGO_KEY = 'revery_custom_logo'; // sanitized <svg> markup; presence = custom icon active (outside the settings JSON)
 const CUSTOM_LOGO_MAX_BYTES = 256 * 1024;
@@ -87,11 +90,16 @@ window.saveEditorSettings = function() {
     savedSidebarWidth: window.savedSidebarWidth || '',
     centerHeaders: window.centerHeaders,
     selectedBackground,
-    themeMode,
+    /* A custom theme is stored as its light/dark base + customThemeActive,
+       so a build without custom themes still opens with a readable palette. */
+    themeMode: themeMode === 'custom' ? (customTheme ? customTheme.base : 'system') : themeMode,
+    customTheme,
+    customThemeActive: themeMode === 'custom' && !!customTheme,
     editorBgGradient,
     slowHardwareMode,
     backgroundOpacity,
     livePreviewMode,
+    yamlPropsCollapsed,
     logoPosition,
     readerDragEnabled,
     readerPaddingCustom,
@@ -173,7 +181,17 @@ function loadEditorSettings() {
       backgroundOpacity = s.backgroundOpacity;
     }
     if (s.livePreviewMode !== undefined) livePreviewMode = !!s.livePreviewMode;
-    if (s.themeMode !== undefined) themeMode = s.themeMode;
+    if (s.yamlPropsCollapsed !== undefined) {
+      yamlPropsCollapsed = !!s.yamlPropsCollapsed;
+      window.yamlPropsCollapsed = yamlPropsCollapsed;
+    }
+    /* Same validation markdown_editor_theme.js applied at boot, so the
+       menu's ■ matches the palette on screen. */
+    if (window.ReveryTheme) {
+      customTheme = window.ReveryTheme.normalizeCustom(s.customTheme);
+      if (s.customThemeActive === true && customTheme) themeMode = 'custom';
+      else if (window.ReveryTheme.MODES.includes(s.themeMode) && s.themeMode !== 'custom') themeMode = s.themeMode;
+    }
     if (s.editorBgGradient !== undefined) editorBgGradient = s.editorBgGradient;
     if (s.logoPosition === 'left' || s.logoPosition === 'center') logoPosition = s.logoPosition;
     if (s.readerDragEnabled !== undefined) readerDragEnabled = !!s.readerDragEnabled;
@@ -560,11 +578,12 @@ function applyUiSizeProseCompensation() {
   const tScale = (previewTextSize / 100).toFixed(4);
   /* .lp-render is the live preview's rendered-block scope: it must get
      the exact same compensation or its blocks drift from the preview.
-     --lp-prose-size exposes the same base to the live preview's raw
-     lines, whose quote/list spacing mirrors em-sized prose rules. */
+     --prose-base-size exposes the same base to what sits outside .prose
+     but must size with it: the live preview's raw lines (their quote/list
+     spacing mirrors em-sized prose rules) and the Properties sheet. */
   styleEl.textContent =
     `:is(#preview, .lp-render) .prose.prose-lg { font-size: calc(1.125rem * ${inv} * ${tScale}); }\n` +
-    `:root { --lp-prose-size: calc(1.125rem * ${inv} * ${tScale}); }`;
+    `:root { --prose-base-size: calc(1.125rem * ${inv} * ${tScale}); }`;
 }
 
 /* Apply reader mode padding: constrains the prose content width so text
@@ -930,6 +949,18 @@ window.setLivePreviewMode = function (on) {
         : []
     );
   }
+  if (typeof window.saveEditorSettings === 'function') window.saveEditorSettings();
+};
+
+/* The Properties sheet folded to its header — ONE global choice,
+   persisted, shared by live preview and reader mode (the split-view
+   preview pane never folds). Called by either sheet's toggle; redraws
+   both: the live preview through its field, the preview by a render. */
+window.setYamlPropsCollapsed = function (on) {
+  yamlPropsCollapsed = !!on;
+  window.yamlPropsCollapsed = yamlPropsCollapsed;
+  if (typeof window.livePreviewSyncYamlCollapsed === 'function') window.livePreviewSyncYamlCollapsed(yamlPropsCollapsed);
+  if (document.body.classList.contains('reader-mode-active') && typeof render === 'function') render();
   if (typeof window.saveEditorSettings === 'function') window.saveEditorSettings();
 };
 
@@ -1437,6 +1468,183 @@ function openAdvancedOptions() {
 }
 window.openAdvancedOptions = openAdvancedOptions;
 
+/* ── Custom theme dialog ──────────────────────────────────────────────────
+   Controls that markdown_editor_theme.js turns into a full palette, each
+   slider changing only what it names: base (light/dark); text color and
+   text saturation — the text color colors every text in the UI and the
+   document, and the highlight and click flash follow it; background color
+   and background saturation. The generator fixes every lightness, so no
+   position can make text unreadable (test/custom_theme.test.js checks
+   every combination). Changes preview on the whole app (see apply()) — the
+   overlay is transparent and the dialog sits top-right so the editor and
+   preview stay visible. Save keeps the theme; Cancel, Escape or a click
+   outside restore the theme that was active before opening. */
+function openCustomThemeDialog() {
+  const RT = window.ReveryTheme;
+  if (!RT || typeof window.setThemeMode !== 'function') return;
+  if (document.getElementById('custom-theme-modal')) return;
+
+  const prevMode = themeMode;
+  const prevCustom = customTheme;
+  /* Start from the saved custom theme, else the defaults on the base
+     that matches the palette on screen now. */
+  let params = prevCustom
+    ? { ...prevCustom }
+    : { ...RT.DEFAULT_CUSTOM, base: RT.isDarkActive() ? 'dark' : 'light' };
+
+  const overlay = document.createElement('div');
+  overlay.id = 'custom-theme-modal';
+  overlay.className = 'modal-overlay show custom-theme-overlay';
+
+  const content = document.createElement('div');
+  content.className = 'modal-content custom-theme-content';
+  content.setAttribute('role', 'dialog');
+  content.setAttribute('aria-label', window.t('Custom theme'));
+
+  const heading = document.createElement('h3');
+  heading.textContent = window.t('Custom theme');
+  content.appendChild(heading);
+
+  const addRow = (labelText, control) => {
+    const row = document.createElement('div');
+    row.className = 'export-row';
+    const label = document.createElement('label');
+    label.textContent = window.t(labelText);
+    row.appendChild(label);
+    row.appendChild(control);
+    content.appendChild(row);
+  };
+
+  /* Base: two toggle buttons (■ marks the active one, like the menus). */
+  const baseWrap = document.createElement('div');
+  baseWrap.className = 'ct-base';
+  const baseBtns = ['light', 'dark'].map((b) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'modal-btn';
+    btn.dataset.base = b;
+    btn.addEventListener('click', () => { params.base = b; update(); });
+    baseWrap.appendChild(btn);
+    return btn;
+  });
+  addRow('Base', baseWrap);
+
+  const sliders = {};
+  const addSlider = (labelText, key, min, max) => {
+    const input = document.createElement('input');
+    input.type = 'range';
+    input.className = 'ct-range';
+    input.min = String(min);
+    input.max = String(max);
+    input.step = '1';
+    input.setAttribute('aria-label', window.t(labelText));
+    input.addEventListener('input', () => {
+      params[key] = Number(input.value);
+      paintControls();
+      if (!slowRepaint) apply();
+    });
+    input.addEventListener('change', () => apply()); // release / keyboard step
+    addRow(labelText, input);
+    sliders[key] = input;
+  };
+  addSlider('Text color', 'textHue', 0, 359);
+  addSlider('Text saturation', 'textSat', 0, 100);
+  addSlider('Background color', 'bgHue', 0, 359);
+  addSlider('Background saturation', 'bgSat', 0, 100);
+
+  /* Slider tracks show what each position gives. The text tracks are
+     painted with RT.textColor — the generator's own function — so they
+     show the exact text colors this base offers: every hue at full
+     saturation, and gray → the chosen hue. The real backgrounds are too
+     near black/white to show a hue, so their tracks use one fixed, clearly
+     visible lightness: every hue, and gray → the chosen hue. */
+  const text = (h, vivid) => RT.hex(RT.textColor(params.base, 'text', h, vivid));
+  const show = (h, chroma) => RT.hex(RT.oklch(0.7, chroma, h));
+  const track = (colors) => 'linear-gradient(90deg, ' + colors.join(', ') + ')';
+  const paintControls = () => {
+    baseBtns.forEach((btn) => {
+      const on = btn.dataset.base === params.base;
+      btn.textContent = (on ? '■ ' : '□ ') + window.t(btn.dataset.base === 'light' ? 'Light' : 'Dark');
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    for (const key of Object.keys(sliders)) sliders[key].value = String(params[key]);
+    const textHues = [], textSats = [], bgHues = [];
+    for (let h = 0; h <= 360; h += 30) {
+      textHues.push(text(h % 360, 100));
+      bgHues.push(show(h, 0.12));
+    }
+    for (let v = 0; v <= 100; v += 25) textSats.push(text(params.textHue, v));
+    sliders.textHue.style.background = track(textHues);
+    sliders.textSat.style.background = track(textSats);
+    sliders.bgHue.style.background = track(bgHues);
+    sliders.bgSat.style.background = track([show(params.bgHue, 0), show(params.bgHue, 0.14)]);
+  };
+
+  /* Live preview. Any palette change restyles the whole document — built-in
+     themes too — costing roughly 40 ms at 20 KB and 1 s at 600 KB of
+     markdown. When one repaint is slower than 100 ms, dragging stops
+     repainting the app and the control applies on release instead, so
+     it never stutters. */
+  let slowRepaint = false;
+  const apply = () => {
+    const t0 = performance.now();
+    window.setThemeMode('custom', params);
+    void document.body.offsetHeight; // the style pass the next frame would run anyway
+    slowRepaint = performance.now() - t0 > 100;
+  };
+  const update = () => { paintControls(); apply(); };
+
+  const buttons = document.createElement('div');
+  buttons.className = 'modal-buttons ct-buttons';
+  const makeBtn = (text, onClick, primary) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = primary ? 'modal-btn modal-btn-primary' : 'modal-btn';
+    b.textContent = window.t(text);
+    b.addEventListener('click', onClick);
+    buttons.appendChild(b);
+    return b;
+  };
+  makeBtn('Reset', () => { params = { ...RT.DEFAULT_CUSTOM, base: params.base }; update(); });
+  const spacer = document.createElement('span');
+  spacer.className = 'ct-spacer';
+  buttons.appendChild(spacer);
+  makeBtn('Cancel', () => close(false));
+  makeBtn('Save', () => close(true), true);
+  content.appendChild(buttons);
+
+  let closed = false;
+  const onKey = (e) => {
+    if (e.key !== 'Escape') return;
+    e.preventDefault();
+    e.stopPropagation(); // the find bar's global Escape must not also act
+    close(false);
+  };
+  function close(save) {
+    if (closed) return;
+    closed = true;
+    document.removeEventListener('keydown', onKey, true);
+    if (save) {
+      customTheme = RT.normalizeCustom(params);
+      themeMode = customTheme ? 'custom' : prevMode;
+      window.setThemeMode(themeMode, customTheme);
+      window.saveEditorSettings();
+    } else {
+      window.setThemeMode(prevMode, prevCustom);
+    }
+    overlay.remove();
+    buildSettingsMenu();
+  }
+
+  overlay.appendChild(content);
+  overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) close(false); });
+  document.addEventListener('keydown', onKey, true);
+  document.body.appendChild(overlay);
+  update();
+  sliders.textHue.focus();
+}
+window.openCustomThemeDialog = openCustomThemeDialog;
+
 /* Apply editor background: gradient (default) or solid (uses --editor-bg-start) */
 function applyEditorBgStyle() {
   if (editorBgGradient) {
@@ -1490,8 +1698,12 @@ window.setLivePreviewMode(livePreviewMode);   // install editor extension + hide
    stylesheet). Boot, the Preview toggle and the Reader toggle all come
    through here, so the classes and the inline styles cannot drift. */
 function applyPaneLayout() {
+  const readerChanged = document.body.classList.contains('reader-mode-active') !== readerMode;
   document.body.classList.toggle('reader-mode-active', readerMode);
   document.body.classList.toggle('preview-hidden', !previewVisible);
+  /* The preview's Properties sheet folds only in reader mode: redraw it
+     with (or without) its toggle. */
+  if (readerChanged && typeof render === 'function') render();
   if (readerMode) {
     edPane.style.display  = 'none';
     divider.style.display = 'none';
@@ -2033,6 +2245,44 @@ const fileActions = [
   /* Whole-project zip export — desktop only (web mode has no project). */
   { label: 'Zip Project Export', action: 'file_zip_export', desktopOnly: true }
 ];
+/* Insert a template (the Insert YAML / Import Template submenus) without
+   breaking the note's frontmatter. One undoable edit each.
+     • YAML template, note without frontmatter → at the top, as always.
+     • YAML template, note WITH frontmatter → only the template's keys the
+       note does not have yet, added inside the existing block. Prepending
+       a second block made the note's own properties body text. Existing
+       values are never changed; nothing missing → a status message.
+     • Markdown template → below the frontmatter: above it, the note's
+       first line was no longer '---' and its frontmatter stopped being one.
+   Frontmatter by the editor's rule (window.frontmatterOfText, cm_setup). */
+function insertTemplate(kind, content) {
+  const say = (msg) => {
+    if (typeof window.showStatusWarning === 'function') {
+      window.showStatusWarning('template-insert', window.t(msg), { priority: 10, ttl: 4000 });
+    }
+  };
+  const noteFm = window.frontmatterOfText(editor.value);
+  if (kind === 'yaml') {
+    const tpl = window.frontmatterOfText(content);
+    if (!tpl) { say('This YAML template has no --- block, so it was not inserted.'); return; }
+    if (!noteFm) { insertWithUndo(0, 0, content); return; }
+    const Y = window.ReveryYaml;
+    const have = new Set(Y.readEntries(noteFm.yaml, 0).map((e) => e.key).filter(Boolean));
+    const missing = Y.readEntries(tpl.yaml, 0)
+      .filter((e) => e.key && !have.has(e.key))
+      .map((e) => tpl.yaml.slice(e.start, e.end));
+    if (!missing.length) { say('This note already has all of the template\'s properties.'); return; }
+    const add = missing.join('\n') + '\n';
+    /* The cursor stays where it was, so the sheet shows the new rows. */
+    const head = window.cmView.state.selection.main.head;
+    insertWithUndo(noteFm.closeFrom, noteFm.closeFrom, add, head >= noteFm.closeFrom ? head + add.length : head);
+    return;
+  }
+  if (!noteFm) { insertWithUndo(0, 0, content); return; }
+  const body = '\n\n' + content.replace(/\s+$/, '');
+  insertWithUndo(noteFm.end, noteFm.end, body);
+}
+
 /* Populate Menus — supports submenus */
 function buildMenu(container, actions) {
   actions.forEach(item => {
@@ -2062,7 +2312,8 @@ function buildMenu(container, actions) {
         subBtn.textContent = subItem.custom ? subItem.label : window.t(subItem.label);
         subBtn.onclick = (e) => {
           e.stopPropagation();
-          insertWithUndo(0, 0, subItem.content);
+          if (item.customKind) insertTemplate(item.customKind, subItem.content);
+          else insertWithUndo(0, 0, subItem.content);
           render();
           container.classList.remove('show');
         };
@@ -2708,7 +2959,8 @@ const themeOptions = [
   { label: 'Light',  val: 'light'  },
   { label: 'Dark',   val: 'dark'   },
   { label: 'Paper',  val: 'paper'  },
-  { label: 'Forest', val: 'forest' }
+  { label: 'Forest', val: 'forest' },
+  { label: 'Custom theme…', val: 'custom' } // opens the dialog (also to edit it)
 ];
 
   const themeWrapper = document.createElement('div');
@@ -2728,6 +2980,11 @@ const themeOptions = [
     btn.textContent = (themeMode === opt.val ? '■ ' : '\u00a0\u00a0') + window.t(opt.label);
     btn.onclick = (e) => {
       e.stopPropagation();
+      if (opt.val === 'custom') {
+        settingsDropdown.classList.remove('show');
+        openCustomThemeDialog();
+        return;
+      }
       themeMode = opt.val;
       if (window.setThemeMode) window.setThemeMode(themeMode);
       settingsDropdown.classList.remove('show');
