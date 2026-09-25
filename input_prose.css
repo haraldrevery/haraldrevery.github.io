@@ -499,6 +499,14 @@
 }
 .article-outline-btn:hover { color: #737373; }
 
+/* The real control is the invisible checkbox, so keyboard focus (Tab, then
+   Space to toggle) has to be shown on the label that stands in for it.
+   :focus-visible keeps a mouse click on the label from drawing the ring. */
+.article-outline-toggle:focus-visible ~ .article-outline-btn {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
 /* Icon swaps between ☰ (closed) and ✕ (open) */
 .article-outline-icon-close { display: none; }
 .article-outline-toggle:checked ~ .article-outline-btn .article-outline-icon-open  { display: none; }
@@ -523,6 +531,18 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
 }
 .article-outline-toggle:checked ~ .article-outline-panel { display: block; }
+
+/* Markdown posts also get the reading-width button (reading_width.js), which
+   sits at 3.9rem-6.4rem, straight through the panel's bottom edge. Lift the
+   panel clear of it: 6.4rem + a small gap. Keyed on the button itself, so posts
+   without it (block posts, touch devices, JS off) keep the lower position, and
+   any version of reading_width.js a browser has cached qualifies. Without
+   :has() the panel simply stays where it was. The max-height term keeps the
+   panel's top below the fixed nav in a short window. */
+.bg-topology-map:has(> .reading-width-btn) .article-outline-panel {
+  bottom: 7rem;
+  max-height: min(60vh, 32rem, calc(100vh - 12.5rem));
+}
 
 .article-outline-heading {
   margin: 0 0 0.6rem;
@@ -631,9 +651,17 @@
    hover from it — so without this the zone loses :hover the instant you touch
    the button and it flickers/fades out under the pointer. */
 .reading-corner-zone:hover ~ .reading-width-btn,
-.reading-width-btn:hover {
+.reading-width-btn:hover,
+.reading-width-btn:focus-visible {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* The button is invisible until hovered, but Tab still reaches it: show it
+   while it has keyboard focus, with a ring, instead of focusing thin air. */
+.reading-width-btn:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 @media (prefers-color-scheme: dark) {

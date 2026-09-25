@@ -43,6 +43,11 @@ body::before {
   background-color: var(--color-backdrop-light-center);
 }
 
+/* Reduced motion: hold the gradient still. It never stops otherwise. */
+@media (prefers-reduced-motion: reduce) {
+  body::before { animation: none; }
+}
+
 /* 3. Dark Mode for EVERYONE */
 @media (prefers-color-scheme: dark) {
   body::before {
@@ -284,6 +289,18 @@ nav {
 
 @keyframes slide-to-left {
   to { transform: translateX(-30px); }
+}
+
+/* Reduced motion: plain page loads (no slide), and in-page links such as a
+   release's "Listen now" jump instead of gliding. The later @view-transition
+   rule wins; this is unlayered, so it also beats the .scroll-smooth utility. */
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 
@@ -864,10 +881,13 @@ nav {
     to   { opacity: 1; }
   }
 
+  /* The hidden start comes from the animation itself (`both` = hold the
+     `from` frame before it starts, including any delay), never from an
+     `opacity: 0` in the rule. With that in the rule, anything that stopped the
+     animation from running left the whole block invisible for good. */
   .fade_effect,
   .extra_fade_effect {
-    animation: fade_effect 1.2s ease-in forwards;
-    opacity: 0;
+    animation: fade_effect 1.2s ease-in both;
   }
 
 
@@ -876,8 +896,7 @@ nav {
      just delayed. */
   .fade_effect_long,
   .extra_fade_effect_long {
-    animation: fade_effect 1.2s ease-in forwards;
-    opacity: 0;
+    animation: fade_effect 1.2s ease-in both;
     animation-delay: 2.8s; /* 2800ms delay */
   }
 
@@ -3138,6 +3157,72 @@ iframe.wait-autoplay {
 
   .track { border-bottom-color: rgba(255, 255, 255, 0.12); }
   .track:first-child { border-top-color: rgba(255, 255, 255, 0.12); }
+}
+
+/* ---- Release page opening sequence ------------------------------------
+   Plays once per page load, CSS only: the blurred colour field rises, the
+   cover lifts into place, the title block follows line by line, then a
+   single glint crosses the cover. About 2.5s in all.
+
+   Scoped to .release-hero--intro, which only release.njk sets: the page
+   builder's Hero reuses the .release-hero__* classes and must not animate.
+
+   Built to be impossible to get stuck:
+   - Every keyframe is FROM-only (or ends where the element normally rests),
+     so once it finishes the page is exactly the normal CSS. `backwards` only
+     holds the start frame during the delay; nothing is held afterwards.
+   - The class lives in the HTML and the animation in main.css, and the two
+     reach returning visitors at different times (main.css is cached for
+     months). Either half alone does nothing.
+   - Only opacity and transform move, which a slow GPU can composite
+     without repainting; the one exception is the glint, a repaint of one
+     cover-sized layer for 1.4s. The backdrop only fades: moving or scaling
+     a blur(64px) layer would re-blur it every frame.
+   - The cover animates its .cover-3d-scene WRAPPER. .cover-3d's own
+     transform belongs to the hover tilt, and an animation there would
+     override it.
+   - Reduced motion: none of it runs. */
+@media (prefers-reduced-motion: no-preference) {
+  .release-hero--intro .release-hero__backdrop {
+    animation: release-backdrop-in 2.2s cubic-bezier(0.33, 1, 0.68, 1) backwards;
+  }
+  .release-hero--intro .cover-3d-scene {
+    animation: release-cover-in 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.1s backwards;
+  }
+  .release-hero--intro .release-hero__kicker,
+  .release-hero--intro .release-hero__title,
+  .release-hero--intro .release-hero__tagline,
+  .release-hero--intro .release-hero__chips,
+  .release-hero--intro .release-hero__cta {
+    animation: release-rise-in 1s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+  .release-hero--intro .release-hero__kicker  { animation-delay: 0.35s; }
+  .release-hero--intro .release-hero__title   { animation-delay: 0.45s; }
+  .release-hero--intro .release-hero__tagline { animation-delay: 0.6s; }
+  .release-hero--intro .release-hero__chips   { animation-delay: 0.7s; }
+  .release-hero--intro .release-hero__cta     { animation-delay: 0.8s; }
+  .release-hero--intro .cover-3d::after {
+    animation: release-cover-glint 1.4s ease-in-out 1.1s;
+  }
+}
+
+/* From-only: the end state is each element's own opacity (the kicker rests
+   at 0.5, the backdrop at 0.5 or 0.55), not 1. */
+@keyframes release-backdrop-in {
+  from { opacity: 0; }
+}
+@keyframes release-cover-in {
+  from { opacity: 0; transform: translateY(2rem) scale(0.96); }
+}
+@keyframes release-rise-in {
+  from { opacity: 0; transform: translateY(1rem); }
+}
+/* The hover sheen (.cover-3d::after), swept once. It starts and ends at
+   opacity 0, so handing back to the resting rule shows no jump. */
+@keyframes release-cover-glint {
+  0%   { opacity: 0; background-position: 0% 100%; }
+  35%  { opacity: 1; }
+  100% { opacity: 0; background-position: 100% 0%; }
 }
 
 

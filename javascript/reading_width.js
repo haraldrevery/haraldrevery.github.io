@@ -28,6 +28,15 @@ var index   = 0;                      // current step in SCALES
 // '<>' only at the last (narrowest) step, where the next click returns to default.
 function glyphFor(i) { return i === SCALES.length - 1 ? WIDEN : NARROW; }
 
+// Glyph plus a name that says what the NEXT press does. Screen readers and
+// keyboard users only get the name, so it must flip with the glyph.
+function render() {
+    var label = index === SCALES.length - 1 ? 'Reset the reading width' : 'Narrow the reading width';
+    btn.textContent = glyphFor(index);
+    btn.setAttribute('aria-label', label);
+    btn.setAttribute('title', label);
+}
+
 // Restore the saved step. The inline snippet at the top of post.njk has already
 // applied the width before paint, so there's nothing to re-apply here — we only
 // need `index` to match it, or the glyph and the next click would be out of sync.
@@ -52,9 +61,7 @@ zone.className = 'reading-corner-zone';
 var btn = document.createElement('button');
 btn.type = 'button';
 btn.className = 'reading-width-btn';
-btn.setAttribute('aria-label', 'Narrow the reading width');
-btn.setAttribute('title', 'Narrow the reading width');
-btn.textContent = glyphFor(index);
+render();
 
 // Sit above the outline button when the post has one; otherwise use the corner slot.
 if (document.querySelector('.article-outline-btn')) {
@@ -64,7 +71,7 @@ if (document.querySelector('.article-outline-btn')) {
 btn.addEventListener('click', function () {
     index = (index + 1) % SCALES.length;
     document.documentElement.style.setProperty('--reading-scale', SCALES[index]);
-    btn.textContent = glyphFor(index);
+    render();
     // Remember the step so the next page opens at the same width. The default
     // step stores nothing, so a reader who never uses the button never gets a key.
     try {

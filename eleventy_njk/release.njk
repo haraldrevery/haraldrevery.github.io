@@ -96,7 +96,9 @@ eleventyExcludeFromCollections: true
 <!-- ====================================================================== -->
 <!-- AMBIENT FULL-BLEED HERO                                                  -->
 <!-- ====================================================================== -->
-<section class="release-hero">
+{#- release-hero--intro plays the opening sequence (input.css). The page
+   builder's Hero shares .release-hero but not this class, so it stays still. #}
+<section class="release-hero release-hero--intro">
 
     <div class="release-hero__backdrop" style="background-image: url('{{ release.artcoverMin }}');"></div>
     <div class="release-hero__scrim"></div>
@@ -380,7 +382,7 @@ eleventyExcludeFromCollections: true
 <!-- GLightbox load (powers the cover-art slider) -->
 <script src="/javascript/glightbox.min.js" defer></script>
 <!-- GLightbox settings -->
-<script src="/javascript/glightbox_settings.js" defer></script>
+<script src="/javascript/glightbox_settings_min.js" defer></script>
 
 </body>
 </html>

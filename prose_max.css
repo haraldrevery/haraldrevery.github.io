@@ -3254,6 +3254,10 @@
 .article-outline-btn:hover {
   color: #737373;
 }
+.article-outline-toggle:focus-visible ~ .article-outline-btn {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
 .article-outline-icon-close {
   display: none;
 }
@@ -3282,6 +3286,10 @@
 }
 .article-outline-toggle:checked ~ .article-outline-panel {
   display: block;
+}
+.bg-topology-map:has(> .reading-width-btn) .article-outline-panel {
+  bottom: 7rem;
+  max-height: min(60vh, 32rem, calc(100vh - 12.5rem));
 }
 .article-outline-heading {
   margin: 0 0 0.6rem;
@@ -3395,9 +3403,13 @@
 .reading-width-btn.reading-width-btn--above-outline {
   bottom: 3.9rem;
 }
-.reading-corner-zone:hover ~ .reading-width-btn, .reading-width-btn:hover {
+.reading-corner-zone:hover ~ .reading-width-btn, .reading-width-btn:hover, .reading-width-btn:focus-visible {
   opacity: 1;
   pointer-events: auto;
+}
+.reading-width-btn:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 @media (prefers-color-scheme: dark) {
   .reading-width-btn {
