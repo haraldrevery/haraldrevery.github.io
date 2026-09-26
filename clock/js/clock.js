@@ -14,10 +14,12 @@
    Timing: timers and alarms are absolute timestamps. One setTimeout aimed at
    the next due moment fires them, so they ring in a background tab (where
    requestAnimationFrame is paused). Drawing uses rAF only for faces that
-   actually move smoothly; everything else redraws once per second. What the
-   browser can animate by itself (the celestial seconds planet, its sky's
-   turning, twinkling and shooting stars, the celestial timer's satellite) it
-   does, so that face needs no rAF, as a clock or as a timer.
+   actually move smoothly; everything else redraws once per second. A timer
+   face is drawn again once something on it has moved half a pixel (every
+   frame only for a short countdown). What the browser can animate by itself
+   (the celestial seconds planet, its sky's turning, twinkling and shooting
+   stars, the celestial timer's satellite) it does, so that face needs no rAF,
+   as a clock or as a timer.
    Settings > Performance > Low turns all smooth motion and blur off.
    ========================================================================== */
 (function () {
@@ -664,20 +666,20 @@
     }
     // TIMER_FACES: the faces that have a timer face, by name, each with
     // draw(progress, remaining) (progress: 0 = just started, 1 = time is up),
-    // smooth (true: drawn every frame while it runs) and, if it has them,
-    // start() for a new countdown and wait() (ms until it needs drawing
-    // again, if that is before the next second). A face is listed only once
-    // it has been built without an error; the others show big numerals.
-    var TIMER_FACES = {}, tfArc = null, hgTimer = null, tfDigits = null;
+    // wait() (ms until it needs drawing again, if that is before the next
+    // second; under two frames means every frame) and, if it has one, start()
+    // for a new countdown. A face is listed only once it has been built
+    // without an error; the others show big numerals.
+    var TIMER_FACES = {}, tfBox = null, tfArc = null, hgTimer = null, tfDigits = null;
     function buildTimerFace() {
-        var box = $('#timer-face');
+        var box = tfBox = $('#timer-face');
         tfDigits = digits($('#tf-digits'));
         box.insertBefore(cloneWithIds($('.face-ring .ring-svg'), 'tf-'), box.firstChild);
         box.insertBefore(cloneWithIds($('#hg-svg'), 'tf-'), box.firstChild);
         tfArc = $('#tf-ring-arc');
         hgTimer = makeHourglass('tf-');
-        TIMER_FACES.ring = { smooth: true, draw: drawRingTimer };
-        TIMER_FACES.hourglass = { smooth: true, draw: drawGlassTimer, start: turnTimerGlass };
+        TIMER_FACES.ring = { draw: drawRingTimer, wait: ringWait };
+        TIMER_FACES.hourglass = { draw: drawGlassTimer, wait: glassWait, start: turnTimerGlass };
     }
     function timerHasFace() { return !!TIMER_FACES[S.face]; }
     function renderTimerFace(progress, remaining) {
@@ -689,9 +691,32 @@
         tfArc.style.strokeDashoffset = (-RING_C * progress).toFixed(2);
         tfArc.classList.toggle('tf-arc-done', progress >= 1);
     }
+    // How far (px) a timer face may move before it is drawn again: too little
+    // to see. Drawn every frame instead, a 5-minute ring timer (its arc moves
+    // a tenth of a pixel a frame) took most of a CPU core.
+    var TF_PX = .5;
+    // ms until the arc's moving end has gone TF_PX (the ring is 600 units across).
+    function ringWait() {
+        var tm = T.timer, w = tfBox.offsetWidth;
+        if (tm.status !== 'running' || !w) return Infinity;
+        return TF_PX / (RING_C * w / 600 / tm.duration);
+    }
     function drawGlassTimer(progress) {
         if (hgTimer.flips < 0) turnHourglass(hgTimer, 0, false);
         drawSand(hgTimer, progress, T.timer.status === 'running');
+    }
+    // ms until the sand next changes: drawSand works in 3600 steps, and a step
+    // is less than a pixel of sand. Also the moment a turn of the glass ends,
+    // when the sand it held back settles.
+    function glassWait() {
+        var tm = T.timer, now = Date.now(), turning = hgTimer.still > now ? hgTimer.still - now + 1 : Infinity;
+        if (tm.status !== 'running') return turning;
+        // drawSand rounds, so a step shows once progress is halfway to the
+        // next. Progress is worked out exactly as tickTimer does, so the two
+        // agree on which side of that point they are (worked out another way,
+        // it can come out a hair short), and the draw is aimed a few ms past it.
+        var step = tm.duration / 3600, x = clamp(1 - (tm.endAt - now) / tm.duration, 0, 1) * 3600;
+        return Math.min(turning, (Math.floor(x - .5) + 1.5 - x) * step + 4);
     }
     // A new countdown on the hourglass: turn the glass over, so the sand lying
     // at the bottom from the last run ends up on top. Called right after the
@@ -747,6 +772,10 @@
         });
         $$('.sec-el', svg).forEach(function (el) { el.classList.remove('sec-el'); });
         var path = svgEl('path', { 'class': 'tf-path' }, svg);
+        // Its dots are CEL_DOT apart, set here because the path is cut by that
+        // spacing (drawCelPath); the same value in clock.css is for older copies
+        // of this script.
+        path.style.strokeDasharray = '0 ' + CEL_DOT;
         svg.insertBefore(path, $('.core-fill', svg));
         box.insertBefore(svg, before);
         // The layers are strips from the centre up to just past the start, as
@@ -784,7 +813,7 @@
             seen: null,         // the timer's status at the last draw; null while not shown
             fx: [], doneId: 0   // the ending's animations, and the timeout that brings the glow
         };
-        TIMER_FACES.celestial = { smooth: false, draw: drawCelTimer, wait: celPathWait };
+        TIMER_FACES.celestial = { draw: drawCelTimer, wait: celPathWait };
     }
     // 2 turns for a few seconds, 3 for a minute, 4 for a quarter of an hour,
     // 5 for an hour, 6 from about three hours.
@@ -1373,8 +1402,9 @@
         heartbeat();
         renderTools();
     }
-    // Idle: the number inputs and presets. Started: the ring or hourglass face
-    // when one of those is chosen, otherwise big numerals and a progress line.
+    // Idle: the number inputs and presets. Started: the ring, hourglass or
+    // celestial face when one of those is chosen, otherwise big numerals and a
+    // progress line.
     function renderTimer() {
         var tm = T.timer, editing = tm.status === 'idle', faceOn = !editing && timerHasFace();
         setHidden($('#timer-edit'), !editing);
@@ -1395,7 +1425,7 @@
             b.setAttribute('aria-pressed', String(editing && Number(b.dataset.preset) * 1000 === inputsToDuration()));
         });
     }
-    // The parts of the timer that move while it runs (every frame).
+    // The parts of the timer that move while it runs (at every draw: see scheduleFrame).
     function tickTimer() {
         var tm = T.timer, remaining = timerRemaining();
         var progress = tm.status === 'idle' ? 0 : clamp(1 - remaining / (tm.duration || 1), 0, 1);
@@ -1670,9 +1700,8 @@
     function needsSmoothFrames() {
         // The stopwatch's hundredths are what it is for: smooth in every mode.
         if (currentMode === 'stopwatch') return T.sw.running;
-        if (S.perf === 'low') return false;
-        if (currentMode === 'timer') return T.timer.status === 'running' && timerHasFace() && TIMER_FACES[S.face].smooth;
-        if (currentMode !== 'clock') return false;
+        // A timer face says itself when it needs drawing (scheduleFrame).
+        if (S.perf === 'low' || currentMode !== 'clock') return false;
         if (S.face === 'celestial') return S.seconds && !celSec;   // see buildCelSeconds
         if (S.face === 'ring' || S.face === 'analog') return S.seconds;
         return false;
@@ -1704,8 +1733,8 @@
         if (T.timer.status === 'running') phase = ((now - T.timer.endAt) % 1000 + 1000) % 1000;
         // A timer face can ask for a draw before that (TIMER_FACES wait);
         // within two frames, it gets the next frame (a timeout that short
-        // often comes a frame late).
-        var wait = 1000 - phase + 8, face = currentMode === 'timer' && timerHasFace() && TIMER_FACES[S.face];
+        // often comes a frame late). Low performance: once a second.
+        var wait = 1000 - phase + 8, face = currentMode === 'timer' && S.perf !== 'low' && timerHasFace() && TIMER_FACES[S.face];
         if (face && face.wait) {
             var soon = face.wait();
             if (soon < 34) { frameRaf = requestAnimationFrame(frame); return; }
@@ -1756,13 +1785,14 @@
     // "reduce motion" keep the sky still, with no shooting stars; a hidden
     // face or tab animates nothing.
     var SKY_R = 140;                 // in face units (the face is 200 across)
-    var sky = null, skyOn = false, meteorId = 0, skyTurns = [];
+    var sky = null, skyOn = false, meteorId = 0;
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     function buildSky() {
         var rand = seeded(7), wrap = $('.orbit-wrap');
         sky = document.createElement('div');
         sky.className = 'sky';
         sky.setAttribute('aria-hidden', 'true');
+        sky.addEventListener('animationstart', phaseSky);
         function layer(cls) {
             var el = document.createElement('div');
             el.className = cls;
@@ -1818,24 +1848,24 @@
             skyOn = on;
             if (!on) $$('.meteor', sky).forEach(function (el) { el.remove(); });
         }
-        if (on) phaseSky();
         var lively = on && S.perf !== 'low' && !reducedMotion.matches;
         if (lively && !meteorId) scheduleMeteor();
         else if (!lively && meteorId) { clearTimeout(meteorId); meteorId = 0; }
     }
     // The browser starts a layer's turn afresh whenever the face is shown
     // again, the sky is moved (see skyHost) or motion comes back on, which
-    // would put the sky back where it began each time. Instead each new turn is set to where the layer would
-    // be had it been turning since midnight (UTC; a day holds a whole number
-    // of turns of either layer, see .sky in clock.css). A turn that was only
-    // paused, under the event card, carries on from where it stopped.
-    // Browsers without getAnimations() start from the beginning, as before.
-    function phaseSky() {
-        $$('.sky-turn', sky).forEach(function (layer, i) {
-            var anim = layer.getAnimations ? layer.getAnimations()[0] : null;
-            if (!anim || anim === skyTurns[i]) return;
-            skyTurns[i] = anim;
-            anim.currentTime = Date.now() % 86400000;
+    // would put the sky back where it began each time. Instead each turn, as
+    // it starts (animationstart, see buildSky), is set to where the layer
+    // would be had it been turning since midnight (UTC; a day holds a whole
+    // number of turns of either layer, see .sky in clock.css). A turn that
+    // was only paused, under the event card, doesn't start again, so it
+    // carries on from where it stopped. The turn is picked by its name: an
+    // element's transitions come first in getAnimations(). Browsers without
+    // getAnimations() start from the beginning, as before.
+    function phaseSky(e) {
+        if (e.animationName !== 'sky-turn' || !e.target.getAnimations) return;
+        e.target.getAnimations().forEach(function (anim) {
+            if (anim.animationName === 'sky-turn') anim.currentTime = Date.now() % 86400000;
         });
     }
 

@@ -545,12 +545,16 @@ body {
    The stars are two layers turning the same way, for depth: the far one
    (.sky-far, the fainter stars) at 3/4 the speed of the near one. clock.js
    sets each layer's angle from the time since midnight, so both durations
-   must divide a day (86400 s) evenly; otherwise that angle jumps at midnight. */
+   must divide a day (86400 s) evenly; otherwise that angle jumps at midnight.
+   They turn in steps of 1/8 s (steps() = duration x 8), not every frame: at
+   the rim that is half a pixel on a 4K screen, too little to see, and a
+   computer without graphics acceleration then turns the two big layers 8
+   times a second instead of 60 (measured: about a third of a CPU core less). */
 .face-celestial { overflow: hidden; overflow: clip; }
 .sky { position: absolute; inset: -20%; pointer-events: none; color: var(--ink); }
 :root[data-theme="light"] .sky, :root[data-tone="light"] .sky { color: color-mix(in srgb, var(--ink) 60%, transparent); }
-.sky-turn { position: absolute; inset: 0; animation: sky-turn 1800s linear infinite; }
-.sky-far { animation-duration: 2400s; }
+.sky-turn { position: absolute; inset: 0; animation: sky-turn 1800s steps(14400) infinite; }
+.sky-far { animation-duration: 2400s; animation-timing-function: steps(19200); }
 @keyframes sky-turn { to { transform: rotate(-360deg); } }
 .sky svg { fill: currentColor; }
 .tw {
@@ -561,6 +565,8 @@ body {
     opacity: .5;
     animation: twinkle 4s ease-in-out infinite alternate;   /* duration and delay: per star */
 }
+/* On a light background a glow in the ink colour reads as a smudge, not a star. */
+:root[data-theme="light"] .tw, :root[data-tone="light"] .tw { box-shadow: none; }
 @keyframes twinkle { from { opacity: .08; } to { opacity: .95; } }
 /* Under the open event card the sky is blurred anyway; don't make the blur redo itself. */
 :root:has(#card-overlay.active) :is(.tw, .sky-turn) { animation-play-state: paused; }
@@ -686,9 +692,10 @@ body {
     transition: transform 1s linear;
 }
 
-/* Timer face: the clock's ring or hourglass while a countdown runs. clock.js
-   copies the clock face's own SVG in here, so the two always look alike. It
-   is sized like the clock faces, less the room the heading and buttons take. */
+/* Timer face: the clock's ring, hourglass or celestial face while a countdown
+   runs. clock.js copies the clock face's own SVG in here, so the two always
+   look alike. It is sized like the clock faces, less the room the heading and
+   buttons take. */
 .timer-face {
     --tf-celestial: 1;           /* tells clock.js this file has the celestial timer's styles (buildCelTimer) */
     --tf-chrome: 9rem;           /* heading + buttons + gaps */
@@ -707,36 +714,39 @@ body {
     transform: translate(-50%, calc(-50% + var(--font-shift)));
     font-size: max(var(--text-xs), calc(var(--tf-size) * .16));
 }
-:root[data-face="hourglass"] .tf-time {
+/* Hourglass and celestial: the time sits in the band under the glass's foot
+   or the outer orbit, so these faces are as large as the ring and in the same
+   place: switching between them moves nothing. */
+:root[data-face="hourglass"] .tf-time,
+:root[data-face="celestial"] .tf-time {
     top: 93%;
     transform: translate(-50%, var(--font-shift));
     font-size: max(var(--text-xs), calc(var(--tf-size) * .075));
-    color: var(--ink-dim);
 }
+:root[data-face="hourglass"] .tf-time { color: var(--ink-dim); }
 .tf-arc-done { visibility: hidden; }   /* a zero-length round-capped dash would still draw a dot */
 
 /* Celestial: the dial (copied without the clock's planets), the path still
    ahead, and the satellite on its two layers, placed by clock.js (see
    "Celestial timer" there). The sky is moved in here while this face shows.
-   The time sits under the dial, so the face leaves room for it; the view
-   clips the sky as .face-celestial does, and the heading and buttons stay in
-   front of it. */
+   The time sits under the outer orbit (above), where the upright meridian
+   stops at the orbit instead of running on through the digits: the last 8 of
+   its 188 units are a gap in its dash. The view clips the sky as
+   .face-celestial does, and the heading and buttons stay in front of it. */
 :root[data-face="celestial"] .timer-face > .tf-cel { display: block; }
 .tf-cel { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.tf-cel .meridian[x1="0"] { stroke-dasharray: 180 8; }
 .tf-cel-box { display: none; position: absolute; inset: 0; pointer-events: none; }
 :root[data-face="celestial"] .tf-cel-box { display: block; }
-:root[data-face="celestial"] .timer-face {
-    --tf-size: calc(min(100cqw, (100cqh - var(--tf-chrome)) / 1.12) * .8 * var(--face-scale));
-    margin-bottom: calc(var(--tf-size) * .12);
-}
-:root[data-face="celestial"] .tf-time {
-    top: calc(100% + var(--tf-size) * .03);
-    transform: translate(-50%, var(--font-shift));
-    font-size: max(var(--text-xs), calc(var(--tf-size) * .075));
-}
 :root[data-face="celestial"] [data-view="timer"] { overflow: clip; }
 [data-view="timer"] :is(.heading, .controls) { position: relative; z-index: 1; }
-/* The path leads here: round dots, over orbits dimmed from the clock's .32. */
+/* No blur behind the timer's buttons: the celestial sky moves behind them,
+   and the browser worked the blur out again every frame (about 6% of a CPU
+   core); the pill is mostly opaque anyway. */
+[data-view="timer"] .btn { -webkit-backdrop-filter: none; backdrop-filter: none; }
+/* The path leads here: round dots, over orbits dimmed from the clock's .32.
+   clock.js sets the dot spacing itself (CEL_DOT, which it cuts the path by);
+   the 1.6 here is for older copies of clock.js, so it has to stay 1.6. */
 .tf-path { fill: none; stroke: currentColor; stroke-width: .6; stroke-linecap: round; stroke-dasharray: 0 1.6; opacity: .62; }
 .tf-cel .orbit-path { opacity: .14; }
 .cel-sat { position: absolute; transform-origin: 50% 100%; }
