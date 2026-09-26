@@ -438,6 +438,18 @@
         $('.orbit-wrap').appendChild(layer);
         celSec = { layer: layer, anim: null };
     }
+    // Where a running animation is right now. Its currentTime is where it was
+    // at the page's last frame, and Firefox, when it is busy, can be that far
+    // behind (measured: up to a second on a large celestial face), while the
+    // animation itself, which the browser runs apart from the page, is not.
+    // Compared with Date as it was, a satellite that ran smoothly was "put
+    // back" by up to a second, both ways, dozens of times a minute: the
+    // stutter on a large face. How long ago the last frame was is added back.
+    function animNow(anim) {
+        var t = anim.currentTime || 0, frame = document.timeline && document.timeline.currentTime;
+        if (anim.playState !== 'running' || anim.pending || typeof frame !== 'number') return t;
+        return t + (performance.now() - frame) * anim.playbackRate;
+    }
     // Called every frame (once a second on this face): runs the planet's
     // turn while the face shows it and stops it otherwise. The browser's
     // animation clock drifts from Date after the computer sleeps or the
@@ -460,8 +472,9 @@
             anim.currentTime = ms;
             return;
         }
-        var off = (((anim.currentTime || 0) - ms) % 60000 + 60000) % 60000;
-        if (Math.min(off, 60000 - off) > 40) anim.currentTime = ms;
+        var off = ((animNow(anim) - ms) % 60000 + 60000) % 60000;
+        if (off > 30000) off -= 60000;
+        if (Math.abs(off) > 40) anim.currentTime = (anim.currentTime || 0) - off;
     }
 
     var faceDigits = {
@@ -874,7 +887,7 @@
     // Where the satellite is as drawn: the browser's animation can be up to
     // 40 ms off the countdown (see placeSatellite), and the path is cut at it.
     function celOnScreen(ct, progress) {
-        return ct.anims ? clamp((ct.anims[0].currentTime || 0) / ct.built, 0, 1) : progress;
+        return ct.anims ? clamp(animNow(ct.anims[0]) / ct.built, 0, 1) : progress;
     }
     // Called every frame: stops everything once
     // the face isn't shown.
@@ -917,7 +930,8 @@
         }
         ct.anims.forEach(function (anim) {
             if (!running && anim.playState !== 'paused') anim.pause();
-            if (Math.abs((anim.currentTime || 0) - elapsed) > (running ? 40 : .5)) anim.currentTime = elapsed;
+            var off = animNow(anim) - elapsed;           // see animNow
+            if (Math.abs(off) > (running ? 40 : .5)) anim.currentTime = (anim.currentTime || 0) - off;
             if (running && anim.playState === 'paused') anim.play();
         });
     }
