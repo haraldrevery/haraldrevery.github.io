@@ -123,7 +123,7 @@ var I18N = {
         desc_empty: 'Write a description under Content to show it.',
         banner_desc: 'The banner size has no room for the description.',
         kind: 'Shape', ring: 'Ring', logo_hr: 'Harald Revery logo', logo_text: 'Text logo',
-        logo_mtn1: 'Mountains 1', logo_mtn3: 'Mountains 2', logo_dots: 'Dotted mountain',
+        logo_mtn1: 'Mountains 1', logo_mtn3: 'Mountains 2', logo_dots: 'Dotted mountain', logo_compass: 'Compass',
         photo: 'Photo', none: 'None', zoom: 'Zoom', bg_hint: 'Drag on the card to move the photo.',
         bg_transp: 'A transparent PNG has no background.', your_image: 'Your image {n}',
         remove_image: 'Remove this image',
@@ -185,7 +185,7 @@ var I18N = {
         desc_empty: 'Skriv en beskrivning under Innehåll för att visa den.',
         banner_desc: 'Bannerstorleken har inte plats för beskrivningen.',
         kind: 'Form', ring: 'Ring', logo_hr: 'Harald Revery-logotyp', logo_text: 'Textlogotyp',
-        logo_mtn1: 'Berg 1', logo_mtn3: 'Berg 2', logo_dots: 'Prickigt berg',
+        logo_mtn1: 'Berg 1', logo_mtn3: 'Berg 2', logo_dots: 'Prickigt berg', logo_compass: 'Kompass',
         photo: 'Foto', none: 'Inget', zoom: 'Zoom', bg_hint: 'Dra på kortet för att flytta fotot.',
         bg_transp: 'En transparent PNG har ingen bakgrund.', your_image: 'Din bild {n}',
         remove_image: 'Ta bort bilden',
@@ -295,7 +295,8 @@ var LOGOS = [
     { src: '/svg/haraldreverytextlogo.svg', scale: 4.4, name: 'logo_text' },
     { src: '/svg/python_generated_svg/mountain_topology1.svg', scale: 8.2, name: 'logo_mtn1' },
     { src: '/svg/python_generated_svg/mountain_topology3.svg', scale: 8.2, name: 'logo_mtn3' },
-    { src: '/svg/mountain_dotted_transparent.svg', scale: 8.2, name: 'logo_dots' }
+    { src: '/svg/mountain_dotted_transparent.svg', scale: 8.2, name: 'logo_dots' },
+    { src: '/svg/compass.svg', scale: 2.56, name: 'logo_compass' }
 ];
 
 var THEMES = {
