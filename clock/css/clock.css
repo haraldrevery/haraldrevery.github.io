@@ -687,6 +687,7 @@ body {
    copies the clock face's own SVG in here, so the two always look alike. It
    is sized like the clock faces, less the room the heading and buttons take. */
 .timer-face {
+    --tf-celestial: 1;           /* tells clock.js this file has the celestial timer's styles (buildCelTimer) */
     --tf-chrome: 9rem;           /* heading + buttons + gaps */
     --tf-size: calc(min(100cqw, 100cqh - var(--tf-chrome)) * .8 * var(--face-scale));
     position: relative;
@@ -710,6 +711,54 @@ body {
     color: var(--ink-dim);
 }
 .tf-arc-done { visibility: hidden; }   /* a zero-length round-capped dash would still draw a dot */
+
+/* Celestial: the dial (copied without the clock's planets), the path still
+   ahead, and the satellite on its two layers, placed by clock.js (see
+   "Celestial timer" there). The sky is moved in here while this face shows.
+   The time sits under the dial, so the face leaves room for it; the view
+   clips the sky as .face-celestial does, and the heading and buttons stay in
+   front of it. */
+:root[data-face="celestial"] .timer-face > .tf-cel { display: block; }
+.tf-cel { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.tf-cel-box { display: none; position: absolute; inset: 0; pointer-events: none; }
+:root[data-face="celestial"] .tf-cel-box { display: block; }
+:root[data-face="celestial"] .timer-face {
+    --tf-size: calc(min(100cqw, (100cqh - var(--tf-chrome)) / 1.12) * .8 * var(--face-scale));
+    margin-bottom: calc(var(--tf-size) * .12);
+}
+:root[data-face="celestial"] .tf-time {
+    top: calc(100% + var(--tf-size) * .03);
+    transform: translate(-50%, var(--font-shift));
+    font-size: max(var(--text-xs), calc(var(--tf-size) * .075));
+}
+:root[data-face="celestial"] [data-view="timer"] { overflow: clip; }
+[data-view="timer"] :is(.heading, .controls) { position: relative; z-index: 1; }
+/* The path leads here: round dots, over orbits dimmed from the clock's .32. */
+.tf-path { fill: none; stroke: currentColor; stroke-width: .6; stroke-linecap: round; stroke-dasharray: 0 1.6; opacity: .62; }
+.tf-cel .orbit-path { opacity: .14; }
+.cel-sat { position: absolute; transform-origin: 50% 100%; }
+.cel-sat-sink { position: absolute; inset: 0; }
+.cel-sat svg { width: 100%; height: 100%; overflow: visible; }
+/* The satellite spins on its own axis, the same way it goes round, at this
+   one speed for every countdown: clock.js turns .sat-steady back by as much
+   as going round turns it. The spin stops while the countdown is paused. */
+.sat-steady { position: absolute; left: 0; width: 100%; }
+.sat-spin { position: absolute; inset: 0; animation: sat-spin 3s linear infinite; }
+@keyframes sat-spin { to { transform: rotate(360deg); } }
+.tf-paused .sat-spin { animation-play-state: paused; }
+.sat-body { fill: currentColor; }
+.sat-halo { fill: currentColor; opacity: .15; }
+.sat-wing { stroke: currentColor; stroke-width: .9; stroke-linecap: round; opacity: .8; }
+.tf-gone .cel-sat { visibility: hidden; }
+/* The endings' effects (clock.js places and animates them) and the glow
+   while it rings. Hidden until animated. */
+.cel-glow, .cel-fx { position: absolute; border-radius: 50%; opacity: 0; }
+.cel-glow { left: 42%; top: 42%; width: 16%; height: 16%; background: var(--alert); box-shadow: 0 0 12px 3px var(--alert); }
+.tf-done .cel-glow { animation: cel-glow 1.2s ease-in-out infinite alternate; }
+@keyframes cel-glow { from { opacity: .12; } to { opacity: .5; } }
+.cel-flash, .cel-flare, .cel-spark { background: currentColor; box-shadow: 0 0 8px currentColor; }
+.cel-wave { border: 1.5px solid currentColor; }
+.cel-dock { border: 1px solid var(--alert); }
 
 .presets { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 760px; }
 .controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
@@ -1127,12 +1176,13 @@ body {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
 }
-:root[data-perf="low"] :is(.tw, .sky-turn) { animation: none; }
+:root[data-perf="low"] :is(.tw, .sky-turn, .sat-spin) { animation: none; }
 
 @media (prefers-reduced-motion: reduce) {
     .view.active, .face { animation: none !important; }
     .hg-svg { transition: none; }
     .app.ringing .face .time-btn, .app.ringing-timer #timer-display, .app.ringing-timer .tf-time, .app.ringing-alarm #alarm-edit { animation: none; }
     .timer-face { animation: none; }
-    .sky-turn, .tw { animation: none !important; }
+    .sky-turn, .tw, .sat-spin { animation: none !important; }
+    .tf-done .cel-glow { animation: none; opacity: .35; }
 }

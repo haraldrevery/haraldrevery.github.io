@@ -16,7 +16,8 @@
    requestAnimationFrame is paused). Drawing uses rAF only for faces that
    actually move smoothly; everything else redraws once per second. What the
    browser can animate by itself (the celestial seconds planet, its sky's
-   turning, twinkling and shooting stars) it does, so that face needs no rAF.
+   turning, twinkling and shooting stars, the celestial timer's satellite) it
+   does, so that face needs no rAF, as a clock or as a timer.
    Settings > Performance > Low turns all smooth motion and blur off.
    ========================================================================== */
 (function () {
@@ -647,10 +648,10 @@
     }
 
     // --- Timer face --------------------------------------------------------
-    // Ring and hourglass show a running countdown in their own look: the
-    // timer view gets copies of the clock faces' SVGs, so the two can never
-    // drift apart. Every id in a copy gets a prefix, and so do url(#…)
-    // references to them (the hourglass's clip paths).
+    // Ring, hourglass and celestial show a running countdown in their own
+    // look: the timer view gets copies of the clock faces' SVGs, so the two
+    // can never drift apart. Every id in a copy gets a prefix, and so do
+    // url(#…) references to them (the hourglass's clip paths).
     function cloneWithIds(el, prefix) {
         var copy = el.cloneNode(true);
         [copy].concat($$('*', copy)).forEach(function (n) {
@@ -661,28 +662,36 @@
         copy.style.transform = '';
         return copy;
     }
-    var tfArc = null, hgTimer = null, tfDigits = null;
+    // TIMER_FACES: the faces that have a timer face, by name, each with
+    // draw(progress, remaining) (progress: 0 = just started, 1 = time is up),
+    // smooth (true: drawn every frame while it runs) and, if it has them,
+    // start() for a new countdown and wait() (ms until it needs drawing
+    // again, if that is before the next second). A face is listed only once
+    // it has been built without an error; the others show big numerals.
+    var TIMER_FACES = {}, tfArc = null, hgTimer = null, tfDigits = null;
     function buildTimerFace() {
         var box = $('#timer-face');
+        tfDigits = digits($('#tf-digits'));
         box.insertBefore(cloneWithIds($('.face-ring .ring-svg'), 'tf-'), box.firstChild);
         box.insertBefore(cloneWithIds($('#hg-svg'), 'tf-'), box.firstChild);
         tfArc = $('#tf-ring-arc');
         hgTimer = makeHourglass('tf-');
-        tfDigits = digits($('#tf-digits'));
+        TIMER_FACES.ring = { smooth: true, draw: drawRingTimer };
+        TIMER_FACES.hourglass = { smooth: true, draw: drawGlassTimer, start: turnTimerGlass };
     }
-    // (Not if buildTimerFace failed: then big numerals, as for the other faces.)
-    function timerHasFace() { return !!hgTimer && (S.face === 'ring' || S.face === 'hourglass'); }
-    // progress: 0 = just started, 1 = time is up.
+    function timerHasFace() { return !!TIMER_FACES[S.face]; }
     function renderTimerFace(progress, remaining) {
         tfDigits(hms(ceilSec(remaining)));
-        if (S.face === 'ring') {
-            // The arc is the time left: it ends at 12 and its start runs clockwise.
-            tfArc.style.strokeDashoffset = (-RING_C * progress).toFixed(2);
-            tfArc.classList.toggle('tf-arc-done', progress >= 1);
-        } else {
-            if (hgTimer.flips < 0) turnHourglass(hgTimer, 0, false);
-            drawSand(hgTimer, progress, T.timer.status === 'running');
-        }
+        TIMER_FACES[S.face].draw(progress, remaining);
+    }
+    // The arc is the time left: it ends at 12 and its start runs clockwise.
+    function drawRingTimer(progress) {
+        tfArc.style.strokeDashoffset = (-RING_C * progress).toFixed(2);
+        tfArc.classList.toggle('tf-arc-done', progress >= 1);
+    }
+    function drawGlassTimer(progress) {
+        if (hgTimer.flips < 0) turnHourglass(hgTimer, 0, false);
+        drawSand(hgTimer, progress, T.timer.status === 'running');
     }
     // A new countdown on the hourglass: turn the glass over, so the sand lying
     // at the bottom from the last run ends up on top. Called right after the
@@ -692,6 +701,346 @@
         hgTimer.svg.getBoundingClientRect();
         turnHourglass(hgTimer, hgTimer.flips + 1, true);
         drawSand(hgTimer, 0, true);
+    }
+
+    // --- Celestial timer -----------------------------------------------------
+    // A satellite on a decaying orbit: it sets off from the outer orbit at 12
+    // and spirals in, reaching the core's ring (at 12 again) when the time is
+    // up. Its distance from the centre is the time left. It goes round a whole
+    // number of times, more for a longer countdown (celTurns), and like a real
+    // decaying orbit the lower it gets the faster it goes (angular speed
+    // ∝ r^-1.5: about 8 times faster at the end). The path still ahead is a
+    // dotted spiral that the satellite uses up.
+    // The satellite rides three layers the browser moves (Web Animations), as
+    // the clock's seconds planet does: one turns about the centre, the one in
+    // it sinks towards the centre, and the innermost turns the satellite back
+    // by as much as the first turned it. So going round doesn't turn it (that
+    // made it spin faster the shorter the countdown); it only spins on its own
+    // axis, at one speed for every countdown (.sat-spin in clock.css).
+    // Nothing is drawn every frame; each draw puts the animations back on the
+    // countdown's time and handles pausing. The path is cut back the moment
+    // the satellite reaches each of its dots (wait: celPathWait), so a dot
+    // goes while the satellite covers it and none is left behind: many times
+    // a second for a short countdown, every few seconds for a long one. Low
+    // performance, or no el.animate(): the layers are set once a second
+    // instead, and the path is cut with them.
+    // At zero one of three endings plays, picked at random (an impact with a
+    // shockwave, a burn-up, a docking), and then the core glows in the alert
+    // colour while it rings. Only the glow if the end can't be watched as it
+    // happens (another view, a hidden tab), on Low or with reduced motion.
+    var CEL_R0 = 86, CEL_RC = 22;          // start and end radius, face units (the outer orbit, the core's ring)
+    var CEL_K0 = Math.pow(CEL_R0, -.5), CEL_K1 = Math.pow(CEL_RC, -.5);
+    var celTimer = null;
+    function buildCelTimer() {
+        // clock.css marks the timer face when it has this face's styles. With
+        // an older stylesheet (a cached page, for a few minutes) the celestial
+        // timer stays big numerals.
+        var box = $('#timer-face'), before = $('#tf-digits');
+        if (getComputedStyle(box).getPropertyValue('--tf-celestial').trim() !== '1') return;
+        var svg = cloneWithIds($('.orbit-wrap > svg'), 'tf-');
+        svg.setAttribute('class', 'tf-cel');
+        // Not the clock's planets or its old fixed stars; the inner orbit is
+        // part of the dial here, not of the seconds (.sec-el).
+        ['#tf-cel-stars', '#tf-cel-h', '#tf-cel-m', '#tf-cel-s'].forEach(function (id) {
+            var el = $(id, svg);
+            if (el) el.remove();
+        });
+        $$('.sec-el', svg).forEach(function (el) { el.classList.remove('sec-el'); });
+        var path = svgEl('path', { 'class': 'tf-path' }, svg);
+        svg.insertBefore(path, $('.core-fill', svg));
+        box.insertBefore(svg, before);
+        // The layers are strips from the centre up to just past the start, as
+        // .cel-sec, turning about their bottom; the satellite is at the top.
+        var half = 5, top = CEL_R0 + half;
+        var layer = document.createElement('div'), turn = document.createElement('div'), sink = document.createElement('div');
+        layer.className = 'tf-cel-box';
+        turn.className = 'cel-sat';
+        turn.style.cssText = 'left:' + (50 - half / 2) + '%;width:' + half + '%;top:' + (50 - top / 2) + '%;height:' + top / 2 + '%';
+        sink.className = 'cel-sat-sink';
+        sink.style.transformOrigin = '50% ' + ((top - CEL_R0) / top * 100).toFixed(2) + '%';   // the satellite
+        // The satellite itself: a square at the top of the strip, turned back
+        // against the orbit (.sat-steady) and spinning inside that (.sat-spin).
+        var steady = document.createElement('div'), spin = document.createElement('div');
+        steady.className = 'sat-steady';
+        steady.style.cssText = 'top:' + ((top - CEL_R0 - half) / top * 100).toFixed(2) + '%;height:' + (2 * half / top * 100).toFixed(2) + '%';
+        spin.className = 'sat-spin';
+        steady.appendChild(spin);
+        var sat = svgEl('svg', { viewBox: -half + ' ' + -half + ' ' + 2 * half + ' ' + 2 * half, 'aria-hidden': 'true' }, spin);
+        svgEl('circle', { 'class': 'sat-halo', r: 3.2 }, sat);
+        svgEl('line', { 'class': 'sat-wing', x1: -4.2, y1: 0, x2: -2, y2: 0 }, sat);
+        svgEl('line', { 'class': 'sat-wing', x1: 2, y1: 0, x2: 4.2, y2: 0 }, sat);
+        svgEl('circle', { 'class': 'sat-body', r: 1.5 }, sat);
+        sink.appendChild(steady);
+        turn.appendChild(sink);
+        var glow = document.createElement('i');
+        glow.className = 'cel-glow';
+        layer.appendChild(glow);
+        layer.appendChild(turn);
+        box.insertBefore(layer, before);
+        celTimer = {
+            box: layer, path: path, turn: turn, sink: sink, steady: steady, top: top,
+            built: 0, turns: 0, keys: null, back: null, pts: null, tail: null, pathKey: null,
+            anims: null,        // [turn, sink, steady] while the browser moves them
+            seen: null,         // the timer's status at the last draw; null while not shown
+            fx: [], doneId: 0   // the ending's animations, and the timeout that brings the glow
+        };
+        TIMER_FACES.celestial = { smooth: false, draw: drawCelTimer, wait: celPathWait };
+    }
+    // 2 turns for a few seconds, 3 for a minute, 4 for a quarter of an hour,
+    // 5 for an hour, 6 from about three hours.
+    function celTurns(duration) { return clamp(Math.round(2 + Math.log2(1 + duration / 60000) / 2), 2, 6); }
+    // Where the satellite is at progress p: its radius, and how far round it
+    // has gone (in turns). k = r^-1/2 runs evenly from start to end over the
+    // turns, which makes the angular speed ∝ r^-1.5.
+    function celRadius(p) { return CEL_R0 - (CEL_R0 - CEL_RC) * p; }
+    function celAngle(p, turns) { return turns * (Math.pow(celRadius(p), -.5) - CEL_K0) / (CEL_K1 - CEL_K0); }
+    function celProgress(a, turns) {
+        return (CEL_R0 - Math.pow(CEL_K0 + (CEL_K1 - CEL_K0) * a / turns, -2)) / (CEL_R0 - CEL_RC);
+    }
+    function celSink(ct, r) { return 'translateY(' + ((CEL_R0 - r) / ct.top * 100).toFixed(3) + '%)'; }
+    // The turning layer's keyframes (every 10°), the same turned the other
+    // way for the steady layer, and the path's points (every 5°, with the
+    // length of the spiral up to each) for a countdown this long.
+    function buildCelOrbit(ct, duration) {
+        stopCelAnims(ct);
+        var turns = celTurns(duration), steps = turns * 72;
+        ct.keys = [];
+        ct.back = [];
+        ct.pts = [];
+        ct.tail = [];
+        for (var i = 0, len = 0; i <= steps; i++) {
+            var a = turns * i / steps, p = i === steps ? 1 : clamp(celProgress(a, turns), 0, 1);
+            var r = celRadius(p), x = Math.sin(a * 2 * Math.PI) * r, y = -Math.cos(a * 2 * Math.PI) * r, prev = ct.pts[i - 1];
+            if (prev) len += Math.hypot(x - prev.x, y - prev.y);
+            ct.pts.push({ x: x, y: y, len: len, p: p });
+            ct.tail.push('L' + x.toFixed(2) + ' ' + y.toFixed(2));
+            if (i % 2 === 0) {
+                var deg = (a * 360).toFixed(1);
+                ct.keys.push({ transform: 'rotate(' + deg + 'deg)', offset: p });
+                ct.back.push({ transform: 'rotate(-' + deg + 'deg)', offset: p });
+            }
+        }
+        ct.keys[0].offset = ct.back[0].offset = 0;
+        ct.built = duration;
+        ct.turns = turns;
+        ct.pathKey = null;
+    }
+    function celTimerShown() {
+        return currentMode === 'timer' && S.face === 'celestial' && T.timer.status !== 'idle' && !!TIMER_FACES.celestial;
+    }
+    function drawCelTimer(progress, remaining) {
+        var ct = celTimer, tm = T.timer;
+        if (!celTimerShown()) { hideCelTimer(); return; }
+        if (ct.built !== tm.duration) buildCelOrbit(ct, tm.duration);
+        var seen = ct.seen;
+        ct.seen = tm.status;
+        if (tm.status === 'done') {
+            if (seen !== 'done') endCelTimer(ct, seen === 'running');
+            return;
+        }
+        if (seen === 'done') resetCelEnd(ct);              // another tab started a new one while it rang
+        placeSatellite(ct, progress, clamp(tm.duration - remaining, 0, tm.duration), tm.status === 'running');
+        drawCelPath(ct, celOnScreen(ct, progress));
+    }
+    // Where the satellite is as drawn: the browser's animation can be up to
+    // 40 ms off the countdown (see placeSatellite), and the path is cut at it.
+    function celOnScreen(ct, progress) {
+        return ct.anims ? clamp((ct.anims[0].currentTime || 0) / ct.built, 0, 1) : progress;
+    }
+    // Called every frame: stops everything once
+    // the face isn't shown.
+    function driveCelTimer() {
+        if (celTimer && !celTimerShown()) hideCelTimer();
+    }
+    function hideCelTimer() {
+        var ct = celTimer;
+        if (ct.seen === null) return;
+        ct.seen = null;
+        stopCelAnims(ct);
+        resetCelEnd(ct);
+    }
+    function stopCelAnims(ct) {
+        if (!ct.anims) return;
+        ct.anims.forEach(function (anim) { anim.cancel(); });
+        ct.anims = null;
+    }
+    // elapsed: ms into the countdown. The animations run while it runs, and
+    // are moved back onto its time if they are more than 40 ms off (after the
+    // computer slept, say); paused, they stand still exactly there.
+    function placeSatellite(ct, p, elapsed, running) {
+        ct.box.classList.toggle('tf-paused', !running);      // its spin stops too
+        if (S.perf === 'low' || !Element.prototype.animate) {
+            stopCelAnims(ct);
+            var deg = (celAngle(p, ct.turns) * 360).toFixed(2);
+            ct.turn.style.transform = 'rotate(' + deg + 'deg)';
+            ct.steady.style.transform = 'rotate(-' + deg + 'deg)';
+            ct.sink.style.transform = celSink(ct, celRadius(p));
+            return;
+        }
+        if (!ct.anims) {
+            ct.turn.style.transform = ct.sink.style.transform = ct.steady.style.transform = '';
+            var timing = { duration: ct.built, fill: 'both' };
+            ct.anims = [
+                ct.turn.animate(ct.keys, timing),
+                ct.sink.animate([{ transform: celSink(ct, CEL_R0) }, { transform: celSink(ct, CEL_RC) }], timing),
+                ct.steady.animate(ct.back, timing)
+            ];
+        }
+        ct.anims.forEach(function (anim) {
+            if (!running && anim.playState !== 'paused') anim.pause();
+            if (Math.abs((anim.currentTime || 0) - elapsed) > (running ? 40 : .5)) anim.currentTime = elapsed;
+            if (running && anim.playState === 'paused') anim.play();
+        });
+    }
+    // The path ahead of the satellite. Its dots are anchored to the whole
+    // spiral (dash offset = where the path starts on it: a dot at every whole
+    // CEL_DOT), so they stay put as it is cut back. A dot goes once it is
+    // under the satellite's body (CEL_LEAD), and the path is cut halfway
+    // between it and the next: where exactly between two dots makes no
+    // difference, and a dot never lies on the cut (it would be left behind).
+    // So it is only redrawn when another dot goes.
+    function drawCelPath(ct, p) {
+        var key = p >= 1 ? -1 : Math.floor((celLen(ct, p) + CEL_LEAD) / CEL_DOT);
+        if (key === ct.pathKey) return;
+        ct.pathKey = key;
+        var cut = (key + .5) * CEL_DOT, pts = ct.pts;
+        if (key < 0 || cut >= pts[pts.length - 1].len) { ct.path.removeAttribute('d'); return; }
+        var hi = celAfter(ct, cut), a = pts[hi - 1], b = pts[hi], f = (cut - a.len) / (b.len - a.len);
+        ct.path.setAttribute('d', 'M' + (a.x + (b.x - a.x) * f).toFixed(2) + ' ' + (a.y + (b.y - a.y) * f).toFixed(2) + ct.tail.slice(hi).join(''));
+        ct.path.style.strokeDashoffset = cut.toFixed(2);
+    }
+    // How far along the spiral the satellite is at progress p.
+    function celLen(ct, p) {
+        var a = celAngle(p, ct.turns), prev = ct.pts[clamp(Math.floor(a * 72), 0, ct.pts.length - 2)];
+        var r = celRadius(p), x = Math.sin(a * 2 * Math.PI) * r, y = -Math.cos(a * 2 * Math.PI) * r;
+        return prev.len + Math.hypot(x - prev.x, y - prev.y);
+    }
+    // The first of the path's points further along the spiral than len.
+    function celAfter(ct, len) {
+        var pts = ct.pts, lo = 0, hi = pts.length - 1;
+        while (hi - lo > 1) {
+            var mid = (lo + hi) >> 1;
+            if (pts[mid].len <= len) lo = mid; else hi = mid;
+        }
+        return hi;
+    }
+    // The progress at which the satellite has flown len along the spiral.
+    function celProgressAtLen(ct, len) {
+        var pts = ct.pts;
+        if (len >= pts[pts.length - 1].len) return 1;
+        var hi = celAfter(ct, len), a = pts[hi - 1], b = pts[hi];
+        return a.p + (b.p - a.p) * (len - a.len) / (b.len - a.len);
+    }
+    // ms until the next dot goes (.tf-path's dash pattern in clock.css: a
+    // dot every 1.6 units): when it is CEL_LEAD ahead of the satellite's
+    // middle, just inside its body (radius 1.5; the dot's is .3). It stays
+    // covered until it is 1.2 behind, so a late draw has 2.3 units to spare:
+    // more than a frame at 60 fps even at the very fastest (the end of a 10 s
+    // countdown, about 80 units a second). Only while the browser moves the
+    // satellite: on Low it steps once a second, and so does the path.
+    var CEL_DOT = 1.6, CEL_LEAD = 1.1;
+    function celPathWait() {
+        var ct = celTimer;
+        if (!ct || !ct.anims || ct.seen !== 'running') return Infinity;
+        var p = celOnScreen(ct, 0), next = (Math.floor((celLen(ct, p) + CEL_LEAD) / CEL_DOT) + 1) * CEL_DOT - CEL_LEAD + .05;
+        return (celProgressAtLen(ct, next) - p) * ct.built;
+    }
+
+    // watched: it was running on screen until now, so the end is seen live.
+    function endCelTimer(ct, watched) {
+        placeSatellite(ct, 1, ct.built, false);
+        ct.box.classList.remove('tf-paused');                // it goes on spinning through the ending
+        drawCelPath(ct, 1);
+        if (!watched || document.hidden || S.perf === 'low' || reducedMotion.matches || !Element.prototype.animate) {
+            ct.box.classList.add('tf-gone', 'tf-done');
+            return;
+        }
+        var glowAt = [celImpact, celBurnUp, celDocking][Math.floor(Math.random() * 3)](ct);
+        ct.doneId = setTimeout(function () { ct.box.classList.add('tf-gone', 'tf-done'); }, glowAt);
+    }
+    function resetCelEnd(ct) {
+        clearTimeout(ct.doneId);
+        ct.fx.forEach(function (anim) { anim.cancel(); });
+        ct.fx = [];
+        $$('.cel-fx', ct.box).forEach(function (el) { el.remove(); });
+        ct.box.classList.remove('tf-gone', 'tf-done');
+    }
+    // An ending's animation; el (an effect of its own) goes when it is over.
+    function celFx(ct, anim, el) {
+        ct.fx.push(anim);
+        if (el) anim.onfinish = function () { el.remove(); };
+    }
+    // A round effect of radius r (face units) centred on (x, y).
+    function celFxEl(ct, cls, x, y, r) {
+        var el = document.createElement('i');
+        el.className = 'cel-fx ' + cls;
+        el.style.cssText = 'left:' + (50 + (x - r) / 2) + '%;top:' + (50 + (y - r) / 2) + '%;width:' + r + '%;height:' + r + '%';
+        ct.box.appendChild(el);
+        return el;
+    }
+    // The endings. Each returns when (ms) the glow takes over.
+    // Impact: it drops into the core, which flashes; two rings ripple out.
+    function celImpact(ct) {
+        var fall = 420;
+        celFx(ct, ct.sink.animate([
+            { transform: celSink(ct, CEL_RC), opacity: 1 },
+            { transform: celSink(ct, 4), opacity: 1, offset: .85 },
+            { transform: celSink(ct, 0), opacity: 0 }
+        ], { duration: fall, easing: 'cubic-bezier(.55, 0, .9, .45)', fill: 'forwards' }));
+        var flash = celFxEl(ct, 'cel-flash', 0, 0, 16);
+        celFx(ct, flash.animate([
+            { opacity: 0, transform: 'scale(.4)' },
+            { opacity: .9, transform: 'scale(1.15)', offset: .12 },
+            { opacity: 0, transform: 'scale(1.9)' }
+        ], { duration: 900, delay: fall, easing: 'ease-out' }), flash);
+        [0, 190].forEach(function (lag) {
+            var wave = celFxEl(ct, 'cel-wave', 0, 0, 100);
+            celFx(ct, wave.animate([
+                { opacity: .7, transform: 'scale(.2)' },
+                { opacity: 0, transform: 'scale(1)' }
+            ], { duration: 1400, delay: fall + lag, easing: 'cubic-bezier(.15, .6, .35, 1)' }), wave);
+        });
+        return fall;
+    }
+    // Burn-up: it flares on the core's ring and breaks into sparks, flying
+    // on along its way (to the right, at 12) and falling in.
+    function celBurnUp(ct) {
+        ct.box.classList.add('tf-gone');
+        var flare = celFxEl(ct, 'cel-flare', 0, -CEL_RC, 2.4);
+        celFx(ct, flare.animate([
+            { opacity: 1, transform: 'scale(.7)' },
+            { opacity: 1, transform: 'scale(2.4)', offset: .25 },
+            { opacity: 0, transform: 'scale(3.2)' }
+        ], { duration: 600, easing: 'ease-out' }), flare);
+        var unit = ct.box.offsetWidth / 200;
+        for (var i = 0; i < 11; i++) {
+            var a = (Math.random() * 140 - 50) * Math.PI / 180, dist = (10 + Math.random() * 22) * unit;
+            var spark = celFxEl(ct, 'cel-spark', 0, -CEL_RC, .6 + Math.random() * .6);
+            celFx(ct, spark.animate([
+                { opacity: 1, transform: 'translate(0, 0)' },
+                { opacity: .85, transform: 'translate(' + (Math.cos(a) * dist * .6).toFixed(1) + 'px, ' + (Math.sin(a) * dist * .6).toFixed(1) + 'px)', offset: .35 },
+                { opacity: 0, transform: 'translate(' + (Math.cos(a) * dist).toFixed(1) + 'px, ' + (Math.sin(a) * dist).toFixed(1) + 'px) scale(.5)' }
+            ], { duration: 800 + Math.random() * 600, delay: 60, easing: 'cubic-bezier(.2, .6, .4, 1)' }), spark);
+        }
+        return 350;
+    }
+    // Docking: it slows down into the core and fades; the core's rings light
+    // up one by one, from the outside in.
+    function celDocking(ct) {
+        celFx(ct, ct.sink.animate([
+            { transform: celSink(ct, CEL_RC) + ' scale(1)', opacity: 1 },
+            { transform: celSink(ct, 6) + ' scale(.7)', opacity: 1, offset: .6 },
+            { transform: celSink(ct, 0) + ' scale(.4)', opacity: 0 }
+        ], { duration: 1500, easing: 'cubic-bezier(.35, .5, .35, 1)', fill: 'forwards' }));
+        [CEL_RC, 18, 16].forEach(function (r, i) {
+            var ring = celFxEl(ct, 'cel-dock', 0, 0, r);
+            celFx(ct, ring.animate([
+                { opacity: 0 },
+                { opacity: .95, offset: .25 },
+                { opacity: 0 }
+            ], { duration: 1300, delay: 900 + i * 220, easing: 'ease-out' }), ring);
+        });
+        return 1400;
     }
 
     function renderFace(now) {
@@ -893,7 +1242,7 @@
     }
 
     // --- Due checks --------------------------------------------------------
-    var dueTimeout = 0;
+    var dueTimeout = 0, dueAt = 0;
     function checkDue() {
         var now = Date.now(), changed = false;
         if (T.timer.status === 'running' && now >= T.timer.endAt) {
@@ -910,13 +1259,21 @@
         if (changed) saveTimers();
         scheduleDue();
     }
+    // A timeout already aimed at the same moment is left alone. The heartbeat
+    // below calls this every second, and Chrome holds back a timeout set from
+    // inside such a chain of timers to about once a minute once the tab has
+    // been in the background for 5 minutes (measured: the timer rang 15.7 s
+    // late). One set from the Start or Arm click is only held to the second.
     function scheduleDue() {
-        clearTimeout(dueTimeout);
         var next = Infinity;
         if (T.timer.status === 'running') next = Math.min(next, T.timer.endAt);
         if (T.alarm.armed) next = Math.min(next, T.alarm.fireAt);
+        if (dueTimeout && next === dueAt) return;
+        clearTimeout(dueTimeout);
+        dueTimeout = 0;
+        dueAt = next;
         if (next === Infinity) return;
-        dueTimeout = setTimeout(checkDue, clamp(next - Date.now() + 15, 0, 2147483000));
+        dueTimeout = setTimeout(function () { dueTimeout = 0; checkDue(); }, clamp(next - Date.now() + 15, 0, 2147483000));
     }
 
     // A slow heartbeat while anything is active keeps the tab title and the
@@ -992,7 +1349,7 @@
         scheduleDue();
         heartbeat();
         renderTools();
-        if (fresh && S.face === 'hourglass' && timerHasFace()) turnTimerGlass();
+        if (fresh && timerHasFace() && TIMER_FACES[S.face].start) TIMER_FACES[S.face].start();
         kick();
     }
     function timerReset() {
@@ -1314,7 +1671,7 @@
         // The stopwatch's hundredths are what it is for: smooth in every mode.
         if (currentMode === 'stopwatch') return T.sw.running;
         if (S.perf === 'low') return false;
-        if (currentMode === 'timer') return T.timer.status === 'running' && timerHasFace();
+        if (currentMode === 'timer') return T.timer.status === 'running' && timerHasFace() && TIMER_FACES[S.face].smooth;
         if (currentMode !== 'clock') return false;
         if (S.face === 'celestial') return S.seconds && !celSec;   // see buildCelSeconds
         if (S.face === 'ring' || S.face === 'analog') return S.seconds;
@@ -1327,6 +1684,7 @@
         var now = new Date();
         safely(drawView, now);
         safely(driveCelSeconds, now);
+        safely(driveCelTimer);
         safely(updateSky);
         scheduleFrame();
     }
@@ -1344,7 +1702,16 @@
         // the wall-clock second, or a running countdown's own second.
         var now = Date.now(), phase = now % 1000;
         if (T.timer.status === 'running') phase = ((now - T.timer.endAt) % 1000 + 1000) % 1000;
-        frameTimeout = setTimeout(frame, 1000 - phase + 8);
+        // A timer face can ask for a draw before that (TIMER_FACES wait);
+        // within two frames, it gets the next frame (a timeout that short
+        // often comes a frame late).
+        var wait = 1000 - phase + 8, face = currentMode === 'timer' && timerHasFace() && TIMER_FACES[S.face];
+        if (face && face.wait) {
+            var soon = face.wait();
+            if (soon < 34) { frameRaf = requestAnimationFrame(frame); return; }
+            wait = Math.min(wait, soon);
+        }
+        frameTimeout = setTimeout(frame, wait);
     }
     // Redraw now (after a setting or mode change) and restart the loop.
     function kick() {
@@ -1375,7 +1742,8 @@
     // the planets, as the northern sky does). It takes over from the face's
     // own fixed stars. Made the first time the celestial face is shown, so
     // no other face pays for it; drawn in the face's units, so it grows and
-    // shrinks with the face and a resize needs nothing.
+    // shrinks with the face and a resize needs nothing. The celestial timer
+    // shows the same sky (skyHost).
     // Two layers, for depth: the fainter half of the still stars lies
     // further back and turns a little slower (.sky-far), the rest and the
     // twinkling stars in front. Which layer a star goes to draws no random
@@ -1428,10 +1796,24 @@
     // Called every frame (once a second on this face): builds the sky when
     // it is first needed, clears it when it goes, and keeps one shooting
     // star waiting while it may have them.
+    // Where it shows: behind the celestial clock face, or behind the
+    // celestial timer while that shows. There is one sky, moved between the
+    // two; it goes back to the clock face when neither shows, so it can never
+    // be left behind another timer face.
+    function skyHost() {
+        if (S.face !== 'celestial') return null;
+        if (currentMode === 'clock') return $('.orbit-wrap');
+        return celTimerShown() ? $('#timer-face') : null;
+    }
     function updateSky() {
-        var on = currentMode === 'clock' && S.face === 'celestial';
+        var host = skyHost(), on = !!host;
         if (on && !sky) buildSky();
         if (!sky) return;
+        var place = host || $('.orbit-wrap');
+        if (sky.parentNode !== place) {
+            $$('.meteor', sky).forEach(function (el) { el.remove(); });
+            place.insertBefore(sky, place.firstChild);
+        }
         if (on !== skyOn) {
             skyOn = on;
             if (!on) $$('.meteor', sky).forEach(function (el) { el.remove(); });
@@ -1442,8 +1824,8 @@
         else if (!lively && meteorId) { clearTimeout(meteorId); meteorId = 0; }
     }
     // The browser starts a layer's turn afresh whenever the face is shown
-    // again (or motion comes back on), which would put the sky back where it
-    // began each time. Instead each new turn is set to where the layer would
+    // again, the sky is moved (see skyHost) or motion comes back on, which
+    // would put the sky back where it began each time. Instead each new turn is set to where the layer would
     // be had it been turning since midnight (UTC; a day holds a whole number
     // of turns of either layer, see .sky in clock.css). A turn that was only
     // paused, under the event card, carries on from where it stopped.
@@ -2051,7 +2433,7 @@
     // Each face is built on its own (see safely): one that fails stays blank,
     // and the timer, alarm and stopwatch still work.
     hgClock = safely(makeHourglass, '');
-    [buildRing, buildAnalog, buildCelestial, buildCelSeconds, buildTimerFace].forEach(function (build) { safely(build); });
+    [buildRing, buildAnalog, buildCelestial, buildCelSeconds, buildTimerFace, buildCelTimer].forEach(function (build) { safely(build); });
     applyRoot();
     applyLanguage();
     wire();
