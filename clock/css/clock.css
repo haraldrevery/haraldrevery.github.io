@@ -600,9 +600,12 @@ body {
 /* ==========================================================================
    Tools: timer, alarm, stopwatch
    ========================================================================== */
+/* No max-width: the timer face is sized from the whole stage (--tf-size) and
+   can be wider than any fixed cap on a big screen, which made the column grow
+   to the right only and pushed the face, heading and buttons off centre. The
+   other rows cap their own width (presets, heading lines, lap log). */
 .tool {
     width: 100%;
-    max-width: 1000px;
     display: grid;
     justify-items: center;
     gap: 34px;
