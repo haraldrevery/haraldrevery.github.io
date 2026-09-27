@@ -23,6 +23,7 @@ window.uiTranslations = {
   "Export .md": { "Swedish": "Exportera .md" },
   "Export": { "Swedish": "Export" },
   "Reader Mode": { "Swedish": "Läsläge" },
+  "Reader": { "Swedish": "Läsläge" },
   "Exit Reader Mode": { "Swedish": "Avsluta läsläge" },
   "Nothing here yet": { "Swedish": "Inget här ännu" },
   "Untitled": { "Swedish": "Namnlös" },
@@ -35,14 +36,14 @@ window.uiTranslations = {
   "Show Word Counter": { "Swedish": "Visa ordräknare" },
   "Show Line Numbers": { "Swedish": "Visa radnummer" },
   "Mobile View": { "Swedish": "Mobilvy" },
-  "Reader padding ▸": { "Swedish": "Läsläge marginal ▸" },
+  "Reading width ▸": { "Swedish": "Läsbredd ▸" },
+  "Full width": { "Swedish": "Full bredd" },
   "Drag to adjust": { "Swedish": "Justera med drag" },
   "Custom": { "Swedish": "Anpassad" },
-  "Fixed width": { "Swedish": "Fast bredd" },
   "Panel order": { "Swedish": "Panelordning" },
   "Normal": { "Swedish": "Normal" },
   "Mirrored": { "Swedish": "Speglad" },
-  "Editor padding ▸": { "Swedish": "Redig. marginal ▸" },
+  "Editor width ▸": { "Swedish": "Redig. bredd ▸" },
   "Default": { "Swedish": "Standard" },
   "Calendar format ▸": { "Swedish": "Kalenderformat ▸" },
   "Filename format ▸": { "Swedish": "Filnamnsformat ▸" },
@@ -222,6 +223,47 @@ window.uiTranslations = {
   "{n} item(s) could not be moved back:": { "Swedish": "{n} objekt kunde inte flyttas tillbaka:" },
   "Move Issues": { "Swedish": "Flyttproblem" },
   "{n} item(s) could not be moved:": { "Swedish": "{n} objekt kunde inte flyttas:" },
+  "Please enter a name.": { "Swedish": "Ange ett namn." },
+  "A name that starts with a dot would hide the item from the file panel. Please choose another name.": { "Swedish": "Ett namn som börjar med en punkt skulle dölja objektet i filpanelen. Välj ett annat namn." },
+  "A name cannot start with a space or end with a dot or a space. Please choose another name.": { "Swedish": "Ett namn kan inte börja med ett mellanslag eller sluta med en punkt eller ett mellanslag. Välj ett annat namn." },
+  "\"{name}\" is a reserved name on Windows. Please choose another name.": { "Swedish": "\"{name}\" är ett reserverat namn i Windows. Välj ett annat namn." },
+  "This name ends like one of Revery's own safety files. Please choose another name.": { "Swedish": "Namnet slutar som en av Reverys egna säkerhetsfiler. Välj ett annat namn." },
+  "This name is too long. Please choose a shorter name.": { "Swedish": "Namnet är för långt. Välj ett kortare namn." },
+  "This name cannot be used. Please choose another name.": { "Swedish": "Namnet kan inte användas. Välj ett annat namn." },
+  "Invalid Name": { "Swedish": "Ogiltigt namn" },
+  "Undone: rename of \"{name}\".": { "Swedish": "Ångrat: namnbytet av \"{name}\"." },
+  "Undone: move of {n} item(s).": { "Swedish": "Ångrat: flytten av {n} objekt." },
+  "Move \"{name}\" to…": { "Swedish": "Flytta \"{name}\" till…" },
+  "Move {n} items to…": { "Swedish": "Flytta {n} objekt till…" },
+  "Move here": { "Swedish": "Flytta hit" },
+  "(current folder)": { "Swedish": "(nuvarande mapp)" },
+  "Rename Issues": { "Swedish": "Problem med namnbyte" },
+  "{n} item(s) could not be renamed:": { "Swedish": "{n} objekt kunde inte byta namn:" },
+  "Move {n} item(s) to Trash?": { "Swedish": "Flytta {n} objekt till papperskorgen?" },
+  "You can restore them from your system trash.": { "Swedish": "Du kan återställa dem från systemets papperskorg." },
+  "Links are removed as links; the items they point to are not changed.": { "Swedish": "Länkar tas bort som länkar; det de pekar på ändras inte." },
+  "Delete Issues": { "Swedish": "Problem med borttagning" },
+  "{n} item(s) could not be moved to the trash (nothing else was changed):": { "Swedish": "{n} objekt kunde inte flyttas till papperskorgen (inget annat ändrades):" },
+  "Name Already Used": { "Swedish": "Namnet används redan" },
+  "\"{name}\" already exists in this folder.": { "Swedish": "\"{name}\" finns redan i den här mappen." },
+  "Could Not Create Folder": { "Swedish": "Kunde inte skapa mappen" },
+  "Could not create folder \"{name}\".": { "Swedish": "Kunde inte skapa mappen \"{name}\"." },
+  "Delete Link": { "Swedish": "Radera länk" },
+  "Move the link \"{name}\" to Trash?": { "Swedish": "Flytta länken \"{name}\" till papperskorgen?" },
+  "Move \"{name}\" to Trash?": { "Swedish": "Flytta \"{name}\" till papperskorgen?" },
+  "Only the link is removed. The item it points to is not changed.": { "Swedish": "Bara länken tas bort. Det den pekar på ändras inte." },
+  "The folder and all its contents will be moved to your system trash. You can restore them from there.": { "Swedish": "Mappen och allt innehåll flyttas till systemets papperskorg. Du kan återställa dem därifrån." },
+  "The file will be moved to your system trash. You can restore it from there.": { "Swedish": "Filen flyttas till systemets papperskorg. Du kan återställa den därifrån." },
+  "Delete Failed": { "Swedish": "Borttagningen misslyckades" },
+  "\"{name}\" could not be moved to the trash. Nothing was changed.": { "Swedish": "\"{name}\" kunde inte flyttas till papperskorgen. Inget ändrades." },
+  "Filter folders…": { "Swedish": "Filtrera mappar…" },
+  "Loading folders…": { "Swedish": "Läser in mappar…" },
+  "Showing the first {n} folders — type to filter.": { "Swedish": "Visar de första {n} mapparna — skriv för att filtrera." },
+  "The folders could not be listed.": { "Swedish": "Mapparna kunde inte listas." },
+  "Move to…": { "Swedish": "Flytta till…" },
+  "Move up one level": { "Swedish": "Flytta upp en nivå" },
+  "Go to \"{name}\" — or drop items here to move them there": { "Swedish": "Gå till \"{name}\" — eller släpp objekt här för att flytta dem dit" },
+  "Go up one level — or drop items here to move them there": { "Swedish": "Gå upp en nivå — eller släpp objekt här för att flytta dem dit" },
   "Open Failed": { "Swedish": "Kunde inte öppna" },
   "Could not read:": { "Swedish": "Kunde inte läsa:" },
   "No Folder Open": { "Swedish": "Ingen mapp öppen" },
@@ -1097,7 +1139,7 @@ END OF TERMS AND CONDITIONS</pre>
           <li><strong>UI Size / Text Size</strong> — "UI Size" scales menu buttons; "Text Size" scales editor and preview text.</li>
           <li><strong>Calendar Format</strong> (Settings menu) — choose how dates are inserted when you use the date toolbar action.</li>
           <li><strong>Drag the divider</strong> — the vertical bar between editor and preview can be dragged left or right to resize each pane.</li>
-          <li><strong>Text column width</strong> — hover the edge of the text column itself (in the editor or the preview/reader) and drag it to exactly the width you like; presets live under Settings → Editor padding ▸ and Reader padding ▸. The <em>Fixed width</em> toggle in each submenu freezes the current width in pixels, so it no longer follows the window when panes or the window resize.</li>
+          <li><strong>Text column width</strong> — Settings → Reading width ▸ (preview, reader mode and live preview) and Editor width ▸ (the Markdown editor) set the text column in pixels, or Full width. The width stays the same when you resize the window: in a pane too narrow for it the side margins shrink first, then the column, and your width comes back as soon as there is room. You can also hover the edge of the text column and drag it to exactly the width you like; it is kept as the <em>Custom</em> choice.</li>
           <li><strong>Panel order</strong> — Advanced Options → Panel order: <em>Mirrored</em> flips the whole layout, putting the preview on the left, the editor on the right, and the file panel on the right edge.</li>
           <li><strong>Panel label bars</strong> — Settings → Theme ▸: the <em>Panel label bars</em> row hides or shows the small title bars above the editor and preview panes for an even cleaner look. With the bars hidden (and always in Reader Mode), the text-size − / + buttons appear when you point at the top-right corner of a pane (desktop, with a mouse).</li>
           <li><strong>Click any preview block</strong> — jumps the editor cursor to the matching source line.</li>
@@ -1177,7 +1219,7 @@ END OF TERMS AND CONDITIONS</pre>
           <li><strong>UI-storlek / textstorlek</strong> — "UI-storlek" skalar menyknappar; "Textstorlek" skalar redigerings- och förhandsgranskningstext.</li>
           <li><strong>Kalenderformat</strong> (Inställningar) — välj hur datum infogas när du använder datumverktyget.</li>
           <li><strong>Dra avdelaren</strong> — den vertikala stapeln mellan redigeraren och förhandsgranskningen kan dras åt vänster eller höger för att ändra storlek på varje ruta.</li>
-          <li><strong>Textkolumnens bredd</strong> — håll muspekaren över kanten på själva textkolumnen (i redigeraren eller förhandsgranskningen/läsläget) och dra den till precis den bredd du vill ha; förval finns under Inställningar → Redig. marginal ▸ och Läsläge marginal ▸. Knappen <em>Fast bredd</em> i respektive undermeny fryser den aktuella bredden i pixlar, så att den inte längre följer fönstret när rutorna eller fönstret ändrar storlek.</li>
+          <li><strong>Textkolumnens bredd</strong> — Inställningar → Läsbredd ▸ (förhandsgranskning, läsläge och Live Preview) och Redig. bredd ▸ (Markdown-redigeraren) anger textkolumnen i pixlar, eller Full bredd. Bredden är densamma när du ändrar fönstrets storlek: i en ruta som är för smal krymper först sidomarginalerna och sedan kolumnen, och din bredd kommer tillbaka så snart det finns plats. Du kan också hålla muspekaren över kanten på textkolumnen och dra den till precis den bredd du vill ha; den sparas som valet <em>Anpassad</em>.</li>
           <li><strong>Panelordning</strong> — Avancerade alternativ → Panelordning: <em>Speglad</em> vänder hela layouten, med förhandsgranskningen till vänster, redigeraren till höger och filpanelen vid högerkanten.</li>
           <li><strong>Panelrubriker</strong> — Inställningar → Tema ▸: raden <em>Panelrubriker</em> döljer eller visar de små rubrikraderna ovanför redigerar- och förhandsgranskningsrutorna för ett ännu renare utseende. När rubrikraderna är dolda (och alltid i läsläge) visas knapparna − / + för textstorlek när du pekar på det övre högra hörnet av en ruta (dator, med mus).</li>
           <li><strong>Klicka på ett förhandsgranskningsblock</strong> — hoppar redigerarens markör till motsvarande källrad.</li>
