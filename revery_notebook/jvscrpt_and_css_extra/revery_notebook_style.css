@@ -525,6 +525,11 @@ body:has(.menu-container.show) #outline-divider::after {
 }
 .menu-item:hover .tmpl-del { opacity: 0.7; }
 .menu-item .tmpl-del:hover { opacity: 1; color: #f87171; }
+/* A touch screen has no hover to reveal the ✕ (delete a custom template
+   or font): show it. Deleting still asks first (confirm, menus.js). */
+@media (hover: none) {
+  .menu-item .tmpl-del { opacity: 0.7; }
+}
 .tmpl-name { width: 100%; box-sizing: border-box; max-width: none; margin-bottom: 10px; }
 .tmpl-textarea {
   width: 100%;
@@ -926,7 +931,11 @@ button.yaml-toggle:focus-visible { outline: none; }
   #editor-pane { width: 100% !important; flex: 1; }
   #preview-pane { display: none; flex: 1; }
   body[data-view="preview"] #editor-pane { display: none; }
-  body[data-view="preview"] #preview-pane { display: flex; }
+  /* !important: with Settings → Show Preview off, applyPaneLayout
+     (menus.js) hides the pane INLINE for the desktop split, which left
+     the phone's Preview view blank. On a phone the view toggle is the
+     request to see the preview (as reader mode is). */
+  body[data-view="preview"] #preview-pane { display: flex !important; }
 
 /* Hide the "Preview" label bar on mobile */
   #preview-pane .pane-label {
@@ -1034,6 +1043,32 @@ button.yaml-toggle:focus-visible { outline: none; }
   body[data-view="preview"] #btn-exit-reader-mode { order: 2; }
 }
 
+/* ── Phone status bar ─────────────────────────────────────────────────
+   Status warnings (storage full, another tab overwrote the autosave,
+   saving held, …) are written to #size-warning in the top bar, which
+   the phone layout hides in every view. _renderStatusWarning (core_cm.js)
+   writes the same text into #phone-status; it shows under the header in
+   the phone layout while it has text. Amber marker, theme text color —
+   readable on the light themes too. Never shown on the desktop layout. */
+#phone-status { display: none; }
+@media (max-width: 820px) {
+  #phone-status:not(:empty) {
+    display: block;
+    flex-shrink: 0;
+    padding: 6px 20px 5px 17px;
+    border-left: 3px solid #fbbf24;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-panel);
+    background: color-mix(in srgb, #fbbf24 16%, var(--bg));
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    line-height: 1.4;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+  }
+}
+
 /* ── Reader Mode Topbar Adjustments ── */
 body.reader-mode-active #topbar-left { visibility: hidden !important; }
 body.reader-mode-active #topbar-left #btn-sidebar { visibility: visible !important; }
@@ -1139,52 +1174,64 @@ body:not(.reader-mode-active) #btn-exit-reader-mode { display: none !important; 
     border-radius: 0;
     background: transparent;
   }
+  /* Long entries (the Filename format examples) wrap instead of being cut
+     off by the menu's overflow-x: hidden — the example IS the choice. */
+  .submenu .menu-item {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
 }
 
 
 /* ── Desktop: mobile-view simulation ── */
-#preview-pane.mobile-preview {
-  /* fill the remaining space and centre the phone window inside it */
-  flex: 1 !important;
-  width: auto !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-hover);
-  overflow: hidden;
-}
+/* Settings → Mobile View is a DESKTOP preview of the phone reading width.
+   Scoped to the desktop layout: a setting left on used to put a fixed
+   360×640 frame inside the real phone layout, where the Settings entry
+   that turns it off does not exist. */
+@media (min-width: 821px) {
+  #preview-pane.mobile-preview {
+    /* fill the remaining space and centre the phone window inside it */
+    flex: 1 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-hover);
+    overflow: hidden;
+  }
 
-/* hide the "Preview" pane label — the frame makes it obvious */
-#preview-pane.mobile-preview .pane-label {
-  display: none;
-}
+  /* hide the "Preview" pane label — the frame makes it obvious */
+  #preview-pane.mobile-preview .pane-label {
+    display: none;
+  }
 
-/* the phone frame */
-#preview-pane.mobile-preview #preview {
-  flex: none;
-  width: 360px;
-  height: 640px;        /* 360 × 640 = exact 9:16 */
-  border-radius: 20px;
-  border: 1px solid var(--border-md);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-  padding: 28px 20px 40px;
-  overflow-y: auto;
-  background-color: var(--bg-panel); /* Changed to background-color to preserve the image */
-}
+  /* the phone frame */
+  #preview-pane.mobile-preview #preview {
+    flex: none;
+    width: 360px;
+    height: 640px;        /* 360 × 640 = exact 9:16 */
+    border-radius: 20px;
+    border: 1px solid var(--border-md);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    padding: 28px 20px 40px;
+    overflow-y: auto;
+    background-color: var(--bg-panel); /* Changed to background-color to preserve the image */
+  }
 
-/* Preserve the mobile phone frame texture overlay (tinted with --bg-panel) */
-[data-theme] #preview-pane.mobile-preview #preview {
-  background-image:
-    linear-gradient(rgba(var(--bg-panel-rgb), calc(1 - var(--bg_oacity))), rgba(var(--bg-panel-rgb), calc(1 - var(--bg_oacity)))),
-    var(--preview-bg-image, none);
-}
-/* apply mobile font scale inside the phone frame */
-#preview-pane.mobile-preview .prose p,
-#preview-pane.mobile-preview .prose li {
-  font-size: var(--text-body-mobile) !important;
+  /* Preserve the mobile phone frame texture overlay (tinted with --bg-panel) */
+  [data-theme] #preview-pane.mobile-preview #preview {
+    background-image:
+      linear-gradient(rgba(var(--bg-panel-rgb), calc(1 - var(--bg_oacity))), rgba(var(--bg-panel-rgb), calc(1 - var(--bg_oacity)))),
+      var(--preview-bg-image, none);
+  }
+  /* apply mobile font scale inside the phone frame */
+  #preview-pane.mobile-preview .prose p,
+  #preview-pane.mobile-preview .prose li {
+    font-size: var(--text-body-mobile) !important;
+  }
 }
 
 /* ── Custom Modal ── */
@@ -1730,6 +1777,7 @@ body:not(.reader-mode-active) #btn-exit-reader-mode { display: none !important; 
 
   /* 2. Hide everything that isn't the preview */
   #topbar,
+  #phone-status,
   #editor-pane,
   #divider,
   #outline-pane,
@@ -1841,6 +1889,19 @@ body:not(.reader-mode-active) #btn-exit-reader-mode { display: none !important; 
 .mod-scroll-about { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; max-height: 400px; overflow-y: auto; padding-right: 8px; }
 .mod-scroll-legal { font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; max-height: 70vh; overflow-y: auto; padding-right: 10px; }
 .mod-scroll-guide { font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; max-height: 70vh; overflow-y: auto; padding-right: 10px; }
+/* About / Legal / User Guide never outgrow the window: the dialog is
+   capped to it and the text area gives up height first, so Close stays
+   on screen. A landscape phone, or a short window at a large UI size,
+   pushed Close off-screen, leaving no way out. Where there is room
+   nothing changes. Only these three: they hold no dropdowns for the
+   overflow to clip (Escape / backdrop close: menus.js). */
+:is(#about-modal, #legal-modal, #user-guide-modal) > .modal-content {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100% - 24px);
+  overflow-y: auto; /* last resort: title + buttons alone taller than the window */
+}
+:is(.mod-scroll-about, .mod-scroll-legal, .mod-scroll-guide) { min-height: 0; }
 
 /* Typography & Headings */
 .mod-about-title { color: var(--text); margin-bottom: 4px; font-size: 1rem; }

@@ -1783,6 +1783,10 @@ applyLoadedStates();
 function smartPositionDropdown(el) {
   if (!el.classList.contains('show')) return;
 
+  /* Open with every submenu collapsed (on touch nothing else collapses a
+     submenu left open when its menu was closed). */
+  el.querySelectorAll('.submenu').forEach(collapseSubmenu);
+
   // ── Skip repositioning for the logo dropdown ──
   if (el.id === 'logo-dropdown') return;
 
@@ -1798,22 +1802,27 @@ function smartPositionDropdown(el) {
   if (window.innerWidth <= 820) {
     // Grab full bounding rect to get the parent's X position
     const parentRect = el.offsetParent ? el.offsetParent.getBoundingClientRect() : { top: 0, left: 0 };
-    const TOPBAR = 94;
-    const MARGIN = 62;
-    const availH = window.innerHeight - TOPBAR - MARGIN;
-    
+    /* Below the header as it IS: its height depends on the view, the UI
+       size and wrapping. A fixed 94 opened the menus over the File/title
+       row, the File menu over its own button. */
+    const topbarEl = document.getElementById('topbar');
+    const TOPBAR = topbarEl ? Math.round(topbarEl.getBoundingClientRect().bottom) : 94;
+    const SIDE = 16;   // the phone .menu-container max-width is 100vw − 32px
+    const BOTTOM = 62;
+    const availH = window.innerHeight - TOPBAR - BOTTOM;
+
     el.style.maxHeight = Math.max(availH, 120) + 'px';
     el.style.overflowY = 'auto';
-    
+
     // Vertically shift the dropdown below the topbar
     el.style.top = (TOPBAR - parentRect.top) + 'px';
 
     // --- Fix horizontal squishing ---
     // Offset negatively to reach the screen's left edge, then add the 16px margin
-    el.style.left = (MARGIN - parentRect.left) + 'px';
-    
+    el.style.left = (SIDE - parentRect.left) + 'px';
+
     // Force explicit width to span viewport minus margins (32px total)
-    el.style.width = (window.innerWidth - (MARGIN * 2)) + 'px';
+    el.style.width = (window.innerWidth - (SIDE * 2)) + 'px';
     el.style.right = 'auto';
 
     return;
@@ -1888,7 +1897,30 @@ function positionSubmenuVertically(sub, initialTop) {
    every submenu gets identical, correct behaviour everywhere.
 
    On touch: prevents ghost mouse events, collapses any other open submenu,
-   and repositions the submenu to stay within the viewport edge.          */
+   and repositions the submenu to stay within the viewport edge.
+
+   A tap fires compatibility mouse events just before its click: the
+   mouseenter opened the submenu, then the click saw it open and shut it,
+   so no submenu could be opened by touch (or pen). The mouseenter of a
+   tap is ignored — the click toggles. Touch events cover engines without
+   pointer events; a real mouse press clears the flag at once.            */
+let lastTouchAt = -Infinity;
+const noteTouch = () => { lastTouchAt = performance.now(); };
+document.addEventListener('touchstart', noteTouch, { capture: true, passive: true });
+document.addEventListener('touchend', noteTouch, { capture: true, passive: true });
+['pointerdown', 'pointerup'].forEach((type) => document.addEventListener(type, (e) => {
+  if (e.pointerType === 'mouse') lastTouchAt = -Infinity;
+  else noteTouch();
+}, true));
+const isTapMouseEvent = () => performance.now() - lastTouchAt < 1000;
+
+/* Hide a submenu and drop the positioning showSubAndFix set, so the next
+   open starts clean. */
+function collapseSubmenu(sub) {
+  sub.style.display = 'none';
+  ['top', 'left', 'right', 'position', 'max-height', 'overflow-y'].forEach((p) => sub.style.removeProperty(p));
+}
+
 function attachSubmenuHandlers(wrapper, sub) {
   let hideTimer;
 
@@ -1931,25 +1963,27 @@ function attachSubmenuHandlers(wrapper, sub) {
   /* Shared helper: hide and reset all dynamic positioning so the next open
      starts from a clean slate.                                           */
   function hideSub() {
-    sub.style.display = 'none';
-    sub.style.removeProperty('top');
-    sub.style.removeProperty('left');
-    sub.style.removeProperty('right');
-    sub.style.removeProperty('position');
-    sub.style.removeProperty('max-height');
-    sub.style.removeProperty('overflow-y');
+    collapseSubmenu(sub);
   }
 
   // ── Desktop: hover to reveal ──
   wrapper.addEventListener('mouseenter', () => {
+    if (isTapMouseEvent()) return; // a tap: its click toggles (below)
     clearTimeout(hideTimer);
     showSubAndFix();
   });
+  /* A tap's mouseleave is ignored as well: opening an accordion moves the
+     layout under the resting touch point, and the boundary mouseleave that
+     follows used to shut the submenu 80 ms after the tap opened it. On
+     touch a submenu closes by a tap on its row or on another row, or when
+     its menu closes (smartPositionDropdown collapses them on every open). */
   wrapper.addEventListener('mouseleave', () => {
+    if (isTapMouseEvent()) return;
     hideTimer = setTimeout(hideSub, 80);
   });
   sub.addEventListener('mouseenter', () => clearTimeout(hideTimer));
   sub.addEventListener('mouseleave', () => {
+    if (isTapMouseEvent()) return;
     hideTimer = setTimeout(hideSub, 80);
   });
 
@@ -1962,15 +1996,7 @@ function attachSubmenuHandlers(wrapper, sub) {
     const isOpen = sub.style.display === 'flex';
     // Collapse any other open submenus first so only one is visible at a time
     document.querySelectorAll('.submenu').forEach(s => {
-      if (s !== sub) {
-        s.style.display = 'none';
-        s.style.removeProperty('top');
-        s.style.removeProperty('left');
-        s.style.removeProperty('right');
-        s.style.removeProperty('position');
-        s.style.removeProperty('max-height');
-        s.style.removeProperty('overflow-y');
-      }
+      if (s !== sub) collapseSubmenu(s);
     });
     if (isOpen) {
       hideSub();
@@ -3157,6 +3183,23 @@ function toggleMobileView() {
    Shows/hides the outline pane on the right side of the preview.
    When shown, renderOutline() is called immediately so the panel
    is populated with the current document's headings.                     */
+/* Close the phone Outline drawer and drop the inline position its open
+   sets. EVERY close goes through here (the Outline button, the scrim, a
+   view change, picking a heading, widening to the desktop layout —
+   layout.js). The scrim and the view toggle used to drop only the class:
+   the leftover inline position then overrode the desktop outline's
+   stylesheet after a widen (a small floating box), and the class made
+   the drawer pop open again on the next Preview view. The desktop outline
+   writes only width/display inline, never these. */
+function closeMobileOutline() {
+  document.body.classList.remove('mobile-outline-open');
+  const outlinePane = document.getElementById('outline-pane');
+  if (outlinePane) {
+    ['position', 'top', 'right', 'left', 'bottom'].forEach((p) => outlinePane.style.removeProperty(p));
+  }
+}
+window.closeMobileOutline = closeMobileOutline;
+
 function toggleOutline() {
   /* ── Mobile: show as dropdown anchored to the Outline button ───────── */
   if (window.innerWidth <= 820) {
@@ -3185,15 +3228,7 @@ function toggleOutline() {
                 outlinePane.style.bottom = 'auto';
               }
     } else {
-      // When closing, remove any inline positioning so it resets for next open
-      const outlinePane = document.getElementById('outline-pane');
-      if (outlinePane) {
-        outlinePane.style.position = '';
-        outlinePane.style.top = '';
-        outlinePane.style.right = '';
-        outlinePane.style.left = '';
-        outlinePane.style.bottom = '';
-      }
+      closeMobileOutline();
     }
     return; // Skip desktop inline-style logic
   }
@@ -3476,6 +3511,31 @@ if (btnLegalClose) {
     document.getElementById('legal-modal').classList.remove('show');
   });
 }
+
+/* About / Legal / User Guide are read-only, so a tap on the backdrop or
+   Escape closes them too: nothing in them can be lost, and a very short
+   window can still hide Close. The backdrop closes on click — the last
+   event of a tap, so no ghost click lands on the app underneath — and
+   only when the press also began on the backdrop (a text selection
+   dragged out of the dialog must not close it). */
+const INFO_MODAL_IDS = ['about-modal', 'legal-modal', 'user-guide-modal'];
+INFO_MODAL_IDS.forEach((id) => {
+  const overlay = document.getElementById(id);
+  if (!overlay) return;
+  let pressedBackdrop = false;
+  overlay.addEventListener('mousedown', (e) => { pressedBackdrop = e.target === overlay; });
+  overlay.addEventListener('click', (e) => {
+    if (pressedBackdrop && e.target === overlay) overlay.classList.remove('show');
+    pressedBackdrop = false;
+  });
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  INFO_MODAL_IDS.forEach((id) => {
+    const overlay = document.getElementById(id);
+    if (overlay) overlay.classList.remove('show');
+  });
+});
 
 /* Attach event listeners for Reader Mode buttons */
 const btnReaderMode = document.getElementById('btn-reader-mode');
