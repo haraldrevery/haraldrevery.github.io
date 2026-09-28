@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, follow">
     <link rel="stylesheet" href="/main.css"> 
+    <link rel="stylesheet" href="/h/wallpaper_settings.css?v=20260928">
     <title>Harald Revery Particles Animation</title>
 
     <!-- Preload LCP image (page load optimization) -->
@@ -46,7 +47,8 @@
 
     
 
-    <div class="mode-toggle" id="mode-toggle">
+    <!-- Old dark mode toggle, hidden: stardust.js is wired to it, and the settings menu clicks it -->
+    <div class="mode-toggle" id="mode-toggle" hidden>
         <span id="mode-icon">☀</span>
     </div>
 
@@ -87,8 +89,45 @@
 
 
 
+<!-- Settings: a cog that fades in near the top-right corner (h/wallpaper_settings.css) -->
+<div class="wallpaper-settings">
+    <details>
+        <summary aria-label="Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+        </summary>
+        <div class="wallpaper-settings-panel">
+            <fieldset>
+                <legend>QR code</legend>
+                <div class="wallpaper-settings-seg">
+                    <label><input type="radio" name="wallpaper-qr" value="show" autocomplete="off" checked>Show</label>
+                    <label><input type="radio" name="wallpaper-qr" value="hide" autocomplete="off">Hide</label>
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend>Website address</legend>
+                <div class="wallpaper-settings-seg">
+                    <label><input type="radio" name="wallpaper-address" value="show" autocomplete="off" checked>Show</label>
+                    <label><input type="radio" name="wallpaper-address" value="hide" autocomplete="off">Hide</label>
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend>Theme</legend>
+                <div class="wallpaper-settings-seg">
+                    <label><input type="radio" name="wallpaper-theme" value="dark" autocomplete="off" checked>Dark</label>
+                    <label><input type="radio" name="wallpaper-theme" value="light" autocomplete="off">Light</label>
+                </div>
+            </fieldset>
+        </div>
+    </details>
+</div>
+
+
 <!-- plexus.js load -->
 <script src="/javascript/stardust.js"></script>
+<script src="/javascript/wallpaper_settings.js?v=20260928"></script>
 
 </body>
 </html>

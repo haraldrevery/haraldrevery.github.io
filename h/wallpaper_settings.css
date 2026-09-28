@@ -1,0 +1,157 @@
+/* Settings menu on the wallpaper pages (h/wallpaper_*.html)
+ *
+ * A cog in the top-right corner that fades in when the pointer comes near it
+ * and opens a small panel: QR code on/off, website address on/off, dark/light.
+ * The look follows the clock's settings (clock/css/clock.css: .cog,
+ * .settings-panel, .seg-group).
+ *
+ * The menu is a <details>, so opening it needs no script, and the QR code and
+ * address switches are radio buttons read here with :has(). Only the theme
+ * switch needs /javascript/wallpaper_settings.js.
+ */
+
+.wallpaper-settings {
+    --ink: rgba(22, 22, 22, 1);
+    --ink-dim: rgba(22, 22, 22, .58);
+    --line: rgba(22, 22, 22, .13);
+    --pressed: rgba(22, 22, 22, .1);
+    /* Nearly opaque: the clock's panel can be glassier because it blurs what's
+       behind it, but a blur here would be redone on every animation frame. */
+    --panel-bg: rgba(247, 245, 240, .97);
+    --ease: cubic-bezier(.25, 1, .5, 1);
+    /* Letter-spaced caps sit high in HaraldMono; this moves a label down to the
+       optical middle of its button (see --font-shift in clock/css/clock.css). */
+    --font-shift: .14em;
+
+    /* The hover zone: the cog shows while the pointer is anywhere in here. */
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 10000;
+    width: 140px;
+    height: 140px;
+    font-family: 'HaraldMono', monospace;
+}
+.dark .wallpaper-settings {
+    --ink: rgba(244, 242, 237, 1);
+    --ink-dim: rgba(244, 242, 237, .56);
+    --line: rgba(244, 242, 237, .13);
+    --pressed: rgba(244, 242, 237, .13);
+    --panel-bg: rgba(12, 12, 12, .97);
+}
+
+/* ---------- Cog ---------- */
+.wallpaper-settings summary {
+    position: absolute;
+    top: calc(1rem + env(safe-area-inset-top));
+    right: calc(1rem + env(safe-area-inset-right));
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    list-style: none;
+    cursor: pointer;
+    color: var(--ink);
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity .35s var(--ease), transform .35s var(--ease);
+    -webkit-tap-highlight-color: transparent;
+}
+.wallpaper-settings summary::-webkit-details-marker { display: none; }
+.wallpaper-settings summary svg {
+    width: 24px;
+    height: 24px;
+    transition: transform .6s var(--ease);
+}
+.wallpaper-settings summary:hover svg,
+.wallpaper-settings details[open] summary svg { transform: rotate(60deg); }
+.wallpaper-settings:hover summary,
+.wallpaper-settings summary:focus-visible,
+.wallpaper-settings details[open] summary { opacity: 1; transform: none; }
+.wallpaper-settings summary:focus-visible { outline: 1px solid var(--ink-dim); outline-offset: 2px; }
+
+/* Touch screens have no hover to reveal the cog, so it stays half visible. */
+@media (hover: none) {
+    .wallpaper-settings summary { opacity: .5; transform: none; }
+}
+
+/* ---------- Panel ---------- */
+.wallpaper-settings-panel {
+    position: absolute;
+    top: calc(1rem + 48px + env(safe-area-inset-top));
+    right: calc(1rem + env(safe-area-inset-right));
+    display: grid;
+    gap: 14px;
+    width: 260px;
+    max-width: calc(100vw - 2rem);
+    padding: 16px 18px 18px;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--panel-bg);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .25);
+    transform-origin: top right;
+    animation: wallpaper-settings-in .3s var(--ease);
+}
+@keyframes wallpaper-settings-in {
+    from { opacity: 0; transform: translateY(-8px) scale(.98); }
+}
+
+.wallpaper-settings fieldset {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+}
+.wallpaper-settings legend {
+    padding: 0 0 8px;
+    font-size: .75rem;
+    line-height: 1;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+}
+
+/* Two options side by side, the chosen one pressed in. */
+.wallpaper-settings-seg {
+    display: flex;
+    gap: 3px;
+    padding: 3px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+}
+.wallpaper-settings-seg label {
+    --ls: .14em;
+    position: relative;
+    flex: 1;
+    padding: calc(.78em + var(--font-shift)) .4em calc(.78em - var(--font-shift)) calc(.4em + var(--ls));
+    font-size: .75rem;
+    line-height: 1;
+    letter-spacing: var(--ls);
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--ink-dim);
+    border-radius: 9px;
+    cursor: pointer;
+    user-select: none;
+    transition: color .2s, background-color .2s;
+}
+.wallpaper-settings-seg label:hover { color: var(--ink); }
+.wallpaper-settings-seg label:has(input:checked) { color: var(--ink); background: var(--pressed); }
+.wallpaper-settings-seg label:has(input:focus-visible) { outline: 1px solid var(--ink-dim); }
+.wallpaper-settings-seg input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* ---------- What the switches do ---------- */
+body:has(input[name="wallpaper-qr"][value="hide"]:checked) .bottom-right-svg,
+body:has(input[name="wallpaper-address"][value="hide"]:checked) .text-overlay_legacy {
+    display: none;
+}
