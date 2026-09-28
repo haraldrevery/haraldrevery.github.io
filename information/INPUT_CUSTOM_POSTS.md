@@ -184,8 +184,12 @@ Both folders are now in `input_prose.css`, with a comment saying why. All four
 stylesheets were rebuilt; growth was +167 bytes on `main.css` and +138 on
 `prose.css`, purely additive.
 
-**If you add another input folder, add it to BOTH `@source` lists.** One is not
-enough, and the failure is silent.
+**Update 2026-09-29:** this whole class of bug is gone. `prose.css` was merged
+into `main.css` (`input.css` now imports `input_prose.css` as a partial), so
+there is one Tailwind build, one `@source` list, and no second copy of any
+utility to override the first. Verified render-identical on every page in a
+headless-browser computed-style comparison. A new input folder goes in the
+`@source` list at the top of `input.css`, nowhere else.
 
 ### Not fixed — your call: a stray `</div>` in `post.njk`
 

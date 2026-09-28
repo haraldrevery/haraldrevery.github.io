@@ -68,29 +68,64 @@ Personal setup for this project:
 * VS Code with the Live Server extension by Ritwick Dey (fine for looking at one page; but the site links clean URLs like `/about`, which Live Server cannot resolve, so clicking between pages there 404s. To click through the site locally, use `npm start` (http://localhost:8080), which serves `/about` from `about.html` the way GitHub Pages does)
 * Tailwind CSS v4.3.1  (tailwindcss-windows-x64.exe renamed to tw.exe; same version as tailwindcss-linux-x64)
 
-On windows, be in the folder and run:
+### Building the site
+
+One command builds everything, in the only correct order: the CSS (Tailwind),
+then the pages (Eleventy), then the health check below.
 
 ```
-Just double click the "dev.bat" and it will run tailwind live.
+./build.sh            # Linux   (chmod +x build.sh once, if needed)
+build.bat             # Windows: double-click it
 ```
 
-On Linux, be in the folder and run:
+Add `--quiet` to see only the health-check sections that found something. The
+order matters because every page links `/main.css?v=<hash of main.css>` (see
+`_data/assets.js`): the CSS is cached for 186 days, so a changed stylesheet has
+to be a new URL, and the pages must be built after the CSS they point at.
+
+`build.sh` uses the standalone Eleventy binary, and falls back to Node when the
+binary is missing or older than `eleventy.config.js`. The binaries and Tailwind
+are kept zipped in git: unzip `tailwindcss-linux-x64.zip` / `tw.zip` and the
+`eleventy-*.zip` for your platform next to this file first.
+
+While working on styles, `./dev.sh` (Windows: `dev.bat`) keeps Tailwind running
+in watch mode. There is one stylesheet, `main.css`; `input.css` pulls in
+`input_prose.css` for the notebook/prose rules.
+
+Stale pages are not deleted by the build (it only writes). If you draft, rename
+or delete a post, the health check lists the leftover page under "orphaned build
+output" - delete what it names.
+
+### Refusing out-of-date commits (recommended)
+
+GitHub Pages serves the committed files as they are, so a commit that changes a
+source but not what it builds to ships stale pages. A pre-commit hook runs
+`build.sh` and refuses the commit when the build changes files or the health
+check finds an error. Enable it once per clone (Linux and Windows):
 
 ```
-chmod +x dev.sh
-chmod +x tailwindcss-linux-x64
-./dev.sh
+git config core.hooksPath githooks
 ```
 
-To build the notebook section, run (if on linux):
+Skip it for one commit with `git commit --no-verify`; turn it off with
+`git config --unset core.hooksPath`.
 
-```
-./eleventy-linux-x64
-```
+### Hosting requirement: clean URLs
 
-or click the eleventy-win-x64.exe if on windows.
+Every internal link, canonical, sitemap entry and feed item uses clean URLs
+(`/music`, `/notebook_pages/gamesettings`), and the files are `music.html` etc.
+The host must serve `/x` from `x.html`. GitHub Pages does, and so does
+`npm start` (the Eleventy dev server). A plain static server does not
+(python `http.server`, nginx/Apache defaults): every page link 404s there.
 
-If the pages don't update, delete everything inside the /notebook_pages folder and run the commands again.
+Watch out for `music/` and `download/`: they are real folders (the audio and
+wallpaper files) next to `music.html` and `download.html`. GitHub Pages serves
+`music.html` for `/music` even so (measured 2026-09-28), but `/music/` is a
+404, and on a plain server `/music` shows a directory listing of the audio
+files. When moving to another host, check `/music` and `/download` first.
+For nginx the rule is `try_files $uri $uri.html $uri/ =404;`. `wrangler.jsonc`
+(Cloudflare) would handle the mapping, but Cloudflare refuses single files over
+25 MiB, and the FLAC files are bigger.
 
 ## Health check
 
@@ -113,6 +148,13 @@ chmod +x healthcheck.sh
 
 Add `--quiet` to print only the sections that found something, or `--help` for the
 size thresholds. Exit code is 1 when there are errors, so it can gate a deploy.
+`build.sh` / `build.bat` run it for you after every build.
+
+Besides links and images it checks the URLs in `sitemap.xml`, `feed.xml` and
+`search-index.json`, pages left behind by a drafted/renamed/deleted post, a post
+that published no page (usually a stale Eleventy binary), and `?v=` versions
+that no longer match `main.css` (the two hand-written pages `h/1dgraph.html` and
+`h/2dphaseportrait.html` carry theirs by hand - it tells you the new value).
 
 Worth knowing: the casing check is the reason there are two scripts rather than one.
 Windows and macOS filesystems ignore case, so a wrong-cased reference resolves fine on
@@ -121,10 +163,11 @@ the machine you wrote it on and only breaks once GitHub Pages serves it. Running
 
 For more information, see the /information folder containing .md files. 
 
-If nothing works, install node.js and run
+If nothing works, install Node.js and run (no npm install needed - `node_modules/`
+is committed):
 
 ```
-npm start
+npm run build     # or: npm start, for the live-reload dev server
 ```
 
 Note: I avoid npm since you depend on so many servers for it to work and you never know what the code is, hence why you should compile binaries that works and stick with them. Only use npm when changing logic for this website and compile in the end when everything works.

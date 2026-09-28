@@ -4,7 +4,7 @@
  *
  * The load-bearing test here is "class coverage". There is no CSS build on
  * export, so the renderer may only emit Tailwind utilities that already exist
- * in the compiled main.css/prose.css. This test greps the REAL committed CSS,
+ * in the compiled main.css. This test greps the REAL committed CSS,
  * which is what stops a plausible-looking `mb-24` or `aspect-[1/1]` from
  * shipping as an invisible no-op. Keep it green.
  */
@@ -20,7 +20,8 @@ import { Text } from "../src/puck/components/Text";
 
 // tests/ sits at the same depth as v1's, so this still resolves to the repo root.
 const REPO = new URL("../..", import.meta.url).pathname;
-const css = readFileSync(`${REPO}/main.css`, "utf8") + readFileSync(`${REPO}/prose.css`, "utf8");
+// One file since 2026-09: the site's prose rules are compiled into main.css.
+const css = readFileSync(`${REPO}/main.css`, "utf8");
 
 type BlockType = keyof Components;
 const BLOCK_TYPES = Object.keys(config.components) as BlockType[];
@@ -65,7 +66,7 @@ function html(content: ReturnType<typeof sample>[]): string {
 }
 
 describe("class coverage", () => {
-  test("every emitted class exists in main.css/prose.css", () => {
+  test("every emitted class exists in main.css", () => {
     const all = html(BLOCK_TYPES.map(sample));
 
     const classes = new Set<string>();

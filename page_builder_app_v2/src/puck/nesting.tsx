@@ -73,9 +73,9 @@ export function BlockShell({
 ///
 /// Pass `html` for markdown/animated output and `children` for plain JSX — the
 /// wrapper itself carries both the prose classes AND the content, with nothing
-/// in between. That adjacency is required: prose.css zeroes the first/last
-/// child's margin with a DIRECT-child selector, so an intermediate <div> would
-/// leave a stray margin at the top of every prose block.
+/// in between. That adjacency is required: the typography rules (main.css)
+/// zero the first/last child's margin with a DIRECT-child selector, so an
+/// intermediate <div> would leave a stray margin at the top of every prose block.
 export function ProseShell({
   spacing,
   html,

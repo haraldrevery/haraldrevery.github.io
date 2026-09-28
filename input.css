@@ -9,8 +9,17 @@
  * its "only emit classes that exist in main.css" guard can actually fail.
  *
  * source(none) turns auto-detection off; the @source lines below reproduce the
- * globs dev.sh used to pass. Keep this list and dev.sh/dev.bat in agreement —
- * or better, leave the scripts' --content alone, since it is now inert.
+ * globs dev.sh used to pass. This list is now the only one: dev.sh/dev.bat no
+ * longer pass --content at all.
+ *
+ * ONE STYLESHEET. This file also pulls in the typography plugin and, at the very
+ * end, input_prose.css (the .prose rules, the image grid, the article outline
+ * and the reading-width button). Until 2026-09 those were a SECOND full Tailwind
+ * build, prose.css, loaded after main.css: half of it was a copy of main.css, and
+ * its copy of a utility beat a responsive variant only main.css had whenever the
+ * two @source lists drifted apart. The @import stays LAST on purpose, so the
+ * prose rules still come after everything here, as they did when they were a
+ * separate file loaded second.
  */
 @import "tailwindcss" source(none);
 
@@ -23,6 +32,8 @@
 @source "./input_legal/**/*.md";
 
 @import "./theme.css";
+
+@plugin "@tailwindcss/typography";
 
 
 @layer base {
@@ -3537,3 +3548,7 @@ a.featured-card__media:hover img {
 @media (max-width: 767px) {
   .symbol-pair { gap: 1rem; }
 }
+
+
+/* Must stay the LAST line: see "ONE STYLESHEET" at the top of this file. */
+@import "./input_prose.css";

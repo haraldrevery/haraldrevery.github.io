@@ -105,7 +105,8 @@ export function makeSiteFrame(previewPort: number): Overrides["iframe"] {
 
       const base = doc.createElement("base");
       base.href = `${origin}/`;
-      const links = ["/main.css", "/prose.css"].map((href) => {
+      // One stylesheet: the site merged prose.css into main.css in 2026-09.
+      const links = ["/main.css"].map((href) => {
         const l = doc.createElement("link");
         l.rel = "stylesheet";
         l.href = origin + href;

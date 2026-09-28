@@ -19,9 +19,19 @@ normally.
 Optional flag: `--quiet`. The dev server is NOT included — for live reload
 keep using `npm start`.
 
+Normally you do not run them directly: `./build.sh` / `build.bat` in the site
+root runs the right one after building the CSS, and falls back to Node when the
+binary is older than `eleventy.config.js`.
+
 On top of what Eleventy does, the binaries (see `runner.mjs`):
 
 - refuse to run outside the site root (no `eleventy.config.js` in the folder);
+- register the site's filters again AFTER Eleventy's built-in ones. The binary
+  hands the config to Eleventy through its programmatic API, which runs it
+  BEFORE Eleventy's defaults, so a built-in filter of the same name replaced
+  ours: binaries compiled before 2026-09-29 use Eleventy's own `slugify`, and
+  publish a tag like `tag_1` at `tag-tag-1.html` where Node writes
+  `tag-tag_1.html` (no live tag was affected, but recompile);
 - **fail** (exit code 1) when the build wrote 0 files, which Eleventy on its
   own reports as a success;
 - warn when `eleventy.config.js` on disk no longer matches the copy bundled
@@ -118,11 +128,13 @@ that bug, or one like it, is back, most likely after a Bun upgrade. Meanwhile,
 the build used the config bundled inside the binary, not your edited file.
 Recompile with `./compile.sh`, then follow "After recompiling".
 
-**Binary runs but output differs from `npx @11ty/eleventy`** — first check it
-isn't just the `<lastmod>` build date in `sitemap.xml` (expected: it's
-regenerated each build). If real pages differ, the bundled `eleventy.config.js`
-is stale — recompile with `./compile.sh` so the binary picks up your config
-changes.
+**Binary runs but output differs from `npx @11ty/eleventy`** — it should not:
+a current binary is byte-identical to the Node build (verified 2026-09-29,
+including a Windows binary under Wine). If pages differ, the bundled
+`eleventy.config.js` is stale — the binary prints a warning saying so —
+recompile with `./compile.sh`. A binary compiled before 2026-09-29 also differs
+on tags containing `_`, capitals or non-ASCII letters (see the filter note
+above).
 
 **`bun: not found` only when cross-compiling / downloads stall** — the first
 `bun build --compile` for a target downloads that platform's Bun runtime

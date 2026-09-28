@@ -108,22 +108,16 @@ git add CNAME && git commit -m "Restore CNAME for custom domain" && git push
 Whenever you change content or files:
 
 ### Step 1 — Rebuild the site
-Always rebuild so the generated pages and `sitemap.xml` are fresh and drafts are
-excluded:
+Always rebuild, so the CSS, the generated pages and `sitemap.xml` are fresh and
+drafts are excluded. One command does all of it, in the right order (CSS first,
+then pages, then the health check):
 ```bash
-./eleventy-linux-x64        # Linux    (Windows: eleventy-win-x64.exe)
+./build.sh                  # Linux    (Windows: double-click build.bat)
 ```
-> `npx @11ty/eleventy` still works and produces identical output — the binary is
-> just the no-Node-needed version (see `eleventy_binary/README.md`).
-
-**Only if you changed styling** (edited `input.css`/`input_prose.css` or added new
-Tailwind classes in HTML), also rebuild the CSS first. Run the watch suite and stop
-it once it prints the compiled output:
-```bash
-./dev.sh            # Linux    (Windows: dev.bat)
-# wait a second for it to compile main.css / prose.css, then press Ctrl+C
-```
-> For content-only edits (new blog post, text changes) you can skip the CSS step.
+> It uses the standalone Eleventy binary, or Node when the binary is missing or
+> older than `eleventy.config.js` (see `eleventy_binary/README.md`). If the
+> pre-commit hook is enabled (README.md, "Refusing out-of-date commits"), `git
+> commit` runs this for you and refuses a commit whose built files are stale.
 
 ### Step 2 — Review, commit, push
 ```bash
@@ -136,19 +130,28 @@ git push                         # publish → GitHub Pages redeploys in ~1 min
 That's it. Refresh `https://haraldrevery.com` after a minute (Cloudflare may cache —
 hard-refresh with `Ctrl+Shift+R` if you don't see the change).
 
-### Copy-paste version (content-only update)
+### Copy-paste version
 ```bash
-./eleventy-linux-x64 && git add -A && git commit -m "Update site" && git push
+./build.sh --quiet && git add -A && git commit -m "Update site" && git push
 ```
 
 ---
 
 ## 3. Publishing a draft
 
-A post with `draft: true` in its front matter is invisible on the live site (no page,
-not in the sitemap) but visible when you run `npm start` for local preview. To publish
-it, change the front matter to `draft: false` (or remove the line), then run the normal
-update workflow in section 2.
+A post with `draft: true` in its front matter gets no page and is left out of the
+Notebook, the tags, the sitemap, the feed and the search - in `npm start` too. To
+publish it, change the front matter to `draft: false` (or remove the line), then run
+the normal update workflow in section 2. `draft:` must be exactly `true` or `false`;
+anything else (`yes`, `"true"`) stops the build with a message saying so.
+
+Two things `draft: true` does NOT do:
+- **Unpublish a page that is already live.** The build never deletes: the old
+  `notebook_pages/<name>.html` stays reachable. The health check lists it under
+  "orphaned build output" - delete the file it names.
+- **Make the text private.** GitHub Pages serves the whole repository, so the source
+  file (e.g. `/input_markdown/<name>.md`) is public. `robots.txt` keeps search engines
+  away from it, not people.
 
 ---
 
@@ -181,9 +184,8 @@ git restore <file>      # undo unstaged changes to a file
 - **Rebuild before every deploy.** GitHub Pages serves your files as-is (no build on
   their side), so `main.css`, the notebook pages, and `sitemap.xml` must be freshly
   built locally and committed.
-- **Don't deploy files left over from `npm start`.** The dev server writes draft pages
-  to disk for preview — always finish with a plain `npx @11ty/eleventy` build before
-  committing.
+- **Finish with `./build.sh`, not `npm start`.** The dev server writes pages to disk
+  as you edit; a final build makes sure every generated file matches the sources.
 - **Binaries stay out of git.** Keep `tailwindcss-linux-x64` / `tw.exe` /
   `eleventy-linux-x64` / `eleventy-win-x64.exe` in your zip backups; they're too big
   for GitHub. The Eleventy ones can also be recompiled with `eleventy_binary/compile.sh`.

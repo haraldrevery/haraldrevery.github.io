@@ -6,9 +6,14 @@
 #   ./healthcheck.sh --quiet    only sections that found something
 #
 # Checks:
-#   A. broken references  - src/href/poster/srcset in HTML, url() in CSS
+#   A. broken references  - src/href/poster/srcset in HTML, url() in CSS, and
+#                           every URL in sitemap.xml, feed.xml and
+#                           search-index.json. Resolved the way GitHub Pages
+#                           serves them, including https://haraldrevery.com/...
 #   B. case-only mismatch - works on Windows, 404s on GitHub Pages
 #   C. size budgets       - oversized images/svg, and per-page image weight
+#   D. build output       - orphaned pages, sources that published nothing, and
+#                           ?v= versions that no longer match the file
 #
 # Note on C: per-page image weight is an UPPER BOUND, not real transfer size.
 # Every srcset candidate is summed on top of the <img src>, and an image used
@@ -36,15 +41,19 @@ PAGE_IMG_MAX_KB=${PAGE_IMG_MAX_KB:-8000}
 # broken image path in this repo lives in one, and including them buries the
 # findings that matter. Add new sections here as the site grows.
 ROOT_PAGES="index about contact music notebook discography download legal 404 h"
-PAGE_DIRS="notebook_pages release h clock"
-CSS_FILES="main.css prose.css"
+PAGE_DIRS="notebook_pages release h clock rvry_ascii revery_notebook"
+CSS_FILES="main.css"
+# Generated indexes: every URL in them must resolve like a link would.
+INDEX_FILES="sitemap.xml feed.xml search-index.json"
+SITE_ORIGIN="https://haraldrevery.com"
 
 # Directories skipped when hunting for oversized assets. Only things that are
 # genuinely not served: tooling, backups and scaffolds. Generator output dirs
 # like svg/python_generated_svg ARE deployed (the asset root is "./"), so they
 # stay in scope - an unused 576 kB svg still ships to visitors.
-SKIP_DIRS="./node_modules ./.git ./page_builder ./test_pages ./notebook_templates \
-./css_bkup ./eleventy_binary"
+SKIP_DIRS="./node_modules ./.git ./page_builder_app_v2/node_modules \
+./page_builder_app_v2/src-tauri/target ./revery_notebook/build_tools/node_modules \
+./test_pages ./notebook_templates ./css_bkup ./eleventy_binary"
 
 # --- output helpers --------------------------------------------------------
 if [ -t 1 ]; then
@@ -161,10 +170,11 @@ while IFS= read -r f; do
     # The JSON-LD block carries the same path a second time but is deliberately
     # not scanned: its other "url" fields are page URLs, not files, and would all
     # report as missing. Checking og:image covers it - both come from imageMeta().
-    grep -noE '<meta[^>]*(og:image|twitter:image)"[^>]*content="[^"]*"' "$f" 2>/dev/null \
+    # og:url rides along: it is the page's own address, absolute, and nothing
+    # else would notice it naming a page that does not exist.
+    grep -noE '<meta[^>]*(og:image|twitter:image|og:url)"[^>]*content="[^"]*"' "$f" 2>/dev/null \
       | sed -E 's|^([0-9]+):.*content="([^"]*)"$|\1\t\2|' \
-      | sed "s|\thttps://haraldrevery.com|\t|" \
-      | awk -F'\t' -v F="$f" 'NF==2 && $2 ~ /^\// {print F "\t" $1 "\t" $2}' >> "$TMP/refs"
+      | awk -F'\t' -v F="$f" 'NF==2 {print F "\t" $1 "\t" $2}' >> "$TMP/refs"
 
     # url(...) inside inline style attributes, e.g.
     #   style="background-image: url('/photos/audioplayer_texture1.jpg')"
@@ -181,6 +191,23 @@ while IFS= read -r f; do
       | awk -F'\t' -v F="$f" 'NF==2 {print F "\t" $1 "\t" $2}' >> "$TMP/refs"
 done < "$TMP/pages"
 
+# The generated indexes. A URL in the sitemap, the feed or the search index is
+# a promise that the page exists, and each is built from its own hand-kept list
+# (sitemap.njk staticPages, search-index.njk staticEntries) or from front
+# matter - a typo there published a dead URL with no other check noticing.
+# Every URL here is absolute (https://haraldrevery.com/...); the resolver below
+# turns the site's own origin back into a local path.
+for x in $INDEX_FILES; do
+    [ -f "$x" ] || continue
+    case "$x" in
+        *.json) pat='"url":"[^"]*"' ;;
+        *)      pat='<loc>[^<]*</loc>|<link>[^<]*</link>|<guid[^>]*>[^<]*</guid>|<enclosure[^>]*url="[^"]*"' ;;
+    esac
+    grep -noE "$pat" "$x" 2>/dev/null \
+      | sed -E 's#^([0-9]+):("url":"|<loc>|<link>|<guid[^>]*>|<enclosure[^>]*url=")#\1\t#; s#("|</loc>|</link>|</guid>)$##' \
+      | awk -F'\t' -v F="$x" 'NF==2 {print F "\t" $1 "\t" $2}' >> "$TMP/refs"
+done
+
 # url(...) in the compiled stylesheets
 for c in $CSS_FILES; do
     [ -f "$c" ] || continue
@@ -188,6 +215,13 @@ for c in $CSS_FILES; do
       | sed -E "s/:url\(['\"]?/\t/; s/['\"]?\)$//" \
       | awk -F'\t' -v F="$c" 'NF==2 {print F "\t" $1 "\t" $2}' >> "$TMP/refs"
 done
+
+# The site's own absolute URLs are local paths. Everything below used to drop
+# https://haraldrevery.com/... as "external", so a canonical, og:url, sitemap or
+# search-index typo passed as ok (verified 2026-09-28).
+awk -F'\t' -v O="$SITE_ORIGIN" 'BEGIN { OFS = "\t" }
+    { if ($3 == O) $3 = "/"; else if (index($3, O "/") == 1) $3 = substr($3, length(O) + 1); print }' \
+    "$TMP/refs" > "$TMP/refs.local" && mv "$TMP/refs.local" "$TMP/refs"
 
 # ---------------------------------------------------------------------------
 # Check A + B: resolve each reference.
@@ -219,6 +253,35 @@ resolve_ci() {
     [ -e "$cur" ] && printf '%s\n' "$cur"
 }
 
+# served <path> - succeed when GitHub Pages would answer 200 for it (measured
+# live 2026-09-28 against /music, /music/, /download/, /release/, /clock):
+#   ends in /  ->  <path>index.html, or nothing. A folder is not a page.
+#   otherwise  ->  the file itself; else <path>.html - even when a folder of the
+#                  same name exists, which is the only reason /music works next
+#                  to music/ (keep music.html, or every /music link 404s);
+#                  else <path>/index.html (Pages redirects /x to /x/).
+# This used to accept ANY existing directory: /download/ and /release/ (both
+# 404 live) passed, and so would every /music link after music.html was deleted.
+served() {
+    case "$1" in
+        */) [ -f "${1}index.html" ] ;;
+        *)  [ -f "$1" ] || [ -f "$1.html" ] || [ -f "$1/index.html" ] ;;
+    esac
+}
+
+# served_ci <path> - the file served() would find if casing were ignored.
+served_ci() {
+    local c hit
+    case "$1" in
+        */) set -- "${1}index.html" ;;
+        *)  set -- "$1" "$1.html" "$1/index.html" ;;
+    esac
+    for c in "$@"; do
+        hit=$(resolve_ci "$c")
+        if [ -n "$hit" ] && [ -f "$hit" ]; then printf '%s\n' "$hit"; return; fi
+    done
+}
+
 while IFS=$'\t' read -r f line url; do
     [ -z "$url" ] && continue
     case "$url" in
@@ -245,17 +308,12 @@ while IFS=$'\t' read -r f line url; do
         path="$(dirname "$f")/${clean}"    # relative to the containing file
     fi
 
-    [ -e "$path" ] && continue
-    # GitHub Pages serves /foo from foo.html, so a clean link (/about,
-    # /h/1dgraph - canonicals and redirect stubs use them) is a hit when
-    # <path>.html exists. A trailing-slash /foo/ already passed as a directory.
-    [ -f "$path.html" ] && continue
+    served "$path" && continue
 
     # Exists under different casing? Fine on Windows, 404 on GitHub Pages.
     # One line per finding - section() counts findings with wc -l, so a
     # two-line entry here reported (and charged to the error count) double.
-    hit=$(resolve_ci "$path")
-    [ -z "$hit" ] && hit=$(resolve_ci "$path.html")
+    hit=$(served_ci "$path")
     if [ -n "$hit" ]; then
         printf '%s:%s  %s  ->  exists as %s\n' "$f" "$line" "$url" "${hit#./}" >> "$TMP/case"
     else
@@ -292,7 +350,7 @@ awk -F'\t' '{print $3}' "$TMP/refs" \
 is_referenced() {          # $1 = path like ./photos/x.jpg
     local n=${1#./}
     grep -qxF "$(echo "$n" | awk '{print tolower($0)}')" "$TMP/referenced" && return 0
-    grep -rlF --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=page_builder \
+    grep -rlF --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=target \
         --include='*.html' --include='*.js' --include='*.css' --include='*.njk' \
         --include='*.json' --include='*.jsonc' --include='*.md' \
         "$(basename "$n")" . 2>/dev/null | grep -q .
@@ -388,8 +446,17 @@ for src in input_markdown/*.md input_custom_html_pages/*.html input_custom_post/
     [ -f "$src" ] || continue
     is_draft "$src" && continue
     b=$(basename "$src"); printf '%s\n' "${b%.*}" >> "$TMP/live_slugs"
-    fm "$src" | sed -n 's/^tags:[[:space:]]*\[\(.*\)\][[:space:]]*$/\1/p' \
-        | tr ',' '\n' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' \
+    # All three YAML shapes: tags: [a, b] / tags: a / a "tags:" line followed
+    # by "- a" lines. Only the first was read, so a post written the third way
+    # got its live tag page reported as an orphan (verified 2026-09-28).
+    fm "$src" | awk '
+        /^tags:[[:space:]]*\[/ { s = $0; sub(/^tags:[[:space:]]*\[/, "", s); sub(/\][[:space:]]*$/, "", s)
+                                n = split(s, a, ","); for (i = 1; i <= n; i++) print a[i]; next }
+        /^tags:[[:space:]]*$/   { list = 1; next }
+        list && /^[[:space:]]*-/ { s = $0; sub(/^[[:space:]]*-[[:space:]]*/, "", s); print s; next }
+        { list = 0 }
+        /^tags:[[:space:]]*[^[:space:]]/ { s = $0; sub(/^tags:[[:space:]]*/, "", s); print s }' \
+        | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' \
         | while read -r t; do
               [ -n "$t" ] && printf '%s\n' "$(slugify "$t")" >> "$TMP/live_tags"
           done
@@ -449,12 +516,44 @@ for f in release/*.html; do
         || printf '%s   no input_release/ json produces this slug\n' "$f" >> "$TMP/orphan"
 done
 
-# licence/<slug> <- input_legal/licenses/<slug> (extensionless raw texts)
+# licence/<slug>.txt <- input_legal/licenses/<slug> (extensionless raw texts).
+# A licence/ file without .txt is from before 2026-09, when the texts were
+# published extensionless and so were downloaded instead of shown.
 for f in licence/*; do
     [ -f "$f" ] || continue
-    [ -f "input_legal/licenses/$(basename "$f")" ] \
-        || printf '%s   no matching input_legal/licenses/ text\n' "$f" >> "$TMP/orphan"
+    b=$(basename "$f")
+    case "$b" in
+        *.txt) [ -f "input_legal/licenses/${b%.txt}" ] \
+                   || printf '%s   no matching input_legal/licenses/ text\n' "$f" >> "$TMP/orphan" ;;
+        *)     printf '%s   no longer published (the build writes licence/<name>.txt)\n' "$f" >> "$TMP/orphan" ;;
+    esac
 done
+
+# ---------------------------------------------------------------------------
+# ?v= versions. Pages link /main.css?v=<first 10 hex of its SHA-256> (see
+# _data/assets.js) so a changed stylesheet is a new URL: CSS is cached for 186
+# days. A version that no longer matches the file means that page still points
+# visitors at the OLD cached stylesheet. Eleventy pages: rebuild (build.sh
+# builds the CSS first, then the pages). Hand-written pages (h/1dgraph.html,
+# h/2dphaseportrait.html): paste the version shown here into the link.
+# ---------------------------------------------------------------------------
+: > "$TMP/stalever"
+declare -A vhash
+while IFS=$'\t' read -r f line url; do
+    case "$url" in *'?v='*) ;; *) continue ;; esac
+    case "$url" in http://*|https://*|//*) continue ;; esac
+    asset=${url%%\?*}
+    want=${url##*\?v=}; want=${want%%[&#]*}
+    # Only content hashes (10 hex digits, as assets.js prints them). clock/ and
+    # the wallpaper pages bump a date by hand (?v=20260926d): a different,
+    # deliberate scheme this cannot judge.
+    [[ $want =~ ^[0-9a-f]{10}$ ]] || continue
+    if [ "${asset#/}" != "$asset" ]; then p=".${asset}"; else p="$(dirname "$f")/${asset}"; fi
+    [ -f "$p" ] || continue        # a missing file is already an error above
+    [ -n "${vhash[$p]}" ] || vhash[$p]=$(sha256sum "$p" | cut -c1-10)
+    [ "${vhash[$p]}" = "$want" ] \
+        || printf '%s:%s  %s  ->  current is ?v=%s\n' "$f" "$line" "$url" "${vhash[$p]}" >> "$TMP/stalever"
+done < "$TMP/refs"
 
 # ---------------------------------------------------------------------------
 # Report.
@@ -465,19 +564,20 @@ section "$TMP/case"    "case-only mismatch (breaks on GitHub Pages)" error
 
 section "$TMP/orphan"  "orphaned build output (still live, no live source)" error
 section "$TMP/unpublished" "live source that published no page (stale binary?)"  error
+section "$TMP/stalever" "stale ?v= (page points at an old cached stylesheet)"    warn
 
 printf '\n%sSize budgets%s\n' "$BLD" "$RST"
 section "$TMP/big_used"   "images over ${IMG_MAX_KB} kB, used on a live page" warn
 section "$TMP/big_svg"    "svg over ${SVG_MAX_KB} kB"                         warn
 section "$TMP/heavy"      "pages referencing over ${PAGE_IMG_MAX_KB} kB of images" warn
-section "$TMP/big_orphan" "images over ${IMG_MAX_KB} kB, referenced by nothing (repo bloat only)" warn
+section "$TMP/big_orphan" "images over ${IMG_MAX_KB} kB, referenced by nothing (still publicly served)" warn
 
 printf '\n%s---%s\n' "$DIM" "$RST"
 if [ "$errors" -gt 0 ] || [ "$warnings" -gt 0 ]; then
     printf '%d error(s), %d warning(s)\n' "$errors" "$warnings"
     printf '%snotebook_pages/ and release/ are build output - fix findings there in\n' "$DIM"
-    printf 'input_custom_html_pages/, input_markdown/, input_custom_post/, eleventy_njk/\nor eleventy_settings/,\n'
-    printf 'then rebuild with ./eleventy-linux-x64%s\n' "$RST"
+    printf 'input_custom_html_pages/, input_markdown/, input_custom_post/, eleventy_njk/\n'
+    printf 'or eleventy_settings/, then rebuild with ./build.sh%s\n' "$RST"
 else
     printf '%sAll checks passed.%s\n' "$GRN" "$RST"
 fi

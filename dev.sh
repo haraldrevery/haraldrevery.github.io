@@ -1,19 +1,19 @@
 #!/bin/bash
+# Tailwind in watch mode while you work on styles. Ctrl+C stops it.
+# For a one-off build of everything (CSS, then the site, then the healthcheck)
+# use ./build.sh instead.
+#
+# One stylesheet: input.css imports input_prose.css, so there is no separate
+# prose build any more. The files Tailwind scans are the @source lines at the
+# top of input.css (the old --content flag was removed in Tailwind v4).
 echo "Starting Tailwind Build Suite..."
 
-# Pipe an infinite empty stream into the background processes 
-# to keep stdin open and prevent Tailwind CLI from auto-exiting.
+# 1. Main Minified - the file every page loads.
+# Piping an endless empty stream keeps stdin open, so the background watcher
+# does not exit when this script's stdin closes.
+tail -f /dev/null | ./tailwindcss-linux-x64 -i input.css -o main.css --watch --minify &
 
-# 1. Main Minified
-tail -f /dev/null | ./tailwindcss-linux-x64 -i input.css -o main.css --watch --content "./*.html,./input_custom_html_pages/**/*.{html,md},./notebook_templates/**/*.{html,md},./eleventy_njk/**/*.njk,./eleventy_settings/**/*.njk,./input_legal/**/*.md" --minify &
-
-# 2. Main Unminified (Full)
-tail -f /dev/null | ./tailwindcss-linux-x64 -i input.css -o main_max.css --watch --content "./*.html,./input_custom_html_pages/**/*.{html,md},./notebook_templates/**/*.{html,md},./eleventy_njk/**/*.njk,./eleventy_settings/**/*.njk,./input_legal/**/*.md" &
-
-# 3. Prose Minified
-tail -f /dev/null | ./tailwindcss-linux-x64 -i input_prose.css -o prose.css --watch --content "./*.html,./input_custom_html_pages/**/*.{html,md},./notebook_templates/**/*.{html,md},./eleventy_njk/**/*.njk,./eleventy_settings/**/*.njk,./input_legal/**/*.md" --minify &
-
-# 4. Prose Unminified (Full)
-# (This stays in the foreground, so it already has an open stdin and doesn't need the pipe)
-echo "Watching Prose Max (Unminified)..."
-./tailwindcss-linux-x64 -i input_prose.css -o prose_max.css --watch --content "./*.html,./input_custom_html_pages/**/*.{html,md},./notebook_templates/**/*.{html,md},./eleventy_njk/**/*.njk,./eleventy_settings/**/*.njk,./input_legal/**/*.md"
+# 2. Main Unminified (Full) - a readable copy for debugging; no page loads it.
+# Stays in the foreground, so Ctrl+C stops both.
+echo "Watching main.css + main_max.css..."
+./tailwindcss-linux-x64 -i input.css -o main_max.css --watch

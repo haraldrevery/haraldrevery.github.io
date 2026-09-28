@@ -339,9 +339,7 @@ describe("a page with no hero still gets a title", () => {
   test("the content column uses only classes the compiled CSS has", () => {
     // The page header is layout markup now, compiled by the site's own Tailwind
     // build. What this app still emits around the blocks is the column.
-    const css =
-      readFileSync(new URL("../../main.css", import.meta.url).pathname, "utf8") +
-      readFileSync(new URL("../../prose.css", import.meta.url).pathname, "utf8");
+    const css = readFileSync(new URL("../../main.css", import.meta.url).pathname, "utf8");
     const esc = (c: string) => c.replace(/([:\/\[\].])/g, "\\$1");
     for (const hasHero of [false, true]) {
       for (const c of contentColumnClass(hasHero).split(/\s+/)) {

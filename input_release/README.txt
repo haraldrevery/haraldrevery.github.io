@@ -11,7 +11,7 @@ rename it. When the site is built, Eleventy generates:
                              one tile per release, newest first, linking to the
                              release pages.
 
-Build the site the usual way (./dev.sh, or the eleventy binary). No npm needed.
+Build the site the usual way (./build.sh, or build.bat on Windows). No npm needed.
 
 --------------------------------------------------------------------------------
   FILE FORMAT  —  .jsonc (comments allowed) or .json

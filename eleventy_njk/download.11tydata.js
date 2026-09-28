@@ -17,12 +17,23 @@ const crypto = require("crypto");
 
 const ROOT = path.join(__dirname, "..");
 
-// Hash cache. Hashing all 347 MB takes ~950 ms, which would nearly triple the
-// build (0.5s -> 1.5s) and get paid again on every `npm start` rebuild. Entries
-// are keyed by path and invalidated on size or mtime change. Committed to git so
-// a fresh clone only re-hashes once (git does not preserve mtimes).
-// Listed in .eleventyignore so writing it can never retrigger the watcher.
+// Hash cache, in TWO files. Hashing all 347 MB takes ~950 ms, which would nearly
+// triple the build (0.5s -> 1.5s) and get paid again on every `npm start`
+// rebuild.
+//
+//   download_hashes.json        COMMITTED. path -> size + hashes: the published
+//                               facts, identical on every machine.
+//   download_hashes.local.json  GITIGNORED. path -> size + mtime: "this file is
+//                               unchanged since it was hashed HERE".
+//
+// It used to be one committed file that included the mtime. Git does not keep
+// mtimes, so every fresh clone and every other machine rehashed everything and
+// rewrote the committed file with nothing changed - a git diff on each machine's
+// first build, which the pre-commit hook (githooks/pre-commit) would refuse.
+// Now a fresh clone rehashes once, finds the same hashes, and changes nothing.
+// Both files are in .eleventyignore so writing them never retriggers the watcher.
 const CACHE_FILE = path.join(__dirname, "download_hashes.json");
+const LOCAL_FILE = path.join(__dirname, "download_hashes.local.json");
 
 // Top-level folders to scan, in page order.
 const ROOTS = ["music", "download"];
@@ -80,32 +91,41 @@ const sortFolders = (root, folders) => {
   });
 };
 
-module.exports = () => {
-  let cache = {};
+const readJson = (file) => {
   try {
-    cache = JSON.parse(fs.readFileSync(CACHE_FILE, "utf8"));
+    return JSON.parse(fs.readFileSync(file, "utf8"));
   } catch (e) {
-    cache = {}; // missing or corrupt cache just means a full re-hash
+    return {}; // missing or corrupt cache just means a full re-hash
   }
+};
+const writeIfChanged = (file, before, after) => {
+  const text = JSON.stringify(after, null, 2) + "\n";
+  if (text !== JSON.stringify(before, null, 2) + "\n") fs.writeFileSync(file, text);
+};
+
+module.exports = () => {
+  const cache = readJson(CACHE_FILE);
+  const local = readJson(LOCAL_FILE);
 
   const nextCache = {};
-  let hashed = 0;
+  const nextLocal = {};
 
   const hashesFor = (relPath, stat) => {
     const hit = cache[relPath];
-    if (hit && hit.size === stat.size && hit.mtimeMs === stat.mtimeMs) {
+    const seen = local[relPath];
+    if (hit && seen && hit.size === stat.size && seen.size === stat.size && seen.mtimeMs === stat.mtimeMs) {
       nextCache[relPath] = hit;
+      nextLocal[relPath] = seen;
       return hit;
     }
     const buf = fs.readFileSync(path.join(ROOT, relPath));
     const entry = {
       size: stat.size,
-      mtimeMs: stat.mtimeMs,
       sha512: crypto.createHash("sha512").update(buf).digest("hex"),
       sha256: crypto.createHash("sha256").update(buf).digest("hex"),
     };
     nextCache[relPath] = entry;
-    hashed++;
+    nextLocal[relPath] = { size: stat.size, mtimeMs: stat.mtimeMs };
     return entry;
   };
 
@@ -156,11 +176,9 @@ module.exports = () => {
   }
 
   // Only write when something actually changed, so a no-op build never touches
-  // the file (belt and braces against a watch loop).
-  const serialised = JSON.stringify(nextCache, null, 2) + "\n";
-  if (hashed > 0 || serialised !== JSON.stringify(cache, null, 2) + "\n") {
-    fs.writeFileSync(CACHE_FILE, serialised);
-  }
+  // either file (belt and braces against a watch loop, and no git diff).
+  writeIfChanged(CACHE_FILE, cache, nextCache);
+  writeIfChanged(LOCAL_FILE, local, nextLocal);
 
   return { musicSections: sections.music, downloadSections: sections.download };
 };

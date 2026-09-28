@@ -26,8 +26,8 @@ const path = require("path");
 
 const LICENSES_DIR = path.join(__dirname, "licenses");
 
-// Where the raw license texts are published, and what the page links to.
-// Kept in sync with LICENSES_DIR on every build by syncLicenceDir() below.
+// Where the raw license texts are published (as <slug>.txt), and what the page
+// links to. Kept in sync with LICENSES_DIR on every build by syncLicenceDir().
 const LICENCE_OUT_DIR = path.join(__dirname, "..", "licence");
 const LICENCE_URL_BASE = "/licence";
 
@@ -142,7 +142,7 @@ const loadLibraries = () => {
       copyright,
       license: license || null,
       text,
-      href: `${LICENCE_URL_BASE}/${slug}`,
+      href: `${LICENCE_URL_BASE}/${slug}.txt`,
       isExternal: false,
     };
   });
@@ -182,21 +182,28 @@ const loadLibraries = () => {
   );
 };
 
-// Publish licenses/<slug> to licence/<slug> so /licence/ can never point at a
-// stale or missing file. Byte-identical files are left alone, which keeps their
-// mtime stable (sitemap.njk reads mtimes for <lastmod>).
+// Publish licenses/<slug> to licence/<slug>.txt so /licence/ can never point at
+// a stale or missing file. Byte-identical files are left alone, so a rebuild
+// with nothing changed rewrites nothing.
+//
+// The .txt matters. The raw texts are extensionless, and a host serves an
+// extensionless file as application/octet-stream: every link in Section 10
+// DOWNLOADED a file called "alpine" instead of showing the text (measured on
+// GitHub Pages, 2026-09-28). .txt is text/plain on every static host.
 // Mirrors the input_custom_html_pages -> notebook_pages copy in eleventy.config.js.
+// Like that copy it never deletes: healthcheck.sh names a licence/ file whose
+// source is gone.
 const syncLicenceDir = (libraries) => {
   if (!fs.existsSync(LICENCE_OUT_DIR)) fs.mkdirSync(LICENCE_OUT_DIR, { recursive: true });
 
   for (const lib of libraries) {
     if (lib.isExternal) continue;
     const src = path.join(LICENSES_DIR, lib.slug);
-    const dest = path.join(LICENCE_OUT_DIR, lib.slug);
+    const dest = path.join(LICENCE_OUT_DIR, `${lib.slug}.txt`);
     const text = fs.readFileSync(src);
     if (fs.existsSync(dest) && fs.readFileSync(dest).equals(text)) continue;
     fs.writeFileSync(dest, text);
-    console.log(`Published licence/${lib.slug}`);
+    console.log(`Published licence/${lib.slug}.txt`);
   }
 };
 

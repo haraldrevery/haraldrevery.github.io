@@ -1,29 +1,14 @@
 /*
- * Sources declared here, not via dev.sh's --content — that flag was removed in
- * Tailwind v4 and the standalone binary now ignores it and scans the whole
- * repo. See the same block at the top of input.css for the full story.
+ * PARTIAL — not built on its own. input.css imports this file as its last line,
+ * so it compiles into main.css together with everything else, after the rules
+ * in input.css. The typography plugin, the theme and the @source list all live
+ * in input.css.
+ *
+ * Until 2026-09 this was a second full Tailwind build (prose.css) that every
+ * post loaded after main.css. See "ONE STYLESHEET" at the top of input.css for
+ * why that was merged. Do not add `@import "tailwindcss"` back here: a second
+ * copy of the utilities in the same file is the bug the merge removed.
  */
-@import "tailwindcss" source(none);
-
-@source "./*.html";
-@source "./input_custom_html_pages/**/*.{html,md}";
-/* MUST be listed here as well as in input.css, not just there: prose.css is a
-   SECOND full Tailwind build and the page links it AFTER main.css, so a utility
-   prose.css emits (say .hidden) overrides a responsive variant that only
-   main.css emits (say .md\:table-cell). The column simply never appears, with
-   nothing in the markup or in main.css to suggest why. Keep the two @source
-   lists in step. */
-@source "./input_custom_post/**/*.html";
-@source "./notebook_templates/**/*.{html,md}";
-@source "./eleventy_njk/**/*.njk";
-@source "./eleventy_settings/**/*.njk";
-@source "./input_legal/**/*.md";
-
-
-@plugin "@tailwindcss/typography";
-
-
-@import "./theme.css";
 
 
 /* ===================================

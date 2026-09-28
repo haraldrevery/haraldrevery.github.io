@@ -1,0 +1,54 @@
+#!/bin/bash
+# ---------------------------------------------------------------------------
+# pre-commit - refuse a commit whose generated files are out of date.
+#
+# The site has no build step on GitHub's side: GitHub Pages serves the
+# committed main.css, notebook_pages/, sitemap.xml ... exactly as they are. So
+# a commit that changes a source but not what it builds to ships stale pages.
+# That had already happened: the committed sitemap.xml was behind edits to
+# clock/index.html and revery_notebook/index.html (found 2026-09-28).
+#
+# This runs ./build.sh (CSS, pages, healthcheck). The commit is refused when
+#   - a build step fails, or the healthcheck finds an ERROR, or
+#   - building CHANGED files: look at them (git status / git diff), `git add`
+#     the ones that belong to this commit, and commit again.
+#
+# Enable once per clone (Linux, and Windows via Git for Windows):
+#     git config core.hooksPath githooks
+# Disable:         git config --unset core.hooksPath
+# Skip just once:  git commit --no-verify
+#
+# It builds the working tree, not the staging area, so unstaged edits to
+# sources are built too - the same thing ./build.sh would do by hand.
+# ---------------------------------------------------------------------------
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+# "<blob hash> <path>" for every modified, deleted or untracked file, so a
+# change made BY the build is told apart from what was already uncommitted.
+state() {
+    git status --porcelain=v1 --untracked-files=all \
+      | cut -c4- | sed 's/^"\(.*\)"$/\1/' \
+      | while IFS= read -r p; do
+            if [ -f "$p" ]; then printf '%s %s\n' "$(git hash-object -- "$p")" "$p"
+            else printf 'gone %s\n' "$p"; fi
+        done | sort
+}
+
+before=$(state)
+if ! ./build.sh --quiet; then
+    echo
+    echo "pre-commit: commit refused - the build or the healthcheck failed (see above)."
+    echo "            Skip this check once with: git commit --no-verify"
+    exit 1
+fi
+after=$(state)
+
+if [ "$before" != "$after" ]; then
+    echo
+    echo "pre-commit: commit refused - building changed these files:"
+    diff <(printf '%s\n' "$before") <(printf '%s\n' "$after") \
+      | sed -n 's/^> [^ ]* /    /p' | sort -u
+    echo "Review them (git diff), git add the ones that belong in this commit, and commit again."
+    exit 1
+fi
+exit 0

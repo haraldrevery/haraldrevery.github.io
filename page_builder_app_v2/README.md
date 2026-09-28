@@ -202,7 +202,8 @@ coming back:
 ## Two rules that constrain everything
 
 1. **No CSS build on export.** Only Tailwind classes already present in the
-   compiled `main.css`/`prose.css` may be emitted. `tests/render.test.tsx` greps
+   compiled `main.css` may be emitted (it also holds the prose rules; there has
+   been no separate `prose.css` since 2026-09). `tests/render.test.tsx` greps
    the real committed CSS to enforce this. A plausible-looking `mb-24` that isn't
    in the bundle ships as an invisible no-op.
 2. **Every top-level block owns exactly ONE gap: the margin below it.** Never a
@@ -230,7 +231,7 @@ provides inside column slots:
 | everything else | `<section class="mb-16">` | no wrapper — the slot div is the wrapper |
 
 The content must be a **direct child** of the element carrying `prose`:
-`prose.css` zeroes first/last-child margins with a direct-child selector, so an
+the typography rules in `main.css` zero first/last-child margins with a direct-child selector, so an
 intermediate `<div>` leaves a stray margin at the top of every prose block.
 
 ## Adding a block type

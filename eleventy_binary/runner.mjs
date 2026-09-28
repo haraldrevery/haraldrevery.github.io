@@ -93,7 +93,32 @@ try {
     configPath: false,
     quietMode: args.includes("--quiet"),
     config: (eleventyConfig) => {
-      fileConfig = configFn(eleventyConfig) || {};
+      // Eleventy runs THIS callback before it loads its own defaults
+      // (Eleventy.js: options.config, then eleventyConfig.init() ->
+      // defaultConfig.js), whereas `npx @11ty/eleventy` loads the config FILE
+      // after them. So a default filter with the same name as one of ours
+      // silently replaced ours in the binary only. It happened to `slugify`:
+      // the binary published a tag "tag_1" at tag-tag-1.html, Node at
+      // tag-tag_1.html (verified 2026-09-29; no live tag was affected). Every
+      // filter the site config registers is recorded here and registered again
+      // from a plugin, and plugins run after the defaults - so ours win, as they
+      // do under Node.
+      const siteFilters = [];
+      const ownAddFilter = Object.prototype.hasOwnProperty.call(eleventyConfig, "addFilter");
+      const addFilter = eleventyConfig.addFilter;
+      eleventyConfig.addFilter = function (name, ...rest) {
+        siteFilters.push([name, rest]);
+        return addFilter.call(this, name, ...rest);
+      };
+      try {
+        fileConfig = configFn(eleventyConfig) || {};
+      } finally {
+        if (ownAddFilter) eleventyConfig.addFilter = addFilter;
+        else delete eleventyConfig.addFilter;
+      }
+      eleventyConfig.addPlugin(function reapplySiteFilters(cfg) {
+        for (const [name, rest] of siteFilters) cfg.addFilter(name, ...rest);
+      });
       if (fileConfig.templateFormats) {
         eleventyConfig.setTemplateFormats(fileConfig.templateFormats);
       }

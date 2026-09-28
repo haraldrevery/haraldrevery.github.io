@@ -34,17 +34,16 @@ possible, no npm needed to build.**
 ## The 30-second version
 
 ```bash
-# Linux — CSS watchers (leave running while you edit)
-chmod +x dev.sh tailwindcss-linux-x64
-./dev.sh
+# Build everything once: CSS, then pages, then the health check — no Node, no npm
+./build.sh
 
-# Build the site (notebook, releases, sitemap) — no Node, no npm
-chmod +x eleventy-linux-x64
-./eleventy-linux-x64
+# While editing styles: Tailwind in watch mode
+./dev.sh
 ```
 
-On Windows: double-click `dev.bat` for CSS, and run `eleventy-win-x64.exe`
-from the site root to build.
+On Windows: double-click `build.bat` (and `dev.bat` while editing styles).
+The Tailwind and Eleventy binaries are kept zipped in git; unzip the ones for
+your platform into the site root first.
 
 Everything the site serves is committed to the repo. There is **no CI build
 step** — whatever you build locally is what goes live, so always rebuild before
@@ -58,7 +57,7 @@ Two separate build tools, deliberately kept independent:
 
 | Tool | Input | Output |
 |---|---|---|
-| **Tailwind** (standalone binary) | `input.css`, `input_prose.css`, `theme.css` | `main.css`, `main_max.css`, `prose.css`, `prose_max.css` |
+| **Tailwind** (standalone binary) | `input.css` (imports `theme.css` and `input_prose.css`) | `main.css`, `main_max.css` |
 | **Eleventy** (standalone binary or Node) | `.njk` templates, `input_markdown/`, `input_custom_post/`, `input_custom_html_pages/`, `input_release/`, `input_legal/` | `notebook.html`, `notebook_pages/`, `discography.html`, `release/`, `sitemap.xml`, `legal.html`, `licence/` |
 
 Hand-written pages (`index.html`, `music.html`, `about.html`, `contact.html`,
@@ -143,13 +142,16 @@ website_v2_123/
 │   └── input_legal.11tydata.js              #   builds Section 10 + syncs licence/
 ├── notebook_templates/                      # Tailwind class mirror (see CSS section)
 │
-├── input.css  → main.css / main_max.css     # site CSS (Tailwind source → build)
-├── input_prose.css → prose.css / prose_max.css  # article/prose CSS
+├── input.css  → main.css / main_max.css     # THE stylesheet (Tailwind source → build)
+├── input_prose.css                          # prose/article rules, imported by input.css
 ├── theme.css                                # @theme design tokens (fonts, colors, sizes)
+├── _data/assets.js                          # /main.css?v=<hash> cache-busting
 │
 ├── eleventy.config.js                       # collections, filters, JSON-LD, outline
 ├── .eleventyignore                          # what Eleventy must NOT process
-├── dev.sh / dev.bat                         # Tailwind watchers (4 outputs)
+├── build.sh / build.bat                     # build everything: CSS, pages, healthcheck
+├── dev.sh / dev.bat                         # Tailwind watchers (main.css + main_max.css)
+├── githooks/pre-commit                      # refuses commits with stale build output
 ├── _headers                                 # Cloudflare CSP + security headers
 ├── wrangler.jsonc                           # Cloudflare static-asset config
 │
@@ -168,20 +170,32 @@ website_v2_123/
 
 ## Running the build
 
+### Everything at once
+
+```bash
+./build.sh            # Linux   (Windows: build.bat)
+./build.sh --quiet    # only the health-check sections that found something
+```
+
+CSS first, then Eleventy, then the health check - in that order because every
+page links `/main.css?v=<hash of main.css>` (`_data/assets.js`). It uses the
+standalone Eleventy binary, and Node when the binary is missing or older than
+`eleventy.config.js`.
+
 ### CSS (Tailwind)
 
-`dev.sh` / `dev.bat` starts **four** watchers at once:
+`dev.sh` / `dev.bat` starts **two** watchers:
 
 | Source | Output | Notes |
 |---|---|---|
-| `input.css` | `main.css` | minified — what the site loads |
+| `input.css` | `main.css` | minified — what every page loads |
 | `input.css` | `main_max.css` | unminified — for reading/debugging |
-| `input_prose.css` | `prose.css` | minified — what articles load |
-| `input_prose.css` | `prose_max.css` | unminified — for reading/debugging |
 
-Leave it running while you edit; it rebuilds on save.
+Leave it running while you edit; it rebuilds on save. There used to be a second
+build, `prose.css`, from `input_prose.css`; it was merged into `main.css` in
+2026-09 (see the top of `input.css` for why).
 
-### Site (Eleventy)
+### Site (Eleventy) on its own
 
 ```bash
 ./eleventy-linux-x64            # Linux
@@ -365,10 +379,17 @@ Same for a sidecar with no local text file and no `licenseUrl`.
 | `input_release/*` | prefix filename with `_` | skipped by the releases collection |
 
 Draft source files **stay tracked in git** so you can keep working on them —
-set `draft: false` (or remove the line) to publish.
+set `draft: false` (or remove the line) to publish. `draft:` must be `true` or
+`false`; anything else (`yes`, `"true"`) stops the build naming the file.
 
-One gotcha: `npm start` (the dev server) writes generated pages to disk. Never
-deploy a tree left over from a serve session without a clean rebuild first.
+Two gotchas:
+- Drafting a post that is already live does not remove its page: the build
+  never deletes. The health check lists it as "orphaned build output".
+- A draft is not private: GitHub Pages serves the whole repo, source files
+  included. `robots.txt` only keeps search engines out.
+
+`npm start` (the dev server) writes generated pages to disk. Finish with
+`./build.sh` before committing.
 
 ---
 
@@ -377,29 +398,28 @@ deploy a tree left over from a serve session without a clean rebuild first.
 - `theme.css` holds the `@theme` design tokens — fonts, text sizes, letter
   spacing, colors, the animated page backdrop gradient. **Global look changes
   go here.**
-- `input.css` — site-wide styles, imports Tailwind + `theme.css`.
-- `input_prose.css` — article styling, adds the `@tailwindcss/typography`
-  plugin.
-- Never edit `main.css` / `prose.css` (or their `_max` twins) — they are
-  generated and overwritten on every build.
-- `css_bkup/` is stale backups and is gitignored. Ignore it.
+- `input.css` — THE stylesheet source: Tailwind, `theme.css`, the
+  `@tailwindcss/typography` plugin, and (as its last line) `input_prose.css`.
+- `input_prose.css` — article styling (`.prose`, the image grid, the outline,
+  the reading-width button). A partial: not built on its own.
+- Never edit `main.css` (or `main_max.css`) — it is generated and overwritten
+  on every build.
+- `css_bkup/` is stale backups from 2026-08 (tracked in git, and publicly
+  served like everything else). Ignore it.
 
-### The `notebook_templates/` trick (important)
+### Which files Tailwind scans
 
-The Tailwind content globs in `dev.sh`/`dev.bat` are:
+The `@source` lines at the top of `input.css` - the only list (the old
+`--content` flag in `dev.sh`/`dev.bat` was removed in Tailwind v4). They cover
+the root `*.html`, `input_custom_html_pages/`, `input_custom_post/`,
+`notebook_templates/`, `eleventy_njk/*.njk`, `eleventy_settings/*.njk` and
+`input_legal/*.md`, so a class used in a template is compiled without any
+mirroring. (`notebook_templates/` used to exist to mirror `.njk` classes, back
+when the scan did not reach them.)
 
-```
-./*.html, ./input_custom_html_pages/**/*.{html,md}, ./notebook_templates/**/*.{html,md}
-```
-
-They **do not include `eleventy_njk/*.njk`**. So a class that exists only
-inside a `.njk` template would get purged from the build. `notebook_templates/`
-exists to solve this: it holds plain-HTML mirrors of the generated markup
-(e.g. `njk_template.html` mirrors `blog.njk`) purely so Tailwind's scanner
-sees those classes.
-
-**If you add new Tailwind classes to a `.njk` template, mirror them into
-`notebook_templates/` or they will vanish from the CSS.**
+A page outside that list that loads `main.css` - `rvry_ascii/rvry_ascii.html`,
+the `h/` pages - only gets classes some scanned file also uses. Add its folder
+to the `@source` list before relying on a new class there.
 
 ---
 
@@ -509,14 +529,27 @@ show `301` and `location: https://haraldrevery.com/about`, and the stubs above
 keep working (`/notebook_pages/1dgraph.html` → `/notebook_pages/1dgraph` → stub).
 
 There is **no CI build**, so generated output must be committed:
-`main.css`, `main_max.css`, `prose.css`, `prose_max.css`, `notebook.html`,
-`notebook_pages/`, `discography.html`, `release/`, `sitemap.xml`.
+`main.css`, `main_max.css`, `notebook.html`, `notebook_pages/`,
+`discography.html`, `release/`, `sitemap.xml`, `feed.xml`, `search-index.json`,
+`licence/`.
 
 Before deploying, always:
 
-1. Run the Tailwind build (`dev.sh` / `dev.bat`) so CSS is current.
-2. Run the Eleventy build (`./eleventy-linux-x64` or the `.exe`).
-3. Commit the generated output along with your sources.
+1. Run `./build.sh` (Windows: `build.bat`) - CSS, pages and health check, in
+   that order.
+2. Commit the generated output along with your sources.
+
+`githooks/pre-commit` does step 1 on every commit and refuses the commit when the
+build changed files or the health check found an error. Enable it once per clone
+with `git config core.hooksPath githooks`.
+
+**Moving to another host.** Links use clean URLs (`/music`), served from
+`music.html`. GitHub Pages does that even though `music/` and `download/` are
+real folders next to `music.html` and `download.html` (measured 2026-09-28); a
+plain web server shows a directory listing instead. Check `/music` and
+`/download` first on any new host; nginx needs `try_files $uri $uri.html $uri/
+=404;`. Cloudflare (`wrangler.jsonc`) refuses single files over 25 MiB, and the
+FLAC files are bigger.
 
 Terminal git/GitHub workflow: `update_to_git_guide.md` in the site root.
 
@@ -541,11 +574,15 @@ These are self-contained and excluded from the Eleventy build.
 ## Troubleshooting
 
 **Pages don't update / look stale**
-Delete everything inside `notebook_pages/` and rebuild.
+Run `./build.sh` and read the health check: a page left behind by a drafted,
+renamed or deleted post is listed under "orphaned build output". Deleting
+everything inside `notebook_pages/` and rebuilding also works.
 
-**A class works in dev but disappears after a rebuild**
-You added it to a `.njk` file. Mirror it into `notebook_templates/` — see the
-[CSS section](#the-notebook_templates-trick-important).
+**A style change is not visible on the live site**
+CSS is cached for 186 days. Pages built by Eleventy link `/main.css?v=<hash>`,
+so a rebuild fixes it; a hand-written page (`h/1dgraph.html`,
+`h/2dphaseportrait.html`) needs its `?v=` updated by hand - the health check
+prints the current value under "stale ?v=".
 
 **`Permission denied` running `./eleventy-linux-x64` or `./dev.sh`**
 Zip backups don't preserve the executable bit:
@@ -563,9 +600,9 @@ Filename starts with `_` (that's the draft mechanism), or the JSON is invalid �
 the build will report the parse error.
 
 **Binary output differs from `npx @11ty/eleventy`**
-If it's only the `<lastmod>` dates in `sitemap.xml`, that's expected. Otherwise
-the config bundled into the binary is stale — recompile with
-`eleventy_binary/compile.sh`.
+It should not: the binaries are byte-identical to the Node build. If they
+differ, the config bundled into the binary is stale (the binary prints a
+warning saying so) — recompile with `eleventy_binary/compile.sh`.
 
 **Images broken**
 Use absolute paths (`/photos/x.jpg`, not `photos/x.jpg`) and match case exactly.
@@ -597,8 +634,8 @@ For reference, the ways the `*_sonnet_generated*.md` files are now wrong:
    `release.njk`, `discography.njk`, JSON-LD filters).
 9. **`sitemap.xml` is generated now**, and there's a draft system, a build-time
    article outline, and KaTeX math — none of which existed in February.
-10. **Four CSS outputs**, not two (`main_max.css` / `prose_max.css` for
-    debugging).
+10. **One CSS output** (`main.css`, plus `main_max.css` for debugging). There
+    were four until 2026-09, when `prose.css` was merged into `main.css`.
 11. **`legal.html` is generated**, not hand-written — it comes from
     `input_legal/legal.md`, and `licence/` is generated too. Both used to be
     edited by hand.

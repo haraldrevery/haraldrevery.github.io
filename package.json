@@ -4,8 +4,8 @@
   "description": "Harald Revery's blog built with Eleventy",
   "scripts": {
     "minify:search": "bun build javascript/search.js --minify --outfile javascript/search_min.js",
-    "start": "npm run minify:search && eleventy --serve",
-    "build": "npm run minify:search && eleventy"
+    "start": "eleventy --serve",
+    "build": "eleventy"
   },
   "devDependencies": {
     "@11ty/eleventy": "^3.1.2",

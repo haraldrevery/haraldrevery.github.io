@@ -10,9 +10,14 @@
 # Double-click healthcheck.bat, or run it from cmd/PowerShell in the site root.
 #
 # Checks:
-#   A. broken references  - src/href/poster/srcset in HTML, url() in CSS
+#   A. broken references  - src/href/poster/srcset in HTML, url() in CSS, and
+#                           every URL in sitemap.xml, feed.xml and
+#                           search-index.json. Resolved the way GitHub Pages
+#                           serves them, including https://haraldrevery.com/...
 #   B. case-only mismatch - works on Windows, 404s on GitHub Pages
 #   C. size budgets       - oversized images/svg, and per-page image weight
+#   D. build output       - orphaned pages, sources that published nothing, and
+#                           ?v= versions that no longer match the file
 #
 # Note on C: per-page image weight is an UPPER BOUND, not real transfer size.
 # Every srcset candidate is summed on top of the <img src>, and an image used
@@ -59,21 +64,25 @@ $PAGE_IMG_MAX_KB = Get-Threshold 'PAGE_IMG_MAX_KB' 8000
 $ROOT_PAGES = @(
     'index','about','contact','music','notebook','discography','download','legal','404','h'
 )
-$PAGE_DIRS = @('notebook_pages','release','h','clock')
-$CSS_FILES = @('main.css','prose.css')
+$PAGE_DIRS = @('notebook_pages','release','h','clock','rvry_ascii','revery_notebook')
+$CSS_FILES = @('main.css')
+# Generated indexes: every URL in them must resolve like a link would.
+$INDEX_FILES = @('sitemap.xml','feed.xml','search-index.json')
+$SITE_ORIGIN = 'https://haraldrevery.com'
 
 # Directories skipped when hunting for oversized assets. Only things that are
 # genuinely not served: tooling, backups and scaffolds. Generator output dirs
 # like svg/python_generated_svg ARE deployed (the asset root is "./"), so they
-# stay in scope - an unused 576 kB svg still ships to visitors. Top level only,
-# matching the "-path ./x -prune" form in healthcheck.sh.
-$SKIP_DIRS = @('node_modules','.git','page_builder','test_pages','notebook_templates',
-               'css_bkup','eleventy_binary')
+# stay in scope - an unused 576 kB svg still ships to visitors. Paths from the
+# site root, matching the "-path ./x -prune" list in healthcheck.sh.
+$SKIP_DIRS = @('node_modules','.git','page_builder_app_v2/node_modules',
+               'page_builder_app_v2/src-tauri/target','revery_notebook/build_tools/node_modules',
+               'test_pages','notebook_templates','css_bkup','eleventy_binary')
 
 # Directories the "is this asset used anywhere?" fallback ignores. Deliberately
 # a shorter list than $SKIP_DIRS, and matched at any depth - it mirrors the
 # --exclude-dir flags on the grep in healthcheck.sh. See Test-Referenced.
-$GREP_SKIP_DIRS = @('node_modules','.git','page_builder')
+$GREP_SKIP_DIRS = @('node_modules','.git','target')
 $GREP_EXTS      = @('.html','.js','.css','.njk','.json','.jsonc','.md')
 
 # --- output helpers --------------------------------------------------------
@@ -246,6 +255,10 @@ Write-Host ''
 $reAttr   = [regex]'(?:src|href|poster)=(?:"([^"]*)"|''([^'']*)'')'
 $reSrcset = [regex]'srcset=(?:"([^"]*)"|''([^'']*)'')'
 $reUrl    = [regex]'url\([''"]?([^)''"]+)[''"]?\)'
+$reStyleUrl = [regex]'url\((?:[''"]|&#x27;|&#39;|&quot;|&#34;)?([^)''"&]+?)(?:[''"]|&#x27;|&#39;|&quot;|&#34;)?\)'
+$reMeta     = [regex]'<meta[^>]*(?:og:image|twitter:image|og:url)"[^>]*content="([^"]*)"'
+$reXmlUrl   = [regex]'<loc>([^<]*)</loc>|<link>([^<]*)</link>|<guid[^>]*>([^<]*)</guid>|<enclosure[^>]*url="([^"]*)"'
+$reJsonUrl  = [regex]'"url":"([^"]*)"'
 
 $refs = New-Object System.Collections.Generic.List[object]
 function Add-Ref([string]$file, [int]$line, [string]$url) {
@@ -278,11 +291,38 @@ foreach ($f in $pages) {
             }
         }
     }
+    # Share images and the page's own address: <meta property="og:image">,
+    # <meta name="twitter:image">, <meta property="og:url">. Absolute URLs, made
+    # local by the origin pass below. A quote must follow the property name, so
+    # og:image:width/height/alt are not taken for file references.
+    for ($i = 0; $i -lt $lines.Length; $i++) {
+        foreach ($m in $reMeta.Matches($lines[$i])) { Add-Ref $f ($i + 1) $m.Groups[1].Value }
+    }
     # url(...) inside inline style attributes, e.g.
     #   style="background-image: url('/photos/audioplayer_texture1.jpg')"
     # music.html alone has four of these; without this pass they are invisible.
+    # The quote may be an HTML entity (the page builder emits url(&#x27;...&#x27;)).
     for ($i = 0; $i -lt $lines.Length; $i++) {
-        foreach ($m in $reUrl.Matches($lines[$i])) { Add-Ref $f ($i + 1) (Get-Capture $m) }
+        foreach ($m in $reStyleUrl.Matches($lines[$i])) { Add-Ref $f ($i + 1) $m.Groups[1].Value }
+    }
+}
+
+# The generated indexes. A URL in the sitemap, the feed or the search index is
+# a promise that the page exists, and each is built from a hand-kept list or
+# from front matter - a typo there published a dead URL with no other check
+# noticing.
+foreach ($x in $INDEX_FILES) {
+    if (-not [System.IO.File]::Exists("./$x")) { continue }
+    $re = $reXmlUrl
+    if ($x.EndsWith('.json')) { $re = $reJsonUrl }
+    $lineNo = 0
+    foreach ($text in [System.IO.File]::ReadLines("./$x")) {
+        $lineNo++
+        foreach ($m in $re.Matches($text)) {
+            foreach ($g in 1..4) {
+                if ($m.Groups.Count -gt $g -and $m.Groups[$g].Success) { Add-Ref $x $lineNo $m.Groups[$g].Value; break }
+            }
+        }
     }
 }
 
@@ -294,6 +334,13 @@ foreach ($c in $CSS_FILES) {
         $lineNo++
         foreach ($m in $reUrl.Matches($text)) { Add-Ref $c $lineNo (Get-Capture $m) }
     }
+}
+
+# The site's own absolute URLs are local paths - a canonical, og:url, sitemap
+# or search-index typo used to pass as "external".
+foreach ($r in $refs) {
+    if ($r.Url -eq $SITE_ORIGIN) { $r.Url = '/' }
+    elseif ($r.Url.StartsWith($SITE_ORIGIN + '/', [StringComparison]::Ordinal)) { $r.Url = $r.Url.Substring($SITE_ORIGIN.Length) }
 }
 
 $reExternal = [regex]'^(https?:|//|data:|mailto:|tel:|javascript:|#)'
@@ -311,6 +358,30 @@ function Resolve-RefPath([string]$file, [string]$clean) {
     return (ConvertTo-Rel $dir) + '/' + $clean
 }
 
+# Resolve-Served <path> - what GitHub Pages answers for it (measured live
+# 2026-09-28 against /music, /music/, /download/, /release/, /clock):
+#   ends in /  ->  <path>index.html, or nothing. A folder is not a page.
+#   otherwise  ->  the file itself; else <path>.html - even when a folder of the
+#                  same name exists, which is the only reason /music works next
+#                  to music/ (keep music.html, or every /music link 404s);
+#                  else <path>/index.html (Pages redirects /x to /x/).
+# Returns a Test-Ref result: 'exact' when served, 'case' when it only would be
+# with different casing, else 'missing'. This used to accept ANY existing
+# directory: /download/ and /release/ (both 404 live) passed.
+function Resolve-Served([string]$path) {
+    if ($path.EndsWith('/')) { $cands = @($path + 'index.html') }
+    else { $cands = @($path, ($path + '.html'), ($path + '/index.html')) }
+    $caseHit = $null
+    foreach ($c in $cands) {
+        $t = Test-Ref $c
+        if (-not $t.IsFile) { continue }
+        if ($t.Status -eq 'exact') { return $t }
+        if ($t.Status -eq 'case' -and $null -eq $caseHit) { $caseHit = $t }
+    }
+    if ($null -ne $caseHit) { return $caseHit }
+    return [pscustomobject]@{ Status = 'missing'; Path = $null; IsFile = $false }
+}
+
 foreach ($r in $refs) {
     $url = $r.Url
     if (-not $url) { continue }
@@ -319,18 +390,16 @@ foreach ($r in $refs) {
 
     $clean = $url.Split('#')[0].Split('?')[0]        # drop #fragment and ?query
     if (-not $clean) { continue }
+    # Percent-decode before comparing against the disk. markdown-it encodes every
+    # non-ASCII character in a link, so a real file named "sn<o-slash>hetta.jpg" arrives
+    # as "sn%C3%B8hetta.jpg" - this script reported it missing (3 false errors
+    # on the image grid stress test) until 2026-09. The encoded URL is correct
+    # and stays in the HTML; only this lookup decodes it.
+    if ($clean.Contains('%')) { $clean = [System.Uri]::UnescapeDataString($clean) }
 
     $path = Resolve-RefPath $r.File $clean
-    $res = Test-Ref $path
+    $res = Resolve-Served $path
     if ($res.Status -eq 'exact') { continue }
-    # GitHub Pages serves /foo from foo.html, so a clean link (/about,
-    # /h/1dgraph - canonicals and redirect stubs use them) is a hit when
-    # <path>.html exists. Same rule as the shell twin.
-    if ($res.Status -eq 'missing') {
-        $asHtml = Test-Ref ($path + '.html')
-        if ($asHtml.Status -eq 'exact' -and $asHtml.IsFile) { continue }
-        if ($asHtml.Status -eq 'case') { $res = $asHtml }
-    }
 
     # One line per finding - Write-Section counts findings by list length, and
     # the shell twin counts them with wc -l, so a two-line entry here would
@@ -413,7 +482,7 @@ $stack.Push('.')
 while ($stack.Count -gt 0) {
     $d = $stack.Pop()
     foreach ($sub in [System.IO.Directory]::EnumerateDirectories($d)) {
-        if ($d -eq '.' -and ($SKIP_DIRS -contains [System.IO.Path]::GetFileName($sub))) { continue }
+        if ($SKIP_DIRS -contains (ConvertTo-Rel $sub)) { continue }
         $stack.Push($sub)
     }
     foreach ($file in [System.IO.Directory]::EnumerateFiles($d)) { $assets.Add($file) }
@@ -484,26 +553,180 @@ foreach ($f in $pages) {
 }
 
 # ---------------------------------------------------------------------------
+# Orphaned build output. Ported from healthcheck.sh in 2026-09: until then this
+# script had no such section, so on Windows a drafted, renamed or deleted post
+# stayed live with nothing saying so.
+#
+# Eleventy's output dir IS the repo root, so the build only ever writes - it
+# never deletes. Set `draft: true` on a published post and the already-generated
+# notebook_pages/<slug>.html stays on disk, live and reachable. Same for a tag
+# page whose last post went draft, a renamed/deleted source, release/ pages and
+# licence/ texts. Report-only: it names the files, you delete them.
+# ---------------------------------------------------------------------------
+$orphan      = New-Object System.Collections.Generic.List[string]
+$unpublished = New-Object System.Collections.Generic.List[string]
+
+# Mirrors the "slugify" filter in eleventy.config.js, which is ASCII-only (\w):
+# "<A-ring>ngstr<o-umlaut>m" -> "ngstrm" there and here. -creplace: -replace ignores case.
+function ConvertTo-Slug([string]$s) {
+    $s = $s.ToLowerInvariant() -creplace '[^a-z0-9_ -]', ''
+    return ($s -creplace '\s+', '-') -creplace '-+', '-'
+}
+
+# Front matter lines of a source file (the block between the first two ---).
+function Get-FrontMatter([string]$file) {
+    $out = New-Object System.Collections.Generic.List[string]
+    $lines = [System.IO.File]::ReadAllLines($file)
+    if ($lines.Length -eq 0 -or -not $lines[0].TrimStart([char]0xFEFF).StartsWith('---')) { return ,$out.ToArray() }
+    for ($i = 1; $i -lt $lines.Length; $i++) {
+        if ($lines[$i].StartsWith('---')) { break }
+        $out.Add($lines[$i])
+    }
+    return ,$out.ToArray()
+}
+function Test-Draft([string[]]$fm) {
+    foreach ($l in $fm) { if ($l -match '^draft:\s*true\s*$') { return $true } }
+    return $false
+}
+# All three YAML shapes: tags: [a, b] / tags: a / "tags:" then "- a" lines.
+function Get-Tags([string[]]$fm) {
+    $tags = New-Object System.Collections.Generic.List[string]
+    $list = $false
+    foreach ($l in $fm) {
+        if ($l -match '^tags:\s*\[(.*)\]\s*$') { foreach ($t in $Matches[1].Split(',')) { $tags.Add($t.Trim()) }; $list = $false; continue }
+        if ($l -match '^tags:\s*$') { $list = $true; continue }
+        if ($list -and $l -match '^\s*-\s*(.*)$') { $tags.Add($Matches[1].Trim()); continue }
+        $list = $false
+        if ($l -match '^tags:\s*(\S.*)$') { $tags.Add($Matches[1].Trim()) }
+    }
+    return ,$tags.ToArray()
+}
+function Get-Files([string]$dir, [string[]]$exts) {
+    if (-not [System.IO.Directory]::Exists("./$dir")) { return @() }
+    return @([System.IO.Directory]::EnumerateFiles("./$dir") |
+        Where-Object { $exts -contains [System.IO.Path]::GetExtension($_).ToLowerInvariant() } |
+        ForEach-Object { ConvertTo-Rel $_ } | Sort-Object -CaseSensitive)
+}
+
+$liveSlugs = New-Object 'System.Collections.Generic.HashSet[string]'
+$liveTags  = New-Object 'System.Collections.Generic.HashSet[string]'
+$sources = @(Get-Files 'input_markdown' @('.md')) + @(Get-Files 'input_custom_html_pages' @('.html')) +
+           @(Get-Files 'input_custom_post' @('.html'))
+foreach ($src in $sources) {
+    $fm = Get-FrontMatter $src
+    if (Test-Draft $fm) { continue }
+    $slug = [System.IO.Path]::GetFileNameWithoutExtension($src)
+    [void]$liveSlugs.Add($slug)
+    foreach ($t in (Get-Tags $fm)) { if ($t) { [void]$liveTags.Add((ConvertTo-Slug $t)) } }
+    # The reverse check: a LIVE source that published no page at all. Likely
+    # cause: a binary compiled before its input folder existed.
+    if (-not [System.IO.File]::Exists("./notebook_pages/$slug.html")) {
+        $unpublished.Add(("{0}   published no page - rebuild, and if that does not fix it, recompile the binary" -f $src))
+    }
+}
+
+foreach ($f in (Get-Files 'notebook_pages' @('.html'))) {
+    # Moved-page stubs from eleventy_njk/redirects.njk have no source by design.
+    if ([System.IO.File]::ReadAllText($f) -match '(?i)http-equiv="refresh"') { continue }
+    $b = [System.IO.Path]::GetFileNameWithoutExtension($f)
+    if ($b.StartsWith('notebook-page-')) { continue }   # index pagination
+    if ($b.StartsWith('tag-')) {
+        $t = $b.Substring(4) -creplace '-page-[0-9].*$', ''
+        if (-not $liveTags.Contains($t)) { $orphan.Add(("{0}   no live post carries tag ""{1}""" -f $f, $t)) }
+    } elseif (-not $liveSlugs.Contains($b)) {
+        $orphan.Add(("{0}   source is draft, renamed or deleted" -f $f))
+    }
+}
+
+# release/<slug>.html <- input_release/*.json ("_" prefix = draft, as in the config)
+$liveReleases = New-Object 'System.Collections.Generic.HashSet[string]'
+foreach ($j in (Get-Files 'input_release' @('.json','.jsonc'))) {
+    if ([System.IO.Path]::GetFileName($j).StartsWith('_')) { continue }
+    $text = [System.IO.File]::ReadAllText($j)
+    $s = ''
+    $m = [regex]::Match($text, '"slug"\s*:\s*"([^"]*)"')
+    if ($m.Success) { $s = $m.Groups[1].Value }
+    else {
+        $m = [regex]::Match($text, '"name"\s*:\s*"([^"]*)"')
+        if ($m.Success) { $s = ConvertTo-Slug $m.Groups[1].Value }
+    }
+    if ($s) { [void]$liveReleases.Add($s) }
+}
+foreach ($f in (Get-Files 'release' @('.html'))) {
+    if (-not $liveReleases.Contains([System.IO.Path]::GetFileNameWithoutExtension($f))) {
+        $orphan.Add(("{0}   no input_release/ json produces this slug" -f $f))
+    }
+}
+
+# licence/<slug>.txt <- input_legal/licenses/<slug>. A licence/ file without
+# .txt is from before 2026-09, when the texts were published extensionless and
+# so were downloaded instead of shown.
+if ([System.IO.Directory]::Exists('./licence')) {
+    foreach ($f in @([System.IO.Directory]::EnumerateFiles('./licence') | ForEach-Object { ConvertTo-Rel $_ } | Sort-Object -CaseSensitive)) {
+        $b = [System.IO.Path]::GetFileName($f)
+        if ($b.EndsWith('.txt')) {
+            if (-not [System.IO.File]::Exists("./input_legal/licenses/" + $b.Substring(0, $b.Length - 4))) {
+                $orphan.Add(("{0}   no matching input_legal/licenses/ text" -f $f))
+            }
+        } else {
+            $orphan.Add(("{0}   no longer published (the build writes licence/<name>.txt)" -f $f))
+        }
+    }
+}
+
+# ---------------------------------------------------------------------------
+# ?v= versions. Pages link /main.css?v=<first 10 hex of its SHA-256> (see
+# _data/assets.js) so a changed stylesheet is a new URL: CSS is cached for 186
+# days. A version that no longer matches the file means that page still points
+# visitors at the OLD cached stylesheet. Eleventy pages: rebuild (build.bat
+# builds the CSS first, then the pages). Hand-written pages (h/1dgraph.html,
+# h/2dphaseportrait.html): paste the version shown here into the link. Only
+# content hashes are judged: clock/ and the wallpaper pages bump a date by hand.
+# ---------------------------------------------------------------------------
+$staleVer = New-Object System.Collections.Generic.List[string]
+$vhash = @{}
+$sha = [System.Security.Cryptography.SHA256]::Create()
+foreach ($r in $refs) {
+    $u = $r.Url
+    if (-not $u -or -not $u.Contains('?v=') -or $reExternal.IsMatch($u)) { continue }
+    $want = ($u.Substring($u.IndexOf('?v=') + 3) -split '[&#]')[0]
+    if ($want -cnotmatch '^[0-9a-f]{10}$') { continue }
+    $res = Test-Ref (Resolve-RefPath $r.File $u.Split('?')[0])
+    if ($res.Status -ne 'exact' -or -not $res.IsFile) { continue }   # missing: already an error
+    if (-not $vhash.ContainsKey($res.Path)) {
+        $bytes = [System.IO.File]::ReadAllBytes('./' + $res.Path)
+        $vhash[$res.Path] = (-join ($sha.ComputeHash($bytes) | ForEach-Object { $_.ToString('x2') })).Substring(0, 10)
+    }
+    if ($vhash[$res.Path] -cne $want) {
+        $staleVer.Add(("{0}:{1}  {2}  ->  current is ?v={3}" -f $r.File, $r.Line, $u, $vhash[$res.Path]))
+    }
+}
+
+# ---------------------------------------------------------------------------
 # Report.
 # ---------------------------------------------------------------------------
 Out-Line 'References' 'White'
 Write-Section $missing              'broken references (missing file)'            'error'
 Write-Section @($caseBad)           'case-only mismatch (breaks on GitHub Pages)' 'error'
 
+Write-Section @($orphan)            'orphaned build output (still live, no live source)' 'error'
+Write-Section @($unpublished)       'live source that published no page (stale binary?)' 'error'
+Write-Section @($staleVer)          'stale ?v= (page points at an old cached stylesheet)' 'warn'
+
 Write-Host ''
 Out-Line 'Size budgets' 'White'
 Write-Section (Sort-Rows $bigUsed)   ("images over {0} kB, used on a live page" -f $IMG_MAX_KB)          'warn'
 Write-Section (Sort-Rows $bigSvg)    ("svg over {0} kB" -f $SVG_MAX_KB)                                  'warn'
 Write-Section (Sort-Rows $heavy)     ("pages referencing over {0} kB of images" -f $PAGE_IMG_MAX_KB)      'warn'
-Write-Section (Sort-Rows $bigOrphan) ("images over {0} kB, referenced by nothing (repo bloat only)" -f $IMG_MAX_KB) 'warn'
+Write-Section (Sort-Rows $bigOrphan) ("images over {0} kB, referenced by nothing (still publicly served)" -f $IMG_MAX_KB) 'warn'
 
 Write-Host ''
 Out-Line '---' 'DarkGray'
 if ($script:errors -gt 0 -or $script:warnings -gt 0) {
     Write-Host ("{0} error(s), {1} warning(s)" -f $script:errors, $script:warnings)
     Out-Line 'notebook_pages/ and release/ are build output - fix findings there in' 'DarkGray'
-    Out-Line 'input_custom_html_pages/, input_markdown/, eleventy_njk/ or eleventy_settings/,' 'DarkGray'
-    Out-Line 'then rebuild with eleventy-win-x64.exe' 'DarkGray'
+    Out-Line 'input_custom_html_pages/, input_markdown/, input_custom_post/, eleventy_njk/' 'DarkGray'
+    Out-Line 'or eleventy_settings/, then rebuild with build.bat' 'DarkGray'
 } else {
     Out-Line 'All checks passed.' 'Green'
 }

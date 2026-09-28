@@ -24,7 +24,8 @@ WRITING A POST, START TO FINISH
 
 The FILE NAME is the URL: my-post.html publishes to /notebook_pages/my-post.html.
 Fill in the front matter, write the body, set draft: false, then build with
-./eleventy-linux-x64 and check with ./healthcheck.sh.
+./build.sh (Windows: build.bat) - it builds the CSS and the pages and runs the
+health check.
 
 THE FOUR WORKING FILES
 
@@ -147,8 +148,8 @@ builder-generated one are the same HTML. They are the reference for "what does
 this block actually look like", and they are a regression fixture: build them,
 open them in both colour schemes, and anything broken shows up on one page.
 
-They also act as a TAILWIND SAFELIST. This folder is in input.css's and
-input_prose.css's @source lists, so every class the blocks use is compiled and
+They also act as a TAILWIND SAFELIST. This folder is in input.css's @source
+list, so every class the blocks use is compiled and
 stays compiled - even while the pages are drafts, because Tailwind scans the
 SOURCE files, not the output. That is not incidental: it is what keeps a
 builder-exported block from shipping a class that was never compiled.
@@ -209,15 +210,11 @@ image grid outside a .prose wrapper is completely unstyled.
 --------------------------------------------------------------------------------
 Write the file, then build the site the usual way:
 
-    ./eleventy-linux-x64            (or eleventy-win-x64.exe)
+    ./build.sh                      (Windows: build.bat)
 
-Then check nothing broke:
-
-    ./healthcheck.sh
-
-If you used a CSS class that no other page uses, rebuild the stylesheet too
-(./dev.sh or dev.bat) — Tailwind only keeps classes it can find, and the
-@source line for this folder is in input.css.
+It rebuilds the stylesheet first (Tailwind only keeps classes it can find, and
+the @source line for this folder is in input.css), then the pages, then runs
+the health check. Nothing else to run.
 
 --------------------------------------------------------------------------------
   RENAMING THIS FOLDER
@@ -226,12 +223,10 @@ Five places, in this order:
 
   1. CUSTOM_POST_DIR in eleventy.config.js
   2. recompile BOTH binaries — eleventy_binary/compile.sh (see the note above)
-  3. the @source line in input.css AND the one in input_prose.css - BOTH, see
-     the note beside them. Miss input.css and classes used only here are
-     purged; miss input_prose.css and prose.css (linked SECOND) overrides
-     main.css's responsive variants with its own plain ones, so a class like
-     md:table-cell silently never applies
-  4. the live_slugs loop AND the source-published-nothing loop in healthcheck.sh
+  3. the @source line in input.css (the only list since prose.css was merged
+     into main.css in 2026-09). Miss it and classes used only here are purged
+  4. the live_slugs loop AND the source-published-nothing loop in healthcheck.sh,
+     and the $sources list in healthcheck.ps1
   5. this file
 
 Also check the new name is not a substring of another input folder's name, and

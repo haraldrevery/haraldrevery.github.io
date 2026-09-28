@@ -9,7 +9,7 @@ const matter = require("gray-matter");
 
 // The four content input folders. Every path below goes through these, so
 // renaming an input folder is a one-line change here (plus the Tailwind @source
-// lists in input.css AND input_prose.css, the two loops in healthcheck.sh, and
+// list in input.css, the source loops in healthcheck.sh AND healthcheck.ps1, and
 // a recompile of the standalone Eleventy binaries, which bundle this file — see
 // eleventy_binary/README.md).
 //
@@ -354,6 +354,54 @@ const isoStamp = (d) => {
   return Number.isNaN(dt.getTime()) ? null : dt.toISOString();
 };
 
+// `draft:` is true or false, nothing else. It used to mean three things: the
+// markdown permalink treated any truthy value as a draft, everything else only
+// `true`, so `draft: yes` (a STRING in YAML 1.2) or `draft: "true"` rendered no
+// page yet still put a card on the Notebook pointing at it. An unambiguous
+// error beats guessing which of the two the author meant. Missing or empty
+// means published. input_markdown/input_markdown.11tydata.js applies the same
+// rule to markdown posts; healthcheck.sh greps for exactly `draft: true`.
+const isDraft = (data, where) => {
+  const d = data.draft;
+  if (d === undefined || d === null || d === false) return false;
+  if (d === true) return true;
+  throw new Error(
+    `${where}: \`draft:\` must be true or false, not ${JSON.stringify(d)}. ` +
+    `Write \`draft: true\` to keep the page unpublished, or delete the line to publish it.`
+  );
+};
+
+// One input_custom_html_pages/ file, parsed once for both of its readers: the
+// eleventy.before hook that copies it to notebook_pages/, and htmlPagePosts,
+// which puts it on the Notebook. They used to parse it separately and could
+// disagree.
+//
+// `permalink:` is REFUSED here. These files are copied verbatim to
+// notebook_pages/<file name>; a permalink could only change the URL every card,
+// tag page, sitemap entry, feed item and search result points at, never where
+// the page is written, so all of those links 404'd (verified 2026-09-28).
+// Honouring it instead would let a copied file land anywhere in the repo root -
+// index.html included - with no duplicate-output check, because this copy is
+// invisible to Eleventy's. Renaming the file is the supported way to move one.
+const readHtmlPage = (dir, file) => {
+  const filePath = path.join(dir, file);
+  let parsed;
+  try {
+    parsed = matter(fs.readFileSync(filePath, "utf8"));
+  } catch (e) {
+    throw new Error(`${filePath}: could not parse its front matter — ${e.message}`);
+  }
+  if (Object.prototype.hasOwnProperty.call(parsed.data, "permalink")) {
+    throw new Error(
+      `${filePath}: \`permalink:\` is not supported in ${dir}/. The file is ` +
+      `copied as-is to notebook_pages/${file}, so a permalink would only break ` +
+      `every link to it. Delete the line; to move the page, rename the file and ` +
+      `add its old address to eleventy_njk/redirects.njk.`
+    );
+  }
+  return { filePath, parsed, draft: isDraft(parsed.data, filePath) };
+};
+
 module.exports = function(eleventyConfig) {
 
   // 0. input_custom_post/ — hand-written block posts, as VIRTUAL TEMPLATES.
@@ -432,7 +480,7 @@ module.exports = function(eleventyConfig) {
         // would just be missing. Name the file and stop.
         throw new Error(`${inputPath}: could not parse its front matter — ${e.message}`);
       }
-      if (parsed.data.draft === true) continue;
+      if (isDraft(parsed.data, inputPath)) continue;
       if (OWN_ENDING.test(parsed.content.replace(/<!--[\s\S]*?-->/g, ""))) {
         throw new Error(
           `${inputPath} carries its own "← NOTEBOOK FRONT PAGE" ending, and ` +
@@ -502,9 +550,8 @@ module.exports = function(eleventyConfig) {
     return fs.readdirSync(HTML_PAGES_DIR)
       .filter(file => file.endsWith('.html'))
       .map(file => {
-        const filePath = path.join(HTML_PAGES_DIR, file);
-        const parsed = matter(fs.readFileSync(filePath, 'utf8'));
-        if (parsed.data.draft === true) return null;   // Skip files with draft: true
+        const { filePath, parsed, draft } = readHtmlPage(HTML_PAGES_DIR, file);
+        if (draft) return null;
 
         const postDate = parsed.data.date
           ? new Date(parsed.data.date)
@@ -519,7 +566,9 @@ module.exports = function(eleventyConfig) {
         const tags = Array.isArray(rawTags) ? rawTags : (rawTags ? [rawTags] : []);
 
         return {
-          url: parsed.data.permalink || `/notebook_pages/${file}`,
+          // Always the file name: readHtmlPage refuses a permalink, because the
+          // eleventy.before hook writes the page here and nowhere else.
+          url: `/notebook_pages/${file}`,
           inputPath: filePath,
           data: {
             title: parsed.data.title || "Untitled",
@@ -656,7 +705,20 @@ module.exports = function(eleventyConfig) {
     return fs.readdirSync(dir)
       .filter(f => (f.endsWith(".json") || f.endsWith(".jsonc")) && !f.startsWith("_"))
       .map(f => {
-        const d = parseJsonc(fs.readFileSync(path.join(dir, f), "utf8"));
+        const file = path.join(dir, f);
+        let d;
+        try {
+          d = parseJsonc(fs.readFileSync(file, "utf8"));
+        } catch (e) {
+          // JSON.parse on its own names neither the file nor that it was a
+          // release, only a character position.
+          throw new Error(`${file}: not valid JSON — ${e.message}`);
+        }
+        if (!d.slug && !d.name) {
+          // slugify(undefined) is "undefined": the page would have been
+          // published at /release/undefined.
+          throw new Error(`${file}: has neither "name" nor "slug", so it has no address to publish at.`);
+        }
         d.slug = d.slug || slugify(d.name);
         d.url = `/release/${d.slug}.html`;
         // Release JSON carries unpadded calendar dates ("2019-5-14", "2015-01-1").
@@ -702,16 +764,6 @@ module.exports = function(eleventyConfig) {
   // and already-clean URLs untouched.
   eleventyConfig.addFilter("cleanUrl", (url) => {
     return typeof url === "string" ? url.replace(/\.html$/, "") : url;
-  });
-
-  // Return a file's last-modified time (for honest <lastmod> on static pages).
-  // Falls back to "now" if the file can't be stat'd.
-  eleventyConfig.addFilter("fileModDate", (filePath) => {
-    try {
-      return fs.statSync(filePath).mtime;
-    } catch (e) {
-      return new Date();
-    }
   });
 
   // Newest date in a list of posts/releases, for the <lastmod> of an index page
@@ -816,8 +868,8 @@ module.exports = function(eleventyConfig) {
   // unreadable path yields rather than dropping the enclosure entirely.
   eleventyConfig.addFilter("fileSize", (sitePath) => {
     try {
-      // Site-absolute path -> repo-relative, same convention as fileModDate:
-      // Eleventy runs with the project root as cwd.
+      // Site-absolute path -> repo-relative: Eleventy runs with the project
+      // root as cwd.
       return fs.statSync(String(sitePath).replace(/^\//, "")).size;
     } catch (e) {
       return 0;
@@ -1111,21 +1163,36 @@ module.exports = function(eleventyConfig) {
         }
       }
       
+      // The stylesheet link gets the current ?v= of main.css, exactly as
+      // {{ assets.v("/main.css") }} prints it on every rendered page: these
+      // files are complete documents written by hand, so a version typed into
+      // one would go stale on the next CSS change. The helper is loaded from
+      // disk at run time (a computed path, so the Bun build of the standalone
+      // binaries does not bundle it) - one rule for both, editable without a
+      // recompile.
+      let mainCssHref = null;
+      const cssHref = () => {
+        if (mainCssHref === null) {
+          const { version } = require(path.resolve("_data", "assets.js"));
+          mainCssHref = `/main.css?v=${version("/main.css")}`;
+        }
+        return mainCssHref;
+      };
+
       files.forEach(file => {
-        const inputPath = path.join(htmlPagesDir, file);
-        const content = fs.readFileSync(inputPath, 'utf8');
-        
-        // Parse with gray-matter to separate frontmatter from content
-        const parsed = matter(content);
-        
-        // Only skip files that explicitly have draft: true
-        if (parsed.data.draft === true) {
+        const { parsed, draft } = readHtmlPage(htmlPagesDir, file);
+
+        if (draft) {
           console.log(`Skipped ${file} (draft: true)`);
         } else {
           const outputPath = path.join(outputDir, file);
-          
+
           // Write only the content (without frontmatter) to output
-          fs.writeFileSync(outputPath, parsed.content, 'utf8');
+          const html = parsed.content.replace(
+            /(<link\b[^>]*\bhref=")\/main\.css(?:\?v=[^"]*)?"/g,
+            (m, pre) => `${pre}${cssHref()}"`
+          );
+          fs.writeFileSync(outputPath, html, 'utf8');
           console.log(`Processed ${file} (frontmatter removed)`);
         }
       });
@@ -1140,6 +1207,12 @@ module.exports = function(eleventyConfig) {
     },
     templateFormats: ["njk", "md"],
     htmlTemplateEngine: "njk",
+    // Nunjucks runs over a .md file BEFORE markdown does. input_legal/legal.md
+    // relies on that ({# #} comments). Notebook posts must NOT get it:
+    // input_markdown/input_markdown.11tydata.js sets templateEngineOverride
+    // "md" there, because "## Heading {#id}" (markdown-it-attrs) opened a
+    // Nunjucks comment and failed the whole build, and "{{a}}" inside KaTeX or
+    // inline code was silently erased.
     markdownTemplateEngine: "njk"
   };
 };

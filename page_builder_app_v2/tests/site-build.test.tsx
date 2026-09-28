@@ -45,6 +45,10 @@ function makeSite(posts: Record<string, string>, markdown: Record<string, string
   sites.push(dir);
   cpSync(join(REPO, "eleventy.config.js"), join(dir, "eleventy.config.js"));
   cpSync(join(REPO, "eleventy_settings"), join(dir, "eleventy_settings"), { recursive: true });
+  // base.njk links {{ assets.v("/main.css") }}: the helper lives in _data/, and
+  // it hashes main.css (a missing file stops the build by design).
+  cpSync(join(REPO, "_data"), join(dir, "_data"), { recursive: true });
+  cpSync(join(REPO, "main.css"), join(dir, "main.css"));
   mkdirSync(join(dir, "eleventy_njk"));
   cpSync(join(REPO, "eleventy_njk", "_builder_shell.njk"), join(dir, "eleventy_njk", "_builder_shell.njk"));
   mkdirSync(join(dir, "input_custom_post"));

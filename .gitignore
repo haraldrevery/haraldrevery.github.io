@@ -1,3 +1,8 @@
+# Machine-local half of the download-page hash cache (file mtimes, which git
+# does not keep). The shared half, download_hashes.json, IS committed. See
+# eleventy_njk/download.11tydata.js.
+eleventy_njk/download_hashes.local.json
+
 # node_modules/ is intentionally COMMITTED (27 MB, pure JS, works on both
 # Linux and Windows) so the site builds without `npm install` even if the
 # npm registry is down. Only this secondary tool's copy stays ignored:
@@ -36,6 +41,6 @@ eleventy-linux-arm64
 eleventy-win-arm64.exe
 
 # NOTE: intentionally NOT ignored (must stay committed):
-#   - Built output: main.css, main_max.css, prose.css, prose_max.css, notebook_pages/
+#   - Built output: main.css, main_max.css, notebook_pages/
 #     (GitHub Pages serves this folder as-is; there is no CI build step)
 

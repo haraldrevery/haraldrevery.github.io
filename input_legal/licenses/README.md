@@ -6,7 +6,8 @@ Name it after the library, with **no file extension** (e.g. `alpine`), and copy
 the text verbatim from the project — never edit it. On the next build it becomes
 a block in Section 10 of the Legal page, showing the library name, its copyright
 notice, and the complete licence inside a "Show full license" toggle. The file is
-also published to `/licence/<name>` so the block's link resolves.
+also published to `/licence/<name>.txt` so the block's link resolves (as text/plain;
+an extensionless file would be downloaded instead of shown).
 
 Everything on the block is read out of the file itself:
 

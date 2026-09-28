@@ -4,7 +4,7 @@
  *
  * WHY THIS SHAPE. v1 kept heading/paragraph/hr as separate blocks and its
  * renderer buffered adjacent ones, flushing them into a single <article> so the
- * gaps between them stayed typographic — prose.css owns them — rather than
+ * gaps between them stayed typographic — the prose rules own them — rather than
  * becoming 64px block gaps (page_builder/src/blocks/render.ts:724-758). Puck
  * renders siblings independently and has no API to merge them, so keeping the
  * blocks separate would silently turn every heading->paragraph gap from ~1em
