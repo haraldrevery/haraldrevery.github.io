@@ -170,7 +170,7 @@ is committed):
 npm run build     # or: npm start, for the live-reload dev server
 ```
 
-Note: I avoid npm since you depend on so many servers for it to work and you never know what the code is, hence why you should compile binaries that works and stick with them. Only use npm when changing logic for this website and compile in the end when everything works.
+Note: Only use npm for development of the site, but not for updating content. Since npm depends on servers and packages that can break or be compromized containing malicious code. Hence why you should compile binaries that works independtly and offline to reduce dependencies of maintaining the site. Only use npm when changing logic/architectures for this website and compile in the end when everything works in one consistent pipeline. 
 
 ---
 
