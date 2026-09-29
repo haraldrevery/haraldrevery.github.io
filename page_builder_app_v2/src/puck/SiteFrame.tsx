@@ -11,8 +11,9 @@
  * one render path, which is the whole point of the rewrite.
  *
  * Deliberately NOT done: importing main.css into the app bundle and letting
- * Puck's CopyHostStyles mirror it in. Tailwind's preflight is global and would
- * wreck the Puck editor chrome.
+ * Puck copy it in. Tailwind's preflight is global and would wreck the editor
+ * chrome. Copying host styles is switched off altogether (iframe.syncHostStyles
+ * in App.tsx), so this override is the ONLY source of page CSS in the frame.
  *
  * NOTE Puck's frame is srcDoc, so it inherits the PARENT's origin. Fonts are
  * the one subresource type that is CORS-gated; server.rs sends
@@ -20,15 +21,9 @@
  * falls back to a system font.
  */
 import { useEffect } from "react";
-import type { Overrides } from "@measured/puck";
-import { createUsePuck } from "@measured/puck";
+import type { Overrides } from "@puckeditor/core";
 import { previewOrigin } from "../appConfig";
-
-/// Selector-aware usePuck. The bare `usePuck()` subscribes with an identity
-/// selector, so this wrapper — which sits around the ENTIRE preview subtree —
-/// re-rendered on every store write, and during a drag there is one of those
-/// per pointer move. Puck warns about exactly this in the console.
-const usePuckState = createUsePuck();
+import { usePuckState } from "./usePuckState";
 
 /// Edit-mode neutralisation. The site's entry animations all start at
 /// opacity:0 and play once; in the editor, dangerouslySetInnerHTML regenerates
@@ -115,20 +110,12 @@ export function makeSiteFrame(previewPort: number): Overrides["iframe"] {
       const style = doc.createElement("style");
       style.textContent = FRAME_CSS;
 
-      // <base> must be FIRST in <head> — it only affects elements that follow it.
-      const apply = () => {
-        doc.head.prepend(base);
-        doc.head.append(...links, style);
-      };
-      apply();
-
-      // Puck's CopyHostStyles clears the frame head (doc.head.innerHTML = "")
-      // inside a promise callback, i.e. AFTER this synchronous child effect has
-      // run. Re-apply whenever our nodes are removed.
-      const obs = new MutationObserver(() => {
-        if (!doc.head.contains(base)) apply();
-      });
-      obs.observe(doc.head, { childList: true });
+      // <base> first in <head>, so nothing before it resolves against the
+      // editor's own origin. (Puck 0.20 wiped the frame head after this effect
+      // ran and a MutationObserver put these back; 0.23 with syncHostStyles off
+      // never touches it — e2e/editor.e2e.mjs would show an unstyled canvas.)
+      doc.head.prepend(base);
+      doc.head.append(...links, style);
 
       // Mirror the published page's <html>/<body> attributes so the site's
       // dark-mode and base text colours apply. The source of truth is
@@ -138,7 +125,6 @@ export function makeSiteFrame(previewPort: number): Overrides["iframe"] {
       doc.body.className = "min-h-screen text-zinc-900 dark:text-white";
 
       return () => {
-        obs.disconnect();
         [base, ...links, style].forEach((n) => n.remove());
       };
     }, [doc]);

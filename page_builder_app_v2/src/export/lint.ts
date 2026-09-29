@@ -15,7 +15,7 @@
  * the page title (post_chrome.njk, which skips it for an empty title).
  * lintPage puts it in front of the scan in the same place.
  */
-import type { Config, Data } from "@measured/puck";
+import type { Config, Data } from "@puckeditor/core";
 import { collectA11yIssues } from "./collect";
 import { splitTags, isIsoDate, layoutAddsHeader } from "./export";
 import { hasSvgText } from "../blocks/svgStore";

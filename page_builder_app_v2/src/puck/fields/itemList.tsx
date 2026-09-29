@@ -14,7 +14,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { DragDropProvider } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
-import { PointerSensor } from "@dnd-kit/dom";
+import { PointerActivationConstraints, PointerSensor } from "@dnd-kit/dom";
 import { moveTo, sameOrder, swap } from "./listOps";
 
 // ------------------------------------------------------------ row controls
@@ -229,7 +229,10 @@ export function SortableItems<T extends object>({
   // 5px before a drag starts, matching Puck's own array field, so a plain click
   // on the grip is not treated as a drag.
   const sensors = useMemo(
-    () => [PointerSensor.configure({ activationConstraints: { distance: { value: 5 } } })],
+    () => [PointerSensor.configure({
+      // dnd-kit 0.4 takes constraint objects, not 0.1's `{ distance: { value } }`.
+      activationConstraints: [new PointerActivationConstraints.Distance({ value: 5 })],
+    })],
     [],
   );
 

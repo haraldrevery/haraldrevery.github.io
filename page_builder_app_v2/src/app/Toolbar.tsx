@@ -1,10 +1,11 @@
 /*
  * New / Open / Save / Save as / Export, plus the dirty marker.
  *
- * Rendered inside <Puck> so it can read live editor state via usePuck().
+ * Rendered inside <Puck> so it can read live editor state (usePuckState).
  */
-import { usePuck } from "@measured/puck";
+import { useGetPuck } from "@puckeditor/core";
 import { canSplit, splitIntoColumns, newColumnsId } from "../puck/splitColumns";
+import { usePuckState } from "../puck/usePuckState";
 
 export interface ToolbarProps {
   projectName: string | null;
@@ -20,8 +21,12 @@ export interface ToolbarProps {
 }
 
 export function Toolbar(p: ToolbarProps) {
-  const { history, dispatch, appState, selectedItem } = usePuck();
-  const editingBlock = !!appState.ui.itemSelector;
+  const getPuck = useGetPuck();
+  const dispatch = usePuckState((s) => s.dispatch);
+  const editingBlock = usePuckState((s) => !!s.appState.ui.itemSelector);
+  const selectedType = usePuckState((s) => s.selectedItem?.type);
+  const hasPast = usePuckState((s) => s.history.hasPast);
+  const hasFuture = usePuckState((s) => s.history.hasFuture);
 
   /*
    * "Split into columns" — v1's affordance, rebuilt (README, "Known gaps").
@@ -32,8 +37,8 @@ export function Toolbar(p: ToolbarProps) {
    * recordHistory makes the split exactly one undo step rather than none. The
    * function form of `data` also avoids Puck's "setData is expensive" warning.
    */
-  const splitId = selectedItem?.props?.id as string | undefined;
-  const splittable = canSplit(appState.data, splitId);
+  const splitId = usePuckState((s) => s.selectedItem?.props?.id as string | undefined);
+  const splittable = usePuckState((s) => canSplit(s.appState.data, s.selectedItem?.props?.id as string | undefined));
   const doSplit = () =>
     dispatch({
       type: "setData",
@@ -66,7 +71,9 @@ export function Toolbar(p: ToolbarProps) {
         {editingBlock && (
           <>
             <span className="pb-toolbar__sep">›</span>
-            <span className="is-current">{selectedItem?.type ?? "Block"}</span>
+            <span className="is-current" title={selectedType}>
+              {selectedType ?? "Block"}
+            </span>
             {/*
               Lives with the breadcrumb rather than in the file operations: it
               acts on the SELECTED block, and this is the only part of the
@@ -97,10 +104,10 @@ export function Toolbar(p: ToolbarProps) {
           Save
         </button>
         <button type="button" onClick={p.onSaveAs}>Save as…</button>
-        <button type="button" onClick={() => history.back()} disabled={!history.hasPast}>
+        <button type="button" onClick={() => getPuck().history.back()} disabled={!hasPast}>
           Undo
         </button>
-        <button type="button" onClick={() => history.forward()} disabled={!history.hasFuture}>
+        <button type="button" onClick={() => getPuck().history.forward()} disabled={!hasFuture}>
           Redo
         </button>
         <button type="button" onClick={p.onPreview} disabled={!!p.busy}>

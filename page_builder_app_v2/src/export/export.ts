@@ -25,7 +25,7 @@
  * places that inspected a Block[] now take Puck `Data` and go through
  * src/export/collect.ts.
  */
-import type { Config, Data } from "@measured/puck";
+import type { Config, Data } from "@puckeditor/core";
 import { renderMarkdown } from "../markdown";
 import { collectStats } from "./collect";
 import type { PageMeta, SchemaChoice, RootProps } from "../puck/PageRoot";

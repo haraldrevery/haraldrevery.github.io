@@ -11,7 +11,7 @@
  * the real CSS for every one of them.
  */
 import type { CSSProperties } from "react";
-import type { PuckContext } from "@measured/puck";
+import type { PuckContext } from "@puckeditor/core";
 import { BlockShell } from "../nesting";
 import { EmptyHint } from "../EmptyHint";
 import { glightboxCaption } from "../shared";

@@ -7,7 +7,7 @@
  * would, and must never be offered where it would damage the block.
  */
 import { describe, expect, test } from "bun:test";
-import type { Data } from "@measured/puck";
+import type { Data } from "@puckeditor/core";
 import { config } from "../src/puck/config";
 import { canSplit, splitIntoColumns, newColumnsId } from "../src/puck/splitColumns";
 import { renderExportContent } from "../src/export/renderExport";

@@ -6,7 +6,7 @@
  * empty defaultProps entry. So each owns its whole items array as one `custom`
  * field.
  */
-import { FieldLabel } from "@measured/puck";
+import { FieldLabel } from "@puckeditor/core";
 import { hashFiles, pickMedia, prefetchSvgs } from "../../media";
 import type { IconItem, DownloadItem } from "../components/Lists";
 import { humanSize } from "../shared";

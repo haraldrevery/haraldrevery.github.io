@@ -8,8 +8,9 @@
  * Values are literal rather than themed: there are only a handful of rules,
  * and a variable layer would cost more than it saves.
  *
- * NB Puck copies host stylesheets into the preview iframe. Everything here is
- * id-scoped or pb-prefixed so nothing can leak onto the rendered page.
+ * The preview iframe does NOT get this stylesheet: Puck's host-style copying
+ * is switched off (iframe.syncHostStyles in App.tsx). Rules here style the
+ * editor chrome only.
  */
 
 /* Toast stack. z-index is above .pb-modal (3000) deliberately: errors raised
@@ -187,58 +188,51 @@
    hand so the toolbar and the page-check panel can sit alongside them. */
 
 /*
- * The app owns the whole window and the document itself NEVER scrolls.
+ * THE RULE: nothing between the window and the editor iframe may scroll. The
+ * iframe is exactly the size of its pane and scrolls internally; every other
+ * box is exactly the size of the window. e2e/editor.e2e.mjs measures this
+ * in real browsers — run it after touching anything below, or after upgrading
+ * Puck. (See the README, "Window layout".)
  *
- * `height: 100vh` on .pb-layout was not enough: nothing resets the UA's default
- * `body { margin: 8px }` — not this file, not puck.css (it carries no html/body
- * rule at all), not the Vite bundle — so a 100vh child made the document
- * 100vh + 16px tall. That is the "top bar can be scrolled down a little":
- * the whole app, toolbar included, slid 16px inside its own window.
+ * Why it matters for drag and drop, not just looks: Puck maps the pointer into
+ * the frame through the iframe's live getBoundingClientRect, and dnd-kit's
+ * autoscroller scrolls whichever scrollable box is under the pointer. If an
+ * ancestor of the iframe can scroll, a drag near the window edge scrolls THAT
+ * — the whole app slides under a stationary pointer and the block lands
+ * somewhere else, typically at the end of the page.
  *
- * It also fed the drag bug. dnd-kit's autoscroller walks the scrollable
- * ancestors of whatever is under the pointer; over the preview that is the
- * <iframe> element in THIS document, whose ancestors were .pb-layout__center
- * (overflow: auto) and a 16px-scrollable <html>. Dragging near an edge
- * therefore scrolled the frame's CONTAINER instead of the frame, moving the
- * iframe under a stationary pointer — and Puck maps pointer coordinates into
- * the frame through the iframe's live getBoundingClientRect, so the drop
- * target jumped by however far the page had slid. Same class of bug as the two
- * overflow/scroll rules SiteFrame neutralises INSIDE the frame; these two are
- * outside it.
+ * `overflow: clip`, not `hidden`, on every box here: `hidden` still makes a
+ * scroll container, which focus changes and scrollIntoView (Puck calls it when
+ * you click an outline layer) will scroll programmatically. `clip` cannot be
+ * scrolled at all.
  *
- * Fixed positioning rather than a `html, body { margin: 0 }` reset: Puck mirrors
- * this whole stylesheet into the preview iframe (CopyHostStyles collects every
- * <style> and <link rel=stylesheet> in the parent document), so a bare html/body
- * rule here would land on the rendered page. `body > #app` matches only this
- * app's mount point — in the frame, page content sits under #frame-root and can
- * never be a direct child of <body>.
+ * `body > #app` is fixed so the UA's default `body { margin: 8px }` cannot make
+ * the document 16px taller than the window, whatever else sets margins.
  */
-body > #app { position: fixed; inset: 0; overflow: hidden; }
+body > #app { position: fixed; inset: 0; overflow: clip; }
 
 /*
- * Propagate that height through Puck's OWN wrapper. When <Puck> is given
- * children it renders them inside `<div class="Puck _Puck_...">`, and that div
- * sets no height — so `.pb-layout { height: 100% }` resolved against an
- * auto-height parent and computed to auto. The layout then grew to fit its
- * tallest panel (measured: 2120px in a 900px window), which meant
- *   - `overflow-y: auto` on the side panels never had anything to scroll,
- *     because each panel was exactly as tall as its own content, and
- *   - everything past the window edge was clipped by the `overflow: hidden`
- *     above, unreachable by any means. That is the "can't reach the settings"
- *     bug, and it is also why drop targeting is unreliable: the preview iframe
- *     is a flex sibling, so it was stretched to that same 2120px while only the
- *     top 900px was visible. Puck maps pointer coordinates through the iframe's
- *     rect, so more than half the canvas sat outside the window.
- *
- * DragDropContext and the `puck` override render no DOM of their own, so
- * .pb-layout really is a direct child of .Puck. Flex rather than a bare
- * `height: 100%` on .pb-layout: #puck-portal-root is a sibling inside .Puck and
- * would otherwise add its height on top of the layout's.
+ * Puck's own stylesheet gives its root `overflow-x: auto` (at >= 766px wide),
+ * and a non-visible overflow-x forces overflow-y to auto as well — so without
+ * this, .Puck is a scroll container around the whole layout. It was the box
+ * that actually scrolled in the "the side panels scroll with the canvas" bug.
  */
-body > #app > .Puck { height: 100%; display: flex; flex-direction: column; }
-body > #app > .Puck > .pb-layout { flex: 1 1 auto; min-height: 0; }
+body > #app > .Puck { overflow: clip; }
 
-.pb-layout { display: flex; flex-direction: column; }
+/*
+ * Sized from the viewport, NOT by propagating height through Puck's wrappers.
+ * Puck puts its own elements between .Puck and this div, and they have changed
+ * both between versions and during boot (0.20 added a wrapper <div> once the
+ * editor left its loading state), so a selector like `.Puck > .pb-layout`
+ * silently stops matching and the layout grows to its tallest side panel.
+ *
+ * It must stay IN FLOW (no position: fixed/absolute). Puck only looks for drop
+ * targets while document.elementsFromPoint() under the pointer includes a
+ * Puck element that wraps this div; taken out of flow, that wrapper collapses
+ * to 0px tall and every drop is silently ignored — the dragged block
+ * still follows the cursor, it just never lands.
+ */
+.pb-layout { height: 100vh; display: flex; flex-direction: column; }
 .pb-layout__body { display: flex; flex: 1; min-height: 0; }
 .pb-layout__left,
 .pb-layout__right {
@@ -252,12 +246,12 @@ body > #app > .Puck > .pb-layout { flex: 1 1 auto; min-height: 0; }
 }
 .pb-layout__left { border-right-width: 1px; }
 .pb-layout__right { border-left-width: 1px; display: flex; flex-direction: column; }
-/* `hidden`, not `auto`: the frame is 100% x 100% of this pane, so it never has
-   anything to scroll — but `auto` still made it a scroll container, and that is
-   the container dnd-kit autoscrolled instead of the frame (see body > #app
-   above). Puck's block overlays and action bars portal into the FRAME's body,
-   not here, so nothing that needs to overhang this box is clipped by it. */
-.pb-layout__center { flex: 1; min-width: 0; background: #f4f4f5; overflow: hidden; }
+/* Puck's block overlays and action bars portal into the FRAME's body, not
+   here, so nothing that needs to overhang this box is clipped by it. */
+.pb-layout__center { flex: 1; min-width: 0; background: #f4f4f5; overflow: clip; }
+/* An iframe is inline by default, so its line box adds a few px of descender
+   space under it: the pane's content ends up taller than the pane. */
+.pb-layout__center > [data-puck-preview] > iframe { display: block; }
 
 /* ---- toolbar ---- */
 .pb-toolbar {
@@ -270,13 +264,19 @@ body > #app > .Puck > .pb-layout { flex: 1 1 auto; min-height: 0; }
   background: #fff;
   flex: none;
 }
+/* Nothing in the toolbar may wrap. Its height is subtracted from the canvas,
+   so a second line (the breadcrumb gains "Split into columns" when a block is
+   selected, and did wrap at the 1000px minimum width) resized and shifted the
+   canvas under the pointer at the start of every drag. What does not fit is
+   truncated instead: the project name and the selected block's name. */
 .pb-toolbar__title {
   font: 13px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
   display: flex; align-items: center; gap: 8px;
+  flex: 0 1 auto; min-width: 0; overflow: hidden; white-space: nowrap;
 }
 .pb-toolbar__dot { color: #f59e0b; }
 .pb-toolbar__busy { color: #71717a; font-style: italic; }
-.pb-toolbar__ops { display: flex; gap: 6px; }
+.pb-toolbar__ops { display: flex; gap: 6px; flex: none; white-space: nowrap; }
 .pb-toolbar__ops button {
   padding: 5px 10px;
   border: 1px solid #e4e4e7;
@@ -389,7 +389,11 @@ body > #app > .Puck > .pb-layout { flex: 1 1 auto; min-height: 0; }
 .pb-toolbar__crumbs {
   display: flex; align-items: center; gap: 6px;
   font-size: 12px; color: #71717a; flex: 1;
+  min-width: 0; overflow: hidden; white-space: nowrap;
 }
+.pb-toolbar__crumbs button,
+.pb-toolbar__sep { flex: none; }
+.pb-toolbar__crumbs span.is-current { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .pb-toolbar__crumbs button {
   border: none; background: none; padding: 2px 6px; border-radius: 4px;
   cursor: pointer; font: inherit; color: #1d4ed8;

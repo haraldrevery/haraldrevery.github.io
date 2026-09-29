@@ -9,7 +9,7 @@
  * in the compiled main.css — there is no CSS build on export. tests/render.test.tsx
  * greps the real CSS to enforce this.
  */
-import type { Config } from "@measured/puck";
+import type { Config } from "@puckeditor/core";
 import { spacingField } from "./spacing";
 import { Heading, type HeadingProps } from "./components/Heading";
 import { Text, type TextProps } from "./components/Text";

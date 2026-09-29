@@ -3,7 +3,7 @@
  * this project" / "overwrite?" / "pick a project", and the native `prompt()` is
  * unavailable in a Tauri webview.
  */
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
 /*
  * Escape closes every prompt, and it is bound HERE, on the modal container —
@@ -12,6 +12,11 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
  * through the preview overlay, so Save-As can mount above the preview). A
  * second window listener would close the prompt AND the preview on one key.
  * Keydown from a focused child bubbles to this div, which is all we need.
+ *
+ * role="dialog" + aria-modal are load-bearing, not just accessibility: Puck
+ * deletes the selected block on Delete/Backspace unless a visible dialog like
+ * this exists, so without them a keypress on a prompt's button deleted the
+ * block hidden behind it (e2e/editor.e2e.mjs, "dialog is open").
  */
 function Modal({
   title,
@@ -22,6 +27,7 @@ function Modal({
   onCancel: () => void;
   children: ReactNode;
 }) {
+  const titleId = useId();
   return (
     <div
       className="pb-modal"
@@ -29,8 +35,8 @@ function Modal({
         if (e.key === "Escape") onCancel();
       }}
     >
-      <div className="pb-modal__box">
-        <h2 className="pb-modal__title">{title}</h2>
+      <div className="pb-modal__box" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+        <h2 className="pb-modal__title" id={titleId}>{title}</h2>
         {children}
       </div>
     </div>

@@ -23,7 +23,7 @@
  *    emits NO wrapper when nested, so the card class — and with it the whole
  *    overlapping grid — would just vanish from the page.
  */
-import type { Data } from "@measured/puck";
+import type { Data } from "@puckeditor/core";
 import { EMBEDDABLE } from "./config";
 
 const topLevel = (data: Data): any[] => (data.content as any[]) ?? [];

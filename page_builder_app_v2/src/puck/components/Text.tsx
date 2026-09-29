@@ -16,7 +16,7 @@
  * block survives only for what markdown cannot express (centre align, per-word
  * animation).
  */
-import type { PuckContext } from "@measured/puck";
+import type { PuckContext } from "@puckeditor/core";
 import { ProseShell } from "../nesting";
 import { EmptyHint } from "../EmptyHint";
 import { renderMarkdown } from "../../markdown";
@@ -27,13 +27,15 @@ export interface TextProps {
   md: string;
   animate: boolean;
   spacing: Spacing;
-  /// Puck injects this; the word_animation delay seed, so repeated renders and
-  /// exports produce identical output rather than churning diffs.
-  id?: string;
   puck?: PuckContext;
 }
 
-export function Text({ md, animate, spacing, id, puck }: TextProps) {
+/// `id` is Puck's, not a stored prop: it injects the block id into every render
+/// (WithId). It seeds the word_animation delays, so repeated renders and exports
+/// produce identical output rather than churning diffs. Declaring it in
+/// TextProps instead collides with Puck's own `id` in resolveFields' `changed`
+/// type and makes the whole config fail Puck's Config constraint.
+export function Text({ md, animate, spacing, id, puck }: TextProps & { id?: string }) {
   // An empty Text block renders an empty <article>, which has zero height —
   // invisible, so a fresh drop looks like it failed. Show a hint instead while
   // editing. The export path (rsc Render) has isEditing false and still emits

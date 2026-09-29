@@ -113,7 +113,9 @@ export function PreviewModal({
   };
 
   return (
-    <div className="pb-preview">
+    // A dialog to Puck too: see the note on Modal in prompts.tsx — without it a
+    // Delete/Backspace pressed while previewing removed the selected block.
+    <div className="pb-preview" role="dialog" aria-modal="true" aria-label="Page preview">
       <header className="pb-preview__bar">
         <strong className="pb-preview__title">{title || "Untitled"}</strong>
         <span className="pb-preview__note">

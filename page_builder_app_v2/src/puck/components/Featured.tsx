@@ -16,7 +16,7 @@
  * floor, the grid would never exist and the panel would render as a plain
  * frosted box under the photo. Same reasoning as Downloads.
  */
-import type { PuckContext } from "@measured/puck";
+import type { PuckContext } from "@puckeditor/core";
 import { BlockShell } from "../nesting";
 import { EmptyHint } from "../EmptyHint";
 import { glightboxCaption } from "../shared";

@@ -12,7 +12,7 @@
  * store.reorderGalleryItem (state.ts:222-237) plus the galleryItemsEditor
  * section of ui/blockForms.ts.
  */
-import { FieldLabel, useGetPuck } from "@measured/puck";
+import { FieldLabel, useGetPuck } from "@puckeditor/core";
 import { imageText, pickMedia } from "../../media";
 import { recheckImages } from "../../export/fixups";
 import { toast } from "../../ui/toast";

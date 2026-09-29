@@ -29,7 +29,7 @@ import {
 import { tmpdir } from "os";
 import { join } from "path";
 import { fileURLToPath } from "url";
-import type { Data } from "@measured/puck";
+import type { Data } from "@puckeditor/core";
 import { config } from "../src/puck/config";
 import { DEFAULT_HERO, DEFAULT_META } from "../src/puck/PageRoot";
 import { assembleDocument, exportText } from "../src/export/export";

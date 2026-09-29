@@ -23,7 +23,7 @@
  */
 import { BlockShell, Nested } from "../nesting";
 import type { Spacing } from "../spacing";
-import type { Slot } from "@measured/puck";
+import type { Slot } from "@puckeditor/core";
 
 export interface ColumnsProps {
   count: 1 | 2;

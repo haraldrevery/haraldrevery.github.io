@@ -17,8 +17,6 @@ export interface HeadingProps {
   align: "left" | "center";
   animate: boolean;
   spacing: Spacing;
-  /// Puck injects this; the word_animation delay seed.
-  id?: string;
 }
 
 /// Matches v1's escText (render.ts:59) — the three characters that change
@@ -28,7 +26,9 @@ function escapeText(s: string): string {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-export function Heading({ level, text, align, animate, spacing, id }: HeadingProps) {
+/// `id` is injected by Puck (the word_animation delay seed) — see Text.tsx for
+/// why it is not declared in HeadingProps.
+export function Heading({ level, text, align, animate, spacing, id }: HeadingProps & { id?: string }) {
   const lvl = Math.max(1, Math.min(3, level || 2));
   const Tag = `h${lvl}` as "h1" | "h2" | "h3";
   const className = align === "center" ? "text-center" : undefined;

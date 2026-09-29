@@ -12,8 +12,8 @@
  * produce lint warnings about markup nobody can see, so each component declares
  * which of its slots are currently hidden and the walk propagates that down.
  */
-import { walkTree } from "@measured/puck/rsc";
-import type { Config, Data } from "@measured/puck";
+import { walkTree } from "@puckeditor/core/rsc";
+import type { Config, Data } from "@puckeditor/core";
 import { hasSvgText } from "../blocks/svgStore";
 import type { GalleryItem } from "../puck/components/Gallery";
 import type { RootProps } from "../puck/PageRoot";

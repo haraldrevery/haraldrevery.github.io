@@ -8,7 +8,7 @@
  * problem and solved it with a "＋ pick content" affordance
  * (page_builder/src/blocks/render.ts:478-480).
  *
- * EDIT MODE ONLY. `puck.isEditing` is false in @measured/puck/rsc's Render,
+ * EDIT MODE ONLY. `puck.isEditing` is false in @puckeditor/core/rsc's Render,
  * which is what the export path uses, so this can never reach a published page
  * — asserted in tests/render.test.tsx.
  *

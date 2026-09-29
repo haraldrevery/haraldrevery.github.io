@@ -38,8 +38,20 @@ bun install
 bun run build                # typecheck + vite
 bunx tauri dev               # dev app (port 5174)
 bunx tauri build --no-bundle # release binary
-bun test tests               # 293 tests (see Tests)
+bun test tests               # 300 unit tests (see Tests)
+bun run test:editor          # layout + drag-and-drop in real browsers (see Tests)
 ```
+
+**Puck and dnd-kit are pinned to exact versions** — `@puckeditor/core` 0.23.0
+and `@dnd-kit/dom`/`@dnd-kit/react` 0.4.0, the dnd-kit version that Puck itself
+depends on, so there is one copy (the sidebar's sortable rows run inside
+Puck's drag context). Both are pre-1.0 and change behaviour between minor
+versions; the layout here depends on details of Puck's DOM and hit-testing
+(see "Window layout"). To upgrade: bump both together, then run
+`bun run build`, `bun test tests` AND `bun run test:editor`. The unit tests
+cover the export; only the browser suite sees scrolling and drops.
+`@puckeditor/core` is Puck's package name since 0.21; `@measured/puck` stopped
+at 0.20.2.
 
 **Use `bunx tauri build`, not `cargo build`.** Plain cargo produces a binary that
 tries to load `devUrl` and shows "Could not connect to localhost".
@@ -251,6 +263,13 @@ export interface QuoteProps {
 }
 ```
 
+*Never declare `id` in the props interface.* Puck injects the block id into
+every render, and a component that needs it (e.g. as an animation seed) takes
+it on the render function instead: `function Quote(p: QuoteProps & { id?: string })`.
+A declared `id` collides with Puck's own in the `changed` type of
+`resolveFields`, which collapses to `never` and makes the WHOLE config fail
+Puck's `Config` constraint — dozens of type errors far from the cause.
+
 **2. A component** in `src/puck/components/`, returning a `BlockShell` (or
 `ProseShell` for prose). Transcribe the body from the matching `*Inner()` in v1's
 `src/blocks/render.ts`: `class` → `className`, `style="a:b"` → `style={{a:"b"}}`,
@@ -319,7 +338,7 @@ The same constraint is why the Image block and the hero store their photo as one
 Custom fields also render their own label — wrap them in Puck's `FieldLabel` or
 the field appears unlabelled.
 
-## React quirks that bite
+## React and Puck quirks that bite
 
 - **React 19 hoists `<link rel="preload" as="image">` in front of every eager
   `<img>`** — even with no fetch-priority attribute. That would land inside
@@ -328,7 +347,18 @@ the field appears unlabelled.
 - React cannot emit a bare valueless attribute (`controls` becomes `controls=""`)
   and self-closes void elements. Both are harmless; `format.ts` normalises void
   elements back to the site's `<img>` convention for readable git diffs.
-- `usePuck()` takes no selector — only `createUsePuck()` does.
+- **Read editor state through `usePuckState(selector)`** (`src/puck/usePuckState.ts`),
+  never bare `usePuck()`: that subscribes to the whole store and re-renders its
+  caller on every pointer move during a drag (Puck logs a warning). A selector
+  must return a primitive or a reference Puck already holds, not a new object.
+  For values used only in event handlers, `useGetPuck()` reads without
+  subscribing.
+- **Delete/Backspace removes the selected block** (Puck, since 0.21). Puck
+  skips it while focus is in a text field or while a visible `role="dialog"` /
+  `aria-modal` element exists — so every overlay this app shows (prompts,
+  Preview) must carry those attributes, or a keypress on its button deletes
+  the block hidden behind it. Ctrl/Cmd+Z has no such guard in Puck;
+  `useTextUndoShim` (`app/keyboard.ts`) keeps it as text undo inside fields.
 - `<Puck data>` is **initial** state, copied into Puck's store on mount. Changing
   it afterwards does not re-sync; loading a project remounts Puck via `key`.
 
@@ -348,7 +378,8 @@ page_builder/src/…" notes in `src/` point. What remains of the split:
 
 ```bash
 bun install                      # in THIS folder
-bun test tests                   # 293 tests
+bun test tests                   # 300 unit tests
+bun run test:editor              # browser suite, below
 ```
 
 `site-build.test.tsx` also needs the repo root's `node_modules/` (committed, so
@@ -378,6 +409,44 @@ nothing to install) — it runs the site's own Eleventy.
 The Rust side has its own: `cargo test` in `src-tauri/` covers atomic writes,
 the SHA-2 vectors, and that `/__pb/` is answered in full and never falls through
 to a file read.
+
+### The browser suite (`e2e/`)
+
+The unit tests run in happy-dom, which has no layout: they cannot see what
+scrolls, how tall a panel is, or where a drop lands. `e2e/editor.e2e.mjs`
+runs the REAL editor bundle (Vite, from `src/`) in real browsers, with the
+Tauri backend replaced by `e2e/tauri-mock.js` and a small static server
+standing in for `server.rs`. The page it edits comes in through the
+crash-recovery Restore path.
+
+```bash
+node e2e/editor.e2e.mjs                 # every installed engine (= bun run test:editor)
+bun e2e/editor.e2e.mjs                  # Chromium only: Firefox never finishes launching under Bun
+node e2e/editor.e2e.mjs --only drawer   # scenarios whose name contains "drawer"
+node e2e/editor.e2e.mjs --headed        # watch it
+```
+
+Browsers are a one-time download outside the repo:
+`node node_modules/playwright-core/cli.js install chromium firefox` (add
+`webkit` to include it; it is skipped when missing). Chromium is the engine
+of the Windows build (WebView2). The Linux build runs WebKitGTK, which
+Playwright's WebKit only approximates.
+
+It checks that the layout is exactly the window and nothing around the canvas
+can scroll (at 1400×900 and the 1000×600 minimum), including after selecting
+a block. It checks that the canvas renders with the site's CSS and none of
+the editor's. On the drag side: wheel past the end scrolls only the canvas; a
+drawer drop lands under the pointer, from the top of the drawer and from the
+bottom; holding at the canvas edge autoscrolls the canvas, not the app; an
+in-canvas move lands where aimed; column slots accept only embeddable blocks;
+an outline click leaves the toolbar in place; and the sidebar's sortable rows
+reorder. On the keyboard side: Delete/Backspace/Ctrl+Z inside a field, or
+while a dialog is open, never delete a block or undo a structural change. It
+also fails on any uncaught page error.
+
+Every scenario was checked against the code from before the 2026-09-29 layout
+fix: 28 checks failed there, one per symptom. Keep it that way. A new
+scenario must fail against the bug it guards before it counts.
 
 ## Preview
 
@@ -426,70 +495,70 @@ full-screen iframe pointed at `http://127.0.0.1:<port>/__pb/preview`.
 
 ## Window layout, and why it is a drag-and-drop concern
 
-Three rules, all in `src/style.css`, all about **scroll containers around the
-editor iframe**:
+**The rule: nothing between the window and the editor iframe may scroll.** The
+iframe is exactly the size of its pane and scrolls internally; every box around
+it is exactly the size of the window. Everything below is in `src/style.css`,
+and `e2e/editor.e2e.mjs` measures it — run it after touching the layout or
+upgrading Puck.
 
-1. `body > #app` is `position: fixed; inset: 0; overflow: hidden`, so the app
-   document itself can never scroll.
-2. `body > #app > .Puck` carries the height down to `.pb-layout`.
-3. `.pb-layout__center` is `overflow: hidden`, not `auto`.
+**Why it is a drag-and-drop concern.** Puck maps the pointer into the frame
+through the iframe's live `getBoundingClientRect`, and dnd-kit's autoscroller
+scrolls whatever scrollable box is under the pointer near an edge. If an
+ancestor of the iframe can scroll, a drag near the window edge scrolls THAT:
+the whole app slides under a stationary pointer and the block lands somewhere
+else. Until 2026-09-29 that was the normal state of the app. Measured in
+Chromium, Firefox and WebKitGTK:
 
-Rule 2 exists because `<Puck>`, when given **children**, renders them inside its
-own `<div class="Puck _Puck_…">` — and that div sets no height. `DragDropContext`
-and the `puck` override emit no DOM, so `.pb-layout` is a direct child of it, and
-`height: 100%` against an auto-height parent computes to `auto`. Measured in a
-900px window, `.pb-layout` came out **2120px**: each side panel was stretched to
-exactly its own content height, so `overflow-y: auto` never had anything to
-scroll and everything past the window edge was clipped by rule 1, unreachable by
-any means. The preview iframe is a flex sibling of those panels, so it was
-stretched to that same 2120px while only the top 900px was visible — and Puck
-maps pointer coordinates through the iframe's rect, so more than half the drop
-surface sat outside the window. Flex rather than `height: 100%` on `.pb-layout`,
-because `#puck-portal-root` is a sibling inside `.Puck` and would otherwise add
-its height on top.
+- `.pb-layout` was ~2570px tall in a 900px window, even with a short page: it
+  grew to its tallest side panel (the Page/SEO fields alone are ~2500px). The
+  canvas was stretched to match, so two-thirds of it sat below the window, and
+  its height changed whenever selecting a block changed a panel.
+- Puck's own CSS gives its root `overflow-x: auto`, which forces
+  `overflow-y: auto` — so `.Puck` was a scroll container around everything.
+  Wheel-scrolling past the end of the page scrolled it (toolbar, panels and
+  canvas together); dragging from a low drawer item autoscrolled it (the block
+  landed one or more slots off, or at the end of the page); clicking an outline
+  layer (Puck calls `scrollIntoView`) scrolled the toolbar out of the window.
+- The canvas's own "scroll down" band was below the window edge, so holding a
+  block at the bottom of the visible canvas did nothing: lower parts of the
+  page could not be reached mid-drag.
 
-`height: 100vh` on `.pb-layout` was not enough. Nothing resets the UA's default
-`body { margin: 8px }` — not this file, not `puck.css` (which carries no
-html/body rule at all), not the Vite bundle — so a `100vh` child made the
-document `100vh + 16px` tall and the whole app, toolbar included, could be
-scrolled 16px inside its own window.
+The earlier fix for this (2026-09-06) targeted `body > #app > .Puck > .pb-layout`
+on the assumption that Puck renders nothing between the two. Puck 0.20 does:
+once the editor leaves its loading state its drag context wraps the children
+in a `<div>`, so the rule never matched after boot.
 
-That 16px was also a **drag** bug, which is why this is not just cosmetic:
+What is there now:
 
-- dnd-kit's `Scroller` finds what to autoscroll with
-  `getElementFromPoint(getDocument(source.element), pointer)`. Dragging from the
-  drawer, `source.element` is in the APP document, and `elementFromPoint` does
-  not pierce iframes — so over the canvas it returns the `<iframe>` element, and
-  the scrollable ancestors it walks are the app's, not the page's.
-- `isScrollable` tests the computed `overflow` value **only**, so
-  `.pb-layout__center { overflow: auto }` counted as a scroll container whether
-  or not it had anything to scroll, and `getScrollableAncestors` adds the
-  document's `scrollingElement` unconditionally at the top.
-- `canScroll` then gated on real scroll position: the centre pane had none, but
-  `<html>` had those 16px. So dragging into the autoscroll trigger band — the
-  band near the top and bottom edges of the canvas, i.e. exactly where you aim
-  to drop at the start or end of a page — ran a `setInterval` scrolling the APP
-  document under the drag.
-- Puck maps pointer coordinates into the frame through the iframe's live
-  `getBoundingClientRect` (`GlobalPosition`), so the frame moved while the
-  pointer did not and the mapped in-frame point jumped by up to 16px.
-  `findDeepestCandidate` then matched a different drop target, or none — the
-  "it does not drop where I aimed, try again" symptom, intermittent because it
-  only bites near the edges.
+1. `body > #app` is fixed to the window (so the UA's `body { margin: 8px }`
+   cannot make the document scroll), and `#app`, `.Puck` and the centre pane
+   are `overflow: clip`. Not `hidden`: a `hidden` box is still a scroll
+   container that focus changes and `scrollIntoView` scroll programmatically,
+   and dnd-kit's `isScrollable` counts `auto` boxes whether or not they have
+   anything to scroll. `clip` cannot be scrolled at all.
+2. `.pb-layout { height: 100vh }` — sized from the viewport, not by passing a
+   percentage height down through Puck's wrappers, whose structure has changed
+   between versions and even during boot.
+3. `.pb-layout` stays **in flow**. Puck only looks for drop targets while
+   `document.elementsFromPoint()` under the pointer includes one of its own
+   elements that wraps the layout (the `.Puck` root in 0.23; that extra `<div>`
+   in 0.20). Pin the layout with `position: fixed` and the wrapper collapses to
+   0px: the dragged block still follows the cursor, it just never lands. That is
+   the easy-looking fix that breaks drag and drop.
+4. The toolbar cannot wrap (its height is subtracted from the canvas; at the
+   1000px minimum width the breadcrumb's "Split into columns" used to wrap and
+   shift the canvas 8px at the start of every drag). What does not fit is
+   truncated.
 
 Same class of bug as the two `main.css` rules `SiteFrame`'s `FRAME_CSS`
 neutralises (`scroll-behavior: smooth` and `overflow-x: hidden`); those are
-INSIDE the frame, these are outside it. **The rule to keep: nothing between
-the window and the editor iframe may be a scroll container.** The frame is
-100% x 100% of its pane and scrolls internally; anything else that scrolls,
-dnd-kit will scroll instead of the page.
+INSIDE the frame, these are outside it.
 
-The reset is scoped rather than written as `html, body { margin: 0 }` because
-Puck's `CopyHostStyles` mirrors every `<style>` and `<link rel=stylesheet>` in
-this document into the preview iframe — a bare html/body rule here would land on
-the rendered page. `body > #app` matches only this app's mount point; in the
-frame, page content sits under `#frame-root` and is never a direct child of
-`<body>`.
+The frame gets only the site's CSS: Puck's copying of this document's
+stylesheets into it is switched off (`iframe.syncHostStyles: false`), and Puck
+injects the few rules its in-frame UI needs itself. With it on, `puck.css` and
+`style.css` landed inside the rendered page (checked: turning it off changed
+no computed style of any page element).
 
 ## Split into columns
 
@@ -653,14 +722,15 @@ history through a 300ms debounce), and the Rust tests in `embedded_text.rs`.
 
 ## Known gaps
 
-- **`page_builder_v2.exe` predates the 2026-09-19 export format and must be
-  rebuilt on Windows.** Its exports still carry their own header and ending.
-  The Eleventy build refuses them with a message naming the file, so nothing
-  broken is published — but nothing it exports builds until it is rebuilt. Its
-  Preview also shows the new shell's `{{DATE}}` tokens unfilled. There is no
-  cross-compile path (the MSVC linker only exists on Windows), so see
-  "Building the Windows .exe" above and rebuild it there. The Linux
-  `page_builder_v2` is current.
+- **`page_builder_v2.exe` must be rebuilt on Windows** after the 2026-09-29
+  changes (layout fix, Puck 0.23 upgrade). The committed .exe was last replaced
+  on 2026-09-28 and still has the old layout: the whole app scrolls with the
+  canvas, and drops near the window edges land off target. If it was built from
+  source older than 2026-09-19, its exports also carry their own header and
+  ending, which the Eleventy build refuses, naming the file — nothing broken is
+  published. There is no cross-compile path (the MSVC linker only exists on
+  Windows), so see "Building the Windows .exe" above and rebuild it there. The
+  Linux `page_builder_v2` is current.
 - **Preview still is not the Eleventy build.** Its page body matches the
   published one (`site-build.test.tsx`), but the `<head>` is the shell's, and
   front matter is omitted, so mistakes in `date:`/`tags:` — which drive the

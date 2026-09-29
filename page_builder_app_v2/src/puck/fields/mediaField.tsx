@@ -14,7 +14,7 @@
  * caption props beside the photo is the one exception, and goes through
  * updateBlock instead.
  */
-import { FieldLabel, useGetPuck, type CustomField } from "@measured/puck";
+import { FieldLabel, useGetPuck, type CustomField } from "@puckeditor/core";
 import { pickMedia, prefetchSvg, type MediaKind } from "../../media";
 import { textFill, type TextTargets } from "./photoText";
 import { selectedBlockId, updateBlock } from "./updateBlock";

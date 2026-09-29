@@ -7,7 +7,7 @@
  * Kept in the repo because it is the fastest way to eyeball real export output
  * without launching the app; it is not imported by anything.
  */
-import type { Data } from "@measured/puck";
+import type { Data } from "@puckeditor/core";
 import { config } from "../src/puck/config";
 import { DEFAULT_HERO, DEFAULT_META } from "../src/puck/PageRoot";
 import { exportText } from "../src/export/export";

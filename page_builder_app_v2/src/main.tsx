@@ -5,7 +5,7 @@ import App from "./App";
 // Puck's own editor chrome. The SITE's main.css is deliberately NOT
 // imported here — it is injected into the preview iframe only (see the
 // SiteFrame override). Tailwind's preflight is global and would wreck this UI.
-import "@measured/puck/puck.css";
+import "@puckeditor/core/puck.css";
 import "./style.css";
 
 const el = document.getElementById("app");

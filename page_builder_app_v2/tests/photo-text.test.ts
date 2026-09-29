@@ -7,7 +7,7 @@
  * (src-tauri/src/embedded_text.rs).
  */
 import { describe, expect, test } from "bun:test";
-import type { PuckApi } from "@measured/puck";
+import type { PuckApi } from "@puckeditor/core";
 import { FEATURED_TEXT, GALLERY_TEXT, IMAGE_TEXT, textFill } from "../src/puck/fields/photoText";
 import { updateBlock } from "../src/puck/fields/updateBlock";
 

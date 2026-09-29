@@ -23,7 +23,7 @@
  * precisely because padding cannot margin-collapse — the previous block's
  * mb-16 plus a pt-6 would silently double-count to 88px.
  */
-import type { PuckContext } from "@measured/puck";
+import type { PuckContext } from "@puckeditor/core";
 import { BlockShell } from "../nesting";
 import { EmptyHint } from "../EmptyHint";
 import type { Spacing } from "../spacing";

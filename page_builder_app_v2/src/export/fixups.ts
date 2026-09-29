@@ -8,7 +8,7 @@
  * They are verification, not editing — v1 deliberately kept them out of the
  * undo history, and so does this.
  */
-import type { Config, Data } from "@measured/puck";
+import type { Config, Data } from "@puckeditor/core";
 import { collectMediaPaths, visitComponents } from "./collect";
 import { checkFiles, deriveMinPath, hashFiles, imageDims } from "../media";
 import { toast } from "../ui/toast";

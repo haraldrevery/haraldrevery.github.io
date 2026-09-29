@@ -4,7 +4,7 @@
  */
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "fs";
-import type { Data } from "@measured/puck";
+import type { Data } from "@puckeditor/core";
 import { config } from "../src/puck/config";
 import { DEFAULT_HERO, DEFAULT_META } from "../src/puck/PageRoot";
 import {

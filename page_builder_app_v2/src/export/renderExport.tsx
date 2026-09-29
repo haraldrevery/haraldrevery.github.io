@@ -1,7 +1,7 @@
 /*
  * React tree -> the two HTML fragments the export is made of.
  *
- * `Render` comes from @measured/puck/rsc: a pure tree walk with no client
+ * `Render` comes from @puckeditor/core/rsc: a pure tree walk with no client
  * hooks, which sets puck.isEditing = false on every component. That is the
  * right renderer for producing a string.
  *
@@ -16,8 +16,8 @@
  * export.ts.
  */
 import { renderToStaticMarkup } from "react-dom/server";
-import { Render } from "@measured/puck/rsc";
-import type { Data } from "@measured/puck";
+import { Render } from "@puckeditor/core/rsc";
+import type { Data } from "@puckeditor/core";
 import { contentConfig } from "../puck/contentConfig";
 import { Hero } from "../puck/components/Hero";
 import { DEFAULT_HERO, type RootProps } from "../puck/PageRoot";

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Puck, type Data } from "@measured/puck";
+import { Puck, type Data } from "@puckeditor/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { config } from "./puck/config";
 import { makeSiteFrame } from "./puck/SiteFrame";
@@ -16,7 +16,8 @@ import { PreviewModal } from "./app/PreviewModal";
 import { useSaveShortcut, useTextUndoShim } from "./app/keyboard";
 import {
   PROJECT_VERSION, buildExport, buildPreview, buildStandalone, listProjects, loadProject,
-  readShell as readShellFile, saveHtmlDocument, saveProject, setPreviewHtml, writeExport,
+  prefetchProjectSvgs, readShell as readShellFile, saveHtmlDocument, saveProject, setPreviewHtml,
+  writeExport,
   type ProjectFileV2, type ProjectInfo,
 } from "./app/project";
 import { setShell } from "./export/shellStore";
@@ -30,6 +31,25 @@ const readShell = async () => {
 };
 
 const EMPTY: Data = { root: { props: {} }, content: [] } as unknown as Data;
+
+/*
+ * Puck options. Module-level so their identity never changes: Puck rebuilds its
+ * store config whenever these objects change identity, and App re-renders often.
+ *
+ * syncHostStyles: false — by default Puck copies every stylesheet in this
+ * document (puck.css, style.css) into the preview frame, on top of the site's
+ * own main.css. The frame should render the site's CSS only; SiteFrame adds
+ * main.css, and Puck injects the few rules its in-frame UI needs (overlays,
+ * drop zones) itself, independent of this setting.
+ *
+ * behavior: "fluid" — blocks move aside as you drag, as they always have here.
+ * Puck 0.23's default ("auto") shows an insertion line instead when adding a
+ * block. It works in both shipping engines (WebView2, WebKitGTK), but in
+ * Firefox a drop after the canvas autoscrolls lands where the pointer entered
+ * the canvas; "fluid" passes e2e/editor.e2e.mjs in every engine.
+ */
+const IFRAME = { enabled: true, waitForStyles: true, syncHostStyles: false } as const;
+const DND = { behavior: "fluid" } as const;
 
 type Dialog =
   | { kind: "none" }
@@ -385,7 +405,8 @@ export default function App() {
         config={config}
         data={data}
         onChange={onChange}
-        iframe={{ enabled: true, waitForStyles: true }}
+        iframe={IFRAME}
+        dnd={DND}
         overrides={overrides}
       >
         <div className="pb-layout">
@@ -455,8 +476,12 @@ export default function App() {
             confirmLabel="Restore"
             cancelLabel="Not now"
             onCancel={close}
-            onConfirm={() => {
+            onConfirm={async () => {
               close();
+              // Not loadProject's disk reconciliation: that rewrites data, and
+              // a draft is restored exactly as it was left. The svg cache is
+              // different — without it every svg renders as a placeholder.
+              await prefetchProjectSvgs(dialog.draft.file.data);
               loadInto(dialog.draft.file, dialog.draft.name);
               // Restored work is still unsaved work: the dot stays, the close
               // guard still fires, and the autosave keeps snapshotting it.

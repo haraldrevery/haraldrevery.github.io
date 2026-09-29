@@ -21,7 +21,7 @@
  * which is the only point at which "3" on the way to "320" is distinguishable
  * from "3" as a final answer.
  */
-import { FieldLabel, type CustomField } from "@measured/puck";
+import { FieldLabel, type CustomField } from "@puckeditor/core";
 import { useEffect, useState } from "react";
 import { liveValue, settledValue } from "./numberOps";
 

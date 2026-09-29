@@ -8,8 +8,8 @@
  */
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
-import { Render } from "@measured/puck/rsc";
-import type { Data } from "@measured/puck";
+import { Render } from "@puckeditor/core/rsc";
+import type { Data } from "@puckeditor/core";
 import { config, type Components } from "../src/puck/config";
 import { contentConfig } from "../src/puck/contentConfig";
 

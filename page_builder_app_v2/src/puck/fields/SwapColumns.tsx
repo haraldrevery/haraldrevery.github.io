@@ -16,14 +16,14 @@
  * block can only ever sit at the top level. That is what lets this be one map
  * over `content` instead of a recursive walk.
  */
-import { FieldLabel, usePuck, type Data } from "@measured/puck";
+import { FieldLabel, type Data } from "@puckeditor/core";
+import { usePuckState } from "../usePuckState";
 
 export function SwapColumnsField() {
-  // usePuck() returns the whole store; only createUsePuck() takes a selector.
-  const { dispatch, selectedItem } = usePuck();
+  const dispatch = usePuckState((s) => s.dispatch);
   // The Fields panel renders the fields of the SELECTED component, so this is
   // the Columns block the button belongs to.
-  const id = selectedItem?.props?.id as string | undefined;
+  const id = usePuckState((s) => s.selectedItem?.props?.id as string | undefined);
 
   const swap = () => {
     if (!id) return;

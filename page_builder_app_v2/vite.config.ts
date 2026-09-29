@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   clearScreen: false,
   server: {
-    // 5174, not 5173: v1 runs on 5173 and both must be able to run at once.
+    // 5174 is devUrl in src-tauri/tauri.conf.json (chosen when v1 used 5173).
     port: 5174,
     strictPort: true,
   },

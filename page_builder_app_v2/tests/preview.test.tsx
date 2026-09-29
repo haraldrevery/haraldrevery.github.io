@@ -18,7 +18,7 @@
  */
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 import { readFileSync } from "fs";
-import type { Data } from "@measured/puck";
+import type { Data } from "@puckeditor/core";
 import { DEFAULT_HERO, DEFAULT_META } from "../src/puck/PageRoot";
 import { exportText } from "../src/export/export";
 import { renderExportContent, renderExportHero } from "../src/export/renderExport";

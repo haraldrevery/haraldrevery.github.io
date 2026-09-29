@@ -14,7 +14,7 @@
  * getSelectorForId finds a block inside a Columns slot too, which SwapColumns'
  * top-level map over `content` would not — Image is embeddable.
  */
-import type { PuckApi } from "@measured/puck";
+import type { PuckApi } from "@puckeditor/core";
 
 type Props = Record<string, any>;
 

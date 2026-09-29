@@ -5,7 +5,7 @@
  * and JSON-LD entries for markup nobody can see.
  */
 import { describe, expect, test } from "bun:test";
-import type { Data } from "@measured/puck";
+import type { Data } from "@puckeditor/core";
 import { config } from "../src/puck/config";
 import {
   visitComponents,

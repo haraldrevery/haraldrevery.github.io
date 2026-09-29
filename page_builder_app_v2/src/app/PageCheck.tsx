@@ -27,7 +27,8 @@
  * would make it flicker.
  */
 import { useEffect, useMemo, useState } from "react";
-import { usePuck, type Data } from "@measured/puck";
+import type { Data } from "@puckeditor/core";
+import { usePuckState } from "../puck/usePuckState";
 import { config } from "../puck/config";
 import { lintPage, type LintIssue } from "../export/lint";
 import { renderExportContent, renderExportHero } from "../export/renderExport";
@@ -59,7 +60,7 @@ const sameList = (a: string[], b: string[]) =>
   a.length === b.length && a.every((x, i) => x === b[i]);
 
 export function PageCheck() {
-  const data = usePuck().appState.data as Data;
+  const data = usePuckState((s) => s.appState.data) as Data;
 
   /*
    * The data the displayed result was computed from.

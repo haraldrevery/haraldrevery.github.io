@@ -6,7 +6,7 @@
  * Grouped in one file because each is small and they share the same shape —
  * a BlockShell (or ProseShell for Divider) around a handful of elements.
  */
-import type { PuckContext } from "@measured/puck";
+import type { PuckContext } from "@puckeditor/core";
 import { BlockShell, ProseShell } from "../nesting";
 import { EmptyHint } from "../EmptyHint";
 import { getSvgText, themeSvgText, prepareSvgForInline } from "../../blocks/svgStore";

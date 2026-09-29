@@ -20,7 +20,7 @@ afterAll(() => GlobalRegistrator.unregister());
 
 const { act, createElement: h } = await import("react");
 const { createRoot } = await import("react-dom/client");
-const { Puck, useGetPuck } = await import("@measured/puck");
+const { Puck, useGetPuck } = await import("@puckeditor/core");
 const { updateBlock } = await import("../src/puck/fields/updateBlock");
 
 const config: any = {

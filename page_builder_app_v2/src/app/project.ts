@@ -9,7 +9,7 @@
  * writes, name sanitising and the two-phase overwrite prompt all still apply.
  */
 import { invoke } from "@tauri-apps/api/core";
-import type { Data } from "@measured/puck";
+import type { Data } from "@puckeditor/core";
 import { config } from "../puck/config";
 import { assembleDocument, assembleStandalone, exportText, resolveSlug } from "../export/export";
 import { renderExportContent, renderExportHero } from "../export/renderExport";
@@ -80,6 +80,12 @@ export interface OpenedProject {
  * The caller owns the epoch guard: these are sequential awaits, so a second
  * Open can still finish first, and React does not help with that.
  */
+/// Warm the synchronous svg cache for a page about to be shown in the editor.
+/// Every path that hands data to the editor must call this first — Open does,
+/// and so does restoring a crash-recovery draft.
+export const prefetchProjectSvgs = (data: Data): Promise<void> =>
+  prefetchSvgs(collectSvgSrcs(data, config));
+
 export async function loadProject(name: string): Promise<OpenedProject> {
   const raw = await invoke<string>("load_project", { name });
   const file = JSON.parse(raw) as ProjectFileV2;
@@ -93,7 +99,7 @@ export async function loadProject(name: string): Promise<OpenedProject> {
       `${name}.json is version ${file.version}; this app reads version ${PROJECT_VERSION}.`,
     );
   }
-  await prefetchSvgs(collectSvgSrcs(file.data, config));
+  await prefetchProjectSvgs(file.data);
   await revalidateThumbs(file.data, config);
   const hashes = await refreshDownloadHashes(file.data, config);
   return { file, hashes };
@@ -133,7 +139,7 @@ export async function buildExport(
 ): Promise<ExportBundle> {
   // Warm the svg cache first: an svg picked and then exported in the same
   // session would otherwise render its placeholder into the committed file.
-  await prefetchSvgs(collectSvgSrcs(data, config));
+  await prefetchProjectSvgs(data);
   // Thumbnails may have appeared since the photos were picked, and rebuilding a
   // binary changes its bytes without touching the project — a published SHA
   // that does not match the file is worse than no SHA at all.
@@ -184,7 +190,7 @@ export async function buildPreview(
   siteUrl: string,
   slugOverride?: string,
 ): Promise<string> {
-  await prefetchSvgs(collectSvgSrcs(data, config));
+  await prefetchProjectSvgs(data);
   return assembleDocument({
     shell, data, config, siteUrl,
     slug: pageSlug(data, slugOverride),
@@ -227,7 +233,7 @@ export async function buildStandalone(
   siteUrl: string,
   slugOverride?: string,
 ): Promise<StandaloneBundle> {
-  await prefetchSvgs(collectSvgSrcs(data, config));
+  await prefetchProjectSvgs(data);
   await revalidateThumbs(data, config);
   const hashes = await refreshDownloadHashes(data, config);
 

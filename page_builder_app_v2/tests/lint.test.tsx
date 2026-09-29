@@ -10,7 +10,7 @@
  * two H1s.
  */
 import { describe, expect, test } from "bun:test";
-import type { Data } from "@measured/puck";
+import type { Data } from "@puckeditor/core";
 import { config } from "../src/puck/config";
 import { DEFAULT_HERO, DEFAULT_META } from "../src/puck/PageRoot";
 import { headingIssues } from "../src/export/lint";

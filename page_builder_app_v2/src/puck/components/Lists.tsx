@@ -2,7 +2,7 @@
  * List-shaped blocks: Icons, Faq, Downloads.
  * Transcribed from page_builder/src/blocks/render.ts:348-466.
  */
-import type { PuckContext } from "@measured/puck";
+import type { PuckContext } from "@puckeditor/core";
 import { BlockShell } from "../nesting";
 import { EmptyHint } from "../EmptyHint";
 import { getSvgText, themeSvgText, prepareSvgForInline } from "../../blocks/svgStore";
@@ -103,7 +103,6 @@ export interface FaqItem {
 export interface FaqProps {
   items: FaqItem[];
   spacing: Spacing;
-  id?: string;
   puck?: PuckContext;
 }
 
@@ -114,7 +113,8 @@ export interface FaqProps {
  * Checkbox ids are prefixed with the block id so two FAQ blocks on one page
  * cannot collide — clicking one question would otherwise open the other's answer.
  */
-export function Faq({ items, spacing, id, puck }: FaqProps) {
+/// `id` is injected by Puck — see Text.tsx for why it is not in FaqProps.
+export function Faq({ items, spacing, id, puck }: FaqProps & { id?: string }) {
   // Defensive on purpose: a component must survive props it did not expect.
   // Puck's array field appends a blank item, and a hand-edited or older project
   // file can be missing any field.
