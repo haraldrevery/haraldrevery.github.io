@@ -1213,7 +1213,7 @@
 
     // --- Sound -------------------------------------------------------------
     var audio = $('#alarm-sound');
-    var SOUNDS = ['/clock/audio/timer_alarm_1.mp3', '/clock/audio/timer_alarm_2.mp3', '/clock/audio/timer_alarm_3.mp3'];
+    var SOUNDS = ['/clock/audio/timer_alarm_1.mp3', '/clock/audio/timer_alarm_2.mp3', '/clock/audio/timer_alarm_3.mp3', '/clock/audio/timer_alarm_4.mp3'];
     var soundCutoff = 0;
     function pickSound() {
         audio.src = SOUNDS[Math.floor(Math.random() * SOUNDS.length)];
