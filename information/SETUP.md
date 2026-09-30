@@ -470,7 +470,7 @@ The CSP is the union of what the site actually uses:
 |---|---|
 | `script-src 'self' 'unsafe-inline' 'unsafe-eval'` | inline handlers on interactive notebook pages; Alpine.js and math.js evaluate expressions |
 | `style-src 'self' 'unsafe-inline'` | the many inline `style=""` attributes |
-| `img-src/media-src 'self' data: blob:` | clock event card: logo graphic and added images are `data:` images (the live header has no `blob:` in `img-src`); the export downloads through a `blob:` link, which is not an image, so `img-src` does not apply |
+| `img-src/media-src 'self' data: blob:` | clock event card: logo graphic and added images are `data:` images (the live header has no `blob:` in `img-src`); the export downloads through a `blob:` link, which is not an image, so `img-src` does not apply. Clock timer/alarm: a sound file the visitor adds plays from a `blob:` URL, so `media-src` needs `blob:` (live header and the clock page's own `<meta>` CSP; without it the built-in sounds ring instead) |
 | `default-src/connect-src/font-src 'self'` | every asset is self-hosted |
 | `object-src 'none'`, `base-uri 'self'`, `frame-ancestors 'self'` | hardening |
 

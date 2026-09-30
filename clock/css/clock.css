@@ -689,6 +689,8 @@ body {
     background: var(--ink-dim);
     transform-origin: left;
     transform: scaleX(0);
+    /* Only for copies of clock.js from before 2026-09-30, which draw the line
+       once a second; the current one turns this off and draws it as it moves. */
     transition: transform 1s linear;
 }
 
@@ -716,7 +718,9 @@ body {
 }
 /* Hourglass and celestial: the time sits in the band under the glass's foot
    or the outer orbit, so these faces are as large as the ring and in the same
-   place: switching between them moves nothing. */
+   place: switching between them moves nothing. The outer orbit comes 3% lower
+   than the glass's foot (93% against 90%), so the celestial time does too:
+   the same gap under each. */
 :root[data-face="hourglass"] .tf-time,
 :root[data-face="celestial"] .tf-time {
     top: 93%;
@@ -724,6 +728,7 @@ body {
     font-size: max(var(--text-xs), calc(var(--tf-size) * .075));
 }
 :root[data-face="hourglass"] .tf-time { color: var(--ink-dim); }
+:root[data-face="celestial"] .tf-time { top: 96%; }
 .tf-arc-done { visibility: hidden; }   /* a zero-length round-capped dash would still draw a dot */
 
 /* Celestial: the dial (copied without the clock's planets), the path still
@@ -888,7 +893,7 @@ body {
     align-items: center;
     gap: 18px;
     max-width: calc(100vw - 32px);
-    padding: 8px 8px 8px 24px;
+    padding: 0 0 0 24px;
     border: 1px solid var(--line-strong);
     border-radius: 999px;
     background: var(--panel-bg);
@@ -912,7 +917,16 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.ring-banner .btn { min-width: 0; }
+/* One button tall, like the buttons in the views: the Dismiss pill fills the
+   banner's height, its border over the banner's. Its focus ring goes inside
+   it, as there is no room around it. */
+.ring-banner .btn { min-width: 0; margin: -1px; }
+.ring-banner .btn:focus-visible { outline-color: var(--bg); outline-offset: -5px; }
+/* On the ringing timer's or alarm's own view (clock.js sets .ring-here) that
+   view's button says Dismiss, so the banner stays away (on a short screen it
+   covered that button) and the heading takes its words and colour. */
+.app.ring-here .ring-banner { display: none; }
+.app.ring-here .view.active .heading,
 .app.ringing .ring-label,
 .app.ringing-timer #timer-display,
 .app.ringing-timer .tf-time,
@@ -1156,7 +1170,27 @@ body {
 .swatch input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
 .swatch input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 50%; }
 .swatch input[type="color"]::-moz-color-swatch { border: 0; border-radius: 50%; }
-.contrast-note { font-size: var(--text-xs); letter-spacing: .1em; color: var(--alert); }
+.contrast-note, .sound-note { font-size: var(--text-xs); letter-spacing: .1em; color: var(--alert); }
+
+/* Timer & alarm sound: what rings (the built-in sounds, or the name of the
+   file you added), a remove button when it is yours, and the file picker. */
+.sound-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.sound-name {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    top: var(--font-shift);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--text-xs);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+}
+.sound-name.mine { letter-spacing: .04em; text-transform: none; color: var(--ink); }
+.sound-row .chip, .sound-row .icon-btn { flex: none; }
+.sound-row .icon-btn { width: 30px; height: 30px; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 760px) {
@@ -1194,7 +1228,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
     .view.active, .face { animation: none !important; }
     .hg-svg { transition: none; }
-    .app.ringing .face .time-btn, .app.ringing-timer #timer-display, .app.ringing-timer .tf-time, .app.ringing-alarm #alarm-edit { animation: none; }
+    .app.ringing .face .time-btn, .app.ringing-timer #timer-display, .app.ringing-timer .tf-time, .app.ringing-alarm #alarm-edit,
+    .app.ring-here .view.active .heading { animation: none; }
     .timer-face { animation: none; }
     .sky-turn, .tw, .sat-spin { animation: none !important; }
     .tf-done .cel-glow { animation: none; opacity: .35; }

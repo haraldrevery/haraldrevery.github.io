@@ -6,7 +6,8 @@
      localStorage "rvry-clock-timers"     running timer and armed alarm, so a reload keeps them
      localStorage "rvry-clock-stopwatch"  stopwatch, laps (notes, time of day), the Undo copy
      IndexedDB    "rvry-clock-photos"     background photos you add yourself
-   Photos never go in localStorage: it is shared with Revery Notebook's
+     IndexedDB    "rvry-clock-sounds"     a sound file you add for the timer and alarm
+   Photos and sounds never go in localStorage: it is shared with Revery Notebook's
    autosave and holds only ~5 MB for the whole site. Every open tab listens
    for the others' writes and takes them over (see wire()), so a tab left open
    in the background never saves an older copy back over newer data.
@@ -124,7 +125,8 @@
         photos: [],          // ids of added photos (the images are in IndexedDB)
         customBg: '#14181f', // the custom theme's two colours; the same
         customInk: '#ece6d9', // fallbacks are in index.html's pre-paint script
-        perf: 'full'         // full | low (no smooth motion, twinkling or blur)
+        perf: 'full',        // full | low (no smooth motion, twinkling or blur)
+        sound: null          // { id, name } of a sound file you added (the file is in IndexedDB), or null: the built-in sounds, one at random
     };
     var HEX = /^#[0-9a-f]{6}$/i;
 
@@ -156,6 +158,7 @@
         if (isNaN(s.bgOpacity)) s.bgOpacity = DEFAULTS.bgOpacity;
         if (!Array.isArray(s.photos)) s.photos = [];
         if (typeof s.bg !== 'string') s.bg = DEFAULTS.bg;
+        if (!s.sound || typeof s.sound.id !== 'string' || typeof s.sound.name !== 'string') s.sound = null;
         if (migrated) {
             writeJSON(KEYS.settings, s);
             try { localStorage.removeItem('clock-lang'); localStorage.removeItem('clock-anim'); } catch (e) {}
@@ -216,6 +219,9 @@
             set_timer: 'Set a timer', make_card: 'Create an event card',
             perf: 'Performance', perf_full: 'Full', perf_low: 'Low',
             perf_low_hint: 'Less motion and no blur: easier on older devices and the battery',
+            sound: 'Timer & alarm sound', sound_random: 'Built-in (random)', sound_add: 'Add a file', sound_replace: 'Replace',
+            sound_remove: 'Remove this sound', sound_too_big: 'That file is over 15 MB.',
+            sound_failed: 'That file could not be played.', sound_save_failed: 'That file could not be saved.',
             week: 'Week'
         },
         sv: {
@@ -246,6 +252,9 @@
             set_timer: 'Ställ in en timer', make_card: 'Skapa ett eventkort',
             perf: 'Prestanda', perf_full: 'Full', perf_low: 'Låg',
             perf_low_hint: 'Mindre rörelse och ingen oskärpa: skonsammare mot äldre enheter och batteriet',
+            sound: 'Ljud för timer och larm', sound_random: 'Inbyggda (slumpat)', sound_add: 'Lägg till en fil', sound_replace: 'Byt',
+            sound_remove: 'Ta bort ljudet', sound_too_big: 'Filen är större än 15 MB.',
+            sound_failed: 'Filen kunde inte spelas upp.', sound_save_failed: 'Filen kunde inte sparas.',
             week: 'Vecka'
         }
     };
@@ -713,6 +722,18 @@
         var tm = T.timer, w = tfBox.offsetWidth;
         if (tm.status !== 'running' || !w) return Infinity;
         return TF_PX / (RING_C * w / 600 / tm.duration);
+    }
+    // The progress line under the big numerals (the faces without a timer
+    // face) is drawn the same way: again once its end has moved TF_PX, and
+    // with no glide in between, so it is full exactly when the time is up. It
+    // used to glide for a second after each once-a-second draw, which kept it
+    // a second behind (80% full when a 5 s timer rang) and kept the browser
+    // animating for the whole countdown (half a CPU core without graphics
+    // acceleration).
+    function barWait() {
+        var tm = T.timer, w = $('#timer-progress').parentNode.offsetWidth;
+        if (tm.status !== 'running' || !w) return Infinity;
+        return TF_PX / (w / tm.duration);
     }
     function drawGlassTimer(progress) {
         if (hgTimer.flips < 0) turnHourglass(hgTimer, 0, false);
@@ -1215,11 +1236,25 @@
     var audio = $('#alarm-sound');
     var SOUNDS = ['/clock/audio/timer_alarm_1.mp3', '/clock/audio/timer_alarm_2.mp3', '/clock/audio/timer_alarm_3.mp3', '/clock/audio/timer_alarm_4.mp3'];
     var soundCutoff = 0;
+    // A sound file of your own (see "Your own sound" below) if you added one,
+    // otherwise one of the built-in ones at random.
     function pickSound() {
-        audio.src = SOUNDS[Math.floor(Math.random() * SOUNDS.length)];
+        audio.src = customSound ? customSound.url : builtInSound();
         audio.preload = 'auto';
         audio.load();
     }
+    function builtInSound() { return SOUNDS[Math.floor(Math.random() * SOUNDS.length)]; }
+    // Your own file didn't play (only blob: URLs are yours): a built-in sound
+    // instead, at once if it is ringing, so a bad file never means silence.
+    audio.addEventListener('error', function () {
+        if (audio.src.slice(0, 5) !== 'blob:') return;
+        audio.src = builtInSound();
+        audio.load();
+        if (ringing) {
+            var p = audio.play();
+            if (p && p.catch) p.catch(function () {});
+        }
+    });
     // Called from the Start / Arm click. Picks (and so downloads) the sound
     // ahead of time, and plays it muted for an instant: Safari only lets a
     // page play audio later if it has played once inside a user gesture.
@@ -1252,6 +1287,151 @@
         audio.loop = false;
     }
 
+    // --- Your own sound ----------------------------------------------------
+    // One file you add in Settings rings for the timer and the alarm alike,
+    // instead of the built-in sounds. The file is kept in IndexedDB as bytes
+    // (as card.js keeps fonts; S.sound only names it) and played from a
+    // blob: URL, which index.html's CSP allows for media (so does the live
+    // header). The URL is made when the page opens, so a Start or Arm click
+    // can prime it at once (primeAudio). If it fails when it rings, a
+    // built-in sound rings instead (the audio element's error listener).
+    // Its own database, not a second store in the photos one: that would
+    // need a new version, and older cached copies of this script open the
+    // photos database as version 1, which would then fail.
+    var SOUND_DB = 'rvry-clock-sounds', SOUND_MAX = 15 * 1024 * 1024;
+    var customSound = null;          // { id, url } of the file in S.sound, once loaded
+    var soundDbPromise = null;
+    function soundStore(mode, fn) {
+        if (!soundDbPromise) {
+            soundDbPromise = new Promise(function (resolve, reject) {
+                var req = indexedDB.open(SOUND_DB, 1);
+                req.onupgradeneeded = function () { req.result.createObjectStore('sounds', { keyPath: 'id' }); };
+                req.onsuccess = function () { resolve(req.result); };
+                req.onerror = function () { reject(req.error); };
+            });
+            soundDbPromise.catch(function () { soundDbPromise = null; });   // try again next time
+        }
+        return soundDbPromise.then(function (d) {
+            return new Promise(function (resolve, reject) {
+                var tx = d.transaction('sounds', mode), req = fn(tx.objectStore('sounds'));
+                tx.oncomplete = function () { resolve(req && req.result); };
+                tx.onerror = tx.onabort = function () { reject(tx.error); };
+            });
+        });
+    }
+    // Takes a file's URL in use (or null: the built-in sounds). A timer or
+    // alarm already primed switches to it; otherwise the next one picks it.
+    // Not while it rings: that sound plays on (its URL is then kept).
+    function useSound(next) {
+        var old = customSound;
+        customSound = next;
+        if (!ringing && audio.getAttribute('src')) {
+            if (T.timer.status === 'running' || T.timer.status === 'paused' || T.alarm.armed) pickSound();
+            else { audio.removeAttribute('src'); audio.load(); }
+        }
+        if (old && (!next || old.url !== next.url) && audio.src !== old.url) URL.revokeObjectURL(old.url);
+    }
+    // The file S.sound names, as a URL: when the page opens, and when another
+    // tab changed it. Only opens IndexedDB if there is one, so a plain visit
+    // makes no database. Unreadable (a private window, say): the built-in
+    // sounds; gone from the database: the setting goes too.
+    function loadCustomSound() {
+        var want = S.sound;
+        if (!want) { useSound(null); return; }
+        if (customSound && customSound.id === want.id) return;
+        soundStore('readonly', function (store) { return store.get(want.id); }).then(function (rec) {
+            if (!S.sound || S.sound.id !== want.id) return;          // changed meanwhile
+            if (!rec) {
+                S.sound = null;
+                saveSettings();
+                syncSoundUI();
+                useSound(null);
+                return;
+            }
+            useSound({ id: rec.id, url: URL.createObjectURL(new Blob([rec.data], { type: rec.type || '' })) });
+        }, function () {});
+    }
+    function readBytes(file) {
+        if (file.arrayBuffer) return file.arrayBuffer();
+        return new Promise(function (resolve, reject) {
+            var r = new FileReader();
+            r.onload = function () { resolve(r.result); };
+            r.onerror = function () { reject(r.error); };
+            r.readAsArrayBuffer(file);
+        });
+    }
+    // Whether this browser can play it: yes once it could start, no on an
+    // error. No answer within 8 s (Safari may load no media before a tap)
+    // counts as yes; should it then not play when it rings, a built-in sound
+    // rings instead.
+    function playable(url) {
+        return new Promise(function (resolve) {
+            var a = new Audio(), id = setTimeout(function () { done(true); }, 8000);
+            function done(ok) {
+                clearTimeout(id);
+                a.oncanplay = a.onerror = null;
+                a.removeAttribute('src');
+                a.load();
+                resolve(ok);
+            }
+            a.preload = 'auto';
+            a.oncanplay = function () { done(true); };
+            a.onerror = function () { done(false); };
+            a.src = url;
+            a.load();
+        });
+    }
+    // A file picked in Settings: checked, saved (in place of the last one),
+    // then used.
+    function addSound(file) {
+        soundNote('');
+        if (!file) return;
+        if (file.size > SOUND_MAX) { soundNote(t('sound_too_big')); return; }
+        var type = file.type || '', url = null;
+        readBytes(file).then(function (data) {
+            url = URL.createObjectURL(new Blob([data], { type: type }));
+            return playable(url).then(function (ok) {
+                if (!ok) throw new Error('play');
+                var rec = { id: 's' + Date.now().toString(36), name: file.name.slice(0, 120), type: type, data: data };
+                return soundStore('readwrite', function (store) { store.clear(); store.put(rec); }).then(function () {
+                    S.sound = { id: rec.id, name: rec.name };
+                    saveSettings();
+                    useSound({ id: rec.id, url: url });
+                    url = null;
+                    syncSoundUI();
+                });
+            });
+        }).catch(function (e) {
+            if (url) URL.revokeObjectURL(url);
+            soundNote(t(e && e.message === 'play' ? 'sound_failed' : 'sound_save_failed'));
+        });
+    }
+    function removeSound() {
+        soundNote('');
+        S.sound = null;
+        saveSettings();
+        useSound(null);
+        syncSoundUI();
+        soundStore('readwrite', function (store) { store.clear(); }).catch(function () {});
+    }
+    // The Settings row. An older cached index.html has none.
+    function syncSoundUI() {
+        var name = $('#sound-name');
+        if (!name) return;
+        var mine = !!S.sound;
+        name.textContent = mine ? S.sound.name : t('sound_random');
+        name.title = mine ? S.sound.name : '';
+        name.classList.toggle('mine', mine);
+        $('#sound-pick').textContent = t(mine ? 'sound_replace' : 'sound_add');
+        setHidden($('#sound-remove'), !mine);
+    }
+    function soundNote(text) {
+        var note = $('#sound-note');
+        if (!note) return;
+        note.textContent = text;
+        setHidden(note, !text);
+    }
+
     // --- Ringing -----------------------------------------------------------
     function startRinging(kind) {
         ringing = kind;
@@ -1272,15 +1452,24 @@
         renderTools();
         heartbeat();
     }
+    // On the ringing timer's or alarm's own view (ringing is named after its
+    // mode), that view's own button says Dismiss, so the banner stays away
+    // (.ring-here in clock.css: on a short screen it covered that button) and
+    // the view's heading says what the banner would have (renderTimer,
+    // renderAlarm).
+    function ringHere() { return !!ringing && ringing === currentMode; }
+    function ringText() { return ringing === 'timer' ? t('ring_timer') : t('ring_alarm', { time: ringingAlarmText }); }
     function renderRinging() {
         var banner = $('#ring-banner');
         app.classList.toggle('ringing', !!ringing);
         app.classList.toggle('ringing-timer', ringing === 'timer');
         app.classList.toggle('ringing-alarm', ringing === 'alarm');
+        app.classList.toggle('ring-here', ringHere());
         banner.hidden = !ringing;
         if (ringing) {
-            $('#ring-label').textContent = ringing === 'timer' ? t('ring_timer') : t('ring_alarm', { time: ringingAlarmText });
-            if (!banner.contains(document.activeElement)) $('#ring-dismiss').focus({ preventScroll: true });
+            $('#ring-label').textContent = ringText();
+            var dismissBtn = !ringHere() ? $('#ring-dismiss') : ringing === 'timer' ? $('#timer-start') : $('#alarm-toggle');
+            if (document.activeElement !== dismissBtn) dismissBtn.focus({ preventScroll: true });
         }
     }
 
@@ -1428,6 +1617,7 @@
         var bar = $('#timer-progress').parentNode;
         setHidden(bar, faceOn);
         bar.style.visibility = editing ? 'hidden' : '';
+        setText($('[data-view="timer"] .heading'), ringing === 'timer' ? ringText() : t('timer_heading'));
         tickTimer();
         var start = $('#timer-start');
         start.textContent = tm.status === 'running' ? t('btn_pause')
@@ -1481,6 +1671,7 @@
         if (al.armed || document.activeElement !== alarmInputs[0]) alarmInputs[0].value = pad(al.h);
         if (al.armed || document.activeElement !== alarmInputs[1]) alarmInputs[1].value = pad(al.m);
         view.classList.toggle('armed', al.armed);
+        setText($('.heading', view), ringing === 'alarm' ? ringText() : t('alarm_heading'));
         var status = $('#alarm-status'), text;
         if (al.armed) {
             var mins = Math.floor((al.fireAt - Date.now()) / 60000);
@@ -1745,15 +1936,15 @@
         // the wall-clock second, or a running countdown's own second.
         var now = Date.now(), phase = now % 1000;
         if (T.timer.status === 'running') phase = ((now - T.timer.endAt) % 1000 + 1000) % 1000;
-        // A timer face can ask for a draw before that (TIMER_FACES wait);
-        // within two frames, it gets the next frame (a timeout that short
-        // often comes a frame late). Low performance: once a second.
-        var wait = 1000 - phase + 8, face = currentMode === 'timer' && S.perf !== 'low' && timerHasFace() && TIMER_FACES[S.face];
-        if (face && face.wait) {
-            var soon = face.wait();
-            if (soon < 34) { frameRaf = requestAnimationFrame(frame); return; }
-            wait = Math.min(wait, soon);
-        }
+        // A timer face, or the progress line when there is none, can ask for
+        // a draw before that (TIMER_FACES wait, barWait); within two frames,
+        // it gets the next frame (a timeout that short often comes a frame
+        // late). Low performance: once a second.
+        var wait = 1000 - phase + 8, timerView = currentMode === 'timer' && S.perf !== 'low';
+        var face = timerView && timerHasFace() && TIMER_FACES[S.face];
+        var soon = face ? (face.wait ? face.wait() : Infinity) : timerView ? barWait() : Infinity;
+        if (soon < 34) { frameRaf = requestAnimationFrame(frame); return; }
+        wait = Math.min(wait, soon);
         frameTimeout = setTimeout(frame, wait);
     }
     // Redraw now (after a setting or mode change) and restart the loop.
@@ -1773,6 +1964,7 @@
         root.setAttribute('data-mode', mode);
         $$('.view').forEach(function (v) { v.classList.toggle('active', v.dataset.view === mode); });
         $$('.mode-btn').forEach(function (b) { b.setAttribute('aria-current', String(b.dataset.mode === mode)); });
+        app.classList.toggle('ring-here', ringHere());
         renderTools();
         kick();
     }
@@ -2193,6 +2385,7 @@
         setHidden($('#contrast-note'), !custom || contrastRatio(S.customBg, S.customInk) >= 4.5);
         $('#custom-bg').value = S.customBg;
         $('#custom-ink').value = S.customInk;
+        syncSoundUI();
     }
     // A colour picked for the custom theme: shown live while the picker is
     // dragged, saved once it is closed ("change").
@@ -2214,6 +2407,7 @@
         if (before.face !== S.face && hgClock) hgClock.flips = -1;
         if (before.bgCycle !== S.bgCycle) restartCycle();
         if (before.photos.join() !== S.photos.join()) { userPhotosLoaded = false; userPhotos = []; }
+        if ((before.sound && before.sound.id) !== (S.sound && S.sound.id)) loadCustomSound();
         syncSettingsUI();
         loadUserPhotos().then(function () { renderPhotoStrip(); showBackground(); });
     }
@@ -2435,6 +2629,21 @@
         // (cached for months) would show a switch that does nothing.
         var perfField = $('#perf-field');
         if (perfField) perfField.hidden = false;
+        // The same for the sound field (and an older cached index.html has none).
+        var soundField = $('#sound-field');
+        if (soundField) {
+            soundField.hidden = false;
+            $('#sound-pick').addEventListener('click', function () { $('#sound-upload').click(); });
+            $('#sound-remove').addEventListener('click', removeSound);
+            $('#sound-upload').addEventListener('change', function (e) {
+                if (e.target.files && e.target.files[0]) addSound(e.target.files[0]);
+                e.target.value = '';
+            });
+        }
+        // The timer's and alarm's headings turn into "Time is up" / "Alarm ·
+        // 07:00" while they ring there (see ringHere), where the banner, which
+        // would have announced it, stays away: they announce it instead.
+        $$('[data-view="timer"] .heading, [data-view="alarm"] .heading').forEach(function (el) { el.setAttribute('aria-live', 'polite'); });
 
         // Another tab (or window) wrote one of the clock's keys: take its
         // version. Each tab keeps everything in memory and saves it whole, so
@@ -2478,6 +2687,10 @@
     // and the timer, alarm and stopwatch still work.
     hgClock = safely(makeHourglass, '');
     [buildRing, buildAnalog, buildCelestial, buildCelSeconds, buildTimerFace, buildCelTimer].forEach(function (build) { safely(build); });
+    // No glide on the progress line (see barWait). Set here, not in
+    // clock.css, which keeps its 1 s glide for older cached copies of this
+    // script: they draw the line only once a second.
+    $('#timer-progress').style.transition = 'none';
     applyRoot();
     applyLanguage();
     wire();
@@ -2485,6 +2698,7 @@
     renderLaps();
     showBackground();
     restartCycle();
+    loadCustomSound();
     setMode('clock');
     checkDue();
     heartbeat();

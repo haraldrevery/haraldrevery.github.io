@@ -17,13 +17,15 @@
 
     <!-- No blob: in img-src on purpose: the live Cloudflare header CSP does not
          allow it either, so anything that relies on blob: images fails here
-         first instead of only on the live site. -->
+         first instead of only on the live site. media-src has blob: for the
+         timer/alarm sound file you can add in Settings, played from memory
+         (the live header allows blob: media too). -->
     <meta http-equiv="Content-Security-Policy"
       content="default-src 'self';
                style-src 'self' 'unsafe-inline';
                font-src 'self' data:;
                img-src 'self' data:;
-               media-src 'self';
+               media-src 'self' blob:;
                connect-src 'self';
                script-src 'self' 'unsafe-inline';">
 
@@ -42,7 +44,7 @@
          the date here whenever clock.css changes. clock.js below has no ?v=
          (a Cloudflare purge is used instead); if it gets one again, clock.js
          passes it on to js/card.js. card.js pins its own card.css version. -->
-    <link rel="stylesheet" href="/clock/css/clock.css?v=20260926d">
+    <link rel="stylesheet" href="/clock/css/clock.css?v=20260930">
 
     <!-- Apply saved look before first paint (no theme/face flash). clock.js
          owns the settings; this only mirrors them onto <html>. The custom
@@ -432,6 +434,21 @@
                     <button class="seg-btn" data-set="lang=sv" lang="sv">SV</button>
                 </div>
             </div>
+        </div>
+
+        <!-- Hidden until clock.js shows it, as the Performance field below.
+             clock.js writes the name and button text. -->
+        <div class="field" id="sound-field" hidden>
+            <span class="field-label" data-i18n="sound">Timer &amp; alarm sound</span>
+            <div class="sound-row">
+                <span class="sound-name" id="sound-name">Built-in (random)</span>
+                <button class="icon-btn" id="sound-remove" aria-label="Remove this sound" data-i18n-aria="sound_remove" hidden>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
+                <button class="chip" id="sound-pick">Add a file</button>
+            </div>
+            <input type="file" id="sound-upload" accept="audio/*" hidden>
+            <p class="sound-note" id="sound-note" aria-live="polite" hidden></p>
         </div>
 
         <!-- Hidden until clock.js shows it: an older cached clock.js doesn't
