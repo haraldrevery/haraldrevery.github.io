@@ -519,15 +519,22 @@
   /* ---------------- theme derivation ---------------- */
 
   const HARMONY_MODES = ['analogous', 'complementary', 'split', 'triad', 'square'];
+  const harmonyCount = (count) => ([3, 4, 5, 7].indexOf(count) >= 0 ? count : 3);
+  // Widest spread that keeps every hue distinct: split stays 60° clear of the
+  // base; analogous never wraps past the full circle (7 x 60° would put the
+  // first and last colour on the same hue).
+  const maxSpread = (mode, count) => (mode === 'split' ? 60 : Math.min(90, Math.floor(360 / harmonyCount(count))));
+  // The spread a harmony really uses (the stored one may be wider).
+  const harmonySpread = (mode, count, spread) => clamp(spread, 5, maxSpread(mode, count));
   // Hues for a harmony around `h`. Spread only applies to analogous / split.
   function harmonyHues(h, mode, count, spread) {
     switch (mode) {
       case 'complementary': return [h, h + 180].map(mod360);
-      case 'split': { const s = clamp(spread, 5, 60); return [h, h + 180 - s, h + 180 + s].map(mod360); }
+      case 'split': { const s = harmonySpread(mode, count, spread); return [h, h + 180 - s, h + 180 + s].map(mod360); }
       case 'triad': return [h, h + 120, h + 240].map(mod360);
       case 'square': return [h, h + 90, h + 180, h + 270].map(mod360);
       default: {
-        const n = [3, 4, 5, 7].indexOf(count) >= 0 ? count : 3, s = clamp(spread, 5, 90), half = (n - 1) / 2;
+        const n = harmonyCount(count), s = harmonySpread('analogous', n, spread), half = (n - 1) / 2;
         const out = [];
         for (let i = 0; i < n; i++) out.push(mod360(h + (i - half) * s));
         return out;
@@ -535,7 +542,7 @@
     }
   }
   // Index of the base colour inside harmonyHues() output.
-  const harmonyBaseIndex = (mode, count) => (mode === 'analogous' ? (([3, 4, 5, 7].indexOf(count) >= 0 ? count : 3) - 1) >> 1 : 0);
+  const harmonyBaseIndex = (mode, count) => (mode === 'analogous' ? (harmonyCount(count) - 1) >> 1 : 0);
 
   // Perceptual tint/shade ramp through the base hue (OKLCH), light to dark.
   // Chroma tapers toward the ends and is gamut-mapped, so hues do not drift.
@@ -646,7 +653,7 @@
     FORMATS, format, toCss, parse, extract, NAMED,
     setFallback: (fn) => { fallback = fn; },
     relLum, flatten, contrast, grade, WHITE, BLACK,
-    HARMONY_MODES, harmonyHues, harmonyBaseIndex,
+    HARMONY_MODES, harmonyHues, harmonyBaseIndex, maxSpread, harmonySpread,
     SCALE_STEPS, toneScale, nearestStep,
     mix, sampleAt, gradientSteps, gradientCss, gradientCssOklab,
     hash32, kmeans

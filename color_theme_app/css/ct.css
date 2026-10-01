@@ -5,11 +5,15 @@
    HaraldMono, animated body::before gradient, .bg-topology-map). App tokens
    are prefixed --ct- and classes are checked against main.css (its .track
    once made every slider 36 px tall), so the two never fight.
-   Layout: on a desktop (>= 1000 x 560 px) the tool is a fixed one-screen
-   app with no page and no panel scrolling: every column is a flex column
-   whose swatch areas take a share of the window height. Only lists that can
-   grow without limit (library, a long stop list) scroll. Phones and tablets
-   get a normal scrolling page.
+   Layout: a fixed one-screen app on every screen size; the page never
+   scrolls. Every panel is a flex column whose swatch areas take a share of
+   the height that is left. Only lists that can grow without limit (library,
+   a long stop list) scroll, and a panel scrolls only as a last resort (the
+   largest text on a very small screen).
+   - Desktop (>= 1000 x 560): three columns, picker | theme | tools.
+   - Phones, tablets in portrait and small windows: one view at a time
+     (picker / theme / tools) chosen in a bottom bar, a side rail on short
+     landscape screens. ct-app.js uses the same 1000 x 560 query.
    ===================================================================== */
 
 :root {
@@ -83,7 +87,12 @@ body { background-color: var(--ct-bg-center); color: var(--ct-ink); }
     var(--color-backdrop-dark-mid, var(--ct-bg-center)),
     var(--color-backdrop-dark-end, var(--ct-bg-edge)));
 }
-body > .bg-topology-map { min-height: 100vh; }
+/* One screen: the page itself never scrolls. */
+body { overflow: hidden; }
+body > .bg-topology-map { min-height: 0; height: 100vh; height: 100dvh; }
+/* iOS < 15.4 has no dvh and its 100vh reaches under the toolbar: ct-app.js
+   sets --app-h from innerHeight there. */
+.no-dvh body > .bg-topology-map, .no-dvh .ct-app { height: var(--app-h, 100vh); }
 
 .ct-app *, .ct-dialog *, .toast * { box-sizing: border-box; }
 .ct-app, .ct-dialog, .toast {
@@ -121,15 +130,23 @@ body > .bg-topology-map { min-height: 100vh; }
 
 /* ---- App frame ---- */
 .ct-app {
+  --ct-gutter: clamp(10px, 1.8vw, 28px);
   display: flex; flex-direction: column;
-  padding: 0 clamp(10px, 1.8vw, 28px);
+  height: 100vh; height: 100dvh;
+  padding: 0 var(--ct-gutter);
   max-width: 1920px; margin: 0 auto;
 }
 .ct-top {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  padding: 10px 0;
+  padding: 10px 0; flex: none;
   border-bottom: 1px solid var(--ct-line);
 }
+.ct-top .icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; color: var(--ct-ink-2); }
+.ct-top .icon-btn:disabled { opacity: 0.35; }
+.ct-redo { margin-left: -6px; }
+/* Language, text size, light/dark: inline here, a small menu on narrow screens. */
+.ct-prefs { display: flex; align-items: center; gap: 10px; }
+.ct-top .ct-prefs-btn { display: none; }
 .ct-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .ct-brand-mark { width: 26px; height: 26px; border-radius: 4px; flex-shrink: 0; }
 .ct-app .ct-title {
@@ -139,29 +156,19 @@ body > .bg-topology-map { min-height: 100vh; }
 }
 .ct-spacer { flex: 1; }
 .ct-home {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 26px; min-height: 26px;
   font-family: var(--ct-text); font-size: calc(17px * var(--ui-scale)); line-height: 1;
   color: var(--ct-ink-3); text-decoration: none; padding: 2px 4px; border-radius: 3px;
 }
 .ct-home:hover { color: var(--ct-ink); }
 .panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .base-hex {
-  background: none; border: 0; padding: 0; cursor: pointer;
+  background: none; border: 0; padding: 0 2px; min-height: 24px; cursor: pointer;
   font-family: var(--ct-mono); font-size: calc(11px * var(--ui-scale)); letter-spacing: 0.04em; color: var(--ct-ink-2);
 }
 .base-hex:hover { color: var(--ct-accent); }
 
-.ct-main {
-  display: grid; grid-template-columns: minmax(0, 1fr);
-  gap: 12px; padding: 12px 0 24px;
-}
-@media (min-width: 760px) {
-  .ct-main { grid-template-columns: minmax(250px, 290px) minmax(0, 1fr); }
-  .ct-side { grid-column: 1 / -1; }
-}
-@media (min-width: 1000px) {
-  .ct-main { grid-template-columns: clamp(232px, 21vw, 330px) minmax(0, 1fr) clamp(290px, 27vw, 400px); }
-  .ct-side { grid-column: auto; }
-}
+.ct-main { flex: 1 1 0; min-height: 0; gap: 12px; padding: 12px 0; }
 
 /* ---- Panels + headings ---- */
 .panel {
@@ -198,7 +205,7 @@ body > .bg-topology-map { min-height: 100vh; }
 .btn:hover { background: var(--ct-btn-hover); }
 .btn.ghost { background: transparent; color: var(--ct-ink-2); border-color: var(--ct-line); }
 .btn.ghost:hover { background: var(--ct-hover); color: var(--ct-ink); border-color: var(--ct-ink-3); }
-.btn.small { padding: 5px 9px; font-size: calc(10.5px * var(--ui-scale)); }
+.btn.small { padding: 5px 9px; font-size: calc(10.5px * var(--ui-scale)); min-height: 24px; }
 .btn.icon { padding: 5px 7px; display: inline-flex; align-items: center; }
 .btn:disabled, .icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn:disabled { background: transparent; color: var(--ct-ink-3); border-color: var(--ct-line); opacity: 0.7; }
@@ -210,29 +217,31 @@ body > .bg-topology-map { min-height: 100vh; }
 }
 .icon-btn:hover:not(:disabled) { color: var(--ct-ink); border-color: var(--ct-line); }
 .link {
-  background: none; border: 0; padding: 0; cursor: pointer;
+  background: none; border: 0; padding: 0; min-height: 24px; cursor: pointer;
   font-family: var(--ct-mono); font-size: calc(10px * var(--ui-scale)); letter-spacing: 0.04em;
   color: var(--ct-ink-3); border-bottom: 1px dashed var(--ct-line);
 }
 .link:hover { color: var(--ct-accent); border-bottom-color: var(--ct-accent); }
 .x {
   background: none; border: 0; cursor: pointer; color: var(--ct-ink-3);
-  font-size: calc(18px * var(--ui-scale)); line-height: 1; padding: 0 4px;
+  font-size: calc(18px * var(--ui-scale)); line-height: 1; padding: 0 4px; min-width: 24px; min-height: 24px;
 }
 .x:hover { color: var(--ct-ink); }
 
-/* ---- Segmented control (aria-pressed / aria-selected = on) ---- */
+/* ---- Segmented control (aria-pressed / aria-selected = on) ----
+   Too narrow for one row, it wraps onto a second instead of cutting off
+   its last buttons (CMYK was clipped at 1000-1100 px and on 280 px phones).
+   The 1px gaps over the line colour draw the dividers in both cases. */
 .seg {
-  display: inline-flex; flex-wrap: nowrap;
+  display: inline-flex; flex-wrap: wrap; gap: 1px;
   border: 1px solid var(--ct-line); border-radius: 3px; overflow: hidden;
-  background: var(--ct-input); max-width: 100%;
+  background: var(--ct-line); max-width: 100%;
 }
 .seg-btn {
-  border: 0; border-right: 1px solid var(--ct-line); background: transparent;
+  flex: 1 0 auto; border: 0; background: var(--ct-input); min-width: 24px; min-height: 24px;
   font-family: var(--ct-mono); font-size: calc(10.5px * var(--ui-scale)); letter-spacing: 0.05em;
   padding: 5px 8px; cursor: pointer; color: var(--ct-ink-2); white-space: nowrap; line-height: 1.2;
 }
-.seg-btn:last-child { border-right: 0; }
 .seg-btn:hover { background: var(--ct-hover); color: var(--ct-ink); }
 .seg-btn[aria-pressed="true"] { background: var(--ct-btn-bg); color: var(--ct-btn-fg); }
 
@@ -293,10 +302,14 @@ body > .bg-topology-map { min-height: 100vh; }
 .ct-app input[type="text"]:focus-visible { outline: 2px solid var(--ct-accent); outline-offset: 0; }
 .ct-app input[aria-invalid="true"] { border-color: var(--ct-err); }
 
+/* Ranges: the visible track is the padding box; the transparent top and
+   bottom borders make the touch area taller than the track (24 px, more
+   with a finger, see the pointer: coarse block). */
 .ct-app input[type="range"] {
   -webkit-appearance: none; appearance: none;
-  width: 100%; height: 6px; margin: 6px 0; padding: 0; border: 0; border-radius: 3px;
-  background: var(--ct-line); outline-offset: 4px; cursor: pointer;
+  width: 100%; height: 24px; margin: 0; padding: 0;
+  border: solid transparent; border-width: 9px 0; border-radius: 12px;
+  background: var(--ct-line); background-clip: padding-box !important; outline-offset: 2px; cursor: pointer;
 }
 .ct-app input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%;
@@ -306,7 +319,7 @@ body > .bg-topology-map { min-height: 100vh; }
   width: 12px; height: 12px; border-radius: 50%;
   background: var(--ct-paper); border: 2px solid var(--ct-ink); box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
-.ct-app input[type="range"].ct-track { height: 12px; border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(127,127,127,0.25); }
+.ct-app input[type="range"].ct-track { border-width: 6px 0; box-shadow: inset 0 0 0 1px rgba(127,127,127,0.25); }
 .track-hue { background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00) !important; }
 .track-sat { background: linear-gradient(to right, var(--sat0, #888), var(--sat1, #f00)) !important; }
 .track-val { background: linear-gradient(to right, #000, var(--val1, #f00)) !important; }
@@ -320,7 +333,7 @@ body > .bg-topology-map { min-height: 100vh; }
 .ct-picker { gap: 10px; }
 .wheel-wrap {
   --wheel: 240px; --sv: 140px;
-  position: relative; width: 100%; max-width: 264px; height: var(--wheel);
+  position: relative; width: 100%; height: var(--wheel);
   align-self: center; flex-shrink: 0;
 }
 .wheel, .wheel-ring, .wheel-lines, .wheel-marks {
@@ -361,12 +374,24 @@ body > .bg-topology-map { min-height: 100vh; }
 /* ---- Board ---- */
 .ct-board { gap: 12px; container-type: inline-size; }
 .board-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-@media (min-width: 1000px) { .board-head { flex-wrap: nowrap; } .board-head .name-input { min-width: 80px; } }
-.board-head .name-input { flex: 1 1 160px; font-family: var(--ct-text); font-size: calc(14px * var(--ui-scale)); }
+.board-head .name-input { flex: 1 1 160px; min-width: 80px; font-family: var(--ct-text); font-size: calc(14px * var(--ui-scale)); }
+/* A narrow board shows the format as a drop-down (the same setting). */
+.fmt-select {
+  display: none; flex: none; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  font-family: var(--ct-mono); font-size: calc(11px * var(--ui-scale)); letter-spacing: 0.05em; color: var(--ct-ink);
+  height: calc(30px * var(--ui-scale) / 1.22); padding: 0 26px 0 9px;
+  border: 1px solid var(--ct-line); border-radius: 3px;
+  background: var(--ct-input) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M2 4l3 3 3-3' fill='none' stroke='%238f8f8f' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 9px center;
+}
+@container (max-width: 559.98px) {
+  #fmt-seg { display: none; }
+  .fmt-select { display: block; }
+}
 .ct-dialog .name-input { flex: 1 1 200px; font-family: var(--ct-text); font-size: calc(14px * var(--ui-scale)); }
 
 .readout { display: flex; gap: 14px; align-items: stretch; }
-.ro-sw { width: clamp(70px, 20%, 150px); min-height: 110px; border-radius: 4px; flex-shrink: 0; }
+.ro-sw { width: clamp(40px, 16%, 150px); border-radius: 4px; flex-shrink: 0; }
 .ro-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
 .ro-title { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
 .ro-title #ro-name { font-size: calc(14px * var(--ui-scale)); }
@@ -376,9 +401,9 @@ body > .bg-topology-map { min-height: 100vh; }
   background: var(--ct-line-2); border: 1px solid var(--ct-line-2); border-radius: 3px; overflow: hidden;
 }
 @container (min-width: 900px) { .ro-rows { grid-template-columns: 1fr 1fr 1fr; } }
-@container (max-width: 380px) { .ro-rows { grid-template-columns: 1fr; } }
+@container (max-width: 299.98px) { .ro-rows { grid-template-columns: 1fr; } }
 .ro-row {
-  display: flex; flex-direction: column; align-items: stretch; gap: 1px; min-width: 0;
+  display: flex; flex-direction: column; justify-content: center; align-items: stretch; gap: 1px; min-width: 0; min-height: 24px;
   background: var(--ct-paper); border: 0; padding: 3px 8px; line-height: 1.25; cursor: pointer; text-align: left; color: var(--ct-ink);
 }
 .ro-row:hover, .ro-row.on { background: var(--ct-hover); }
@@ -395,11 +420,11 @@ body > .bg-topology-map { min-height: 100vh; }
 .sec-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 .sec-head > .ct-h { margin-right: auto; }
 .sec-head .btn { margin-left: auto; }
-.sec-head .ct-sub + .btn { margin-left: 0; }
+.sec-head .ct-sub + .btn, .sec-head .seg + .btn { margin-left: 0; }
 .sec-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .sec-controls .btn { margin-left: auto; }
 .inline-range {
-  display: flex; align-items: center; gap: 8px; flex: 1 1 200px; min-width: 0;
+  display: flex; align-items: center; gap: 8px; flex: 1 1 140px; min-width: 0;
   font-family: var(--ct-mono); font-size: calc(10.5px * var(--ui-scale)); letter-spacing: 0.06em;
   text-transform: uppercase; color: var(--ct-ink-3);
 }
@@ -573,11 +598,6 @@ body > .bg-topology-map { min-height: 100vh; }
 .toast .link { color: var(--ct-btn-fg); border-bottom-color: currentColor; font-size: inherit; }
 
 @media (max-width: 520px) {
-  .ct-top { gap: 8px; }
-  .ct-app .ct-title { font-size: calc(14px * var(--ui-scale)); }
-  .ro-sw { width: 70px; }
-  .readout { flex-direction: column; }
-  .ro-sw { width: 100%; min-height: 70px; }
   .cc-slots { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -585,68 +605,183 @@ body > .bg-topology-map { min-height: 100vh; }
 }
 
 /* =====================================================================
-   One-screen desktop canvas (>= 1000 x 560). Every column is a flex column;
-   the swatch areas (flex: 1, basis 0, a minimum height) absorb whatever
-   height the window has, so nothing scrolls. Panels keep overflow:auto only
-   as a last resort (a tiny window with the largest text size).
+   Filling the screen (both layouts). Every panel is a flex column; the
+   swatch areas (flex: 1, basis 0, a minimum height) absorb whatever height
+   is left, so nothing scrolls. Panels keep overflow:auto only as a last
+   resort (a tiny screen with the largest text size).
    ===================================================================== */
-@media (min-width: 1000px) and (min-height: 560px) {
-  body { overflow: hidden; }
-  body > .bg-topology-map { min-height: 0; height: 100vh; height: 100dvh; }
-  .ct-app { height: 100vh; height: 100dvh; }
-  .ct-main { flex: 1; min-height: 0; padding: 12px 0; }
-  .ct-main > .panel { min-height: 0; overflow-x: hidden; overflow-y: auto; scrollbar-width: thin; }
+.ct-main > .panel { min-height: 0; overflow-x: hidden; overflow-y: auto; scrollbar-width: thin; }
 
-  /* Picker: the wheel takes the height that is left. */
-  .ct-picker { gap: 10px; }
-  .ct-picker > * { flex: none; }
-  .ct-picker { position: relative; }
-  .ct-picker > .wheel-wrap { flex: 1 1 0; min-height: 120px; height: auto; max-width: none; width: 100%; }
-  /* The paste tray is a short-lived prompt: float it over the bottom of the
-     column instead of taking the wheel's space. */
-  .ct-picker > .tray {
-    position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 5;
-    background: var(--ct-paper); border-style: solid; box-shadow: var(--ct-shadow);
-  }
-
-  /* Board */
-  .ct-board > * { flex: none; }
-  .ct-board > .sec-harm { flex: 3 1 auto; }
-  .ct-board > .sec-scale { flex: 2 1 auto; }
-  .ct-board > .sec-grad { flex: 3 1 auto; }
-  .sec > .sec-head, .sec > .sec-controls { flex: none; }
-  /* One row each; labels shorten with an ellipsis (the readout shows the full value). */
-  #harm-row, #grad-steps { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
-  #harm-row .chip-label, #grad-steps .chip-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
-  #harm-row { flex: 1 1 0; min-height: 64px; grid-auto-rows: 1fr; }
-  #ramp { flex: 1 1 0; min-height: 44px; }
-  .ramp-step { height: auto; }
-  .grad-bar { flex: 2 1 0; min-height: 18px; height: auto; }
-  #grad-steps { flex: 3 1 0; min-height: 52px; grid-auto-rows: 1fr; }
-  #harm-row .chip, #grad-steps .chip { min-height: 0; }
-  #harm-row .chip-sw, #grad-steps .chip-sw { flex: 1 1 auto; height: auto; min-height: 18px; }
-
-  /* Tools */
-  .ct-side > .tab-panel { flex: 1 1 0; min-height: 0; }
-  .ct-side .tab-panel > * { flex: none; }
-  #tab-gradient .stops { flex: 0 1 auto; min-height: 64px; overflow-y: auto; scrollbar-width: thin; }
-  #tab-contrast .cc-readout { flex: 1 1 auto; min-height: 96px; max-height: 260px; }
-  #tab-image .dropzone { flex: 1 1 auto; max-height: 420px; }
-  #tab-image .img-area { flex: 1 1 0; min-height: 0; }
-  #tab-image .img-area > * { flex: none; }
-  #tab-image .img-wrap { flex: 1 1 0; min-height: 80px; align-self: stretch; display: flex; align-items: center; justify-content: center; }
-  #tab-image .img-wrap img { max-height: var(--img-max, 260px); }
-  #tab-library .lib-grid { flex: 1 1 0; min-height: 0; overflow-y: auto; align-content: start; scrollbar-width: thin; }
+/* Picker: the wheel takes the height that is left. */
+.ct-picker { position: relative; }
+.ct-picker > * { flex: none; }
+.ct-picker > .wheel-wrap { flex: 1 1 0; min-height: 120px; height: auto; }
+/* The paste tray is a short-lived prompt: float it over the bottom of the
+   column instead of taking the wheel's space. */
+.ct-picker > .tray {
+  position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 5;
+  background: var(--ct-paper); border-style: solid; box-shadow: var(--ct-shadow);
 }
-/* Short windows (laptops: 1366 x 768 leaves ~650 px of page): denser spacing. */
-@media (min-width: 1000px) and (min-height: 560px) and (max-height: 760px) {
+
+/* Board */
+.ct-board > * { flex: none; }
+.ct-board > .sec-harm { flex: 3 1 auto; }
+.ct-board > .sec-scale { flex: 2 1 auto; }
+.ct-board > .sec-grad { flex: 3 1 auto; }
+.sec > .sec-head, .sec > .sec-controls { flex: none; }
+/* One row each; labels shorten with an ellipsis (the readout shows the full value). */
+#harm-row, #grad-steps { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+#harm-row .chip-label, #grad-steps .chip-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
+#harm-row { flex: 1 1 0; min-height: 64px; grid-auto-rows: 1fr; }
+#ramp { flex: 1 1 0; min-height: 44px; }
+.ramp-step { height: auto; }
+.grad-bar { flex: 2 1 0; min-height: 18px; height: auto; }
+#grad-steps { flex: 3 1 0; min-height: 52px; grid-auto-rows: 1fr; }
+#harm-row .chip, #grad-steps .chip { min-height: 0; }
+#harm-row .chip-sw, #grad-steps .chip-sw { flex: 1 1 auto; height: auto; min-height: 18px; }
+
+/* Tools */
+.ct-side > .tab-panel { flex: 1 1 0; min-height: 0; }
+.ct-side .tab-panel > * { flex: none; }
+#tab-gradient .stops { flex: 0 1 auto; min-height: 64px; overflow-y: auto; scrollbar-width: thin; }
+#tab-contrast .cc-readout { flex: 1 1 auto; min-height: 96px; max-height: 260px; }
+#tab-image .dropzone { flex: 1 1 auto; max-height: 420px; }
+#tab-image .img-area { flex: 1 1 0; min-height: 0; }
+#tab-image .img-area > * { flex: none; }
+#tab-image .img-wrap { flex: 1 1 0; min-height: 80px; align-self: stretch; display: flex; align-items: center; justify-content: center; }
+#tab-image .img-wrap img { max-height: var(--img-max, 260px); }
+#tab-library .lib-grid { flex: 1 1 0; min-height: 0; overflow-y: auto; align-content: start; scrollbar-width: thin; }
+
+/* Phone-only parts, hidden in the desktop layout. main.css pins every
+   <nav> to the top of the page (the site menu); this one stays in place. */
+.ct-nav, .ct-strip { display: none; }
+.ct-nav { position: static; top: auto; }
+
+/* ---- Desktop: three columns (>= 1000 x 560) ---- */
+@media (min-width: 1000px) and (min-height: 560px) {
+  .ct-main { display: grid; grid-template-columns: clamp(232px, 21vw, 330px) minmax(0, 1fr) clamp(290px, 27vw, 400px); }
+  .ro-sw { min-height: 110px; }
+}
+
+/* ---- Phones, portrait tablets, small windows: one view at a time ---- */
+@media (max-width: 999.98px), (max-height: 559.98px) {
+  .ct-main { display: flex; flex-direction: column; padding: 8px 0; }
+  .ct-main > .panel { display: none; flex: 1 1 0; }
+  #view-picker { display: flex; }
+  [data-view="theme"] #view-picker, [data-view="tools"] #view-picker { display: none; }
+  [data-view="theme"] #view-theme, [data-view="tools"] #view-tools { display: flex; }
+
+  .ct-nav {
+    display: flex; flex: none;
+    margin: 0 calc(-1 * var(--ct-gutter)); padding: 0 var(--ct-gutter) env(safe-area-inset-bottom, 0px);
+    background: var(--ct-paper); border-top: 1px solid var(--ct-line);
+  }
+  .nav-btn {
+    flex: 1 1 0; min-width: 0; min-height: 52px; position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    background: none; border: 0; cursor: pointer; color: var(--ct-ink-3);
+    font-family: var(--ct-mono); font-size: calc(9.5px * var(--ui-scale)); letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .nav-btn:hover { color: var(--ct-ink-2); }
+  .nav-btn[aria-pressed="true"] { color: var(--ct-ink); }
+  .nav-btn[aria-pressed="true"]::before {
+    content: ''; position: absolute; top: -1px; left: 22%; right: 22%; height: 2px; background: var(--ct-ink);
+  }
+  .nav-btn span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Live strip: the theme while you pick; it opens the theme view. */
+  .ct-strip {
+    display: flex; align-items: center; gap: 8px; padding: 0; min-height: 40px;
+    background: none; border: 0; cursor: pointer; color: var(--ct-ink-3); text-align: left;
+  }
+  .strip-swatches { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; border-radius: 3px; overflow: hidden; }
+  .strip-row { display: flex; height: 26px; }
+  .strip-row.thin { height: 12px; }
+  .strip-row .sw { flex: 1 1 0; min-width: 0; box-shadow: none; }
+  .ct-strip:hover { color: var(--ct-ink); }
+  .ct-picker > .panel-head { display: none; } /* the strip shows the base */
+
+  /* Sliders: label | track rows (the label column fits the longest label). */
+  .sliders { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: center; column-gap: 12px; row-gap: 2px; }
+  .sliders .field { display: contents; }
+  .sliders .val { display: inline-block; min-width: 4ch; text-align: right; }
+  .smart > label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  .sec-harm #mode-seg { order: 2; flex: 1 1 100%; }
+  .toast { bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+}
+/* Landscape (phones on their side, short windows): two columns per view. */
+@media (max-width: 999.98px) and (orientation: landscape), (max-height: 559.98px) and (orientation: landscape) {
+  #view-picker {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: repeat(4, auto) minmax(0, 1fr);
+    column-gap: 16px; row-gap: 8px; align-content: start;
+  }
+  #view-picker > * { grid-column: 2; }
+  #view-picker > .wheel-wrap { grid-column: 1; grid-row: 1 / -1; align-self: stretch; }
+  [data-view="theme"] #view-theme {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+    grid-template-rows: auto minmax(min-content, 3fr) minmax(min-content, 2fr) minmax(min-content, 3fr); column-gap: 16px; row-gap: 8px;
+  }
+  #view-theme > .board-head { grid-column: 1; grid-row: 1; }
+  #view-theme #fmt-seg { display: none; } /* the head is one column wide here */
+  #view-theme .fmt-select { display: block; }
+  #view-theme > .readout { grid-column: 1; grid-row: 2 / -1; align-self: start; }
+  #view-theme > .sec-harm { grid-column: 2; grid-row: 1 / 3; }
+  #view-theme > .sec-scale { grid-column: 2; grid-row: 3; }
+  #view-theme > .sec-grad { grid-column: 2; grid-row: 4; }
+}
+/* Short landscape screens: the views bar becomes a rail on the left. */
+@media (max-height: 499.98px) and (orientation: landscape) {
+  .ct-app { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .ct-top { grid-column: 1 / -1; }
+  .ct-main { grid-column: 2; grid-row: 2; }
+  .ct-nav {
+    grid-column: 1; grid-row: 2; flex-direction: column; justify-content: center;
+    margin: 0 10px 0 calc(-1 * var(--ct-gutter)); padding: 0 0 env(safe-area-inset-bottom, 0px) var(--ct-gutter);
+    border-top: 0; border-right: 1px solid var(--ct-line); background: transparent;
+  }
+  .nav-btn { flex: none; width: 64px; min-height: 56px; }
+  .ct-app .ct-top { padding: 2px 0; }
+  .ct-app .ct-main { padding: 6px 0; }
+  .strip-row { height: 20px; }
+  .strip-row.thin { height: 8px; }
+  .ct-strip { min-height: 30px; }
+  .sliders { row-gap: 0; }
+  /* Theme: the harmony modes share the heading's row (they name themselves). */
+  .sec-harm .sec-head > .ct-h { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .sec-harm #mode-seg { order: 0; flex: 1 1 auto; }
+  #view-theme .name-input { flex-basis: 80px; }
+  .nav-btn[aria-pressed="true"]::before { top: 22%; bottom: 22%; left: auto; right: -1px; width: 2px; height: auto; }
+  .toast { bottom: 18px; }
+}
+/* Narrow top bar: language, text size and light/dark move into a menu. */
+@media (max-width: 819.98px) {
+  .ct-top { position: relative; flex-wrap: nowrap; gap: 6px; padding: 6px 0; }
+  .ct-top .ct-prefs-btn { display: inline-flex; }
+  .ct-prefs {
+    display: none; position: absolute; right: 0; top: calc(100% + 4px); z-index: 70;
+    flex-direction: column; align-items: flex-start; gap: 10px; padding: 12px;
+    background: var(--ct-paper); border: 1px solid var(--ct-line); border-radius: 4px; box-shadow: var(--ct-shadow);
+  }
+  .ct-prefs.open { display: flex; }
+}
+@media (max-width: 559.98px) {
+  .ct-app .ct-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+@media (max-width: 359.98px) {
+  .ct-app { --ct-gutter: 8px; }
+  .ct-top { gap: 4px; }
+  .ct-brand-mark { display: none; }
+}
+
+/* Short screens (laptops: 1366 x 768 leaves ~650 px of page; phones): denser spacing. */
+@media (max-height: 760px) {
   .ct-top { padding: 6px 0; }
   .ct-main { padding: 8px 0; gap: 10px; }
   .panel { padding: 10px 12px; gap: 8px; }
   .ct-board { gap: 8px; }
   .ct-picker { gap: 6px; }
-  .sliders { gap: 0; }
-  .ct-app input[type="range"] { margin: 4px 0; }
+  .sliders { row-gap: 0; }
   .sec { gap: 4px; }
   .ro-row { padding: 2px 8px; }
   .ro-body { gap: 4px; }
@@ -659,8 +794,8 @@ body > .bg-topology-map { min-height: 100vh; }
   .stop-sw, .cc-sw { width: 26px; height: 26px; }
   .smart-sw { width: 26px; height: 26px; }
 }
-/* Very short windows (1280 x 720 screens leave ~600 px): smaller minimums. */
-@media (min-width: 1000px) and (min-height: 560px) and (max-height: 640px) {
+/* Very short screens (1280 x 720 screens leave ~600 px): smaller minimums. */
+@media (max-height: 640px) {
   #harm-row { min-height: 44px; }
   #ramp { min-height: 34px; }
   #grad-steps { min-height: 38px; }
@@ -686,3 +821,33 @@ body > .bg-topology-map { min-height: 100vh; }
 .dense-2 .ro-row { padding: 1px 6px; }
 .dense-2 #tab-image .img-wrap { min-height: 56px; }
 .dense-2 .ct-picker > .wheel-wrap { min-height: 100px; }
+
+/* Touch screens: finger-sized targets (most at least 32-36 px, the bars
+   40-52 px) and 16 px text in fields: iOS Safari zooms the page into any
+   field with smaller text when it gets focus. Last, so it wins over the
+   density rules above. */
+@media (pointer: coarse) {
+  .btn { min-height: 36px; }
+  .btn.small { min-height: 32px; }
+  .seg-btn { min-height: 34px; min-width: 36px; }
+  .ro-row { min-height: 28px; }
+  .tab-btn { min-height: 40px; }
+  .icon-btn { width: 34px; height: 34px; }
+  .ct-top .icon-btn { width: 40px; height: 40px; }
+  .ct-home { min-width: 40px; min-height: 40px; }
+  .ct-menu-btn { height: 36px; }
+  .link { min-height: 32px; }
+  .x { min-width: 36px; min-height: 36px; }
+  .lib-name { min-height: 32px; }
+  .ct-app input[type="text"], .ct-dialog input[type="text"], .fmt-select { font-size: 16px; height: 38px; }
+  .ct-app input[type="range"] { height: 34px; border-width: 14px 0; }
+  .ct-app input[type="range"].ct-track { border-width: 10px 0; }
+  .ct-app input[type="range"]::-webkit-slider-thumb { width: 24px; height: 24px; }
+  .ct-app input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; }
+  .sw.mini { width: 32px; height: 32px; }
+  .stop-sw, .cc-sw, .smart-sw { width: 36px; height: 36px; }
+}
+/* No hover on touch: the readout rows always show that a tap copies. */
+@media (hover: none) {
+  .ro-c { opacity: 1; color: var(--ct-ink-3); }
+}

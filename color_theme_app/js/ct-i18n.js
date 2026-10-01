@@ -16,6 +16,10 @@
       home: 'Back to the experiments',
       copy_base: 'Copy the base color',
       undone: 'Undone', redone: 'Redone',
+      redo: 'Redo', undo_key: 'Undo ({key})', redo_key: 'Redo ({key})',
+      settings: 'Settings',
+      views: 'Views', tools: 'Tools',
+      show_theme: 'Show the theme',
 
       sec_picker: 'Picker',
       hue: 'Hue', saturation: 'Saturation', brightness: 'Brightness', alpha: 'Opacity',
@@ -117,6 +121,7 @@
       deleted: 'Deleted “{name}”',
       undo: 'Undo',
       gradient_replaced: 'Gradient replaced',
+      gradient_first: 'Gradient replaced with the first {n} of {total} colors',
       storage_full: 'Kept for this visit only: the browser will not store it (storage full or blocked).',
 
       exp_title: 'Export theme',
@@ -150,6 +155,10 @@
       home: 'Tillbaka till experimenten',
       copy_base: 'Kopiera basfärgen',
       undone: 'Ångrat', redone: 'Gjort om',
+      redo: 'Gör om', undo_key: 'Ångra ({key})', redo_key: 'Gör om ({key})',
+      settings: 'Inställningar',
+      views: 'Vyer', tools: 'Verktyg',
+      show_theme: 'Visa temat',
 
       sec_picker: 'Färgväljare',
       hue: 'Nyans', saturation: 'Mättnad', brightness: 'Ljusstyrka', alpha: 'Opacitet',
@@ -251,6 +260,7 @@
       deleted: 'Tog bort ”{name}”',
       undo: 'Ångra',
       gradient_replaced: 'Gradienten ersattes',
+      gradient_first: 'Gradienten ersattes med de första {n} av {total} färgerna',
       storage_full: 'Sparas bara under det här besöket: webbläsaren tillåter inte lagring (full eller blockerad).',
 
       exp_title: 'Exportera tema',

@@ -8,16 +8,16 @@
 <!-- Easter egg (linked from /h): kept out of search results, like the h/ wallpapers. -->
 <meta name="robots" content="noindex, follow" />
 <!-- Site CSS first (animated body::before gradient, .bg-topology-map SVG
-     background, fonts), then the app's own styles. No site footer: on a
-     desktop the tool is a fixed one-screen app; the ½ link in the top bar
-     leads back to /h like the footer easter egg did.
-     The app files have new names (2026-10 rewrite) because CSS/JS are cached
-     for 186 days with no ?v=: a changed file needs a new name or a ?v=. -->
+     background, fonts), then the app's own styles. No site footer: the tool
+     is a fixed one-screen app on every screen size; the ½ link in the top
+     bar leads back to /h like the footer easter egg did.
+     CSS/JS are cached for 186 days, so every app file below carries ?v=N:
+     bump N on all of them (here and in h/color_theme.html) after a change. -->
 <link rel="stylesheet" href="/main.css" />
-<link rel="stylesheet" href="/color_theme_app/css/ct.css" />
-<!-- Saved theme / language / text size before first paint (no flash).
-     rvry-theme is shared with RVRY_ASCII. -->
-<script>try{var d=document.documentElement,t=localStorage.getItem("rvry-theme");if(t==="light"||t==="dark")d.setAttribute("data-theme",t);var s=JSON.parse(localStorage.getItem("rvry-color-settings")||"{}");if(s.lang==="sv")d.lang="sv";if(/^(xs|sm|md|lg|xl)$/.test(s.size))d.setAttribute("data-ui-size",s.size);}catch(e){}</script>
+<link rel="stylesheet" href="/color_theme_app/css/ct.css?v=2" />
+<!-- Saved theme / language / text size / phone view before first paint (no
+     flash). rvry-theme is shared with RVRY_ASCII. -->
+<script>try{var d=document.documentElement,t=localStorage.getItem("rvry-theme");if(t==="light"||t==="dark")d.setAttribute("data-theme",t);var s=JSON.parse(localStorage.getItem("rvry-color-settings")||"{}");if(s.lang==="sv")d.lang="sv";if(/^(xs|sm|md|lg|xl)$/.test(s.size))d.setAttribute("data-ui-size",s.size);if(/^(picker|theme|tools)$/.test(s.view))d.setAttribute("data-view",s.view);}catch(e){}</script>
 </head>
 <body>
 
@@ -34,37 +34,55 @@
       <h1 class="ct-title" data-i18n="tool_name">Color Theme Generator</h1>
     </div>
     <span class="ct-spacer"></span>
-    <div class="seg" role="group" data-i18n-aria="language" aria-label="Language">
-      <button type="button" class="seg-btn" data-lang="en" lang="en">EN</button>
-      <button type="button" class="seg-btn" data-lang="sv" lang="sv">SV</button>
-    </div>
-    <div class="ct-menu" id="size-menu">
-      <button type="button" class="ct-menu-btn" id="size-btn" aria-haspopup="menu" aria-expanded="false" data-i18n-title="text_size" title="Text size">
-        <span class="fs-aa" aria-hidden="true">Aa</span><span id="size-label">Medium</span>
-        <svg class="caret" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 4l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-      <div class="ct-menu-list" id="size-list" role="menu" hidden>
-        <button type="button" role="menuitemradio" data-size="xs" data-i18n="size_xs">Extra small</button>
-        <button type="button" role="menuitemradio" data-size="sm" data-i18n="size_sm">Small</button>
-        <button type="button" role="menuitemradio" data-size="md" data-i18n="size_md">Medium</button>
-        <button type="button" role="menuitemradio" data-size="lg" data-i18n="size_lg">Large</button>
-        <button type="button" role="menuitemradio" data-size="xl" data-i18n="size_xl">Extra large</button>
-      </div>
-    </div>
-    <button type="button" class="theme-toggle" id="theme-toggle" data-i18n-aria="theme_toggle" aria-label="Toggle light / dark">
-      <span class="tt-track">
-        <span class="tt-icon tt-sun"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></span>
-        <span class="tt-icon tt-moon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.5A9 9 0 1 1 11.5 3a7 7 0 0 0 9.5 9.5z"/></svg></span>
-        <span class="tt-knob"></span>
-      </span>
+    <button type="button" class="icon-btn ct-undo" id="undo-btn" disabled data-i18n-aria="undo" aria-label="Undo">
+      <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 3 2.5 6l3 3"/><path d="M2.5 6h7a4 4 0 0 1 0 8H7"/></svg>
     </button>
+    <button type="button" class="icon-btn ct-redo" id="redo-btn" disabled data-i18n-aria="redo" aria-label="Redo">
+      <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.5 3l3 3-3 3"/><path d="M13.5 6h-7a4 4 0 0 0 0 8H9"/></svg>
+    </button>
+    <!-- Language, text size and light/dark: in the bar on wide screens, in a
+         small menu behind the sliders button on narrow ones (ct.css). -->
+    <button type="button" class="icon-btn ct-prefs-btn" id="prefs-btn" aria-expanded="false" aria-controls="prefs" data-i18n-aria="settings" aria-label="Settings" data-i18n-title="settings" title="Settings">
+      <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12"/><circle cx="5" cy="4" r="1.6" fill="currentColor"/><circle cx="11" cy="8" r="1.6" fill="currentColor"/><circle cx="6.5" cy="12" r="1.6" fill="currentColor"/></svg>
+    </button>
+    <div class="ct-prefs" id="prefs">
+      <div class="seg" role="group" data-i18n-aria="language" aria-label="Language">
+        <button type="button" class="seg-btn" data-lang="en" lang="en">EN</button>
+        <button type="button" class="seg-btn" data-lang="sv" lang="sv">SV</button>
+      </div>
+      <div class="ct-menu" id="size-menu">
+        <button type="button" class="ct-menu-btn" id="size-btn" aria-haspopup="menu" aria-expanded="false" data-i18n-title="text_size" title="Text size">
+          <span class="fs-aa" aria-hidden="true">Aa</span><span id="size-label">Medium</span>
+          <svg class="caret" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 4l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="ct-menu-list" id="size-list" role="menu" hidden>
+          <button type="button" role="menuitemradio" data-size="xs" data-i18n="size_xs">Extra small</button>
+          <button type="button" role="menuitemradio" data-size="sm" data-i18n="size_sm">Small</button>
+          <button type="button" role="menuitemradio" data-size="md" data-i18n="size_md">Medium</button>
+          <button type="button" role="menuitemradio" data-size="lg" data-i18n="size_lg">Large</button>
+          <button type="button" role="menuitemradio" data-size="xl" data-i18n="size_xl">Extra large</button>
+        </div>
+      </div>
+      <button type="button" class="theme-toggle" id="theme-toggle" data-i18n-aria="theme_toggle" aria-label="Toggle light / dark">
+        <span class="tt-track">
+          <span class="tt-icon tt-sun"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></span>
+          <span class="tt-icon tt-moon"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.5A9 9 0 1 1 11.5 3a7 7 0 0 0 9.5 9.5z"/></svg></span>
+          <span class="tt-knob"></span>
+        </span>
+      </button>
+    </div>
     <button type="button" class="btn primary" id="export-open" data-i18n="export">Export</button>
   </header>
 
   <main class="ct-main">
 
     <!-- ============ PICKER ============ -->
-    <section class="panel ct-picker" aria-labelledby="h-picker">
+    <section class="panel ct-picker" id="view-picker" aria-labelledby="h-picker">
+      <!-- Phones and small windows: the theme, live while you pick (tap to open it). -->
+      <button type="button" class="ct-strip" id="strip" data-i18n-aria="show_theme" aria-label="Show the theme">
+        <span class="strip-swatches"><span class="strip-row" id="strip-harm"></span><span class="strip-row thin" id="strip-ramp"></span></span>
+        <svg class="strip-go" viewBox="0 0 10 10" width="12" height="12" aria-hidden="true"><path d="M3.5 1.5 7 5l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
       <div class="panel-head">
         <h2 class="ct-h" id="h-picker" data-i18n="sec_picker">Picker</h2>
         <button type="button" class="base-hex" id="base-hex" data-i18n-title="copy_base" title="Copy the base color"></button>
@@ -127,7 +145,7 @@
     </section>
 
     <!-- ============ THEME BOARD ============ -->
-    <section class="panel ct-board" aria-labelledby="h-board">
+    <section class="panel ct-board" id="view-theme" aria-labelledby="h-board">
       <h2 class="sr-only" id="h-board" data-i18n="sec_theme">Theme</h2>
       <div class="board-head">
         <input type="text" class="name-input" id="theme-name" maxlength="80" spellcheck="false" data-i18n-ph="untitled" placeholder="Untitled theme" data-i18n-aria="theme_name" aria-label="Theme name" />
@@ -139,6 +157,11 @@
           <button type="button" class="seg-btn" data-fmt="oklch">OKLCH</button>
           <button type="button" class="seg-btn" data-fmt="cmyk">CMYK</button>
         </div>
+        <!-- Same setting as the buttons, for a narrow board (ct.css shows one). -->
+        <select class="fmt-select" id="fmt-select" data-i18n-aria="display_format" aria-label="Color format">
+          <option value="hex">HEX</option><option value="rgb">RGB</option><option value="hsl">HSL</option>
+          <option value="hsv">HSV</option><option value="oklch">OKLCH</option><option value="cmyk">CMYK</option>
+        </select>
         <button type="button" class="btn ghost" id="save-theme">☆ <span data-i18n="save">Save</span></button>
       </div>
 
@@ -164,6 +187,7 @@
             <button type="button" class="seg-btn" data-mode="triad" data-i18n="modeS_triad">Triad</button>
             <button type="button" class="seg-btn" data-mode="square" data-i18n="modeS_square">Square</button>
           </div>
+          <button type="button" class="btn ghost small" id="copy-harmony" data-i18n="copy">Copy</button>
         </div>
         <div class="swatch-row" id="harm-row"></div>
         <div class="sec-controls">
@@ -174,7 +198,6 @@
             <button type="button" class="seg-btn" data-count="7">7</button>
           </div>
           <label class="inline-range" id="spread-wrap"><span data-i18n="spread">Spread</span><input type="range" id="spread" min="5" max="90" step="1" /><span class="val" id="v-spread"></span></label>
-          <button type="button" class="btn ghost small" id="copy-harmony" data-i18n="copy">Copy</button>
         </div>
       </div>
 
@@ -199,7 +222,7 @@
     </section>
 
     <!-- ============ TOOLS ============ -->
-    <section class="panel ct-side" aria-label="Tools">
+    <section class="panel ct-side" id="view-tools" data-i18n-aria="tools" aria-label="Tools">
       <div class="tabbar" role="tablist" id="tabbar">
         <button type="button" class="tab-btn" role="tab" id="tab-btn-gradient" data-tab="gradient" aria-controls="tab-gradient" data-i18n="tab_gradient">Gradient</button>
         <button type="button" class="tab-btn" role="tab" id="tab-btn-contrast" data-tab="contrast" aria-controls="tab-contrast" data-i18n="tab_contrast">Contrast</button>
@@ -296,6 +319,22 @@
       </div>
     </section>
   </main>
+
+  <!-- Phones and small windows show one view at a time. -->
+  <nav class="ct-nav" id="ct-nav" data-i18n-aria="views" aria-label="Views">
+    <button type="button" class="nav-btn" data-view="picker" aria-controls="view-picker">
+      <svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7.5"/><circle cx="10" cy="10" r="3.5"/></svg>
+      <span data-i18n="sec_picker">Picker</span>
+    </button>
+    <button type="button" class="nav-btn" data-view="theme" aria-controls="view-theme">
+      <svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="3.5" width="4" height="13" rx="1"/><rect x="8" y="3.5" width="4" height="13" rx="1"/><rect x="13.5" y="3.5" width="4" height="13" rx="1"/></svg>
+      <span data-i18n="sec_theme">Theme</span>
+    </button>
+    <button type="button" class="nav-btn" data-view="tools" aria-controls="view-tools">
+      <svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 5.5h14M3 10h14M3 14.5h8"/></svg>
+      <span data-i18n="tools">Tools</span>
+    </button>
+  </nav>
 </div>
 
 <noscript><p class="ct-noscript">This tool needs JavaScript. · Verktyget kräver JavaScript.</p></noscript>
@@ -343,9 +382,9 @@
 
 <!-- Plain JavaScript, no build step. Load order matters: colour maths ->
      theme/export -> strings -> app. -->
-<script src="/color_theme_app/js/ct-color.js"></script>
-<script src="/color_theme_app/js/ct-export.js"></script>
-<script src="/color_theme_app/js/ct-i18n.js"></script>
-<script src="/color_theme_app/js/ct-app.js"></script>
+<script src="/color_theme_app/js/ct-color.js?v=2"></script>
+<script src="/color_theme_app/js/ct-export.js?v=2"></script>
+<script src="/color_theme_app/js/ct-i18n.js?v=2"></script>
+<script src="/color_theme_app/js/ct-app.js?v=2"></script>
 </body>
 </html>

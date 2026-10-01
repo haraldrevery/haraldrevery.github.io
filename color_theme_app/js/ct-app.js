@@ -20,9 +20,10 @@
 
   const SIZES = ['xs', 'sm', 'md', 'lg', 'xl'];
   const TABS = ['gradient', 'contrast', 'image', 'library'];
+  const VIEWS = ['picker', 'theme', 'tools']; // phones / small windows: one at a time
   const MAX_STOPS = 12;
   const savedSettings = store.json(KEY.settings);
-  const settings = Object.assign({ lang: 'en', size: 'md', fmt: 'hex', tab: 'gradient', sheet: 'light' }, savedSettings || {});
+  const settings = Object.assign({ lang: 'en', size: 'md', fmt: 'hex', tab: 'gradient', sheet: 'light', view: 'picker' }, savedSettings || {});
   if (!savedSettings) { // first visit after the rewrite: keep the old app's choices
     if (C.FORMATS.indexOf(store.get(OLD.format)) >= 0) settings.fmt = store.get(OLD.format);
     if (SIZES.indexOf(store.get(OLD.size)) >= 0) settings.size = store.get(OLD.size);
@@ -32,6 +33,7 @@
   if (C.FORMATS.indexOf(settings.fmt) < 0) settings.fmt = 'hex';
   if (TABS.indexOf(settings.tab) < 0) settings.tab = 'gradient';
   if (settings.sheet !== 'dark') settings.sheet = 'light';
+  if (VIEWS.indexOf(settings.view) < 0) settings.view = 'picker';
   const saveSettings = () => store.set(KEY.settings, JSON.stringify(settings));
 
   let t = I.translator(settings.lang);
@@ -78,16 +80,18 @@
     if (themeChanged) themeDirty = true;
     if (!frame) frame = requestAnimationFrame(render);
   }
-  function themeChanged() { schedule(true); saveWorkSoon(); commitSoon(); }
+  function themeChanged() { pending = true; schedule(true); saveWorkSoon(); commitSoon(); }
 
-  // Undo / redo for theme edits (Ctrl+Z, Ctrl+Shift+Z / Ctrl+Y). A drag or a
-  // run of typing becomes one step: a state is committed 400 ms after the
-  // last change.
+  // Undo / redo for theme edits (the top bar buttons, Ctrl+Z, Ctrl+Shift+Z /
+  // Ctrl+Y). A drag or a run of typing becomes one step: a state is committed
+  // 400 ms after the last change (`pending` until then).
   const undoStack = [], redoStack = [];
-  let committed = JSON.stringify(X.serializeTheme(theme)), commitTimer = 0;
+  let committed = JSON.stringify(X.serializeTheme(theme)), commitTimer = 0, pending = false;
   function commitSoon() { clearTimeout(commitTimer); commitTimer = setTimeout(commit, 400); }
   function commit() {
     clearTimeout(commitTimer);
+    pending = false;
+    schedule(); // the undo / redo buttons
     const cur = JSON.stringify(X.serializeTheme(theme));
     if (cur === committed) return;
     undoStack.push(committed);
@@ -109,10 +113,12 @@
   const redo = () => stepHistory(redoStack, undoStack, 'redone');
 
   let workTimer = 0;
-  function saveWorkSoon() {
-    clearTimeout(workTimer);
-    workTimer = setTimeout(() => store.set(KEY.work, JSON.stringify(X.serializeTheme(theme))), 400);
-  }
+  function saveWork() { clearTimeout(workTimer); workTimer = 0; store.set(KEY.work, JSON.stringify(X.serializeTheme(theme))); }
+  function saveWorkSoon() { clearTimeout(workTimer); workTimer = setTimeout(saveWork, 400); }
+  // Closing or reloading inside the 400 ms would lose the last edit.
+  const flushWork = () => { if (workTimer) saveWork(); };
+  window.addEventListener('pagehide', flushWork);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushWork(); });
 
   /* ---------------- small helpers ---------------- */
 
@@ -159,8 +165,13 @@
     if (f) f();
   });
 
+  // The modal export dialog covers the toast: say it inside the dialog then.
+  function say(msg) {
+    if ($('export-dialog').open) $('exp-msg').textContent = msg;
+    else toast(msg);
+  }
   function copy(text, what) {
-    const done = () => toast(what ? t('copied_what', { what }) : t('copied'));
+    const done = () => say(what ? t('copied_what', { what }) : t('copied'));
     const legacy = () => {
       const ta = el('textarea', { class: 'sr-only', 'aria-hidden': 'true' });
       ta.value = text;
@@ -169,7 +180,7 @@
       let ok = false;
       try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
       ta.remove();
-      if (ok) done(); else toast(t('copy_failed'));
+      if (ok) done(); else say(t('copy_failed'));
     };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, legacy);
     else legacy();
@@ -185,7 +196,7 @@
     setTimeout(() => URL.revokeObjectURL(url), 2000);
     $('exp-msg').textContent = t('downloaded', { file: name });
   }
-  const slug = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+  const slug = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'color-theme';
 
   /* ---------------- selection ---------------- */
@@ -236,19 +247,21 @@
 
   /* ---------------- picker: wheel + SV square ---------------- */
 
-  // Same query as the one-screen layout in ct.css.
+  // Same query as the three-column layout in ct.css; below it, phones and
+  // small windows show one view at a time (picker / theme / tools).
   const CANVAS = window.matchMedia ? window.matchMedia('(min-width: 1000px) and (min-height: 560px)') : { matches: false };
   const wheel = { size: 0, outer: 0, inner: 0, sv: 0 };
-  // Desktop: the wheel fills the height the column has left. Otherwise it
-  // follows the column width (and the wrap takes the wheel's height).
+  // The wheel fills the height its column has left, up to a maximum.
   function layoutWheel() {
     const wrap = $('wheel-wrap');
-    // Desktop: never taller than wide, so spare height stays below the picker
+    if (!wrap.clientWidth) return; // another view is showing: lay out when it opens
+    const max = CANVAS.matches ? 360 : 420;
+    // Never taller than wide, so spare height stays below the picker
     // instead of floating around the wheel.
-    wrap.style.maxHeight = CANVAS.matches ? Math.min(wrap.clientWidth, 360) + 'px' : '';
-    const w = wrap.clientWidth || 240;
-    const avail = CANVAS.matches ? Math.min(w, wrap.clientHeight || w, 360) : Math.min(w, 264);
-    const size = Math.max(140, Math.floor(avail));
+    wrap.style.maxHeight = Math.min(wrap.clientWidth, max) + 'px';
+    const w = wrap.clientWidth;
+    const avail = Math.min(w, wrap.clientHeight || w, max);
+    const size = Math.max(120, Math.floor(avail));
     if (size === wheel.size) return;
     wheel.size = size;
     wheel.outer = size / 2 - 2;
@@ -303,21 +316,26 @@
     node.addEventListener('pointerup', end);
     node.addEventListener('pointercancel', end);
   }
-  dragger($('wheel-ring'), (e, first) => {
-    const r = $('wheel-ring').getBoundingClientRect();
-    const x = e.clientX - r.left - r.width / 2, y = e.clientY - r.top - r.height / 2;
-    if (first && Math.hypot(x, y) < wheel.inner - 4) return false; // the empty middle
-    setBase(Object.assign({}, theme.base, { h: Math.atan2(y, x) * 180 / Math.PI + 90 }));
-    $('wheel-ring').focus({ preventScroll: true });
-  });
-  dragger($('sv'), (e) => {
+  function pointSV(e) {
     const r = $('sv').getBoundingClientRect();
     setBase(Object.assign({}, theme.base, {
       s: C.clamp((e.clientX - r.left) / r.width, 0, 1),
       v: 1 - C.clamp((e.clientY - r.top) / r.height, 0, 1)
     }));
     $('sv').focus({ preventScroll: true });
+  }
+  // A press inside the ring but beside the square (an easy miss with a
+  // finger) drives the square from its nearest edge.
+  let ringMode = 'hue';
+  dragger($('wheel-ring'), (e, first) => {
+    const r = $('wheel-ring').getBoundingClientRect();
+    const x = e.clientX - r.left - r.width / 2, y = e.clientY - r.top - r.height / 2;
+    if (first) ringMode = Math.hypot(x, y) < wheel.inner - 4 ? 'sv' : 'hue';
+    if (ringMode === 'sv') { pointSV(e); return; }
+    setBase(Object.assign({}, theme.base, { h: Math.atan2(y, x) * 180 / Math.PI + 90 }));
+    $('wheel-ring').focus({ preventScroll: true });
   });
+  dragger($('sv'), pointSV);
   const stepKey = (e) => (e.shiftKey ? 10 : 1);
   $('wheel-ring').addEventListener('keydown', (e) => {
     const k = e.key, d = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1, PageUp: 15, PageDown: -15 }[k];
@@ -366,7 +384,7 @@
       msg.textContent = t('msg_list', { n: list.length });
       msg.className = 'hint ok';
       $('smart').value = '';
-      schedule();
+      setView('picker');
       return true;
     }
     if (String(text).trim()) { msg.textContent = t('msg_unknown'); msg.className = 'hint err'; $('smart').setAttribute('aria-invalid', 'true'); }
@@ -435,6 +453,10 @@
     if (!b) return;
     settings.fmt = b.dataset.fmt; saveSettings(); schedule();
   });
+  $('fmt-select').addEventListener('change', (e) => {
+    if (C.FORMATS.indexOf(e.target.value) < 0) return;
+    settings.fmt = e.target.value; saveSettings(); schedule();
+  });
   $('mode-seg').addEventListener('click', (e) => {
     const b = e.target.closest('[data-mode]');
     if (!b) return;
@@ -480,7 +502,8 @@
     theme.gradient.stops = next;
     if (sel.kind === 'stop' || sel.kind === 'step') sel = { kind: 'base' };
     themeChanged();
-    toast(t('gradient_replaced'), () => { theme.gradient.stops = before; themeChanged(); });
+    const msg = colors.length > MAX_STOPS ? t('gradient_first', { n: MAX_STOPS, total: colors.length }) : t('gradient_replaced');
+    toast(msg, () => { theme.gradient.stops = before; themeChanged(); });
   }
   function addStop(c) {
     if (theme.gradient.stops.length >= MAX_STOPS) { toast(t('max_stops', { n: MAX_STOPS })); return; }
@@ -546,18 +569,23 @@
 
   /* ---------------- image palette + eyedropper ---------------- */
 
+  // Each new file (or Clear) bumps the token, so a big photo that finishes
+  // decoding after a smaller one chosen later cannot replace it.
+  let imageToken = 0;
   function loadImageFile(file) {
     showTab('image');
     if (!file || !/^image\//.test(file.type || '')) { toast(t('image_error')); return; }
+    const token = ++imageToken;
     // data: URL, not blob: — the live CSP has no blob: in img-src.
     const reader = new FileReader();
-    reader.onload = () => setImage(String(reader.result));
-    reader.onerror = () => toast(t('image_error'));
+    reader.onload = () => { if (token === imageToken) setImage(String(reader.result), token); };
+    reader.onerror = () => { if (token === imageToken) toast(t('image_error')); };
     reader.readAsDataURL(file);
   }
-  function setImage(src) {
+  function setImage(src, token) {
     const img = new Image();
     img.onload = () => {
+      if (token !== imageToken) return;
       const w = img.naturalWidth, h = img.naturalHeight;
       if (!w || !h) { toast(t('image_error')); return; }
       // Eyedropper canvas: at most 4096 px and 16 MP (iOS Safari's canvas limit).
@@ -581,7 +609,7 @@
       $('img').src = src;
       extractPalette();
     };
-    img.onerror = () => toast(t('image_error'));
+    img.onerror = () => { if (token === imageToken) toast(t('image_error')); };
     img.src = src;
   }
   function extractPalette() {
@@ -591,6 +619,7 @@
     schedule();
   }
   function clearImage() {
+    imageToken++;
     Object.assign(image, { src: null, palette: [], pick: null, pixels: null, eyedrop: false });
     $('img').removeAttribute('src');
     memo.img = null;
@@ -687,6 +716,10 @@
     }
     return null;
   }
+  const normalizeList = (raw) => {
+    const seen = new Set();
+    return raw.map(normalizeItem).filter((it) => it && !seen.has(it.id) && seen.add(it.id));
+  };
   function loadLibrary() {
     let raw = store.json(KEY.lib);
     if (!Array.isArray(raw)) {
@@ -695,17 +728,36 @@
       raw = Array.isArray(old) ? old : [];
       if (raw.length) setTimeout(() => saveLibrary(), 0);
     }
-    const seen = new Set();
-    return raw.map(normalizeItem).filter((it) => it && !seen.has(it.id) && seen.add(it.id));
+    return normalizeList(raw);
+  }
+  // Every open tab shares the stored library, so each change starts from the
+  // stored copy (editLibrary) and other tabs' saves are followed (the
+  // `storage` event below); before, the last tab to save erased what the
+  // others had added. When the browser refuses to store, the copy in memory
+  // is the only one and is kept.
+  let libUnsaved = false;
+  function freshLibrary() {
+    if (libUnsaved) return library;
+    const raw = store.json(KEY.lib);
+    return Array.isArray(raw) ? normalizeList(raw) : library;
   }
   // Returns false (and says so) when the browser will not store it.
   function saveLibrary() {
     const saved = store.set(KEY.lib, JSON.stringify(library));
+    libUnsaved = !saved;
     if (!saved) toast(t('storage_full'));
     memo.lib = null;
     schedule();
     return saved;
   }
+  function editLibrary(change) {
+    library = freshLibrary();
+    change();
+    return saveLibrary();
+  }
+  window.addEventListener('storage', (e) => {
+    if ((e.key === KEY.lib || e.key === null) && !libUnsaved) { library = freshLibrary(); memo.lib = null; schedule(); }
+  });
   function defaultName(type) {
     const n = library.filter((it) => it.type === type).length + 1;
     return t('default_' + type, { n });
@@ -713,9 +765,11 @@
   function addLibrary(item) {
     const it = normalizeItem(Object.assign({ id: uid(), created: Date.now() }, item));
     if (!it) return;
-    if (!it.name) it.name = defaultName(it.type);
-    library.unshift(it);
-    if (saveLibrary()) toast(t('saved'), () => { library = library.filter((x) => x.id !== it.id); saveLibrary(); });
+    const saved = editLibrary(() => {
+      if (!it.name) it.name = defaultName(it.type);
+      library.unshift(it);
+    });
+    if (saved) toast(t('saved'), () => editLibrary(() => { library = library.filter((x) => x.id !== it.id); }));
   }
   function loadItem(it) {
     if (it.type === 'theme') {
@@ -728,11 +782,15 @@
       replaceStops((it.stops || it.colors).map((h) => C.parse(h).color));
     }
   }
-  function deleteItem(it) {
-    const at = library.indexOf(it);
-    library = library.filter((x) => x !== it);
-    saveLibrary();
-    toast(t('deleted', { name: it.name }), () => { library.splice(Math.min(at, library.length), 0, it); saveLibrary(); });
+  function deleteItem(id) {
+    let gone = null, at = -1;
+    const saved = editLibrary(() => {
+      at = library.findIndex((x) => x.id === id);
+      if (at >= 0) gone = library.splice(at, 1)[0];
+    });
+    if (saved && gone) toast(t('deleted', { name: gone.name }), () => editLibrary(() => {
+      if (!library.some((x) => x.id === gone.id)) library.splice(Math.min(at, library.length), 0, gone);
+    }));
   }
   $('lib-filter').addEventListener('click', (e) => { const b = e.target.closest('[data-filter]'); if (b) { libFilter = b.dataset.filter; memo.lib = null; schedule(); } });
   $('lib-grid').addEventListener('click', (e) => {
@@ -744,7 +802,7 @@
     if (!act) return;
     const a = act.dataset.act;
     if (a === 'load') loadItem(it);
-    else if (a === 'del') deleteItem(it);
+    else if (a === 'del') deleteItem(it.id);
     else if (a === 'rename') { renaming = it.id; memo.lib = null; schedule(); }
     else if (a === 'color') {
       const i = +act.dataset.i, list = it.colors || it.stops;
@@ -752,9 +810,9 @@
     }
   });
   function finishRename(inp, commit) {
-    const it = library.find((x) => x.id === renaming);
+    const id = renaming, name = inp.value.trim().slice(0, 80);
     renaming = null;
-    if (it && commit && inp.value.trim()) { it.name = inp.value.trim().slice(0, 80); saveLibrary(); }
+    if (commit && name) editLibrary(() => { const it = library.find((x) => x.id === id); if (it) it.name = name; });
     else { memo.lib = null; schedule(); }
   }
   $('lib-grid').addEventListener('keydown', (e) => {
@@ -792,20 +850,22 @@
         const colors = C.extract(text);
         if (colors.length) items = [{ type: 'palette', name: file.name.replace(/\.[^.]+$/, '').slice(0, 80), colors: colors.map((x) => hex(x.color)) }];
       }
-      const have = new Set(library.map(sigOf));
+      if (!items.length) { toast(t('import_none')); return; }
       let added = 0;
-      items.map(normalizeItem).filter(Boolean).forEach((it) => {
-        it.id = uid();
-        if (!it.name) it.name = defaultName(it.type);
-        const s = sigOf(it);
-        if (have.has(s)) return;
-        have.add(s);
-        library.unshift(it);
-        added++;
+      const saved = editLibrary(() => {
+        const have = new Set(library.map(sigOf));
+        items.map(normalizeItem).filter(Boolean).forEach((it) => {
+          it.id = uid();
+          if (!it.name) it.name = defaultName(it.type);
+          const s = sigOf(it);
+          if (have.has(s)) return;
+          have.add(s);
+          library.unshift(it);
+          added++;
+        });
       });
-      if (!added && !items.length) { toast(t('import_none')); return; }
       showTab('library');
-      if (saveLibrary()) toast(t('imported', { n: added }));
+      if (saved) toast(t('imported', { n: added }));
     };
     reader.readAsText(file);
   }
@@ -816,8 +876,32 @@
     if (TABS.indexOf(name) < 0) return;
     settings.tab = name; saveSettings();
     memo.tabs = null;
+    setView('tools');
+  }
+  // Phones / small windows: which of the three panels shows. The desktop
+  // layout shows all three and ignores it.
+  function setView(name) {
+    if (VIEWS.indexOf(name) < 0) return;
+    if (settings.view !== name && !CANVAS.matches) { settings.view = name; saveSettings(); }
     schedule();
   }
+  $('ct-nav').addEventListener('click', (e) => { const b = e.target.closest('[data-view]'); if (b) setView(b.dataset.view); });
+  $('strip').addEventListener('click', () => setView('theme'));
+
+  // Narrow screens: language, text size and light/dark sit behind a button.
+  const prefsBtn = $('prefs-btn'), prefs = $('prefs');
+  function openPrefs(open) {
+    prefs.classList.toggle('open', open);
+    prefsBtn.setAttribute('aria-expanded', String(open));
+    if (!open) openSize(false);
+  }
+  prefsBtn.addEventListener('click', () => openPrefs(!prefs.classList.contains('open')));
+  document.addEventListener('pointerdown', (e) => { if (prefs.classList.contains('open') && !e.target.closest('#prefs, #prefs-btn')) openPrefs(false); });
+  prefs.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !e.defaultPrevented) { openPrefs(false); prefsBtn.focus(); } });
+
+  const MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
+  $('undo-btn').addEventListener('click', () => undo());
+  $('redo-btn').addEventListener('click', () => redo());
   $('tabbar').addEventListener('click', (e) => { const b = e.target.closest('[data-tab]'); if (b) showTab(b.dataset.tab); });
   $('tabbar').addEventListener('keydown', (e) => {
     const d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
@@ -974,6 +1058,17 @@
       Array.prototype.forEach.call(sizeList.children, (n) => n.setAttribute('aria-checked', String(n.dataset.size === settings.size)));
     }
     document.querySelectorAll('[data-lang]').forEach((n) => n.setAttribute('aria-pressed', String(n.dataset.lang === settings.lang)));
+    if (changed('view', settings.view)) {
+      doc.setAttribute('data-view', settings.view);
+      $('ct-nav').querySelectorAll('[data-view]').forEach((n) => n.setAttribute('aria-pressed', String(n.dataset.view === settings.view)));
+    }
+    const canUndo = undoStack.length > 0 || pending, canRedo = redoStack.length > 0 && !pending;
+    if (changed('undo', canUndo + '|' + canRedo + settings.lang)) {
+      $('undo-btn').disabled = !canUndo;
+      $('redo-btn').disabled = !canRedo;
+      $('undo-btn').title = t('undo_key', { key: MAC ? '⌘Z' : 'Ctrl+Z' });
+      $('redo-btn').title = t('redo_key', { key: MAC ? '⇧⌘Z' : 'Ctrl+Y' });
+    }
 
     // Picker
     const baseSig = [b.h, b.s, b.v, b.a].join();
@@ -983,7 +1078,7 @@
       svDot.style.left = (b.s * 100) + '%'; svDot.style.top = ((1 - b.v) * 100) + '%';
       svDot.style.setProperty('--sw', C.toCss(C.hsvToRgb(b.h, b.s, b.v)));
       const vals = { 'sl-h': Math.round(b.h) % 360, 'sl-s': Math.round(b.s * 100), 'sl-v': Math.round(b.v * 100), 'sl-a': Math.round(b.a * 100) };
-      for (const id in vals) if (!isTyping($(id)) || $(id).value === '') $(id).value = vals[id];
+      for (const id in vals) if ($(id).value !== String(vals[id])) $(id).value = vals[id];
       $('v-h').textContent = vals['sl-h'] + '°';
       $('v-s').textContent = vals['sl-s'] + '%';
       $('v-v').textContent = vals['sl-v'] + '%';
@@ -1003,6 +1098,15 @@
       $('base-hex').textContent = hex(S.base);
       if (!$('smart').value) setSw($('smart-sw'), S.base);
     }
+    // Phones: the live strip above the wheel (harmonies over the tone scale).
+    const stripSig = S.harmony.colors.map(hex).join() + '|' + S.scale.map((x) => hex(x.color)).join();
+    if (changed('strip', stripSig)) {
+      const hs = sync($('strip-harm'), S.harmony.colors.length, () => el('span', { class: 'sw' }));
+      S.harmony.colors.forEach((c, i) => setSw(hs[i], c));
+      const rs = sync($('strip-ramp'), S.scale.length, () => el('span', { class: 'sw' }));
+      S.scale.forEach((x, i) => setSw(rs[i], x.color));
+    }
+
     // Wheel markers: current hue + harmony hues
     const hues = C.harmonyHues(b.h, theme.harmony.mode, theme.harmony.count, theme.harmony.spread);
     if (changed('marks', hues.join() + wheel.size + b.h)) {
@@ -1025,14 +1129,18 @@
 
     // Board header
     if (!isTyping($('theme-name')) && $('theme-name').value !== theme.name) $('theme-name').value = theme.name;
-    if (changed('fmt', f)) $('fmt-seg').querySelectorAll('[data-fmt]').forEach((n) => n.setAttribute('aria-pressed', String(n.dataset.fmt === f)));
+    if (changed('fmt', f)) {
+      $('fmt-seg').querySelectorAll('[data-fmt]').forEach((n) => n.setAttribute('aria-pressed', String(n.dataset.fmt === f)));
+      $('fmt-select').value = f;
+    }
 
     // Readout
     const roSig = hex(cur.color) + cur.name + f + settings.lang + !!cur.base;
     if (changed('ro', roSig)) {
       setSw($('ro-sw'), cur.color);
       $('ro-name').textContent = cur.name;
-      const w = C.contrast(C.WHITE, cur.color), k = C.contrast(C.BLACK, cur.color);
+      // The colour on white / on black: a translucent one mixes with that ground.
+      const w = C.contrast(cur.color, C.WHITE), k = C.contrast(cur.color, C.BLACK);
       $('ro-note').textContent = `${t('on_white')} ${C.num(w, 2)} ${t('grade_' + C.grade(w))} · ${t('on_black')} ${C.num(k, 2)} ${t('grade_' + C.grade(k))}`;
       const rows = sync($('ro-rows'), C.FORMATS.length, (i) => el('button', { type: 'button', class: 'ro-row', 'data-f': C.FORMATS[i] }, [
         el('span', { class: 'ro-k' }, [C.FORMATS[i].toUpperCase(), el('span', { class: 'ro-c' })]), el('span', { class: 'ro-v' })
@@ -1061,12 +1169,10 @@
       $('mode-seg').querySelectorAll('[data-mode]').forEach((n) => n.setAttribute('aria-pressed', String(n.dataset.mode === theme.harmony.mode)));
       $('count-seg').querySelectorAll('[data-count]').forEach((n) => n.setAttribute('aria-pressed', String(+n.dataset.count === theme.harmony.count)));
       $('count-seg').hidden = theme.harmony.mode !== 'analogous';
-      const max = theme.harmony.mode === 'split' ? 60 : 90;
       $('spread-wrap').hidden = !S.harmony.usesSpread;
-      $('spread').max = max;
-      const sp = Math.min(theme.harmony.spread, max);
-      if (!isTyping($('spread'))) $('spread').value = sp;
-      $('v-spread').textContent = sp + '°';
+      $('spread').max = C.maxSpread(theme.harmony.mode, theme.harmony.count);
+      if ($('spread').value !== String(S.harmony.spread)) $('spread').value = S.harmony.spread;
+      $('v-spread').textContent = S.harmony.spread + '°';
     }
 
     // Tone scale
@@ -1103,7 +1209,7 @@
         n.title = t('click_select', { name: t('n_step', { n: i + 1 }) }) + ' · ' + fmt(c);
       });
       $('v-steps').textContent = theme.gradient.steps;
-      if (!isTyping($('grad-steps-n'))) $('grad-steps-n').value = theme.gradient.steps;
+      if ($('grad-steps-n').value !== String(theme.gradient.steps)) $('grad-steps-n').value = theme.gradient.steps;
     }
 
     // Stops editor
@@ -1213,8 +1319,9 @@
     if (changed('lib', lSig)) renderLibrary();
 
     // Density: re-check only when the layout's inputs change.
-    if (changed('fit', [innerWidth, innerHeight, settings.size, settings.lang, settings.tab, image.palette.length, !!image.src,
-      S.harmony.colors.length, g.steps.length, g.stops.length, history.length > 1, !!cur.base, library.length, CANVAS.matches].join())) fitDensity();
+    if (changed('fit', [innerWidth, innerHeight, settings.size, settings.lang, settings.tab, settings.view, image.palette.length, !!image.src,
+      S.harmony.colors.length, g.steps.length, g.stops.length, history.length > 1, !!cur.base, library.length, CANVAS.matches,
+      S.harmony.usesSpread, theme.harmony.mode === 'analogous', !!tray].join())) fitDensity();
 
     // Export dialog bits
     if (changed('exp', settings.sheet + settings.lang)) {
@@ -1224,6 +1331,7 @@
 
   function renderLibrary() {
     const grid = $('lib-grid');
+    const typing = grid.querySelector('.lib-rename'), draft = typing ? typing.value : null;
     grid.textContent = '';
     $('lib-filter').querySelectorAll('[data-filter]').forEach((n) => n.setAttribute('aria-pressed', String(n.dataset.filter === libFilter)));
     $('lib-empty').hidden = library.length > 0;
@@ -1254,7 +1362,7 @@
       }
       const count = it.type === 'theme' ? '' : ' · ' + (it.colors || it.stops).length;
       const name = renaming === it.id
-        ? el('input', { type: 'text', class: 'lib-rename', value: it.name, maxlength: 80, 'aria-label': t('rename') })
+        ? el('input', { type: 'text', class: 'lib-rename', value: draft != null ? draft : it.name, maxlength: 80, 'aria-label': t('rename') })
         : el('button', { type: 'button', class: 'lib-name', 'data-act': 'rename', title: t('rename'), text: it.name });
       grid.appendChild(el('div', { class: 'lib-card', 'data-id': it.id }, [
         prev,
@@ -1270,37 +1378,45 @@
     });
     if (renaming) {
       const inp = grid.querySelector('.lib-rename');
-      if (inp) { inp.focus(); inp.select(); }
+      if (inp) { inp.focus(); if (draft == null) inp.select(); }
     }
   }
 
   /* ---------------- one-screen fit ---------------- */
 
-  // Desktop layout: if a column would overflow (large text on a small
-  // window), step up the density classes in ct.css until it fits. Runs only
-  // when something that changes the layout changed, never during a drag.
+  // Both layouts are one screen: if a panel would overflow (large text on a
+  // small window or phone), step up the density classes in ct.css until it
+  // fits. Hidden views measure 0 and never count. Runs only when something
+  // that changes the layout changed, never during a drag.
   const DENSE = ['dense-1', 'dense-2'];
   function fitDensity() {
     const app = $('ct-app');
     app.classList.remove.apply(app.classList, DENSE);
-    if (!CANVAS.matches) return;
     const cols = document.querySelectorAll('.ct-main > .panel');
     const over = () => Array.prototype.some.call(cols, (p) => p.scrollHeight > p.clientHeight + 1);
     for (const cls of DENSE) { if (!over()) break; app.classList.add(cls); }
   }
   window.addEventListener('resize', () => schedule());
+  // Browsers without dvh (iOS < 15.4): 100vh includes the hidden toolbar
+  // area there, which would push the bottom bar off screen.
+  if (!(window.CSS && CSS.supports && CSS.supports('height', '100dvh'))) {
+    const setH = () => doc.style.setProperty('--app-h', window.innerHeight + 'px');
+    doc.classList.add('no-dvh');
+    setH();
+    window.addEventListener('resize', setH);
+  }
 
   /* ---------------- start ---------------- */
 
   const fitImage = () => {
     const h = $('img-wrap').clientHeight;
-    $('img-wrap').style.setProperty('--img-max', CANVAS.matches && h ? h + 'px' : '260px');
+    if (h) $('img-wrap').style.setProperty('--img-max', h + 'px');
   };
   if ('ResizeObserver' in window) {
     new ResizeObserver(() => layoutWheel()).observe($('wheel-wrap'));
     new ResizeObserver(fitImage).observe($('img-wrap'));
   } else window.addEventListener('resize', () => { layoutWheel(); fitImage(); });
-  const onMode = () => { wheel.size = 0; layoutWheel(); fitImage(); };
+  const onMode = () => { wheel.size = 0; openPrefs(false); layoutWheel(); fitImage(); schedule(); };
   if (CANVAS.addEventListener) CANVAS.addEventListener('change', onMode); else if (CANVAS.addListener) CANVAS.addListener(onMode);
   library = loadLibrary();
   layoutWheel();

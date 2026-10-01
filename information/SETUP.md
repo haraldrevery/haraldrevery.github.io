@@ -564,7 +564,7 @@ The Tailwind and Eleventy binaries are gitignored (GitHub's 100 MB file limit)
 |---|---|
 | `page_builder_app_v2/` | Tauri v2 + TypeScript (Puck) desktop app that assembles notebook pages from content blocks and exports body fragments to `input_custom_post/`. Prebuilt as `page_builder_v2` (Linux) and `page_builder_v2.exe` (Windows, rebuilt on Windows) at the repo root. See its README. |
 | `revery_notebook/` | Standalone markdown editor (CodeMirror, markdown-it, KaTeX, highlight.js, DOMPurify) for drafting posts. |
-| `color_theme_app/` | Standalone color theme tool (plain JS, no build step): base color → harmonies, tint/shade scale and gradient; exports a PNG reference sheet, .txt, .css, .gpl, .ase, Procreate .swatches and .json. EN/SV. Unit tests: `node color_theme_app/tests/ct.test.js`. Its CSS/JS are cached 186 days without `?v=`, so a changed file needs a new name or a `?v=`. `h/color_theme.html` must stay a byte-identical copy of `color_theme_app/color_theme.html`. |
+| `color_theme_app/` | Standalone color theme tool (plain JS, no build step): base color → harmonies, tint/shade scale and gradient; exports a PNG reference sheet, .txt, .css, .gpl, .ase, Procreate .swatches and .json. EN/SV. One screen on every size: three columns on a desktop (≥ 1000 × 560), one view at a time (Picker / Theme / Tools) on phones and small windows. Unit tests: `node color_theme_app/tests/ct.test.js`. CSS/JS are cached 186 days, so the HTML loads them with `?v=N`: bump N on all five after any change. `h/color_theme.html` must stay a byte-identical copy of `color_theme_app/color_theme.html`. |
 | `eleventy_binary/` | `compile.sh` + `build.mjs` — cross-compiles both Eleventy binaries with Bun. |
 
 These are self-contained and excluded from the Eleventy build.

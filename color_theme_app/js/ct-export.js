@@ -76,7 +76,7 @@
     const harmonyColors = hues.map((h) => C.quant(C.hsvToRgb(h, t.base.s, t.base.v, t.base.a)));
     const scale = C.toneScale(base).map((s) => ({
       step: s.step, color: C.quant(s.color), L: s.L,
-      white: C.contrast(C.WHITE, s.color), black: C.contrast(C.BLACK, s.color)
+      white: C.contrast(s.color, C.WHITE), black: C.contrast(s.color, C.BLACK)
     }));
     const stops = t.gradient.stops.map(C.quant);
     const steps = C.gradientSteps(stops, t.gradient.steps).map(C.quant);
@@ -85,7 +85,8 @@
       name: t.name || '',
       base,
       harmony: {
-        mode: t.harmony.mode, count: hues.length, spread: t.harmony.spread,
+        mode: t.harmony.mode, count: hues.length,
+        spread: Math.round(C.harmonySpread(t.harmony.mode, t.harmony.count, t.harmony.spread)),
         usesSpread: t.harmony.mode === 'analogous' || t.harmony.mode === 'split',
         colors: harmonyColors, baseIndex: C.harmonyBaseIndex(t.harmony.mode, t.harmony.count)
       },

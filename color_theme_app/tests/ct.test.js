@@ -96,6 +96,13 @@ ok(Math.abs(C.contrast(C.BLACK, C.WHITE) - 21) < 1e-9, 'black on white = 21');
 ok(Math.abs(C.contrast({ r: 26, g: 25, b: 22, a: 1 }, C.WHITE) - 17.58) < 0.01, 'ink on white');
 ok(C.grade(4.5) === 'AA' && C.grade(3) === 'AA18' && C.grade(7) === 'AAA' && C.grade(2.9) === 'fail', 'grades');
 ok(Math.abs(C.contrast({ r: 0, g: 0, b: 0, a: 0.5 }, C.WHITE) - C.contrast({ r: 128, g: 128, b: 128, a: 1 }, C.WHITE)) < 0.05, 'translucent text flattened');
+// A translucent colour on black is seen mixed with black (red at 50% on black
+// was reported as 8.62 AAA; mixed with black it is dark red, 1.92).
+{
+  const red50 = { r: 255, g: 0, b: 0, a: 0.5 };
+  ok(Math.abs(C.contrast(red50, C.BLACK) - 1.92) < 0.01, 'red 50% on black', C.contrast(red50, C.BLACK));
+  ok(Math.abs(C.contrast(red50, C.WHITE) - C.contrast({ r: 255, g: 128, b: 128, a: 1 }, C.WHITE)) < 0.05, 'red 50% on white');
+}
 
 /* ---- theme derivation ---- */
 {
@@ -103,6 +110,18 @@ ok(Math.abs(C.contrast({ r: 0, g: 0, b: 0, a: 0.5 }, C.WHITE) - C.contrast({ r: 
   ok(C.harmonyHues(18, 'complementary').length === 2 && C.harmonyHues(18, 'square').length === 4, 'harmony counts');
   ok(C.harmonyHues(18, 'analogous', 7, 30).length === 7, 'analogous 7');
   ok(C.harmonyHues(18, 'analogous', 99, 30).length === 3, 'bad count falls back');
+  // No two harmony colours on the same hue, whatever spread is stored
+  // (7 x 90° used to give 108,198,288,18,108,198,288).
+  const distinct = (hs) => hs.every((h, i) => hs.every((g, j) => i === j || Math.min(Math.abs(h - g), 360 - Math.abs(h - g)) >= 1));
+  [3, 4, 5, 7].forEach((n) => [5, 30, 51, 60, 72, 90].forEach((sp) =>
+    ok(distinct(C.harmonyHues(18, 'analogous', n, sp)), 'analogous distinct ' + n + 'x' + sp, C.harmonyHues(18, 'analogous', n, sp))));
+  ok(C.maxSpread('analogous', 7) === 51 && C.maxSpread('analogous', 5) === 72 && C.maxSpread('analogous', 3) === 90 && C.maxSpread('split', 3) === 60, 'max spread');
+  ok(C.harmonyHues(0, 'split', 3, 90).join() === '0,120,240', 'split capped at 60');
+  // The export reports the spread the colours use, not the stored one.
+  const sp = X.snapshot(X.normalizeTheme({ harmony: { mode: 'split', spread: 90 } }));
+  ok(sp.harmony.spread === 60, 'split snapshot spread', sp.harmony.spread);
+  const an = X.snapshot(X.normalizeTheme({ harmony: { mode: 'analogous', count: 7, spread: 90 } }));
+  ok(an.harmony.spread === 51, 'analogous 7 snapshot spread', an.harmony.spread);
   const sc = C.toneScale(C.hsvToRgb(base.h, base.s, base.v));
   ok(sc.length === 11 && sc[0].step === 50 && sc[10].step === 950, 'scale steps');
   ok(sc.every((s, i) => i === 0 || C.rgbToOklch(s.color).L < C.rgbToOklch(sc[i - 1].color).L), 'scale is light to dark');
