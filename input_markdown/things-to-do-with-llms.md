@@ -80,7 +80,6 @@ To be clear: Yes, I'm stating that "AI slop" is better than your average indie g
 Another aspect of making games is that it can teach you things about how the real world work, since games are minified simulations often inspired by the real world (but optimized to just be "fun" on a screen) in most cases.  Some examples are logistics systems and finances, cartography, ecological biomes and so on.  So playing around with LLM-generated games gives you an insight of the many choices, assumptions and compromises the *digital representations* of various phenomena/systems have of the real world. Even if it's buggy "AI slop", it provides some wisdom of how simplified code is and how one should always be careful about digital representations, since it's just an abstract translation into a screen, pixels calculated from an algorithm computed on doped silicon.
 
 
-
 ---
 
 
